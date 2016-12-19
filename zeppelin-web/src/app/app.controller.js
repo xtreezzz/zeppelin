@@ -21,6 +21,24 @@ function MainCtrl($scope, $rootScope, $window, arrayOrderingSrv) {
 
   let init = function() {
     $scope.asIframe = (($window.location.href.indexOf('asIframe') > -1) ? true : false);
+
+    $scope.paragrapScrollTimeout = 0;
+
+    $scope.$on('$includeContentLoaded', function() {
+      if ($scope.paragrapScrollTimeout !== 0) {
+        clearTimeout($scope.paragrapScrollTimeout);
+      }
+
+      $scope.paragrapScrollTimeout = setTimeout(function() {
+        let paraID = window.location.href.match(/paragraph=([^&#]+)/);
+        let para = jQuery('#' + paraID[1] + '_container');
+
+        if (para.length > 0) {
+          para[0].scrollIntoView(true);
+          window.scrollBy(0, -120);
+        }
+      }, 1000);
+    });
   };
 
   init();
