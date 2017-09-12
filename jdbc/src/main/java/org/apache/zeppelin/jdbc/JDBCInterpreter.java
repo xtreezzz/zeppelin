@@ -42,6 +42,7 @@ import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDriver;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.hadoop.conf.Configuration;
@@ -104,6 +105,7 @@ public class JDBCInterpreter extends Interpreter {
   static final String JDBC_JCEKS_FILE = "jceks.file";
   static final String JDBC_JCEKS_CREDENTIAL_KEY = "jceks.credentialKey";
   static final String DOT = ".";
+  static final String PRECODE_KEY_TEMPLATE = "%s.precode";
 
   private static final char WHITESPACE = ' ';
   private static final char NEWLINE = '\n';
@@ -549,6 +551,21 @@ public class JDBCInterpreter extends Interpreter {
       }
     }
     return queries;
+  }
+
+  public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
+    InterpreterResult interpreterResult = null;
+    for (String propertyKey : basePropretiesMap.keySet()) {
+      String precode = getProperty(String.format(PRECODE_KEY_TEMPLATE, propertyKey));
+      if (StringUtils.isNotBlank(precode)) {
+        interpreterResult = executeSql(propertyKey, precode, interpreterContext);
+        if (interpreterResult.code() != Code.SUCCESS) {
+          break;
+        }
+      }
+    }
+
+    return interpreterResult;
   }
 
   private InterpreterResult executeSql(String propertyKey, String sql,

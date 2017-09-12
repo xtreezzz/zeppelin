@@ -343,10 +343,14 @@ while True :
       sc.setJobGroup(jobGroup, "Zeppelin")
       code = compile('\n'.join(final_code), '<stdin>', 'exec', ast.PyCF_ONLY_AST, 1)
       to_run_hooks = []
-      if (nhooks > 0):
+      if (nhooks > 0 and len(code.body) > nhooks):
         to_run_hooks = code.body[-nhooks:]
-      to_run_exec, to_run_single = (code.body[:-(nhooks + 1)],
-                                    [code.body[-(nhooks + 1)]])
+        to_run_exec, to_run_single = (code.body[:-(nhooks + 1)],
+                                      [code.body[-(nhooks + 1)]])
+      else:
+        to_run_exec, to_run_single= (code.body,
+                                      code.body)
+
 
       try:
         for node in to_run_exec:

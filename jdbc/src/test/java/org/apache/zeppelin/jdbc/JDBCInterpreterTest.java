@@ -20,6 +20,8 @@ import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_PASSWORD;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_USER;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_URL;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.COMMON_MAX_LINE;
+import static org.apache.zeppelin.jdbc.JDBCInterpreter.PRECODE_KEY_TEMPLATE;
+
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -386,5 +388,68 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     assertEquals("user2Id", user2JDBC2Conf.getPropertyMap("default").get("user"));
     assertEquals("user2Pw", user2JDBC2Conf.getPropertyMap("default").get("password"));
     jdbc2.close();
+  }
+
+  @Test
+  public void testPrecode() throws SQLException, IOException {
+    Properties properties = new Properties();
+    properties.setProperty("default.driver", "org.h2.Driver");
+    properties.setProperty("default.url", getJdbcConnection());
+    properties.setProperty("default.user", "");
+    properties.setProperty("default.password", "");
+    properties.setProperty("default.precode", "create table test_precode (id int); insert into test_precode values (1);");
+    JDBCInterpreter jdbcInterpreter = new JDBCInterpreter(properties);
+    jdbcInterpreter.open();
+    jdbcInterpreter.executePrecode(interpreterContext);
+
+    String sqlQuery = "select *from test_precode";
+
+    InterpreterResult interpreterResult = jdbcInterpreter.interpret(sqlQuery, interpreterContext);
+
+    assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
+    assertEquals("ID\n1\n", interpreterResult.message().get(0).getData());
+  }
+
+  @Test
+  public void testIncorrectPrecode() throws SQLException, IOException {
+    Properties properties = new Properties();
+    properties.setProperty("default.driver", "org.h2.Driver");
+    properties.setProperty("default.url", getJdbcConnection());
+    properties.setProperty("default.user", "");
+    properties.setProperty("default.password", "");
+    properties.setProperty("default.precode", "select 1");
+    properties.setProperty("incorrect.driver", "org.h2.Driver");
+    properties.setProperty("incorrect.url", getJdbcConnection());
+    properties.setProperty("incorrect.user", "");
+    properties.setProperty("incorrect.password", "");
+    properties.setProperty(String.format(PRECODE_KEY_TEMPLATE, "incorrect"), "incorrect command");
+    JDBCInterpreter jdbcInterpreter = new JDBCInterpreter(properties);
+    jdbcInterpreter.open();
+    InterpreterResult interpreterResult = jdbcInterpreter.executePrecode(interpreterContext);
+
+    assertEquals(InterpreterResult.Code.ERROR, interpreterResult.code());
+    assertEquals(InterpreterResult.Type.TEXT, interpreterResult.message().get(0).getType());
+  }
+
+  @Test
+  public void testPrecodeWithAnotherPrefix() throws SQLException, IOException {
+    Properties properties = new Properties();
+    properties.setProperty("anotherPrefix.driver", "org.h2.Driver");
+    properties.setProperty("anotherPrefix.url", getJdbcConnection());
+    properties.setProperty("anotherPrefix.user", "");
+    properties.setProperty("anotherPrefix.password", "");
+    properties.setProperty(String.format(PRECODE_KEY_TEMPLATE, "anotherPrefix"), "create table test_precode_2 (id int); insert into test_precode_2 values (2);");
+    JDBCInterpreter jdbcInterpreter = new JDBCInterpreter(properties);
+    jdbcInterpreter.open();
+    jdbcInterpreter.executePrecode(interpreterContext);
+
+    String sqlQuery = "(anotherPrefix) select *from test_precode_2";
+
+    InterpreterResult interpreterResult = jdbcInterpreter.interpret(sqlQuery, interpreterContext);
+
+    assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
+    assertEquals("ID\n2\n", interpreterResult.message().get(0).getData());
   }
  }

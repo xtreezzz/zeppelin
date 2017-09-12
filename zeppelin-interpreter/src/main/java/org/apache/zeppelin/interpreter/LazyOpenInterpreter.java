@@ -74,6 +74,11 @@ public class LazyOpenInterpreter
   }
 
   @Override
+  public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
+    return intp.executePrecode(interpreterContext);
+  }
+
+  @Override
   public void close() {
     synchronized (intp) {
       if (opened == true) {
