@@ -140,12 +140,14 @@ public abstract class Interpreter {
   private InterpreterGroup interpreterGroup;
   private URL[] classloaderUrls;
   protected Properties property;
+  private final Properties propertySource;
   private String userName;
 
   @ZeppelinApi
   public Interpreter(Properties property) {
     logger.debug("Properties: {}", property);
     this.property = property;
+    this.propertySource = property;
   }
 
   public void setProperty(Properties property) {
@@ -179,6 +181,13 @@ public abstract class Interpreter {
     logger.debug("key: {}, value: {}", key, getProperty().getProperty(key));
 
     return getProperty().getProperty(key);
+  }
+
+  @ZeppelinApi
+  public Properties getPropertySource() {
+    Properties p = new Properties();
+    p.putAll(propertySource);
+    return p;
   }
 
 

@@ -126,7 +126,8 @@ public class JDBCInterpreter extends Interpreter {
   private final String CONCURRENT_EXECUTION_COUNT = "zeppelin.jdbc.concurrent.max_connection";
   private final String DBCP_STRING = "jdbc:apache:commons:dbcp:";
 
-  private final HashMap<String, Properties> basePropretiesMap;
+  private final Set<String> dataSourcePropertyKeys = new HashSet();
+  private final Properties commonProperties = new Properties();
   private final HashMap<String, JDBCUserConfigurations> jdbcUserConfigurationsMap;
   private final Map<String, SqlCompleter> propertyKeySqlCompleterMap;
 
@@ -144,13 +145,9 @@ public class JDBCInterpreter extends Interpreter {
     super(property);
     jdbcUserConfigurationsMap = new HashMap<>();
     propertyKeySqlCompleterMap = new HashMap<>();
-    basePropretiesMap = new HashMap<>();
     maxLineResults = MAX_LINE_DEFAULT;
   }
 
-  public HashMap<String, Properties> getPropertiesMap() {
-    return basePropretiesMap;
-  }
 
   @Override
   public void open() {
@@ -158,49 +155,24 @@ public class JDBCInterpreter extends Interpreter {
       logger.debug("propertyKey: {}", propertyKey);
       String[] keyValue = propertyKey.split("\\.", 2);
       if (2 == keyValue.length) {
-        logger.debug("key: {}, value: {}", keyValue[0], keyValue[1]);
-
-        Properties prefixProperties;
-        if (basePropretiesMap.containsKey(keyValue[0])) {
-          prefixProperties = basePropretiesMap.get(keyValue[0]);
+        if (!keyValue[0].equals(COMMON_KEY) &&
+                property.containsKey(String.format("%s.%s", keyValue[0], DRIVER_KEY)) &&
+                property.containsKey(String.format("%s.%s", keyValue[0], URL_KEY))) {
+          dataSourcePropertyKeys.add(keyValue[0]);
         } else {
-          prefixProperties = new Properties();
-          basePropretiesMap.put(keyValue[0].trim(), prefixProperties);
-        }
-        prefixProperties.put(keyValue[1].trim(), property.getProperty(propertyKey));
-      }
-    }
-
-    Set<String> removeKeySet = new HashSet<>();
-    for (String key : basePropretiesMap.keySet()) {
-      if (!COMMON_KEY.equals(key)) {
-        Properties properties = basePropretiesMap.get(key);
-        if (!properties.containsKey(DRIVER_KEY) || !properties.containsKey(URL_KEY)) {
-          logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
-              key, DRIVER_KEY, key, key, URL_KEY);
-          removeKeySet.add(key);
+          commonProperties.setProperty(keyValue[1], property.getProperty(propertyKey));
         }
       }
     }
 
-    for (String key : removeKeySet) {
-      basePropretiesMap.remove(key);
-    }
-    logger.debug("JDBC PropretiesMap: {}", basePropretiesMap);
+    logger.debug("JDBC dataSourcePropertyKeys: {}", dataSourcePropertyKeys);
 
-    if (!isEmpty(property.getProperty("zeppelin.jdbc.auth.type"))) {
-      JDBCSecurityImpl.createSecureConfiguration(property);
-    }
-    for (String propertyKey : basePropretiesMap.keySet()) {
-      propertyKeySqlCompleterMap.put(propertyKey, createSqlCompleter(null));
-    }
     setMaxLineResults();
   }
 
   private void setMaxLineResults() {
-    if (basePropretiesMap.containsKey(COMMON_KEY) &&
-        basePropretiesMap.get(COMMON_KEY).containsKey(MAX_LINE_KEY)) {
-      maxLineResults = Integer.valueOf(basePropretiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY));
+    if (commonProperties.containsKey(MAX_LINE_KEY)) {
+      maxLineResults = Integer.valueOf(commonProperties.getProperty(MAX_LINE_KEY));
     }
   }
 
@@ -251,6 +223,17 @@ public class JDBCInterpreter extends Interpreter {
     }
   }
 
+  private Properties getPropertiesByKey(String propertyKey) {
+    Properties prefixProperties = new Properties();
+    for (String p : property.stringPropertyNames()) {
+      String[] keyValue = p.split("\\.", 2);
+      if (2 == keyValue.length && keyValue[0].equals(propertyKey)) {
+        prefixProperties.put(keyValue[1].trim(), property.getProperty(p));
+      }
+    }
+    return prefixProperties;
+  }
+
   private String getEntityName(String replName) {
     StringBuffer entityName = new StringBuffer();
     entityName.append(INTERPRETER_NAME);
@@ -268,9 +251,9 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   private boolean existAccountInBaseProperty(String propertyKey) {
-    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY)) &&
-        basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
+    Properties properties = getPropertiesByKey(propertyKey);
+    return properties.containsKey(USER_KEY) && !isEmpty((String) properties.get(USER_KEY)) &&
+            properties.containsKey(PASSWORD_KEY);
   }
 
   private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
@@ -308,14 +291,15 @@ public class JDBCInterpreter extends Interpreter {
 
     JDBCUserConfigurations jdbcUserConfigurations =
       getJDBCConfiguration(user);
-    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
-      String password = getPassword(basePropretiesMap.get(propertyKey));
+    Properties properties = getPropertiesByKey(propertyKey);
+    if (properties.containsKey(USER_KEY) &&
+            !properties.getProperty(USER_KEY).isEmpty()) {
+      String password = getPassword(properties);
       if (!isEmpty(password)) {
-        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
+        properties.setProperty(PASSWORD_KEY, password);
       }
     }
-    jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
+    jdbcUserConfigurations.setPropertyMap(propertyKey, properties);
     if (existAccountInBaseProperty(propertyKey)) {
       return;
     }
@@ -360,7 +344,8 @@ public class JDBCInterpreter extends Interpreter {
       throws ClassNotFoundException, SQLException, InterpreterException, IOException {
     final String user =  interpreterContext.getAuthenticationInfo().getUser();
     Connection connection;
-    if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
+    Properties propertiesByKey = getPropertiesByKey(propertyKey);
+    if (propertyKey == null || propertiesByKey == null) {
       return null;
     }
 
@@ -555,7 +540,7 @@ public class JDBCInterpreter extends Interpreter {
 
   public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
     InterpreterResult interpreterResult = null;
-    for (String propertyKey : basePropretiesMap.keySet()) {
+    for (String propertyKey : dataSourcePropertyKeys) {
       String precode = getProperty(String.format(PRECODE_KEY_TEMPLATE, propertyKey));
       if (StringUtils.isNotBlank(precode)) {
         interpreterResult = executeSql(propertyKey, precode, interpreterContext);
@@ -570,6 +555,11 @@ public class JDBCInterpreter extends Interpreter {
 
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
+
+    if (!dataSourcePropertyKeys.contains(propertyKey)) {
+      return new InterpreterResult(Code.ERROR, "Prefix not found.");
+    }
+
     Connection connection;
     Statement statement;
     ResultSet resultSet = null;
@@ -580,9 +570,6 @@ public class JDBCInterpreter extends Interpreter {
 
     try {
       connection = getConnection(propertyKey, interpreterContext);
-      if (connection == null) {
-        return new InterpreterResult(Code.ERROR, "Prefix not found.");
-      }
 
       ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
       for (int i = 0; i < multipleSqlArray.size(); i++) {
