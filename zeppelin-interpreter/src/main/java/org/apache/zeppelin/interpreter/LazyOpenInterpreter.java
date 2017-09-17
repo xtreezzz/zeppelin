@@ -71,6 +71,11 @@ public class LazyOpenInterpreter
 
     synchronized (intp) {
       if (opened == false) {
+        InterpreterContext interpreterContext = InterpreterContext.get();
+        if (interpreterContext != null) {
+          // some interpreters access to field "property" directly
+          replaceContextParameters(interpreterContext);
+        }
         intp.open();
         opened = true;
       }
