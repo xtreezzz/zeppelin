@@ -100,9 +100,6 @@ public class LazyOpenInterpreter
 
   @Override
   public InterpreterResult interpret(String st, InterpreterContext context) {
-    Properties properties = intp.getPropertySource();
-    replaceContextParameters(properties, context);
-    intp.setProperty(properties);
     open();
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try {
@@ -203,8 +200,8 @@ public class LazyOpenInterpreter
    * Replace markers #{contextFieldName} by values from {@link InterpreterContext} fields
    * with same name and marker #{user}. If value == null then replace by empty string.
    */
-  private void replaceContextParameters(Properties properties,
-                                        InterpreterContext interpreterContext) {
+  public void replaceContextParameters(InterpreterContext interpreterContext) {
+    Properties properties = intp.getPropertySource();
     if (properties != null && interpreterContext != null) {
       String markerTemplate = "#\\{%s\\}";
       List<String> skipFields = Arrays.asList("paragraphTitle", "paragraphId", "paragraphText");
@@ -236,6 +233,7 @@ public class LazyOpenInterpreter
           }
         }
       }
+      intp.setProperty(properties);
     }
   }
 }

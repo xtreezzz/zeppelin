@@ -489,6 +489,7 @@ public class RemoteInterpreterServer
         // This is necessary because the earliest we can register a hook
         // is from within the open() method.
         LazyOpenInterpreter lazy = (LazyOpenInterpreter) interpreter;
+        lazy.replaceContextParameters(context);
         if (!lazy.isOpen()) {
           lazy.open();
           result = lazy.executePrecode(context);
