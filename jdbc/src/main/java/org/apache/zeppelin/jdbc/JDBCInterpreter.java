@@ -587,7 +587,6 @@ public class JDBCInterpreter extends Interpreter {
                   getProperty(String.format(SESSION_PRECODE_KEY_TEMPLATE, propertyKey));
 
           if (StringUtils.isNotBlank(sessionPrecode)) {
-            System.out.println("!!!!!!!!! execute session precode " + sessionPrecode);
             statement.execute(sessionPrecode);
           }
 
