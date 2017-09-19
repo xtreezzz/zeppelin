@@ -106,6 +106,7 @@ public class JDBCInterpreter extends Interpreter {
   static final String JDBC_JCEKS_CREDENTIAL_KEY = "jceks.credentialKey";
   static final String DOT = ".";
   static final String PRECODE_KEY_TEMPLATE = "%s.precode";
+  static final String SESSION_PRECODE_KEY_TEMPLATE = "%s.sessionPrecode";
 
   private static final char WHITESPACE = ' ';
   private static final char NEWLINE = '\n';
@@ -581,6 +582,14 @@ public class JDBCInterpreter extends Interpreter {
 
         try {
           getJDBCConfiguration(user).saveStatement(paragraphId, statement);
+
+          String sessionPrecode =
+                  getProperty(String.format(SESSION_PRECODE_KEY_TEMPLATE, propertyKey));
+
+          if (StringUtils.isNotBlank(sessionPrecode)) {
+            System.out.println("!!!!!!!!! execute session precode " + sessionPrecode);
+            statement.execute(sessionPrecode);
+          }
 
           boolean isResultSetAvailable = statement.execute(sqlToExecute);
           getJDBCConfiguration(user).setConnectionInDBDriverPoolSuccessful(propertyKey);
