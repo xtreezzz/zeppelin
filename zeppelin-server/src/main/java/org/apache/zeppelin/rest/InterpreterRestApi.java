@@ -37,6 +37,7 @@ import javax.ws.rs.core.Response.Status;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.zeppelin.interpreter.InterpreterPropertyType;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.rest.message.RestartInterpreterRequest;
 import org.apache.zeppelin.utils.SecurityUtils;
@@ -117,11 +118,9 @@ public class InterpreterRestApi {
       if (request == null) {
         return new JsonResponse<>(Status.BAD_REQUEST).build();
       }
-      Properties p = new Properties();
-      p.putAll(request.getProperties());
       InterpreterSetting interpreterSetting = interpreterSettingManager
           .createNewSetting(request.getName(), request.getGroup(), request.getDependencies(),
-              request.getOption(), p);
+              request.getOption(), request.getProperties());
       logger.info("new setting created with {}", interpreterSetting.getId());
       return new JsonResponse<>(Status.CREATED, "", interpreterSetting).build();
     } catch (InterpreterException | IOException e) {
@@ -288,5 +287,14 @@ public class InterpreterRestApi {
           ExceptionUtils.getStackTrace(e)).build();
     }
     return new JsonResponse(Status.OK).build();
+  }
+
+  /**
+   * Get available types for property
+   */
+  @GET
+  @Path("property/types")
+  public Response listInterpreterPropertyTypes() {
+    return new JsonResponse<>(Status.OK, InterpreterPropertyType.getTypes()).build();
   }
 }
