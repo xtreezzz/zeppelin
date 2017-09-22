@@ -27,8 +27,11 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 
@@ -171,19 +174,59 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
   @Test
   public void testSplitSqlQuery() throws SQLException, IOException {
     String sqlQuery = "insert into test_table(id, name) values ('a', ';\"');" +
-        "select * from test_table;" +
-        "select * from test_table WHERE ID = \";'\";" +
-        "select * from test_table WHERE ID = ';'";
+            "select * from test_table;" +
+            "select * from test_table WHERE ID = \";'\";" +
+            "select * from test_table WHERE ID = ';';" +
+            "select '\n', ';';" +
+            "select replace('A\\;B', '\\', 'text');" +
+            "select '\\', ';';" +
+            "select '''', ';'";
 
     Properties properties = new Properties();
     JDBCInterpreter t = new JDBCInterpreter(properties);
     t.open();
-    ArrayList<String> multipleSqlArray = t.splitSqlQueries(sqlQuery);
-    assertEquals(4, multipleSqlArray.size());
+    List<String> multipleSqlArray = t.splitSqlQueries(sqlQuery);
+    assertEquals(8, multipleSqlArray.size());
     assertEquals("insert into test_table(id, name) values ('a', ';\"')", multipleSqlArray.get(0));
     assertEquals("select * from test_table", multipleSqlArray.get(1));
     assertEquals("select * from test_table WHERE ID = \";'\"", multipleSqlArray.get(2));
     assertEquals("select * from test_table WHERE ID = ';'", multipleSqlArray.get(3));
+    assertEquals("select '\n', ';'", multipleSqlArray.get(4));
+    assertEquals("select replace('A\\;B', '\\', 'text')", multipleSqlArray.get(5));
+    assertEquals("select '\\', ';'", multipleSqlArray.get(6));
+    assertEquals("select '''', ';'", multipleSqlArray.get(7));
+  }
+
+  @Test
+  public void testQueryWithEsсapedCharacters() throws SQLException, IOException {
+    String sqlQuery = "select '\\n', ';';" +
+            "select replace('A\\;B', '\\', 'text');" +
+            "select '\\', ';';" +
+            "select '''', ';'";
+
+    Properties properties = new Properties();
+    properties.setProperty("common.max_count", "1000");
+    properties.setProperty("common.max_retry", "3");
+    properties.setProperty("default.driver", "org.h2.Driver");
+    properties.setProperty("default.url", getJdbcConnection());
+    properties.setProperty("default.user", "");
+    properties.setProperty("default.password", "");
+    properties.setProperty("default.splitQueries", "true");
+    JDBCInterpreter t = new JDBCInterpreter(properties);
+    t.open();
+
+    InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
+
+    assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(1).getType());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(2).getType());
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(3).getType());
+    assertEquals("'\\n'\t';'\n\\n\t;\n", interpreterResult.message().get(0).getData());
+    assertEquals("'Atext;B'\nAtext;B\n", interpreterResult.message().get(1).getData());
+    assertEquals("'\\'\t';'\n\\\t;\n", interpreterResult.message().get(2).getData());
+    assertEquals("''''\t';'\n'\t;\n", interpreterResult.message().get(3).getData());
+
   }
 
   @Test
@@ -195,6 +238,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     properties.setProperty("default.url", getJdbcConnection());
     properties.setProperty("default.user", "");
     properties.setProperty("default.password", "");
+    properties.setProperty("default.splitQueries", "true");
     JDBCInterpreter t = new JDBCInterpreter(properties);
     t.open();
 
@@ -212,6 +256,28 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
   }
 
   @Test
+  public void testDefaultSplitQuries() throws SQLException, IOException {
+    Properties properties = new Properties();
+    properties.setProperty("common.max_count", "1000");
+    properties.setProperty("common.max_retry", "3");
+    properties.setProperty("default.driver", "org.h2.Driver");
+    properties.setProperty("default.url", getJdbcConnection());
+    properties.setProperty("default.user", "");
+    properties.setProperty("default.password", "");
+    JDBCInterpreter t = new JDBCInterpreter(properties);
+    t.open();
+
+    String sqlQuery = "select * from test_table;" +
+            "select * from test_table WHERE ID = ';';";
+    InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
+    assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    assertEquals(1, interpreterResult.message().size());
+
+    assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
+    assertEquals("ID\tNAME\na\ta_name\nb\tb_name\nc\tnull\n", interpreterResult.message().get(0).getData());
+  }
+
+  @Test
   public void testSelectQueryWithNull() throws SQLException, IOException {
     Properties properties = new Properties();
     properties.setProperty("common.max_count", "1000");
@@ -220,6 +286,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     properties.setProperty("default.url", getJdbcConnection());
     properties.setProperty("default.user", "");
     properties.setProperty("default.password", "");
+    properties.setProperty("default.splitQueries", "true");
     JDBCInterpreter t = new JDBCInterpreter(properties);
     t.open();
 
@@ -451,5 +518,34 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
     assertEquals("ID\n2\n", interpreterResult.message().get(0).getData());
+  }
+
+  @Test
+  public void testExcludingComments() throws SQLException, IOException {
+    Properties properties = new Properties();
+    properties.setProperty("common.max_count", "1000");
+    properties.setProperty("common.max_retry", "3");
+    properties.setProperty("default.driver", "org.h2.Driver");
+    properties.setProperty("default.url", getJdbcConnection());
+    properties.setProperty("default.user", "");
+    properties.setProperty("default.password", "");
+    properties.setProperty("default.splitQueries", "true");
+    JDBCInterpreter t = new JDBCInterpreter(properties);
+    t.open();
+
+    String sqlQuery = "/* ; */\n" +
+            "-- /* comment\n" +
+            "--select * from test_table\n" +
+            "select * from test_table; /* some comment ; */\n" +
+            "/*\n" +
+            "select * from test_table;\n" +
+            "*/\n" +
+            "-- a ; b\n" +
+            "select * from test_table WHERE ID = ';--';\n" +
+            "select * from test_table WHERE ID = '/*' -- test";
+
+    InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
+    assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    assertEquals(3, interpreterResult.message().size());
   }
  }

@@ -30,6 +30,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -102,6 +103,7 @@ public class JDBCInterpreter extends Interpreter {
   static final String URL_KEY = "url";
   static final String USER_KEY = "user";
   static final String PASSWORD_KEY = "password";
+  static final String SPLIT_QURIES_KEY = "splitQueries";
   static final String JDBC_JCEKS_FILE = "jceks.file";
   static final String JDBC_JCEKS_CREDENTIAL_KEY = "jceks.credentialKey";
   static final String DOT = ".";
@@ -495,47 +497,70 @@ public class JDBCInterpreter extends Interpreter {
   protected ArrayList<String> splitSqlQueries(String sql) {
     ArrayList<String> queries = new ArrayList<>();
     StringBuilder query = new StringBuilder();
-    Character character;
+    char character;
 
-    Boolean antiSlash = false;
+    Boolean multiLineComment = false;
+    Boolean singleLineComment = false;
     Boolean quoteString = false;
     Boolean doubleQuoteString = false;
 
     for (int item = 0; item < sql.length(); item++) {
       character = sql.charAt(item);
 
-      if (character.equals('\\')) {
-        antiSlash = true;
+      if ((singleLineComment && (character == '\n' || item == sql.length() - 1))
+              || (multiLineComment && character == '/' && sql.charAt(item - 1) == '*')) {
+        singleLineComment = false;
+        multiLineComment = false;
+        if (item == sql.length() - 1 && query.length() > 0) {
+          queries.add(StringUtils.trim(query.toString()));
+        }
+        continue;
       }
-      if (character.equals('\'')) {
-        if (antiSlash) {
-          antiSlash = false;
-        } else if (quoteString) {
+
+      if (singleLineComment || multiLineComment) {
+        continue;
+      }
+
+      if (character == '\'') {
+        if (quoteString) {
           quoteString = false;
         } else if (!doubleQuoteString) {
           quoteString = true;
         }
       }
-      if (character.equals('"')) {
-        if (antiSlash) {
-          antiSlash = false;
-        } else if (doubleQuoteString) {
+
+      if (character == '"') {
+        if (doubleQuoteString && item > 0) {
           doubleQuoteString = false;
         } else if (!quoteString) {
           doubleQuoteString = true;
         }
       }
 
-      if (character.equals(';') && !antiSlash && !quoteString && !doubleQuoteString) {
-        queries.add(query.toString());
+      if (!quoteString && !doubleQuoteString && !multiLineComment && !singleLineComment
+              && sql.length() > item + 1) {
+        if (character == '-' && sql.charAt(item + 1) == '-') {
+          singleLineComment = true;
+          continue;
+        }
+
+        if (character == '/' && sql.charAt(item + 1) == '*') {
+          multiLineComment = true;
+          continue;
+        }
+      }
+
+      if (character == ';' && !quoteString && !doubleQuoteString) {
+        queries.add(StringUtils.trim(query.toString()));
         query = new StringBuilder();
       } else if (item == sql.length() - 1) {
         query.append(character);
-        queries.add(query.toString());
+        queries.add(StringUtils.trim(query.toString()));
       } else {
         query.append(character);
       }
     }
+
     return queries;
   }
 
@@ -567,14 +592,26 @@ public class JDBCInterpreter extends Interpreter {
     String paragraphId = interpreterContext.getParagraphId();
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
+    boolean splitQuery = false;
+    String splitQueryProperty = getProperty(String.format("%s.%s", propertyKey, SPLIT_QURIES_KEY));
+    if (StringUtils.isNotBlank(splitQueryProperty) && splitQueryProperty.equalsIgnoreCase("true")) {
+      splitQuery = true;
+    }
+
     InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
 
     try {
       connection = getConnection(propertyKey, interpreterContext);
 
-      ArrayList<String> multipleSqlArray = splitSqlQueries(sql);
-      for (int i = 0; i < multipleSqlArray.size(); i++) {
-        String sqlToExecute = multipleSqlArray.get(i);
+      List<String> sqlArray;
+      if (splitQuery) {
+        sqlArray = splitSqlQueries(sql);
+      } else {
+        sqlArray = Arrays.asList(sql);
+      }
+
+      for (int i = 0; i < sqlArray.size(); i++) {
+        String sqlToExecute = sqlArray.get(i);
         statement = connection.createStatement();
         if (statement == null) {
           return new InterpreterResult(Code.ERROR, "Prefix not found.");
