@@ -712,7 +712,7 @@ public class InterpreterSettingManager {
 
   private InterpreterSetting add(String group, InterpreterInfo interpreterInfo,
                                  Map<String, DefaultInterpreterProperty> interpreterProperties,
-                                 InterpreterOption option, String path,InterpreterRunner runner)
+                                 InterpreterOption option, String path, InterpreterRunner runner)
       throws InterpreterException, IOException, RepositoryException {
     ArrayList<InterpreterInfo> infos = new ArrayList<>();
     infos.add(interpreterInfo);
