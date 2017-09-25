@@ -118,6 +118,11 @@ The JDBC interpreter properties are defined by default like below.
     <td>gpadmin</td>
     <td>The JDBC user name</td>
   </tr>
+  <tr>
+     <td>default.splitQueries</td>
+     <td>false</td>
+     <td>Each query is executed apart and returns the result</td>
+   </tr>
 </table>
 
 If you want to connect other databases such as `Mysql`, `Redshift` and `Hive`, you need to edit the property values.

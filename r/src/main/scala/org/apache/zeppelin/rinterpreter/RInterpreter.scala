@@ -110,7 +110,7 @@ object RInterpreter {
   logger.trace("logging inside the RInterpreter singleton")
 
   // These are the additional properties we need on top of the ones provided by the spark interpreters
-  lazy val props: Map[String, InterpreterProperty] = new InterpreterPropertyBuilder()
+  lazy val props: Map[String, DefaultInterpreterProperty] = new InterpreterPropertyBuilder()
     .add("rhadoop.cmd",          "HADOOP_CMD", "rhadoop.cmd", "", "Usually /usr/bin/hadoop")
     .add("rhadooop.streamingjar", "HADOOP_STREAMING", "rhadooop.streamingjar", "", "Usually /usr/lib/hadoop/contrib/streaming/hadoop-streaming-<version>.jar")
     .add("rscala.debug",          "RSCALA_DEBUG", "rscala.debug","false", "Whether to turn on rScala debugging") // TEST:  Implemented but not tested

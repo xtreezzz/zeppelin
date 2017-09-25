@@ -19,6 +19,7 @@ package org.apache.zeppelin.notebook;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 
 import com.google.common.collect.Lists;
@@ -27,14 +28,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.dep.Dependency;
 import org.apache.zeppelin.dep.DependencyResolver;
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterFactory;
-import org.apache.zeppelin.interpreter.InterpreterInfo;
-import org.apache.zeppelin.interpreter.InterpreterOption;
-import org.apache.zeppelin.interpreter.InterpreterProperty;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
-import org.apache.zeppelin.interpreter.LazyOpenInterpreter;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter1;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter11;
 import org.apache.zeppelin.interpreter.mock.MockInterpreter2;
@@ -72,11 +66,11 @@ public class NoteInterpreterLoaderTest {
     ArrayList<InterpreterInfo> interpreterInfos2 = new ArrayList<>();
     interpreterInfos2.add(new InterpreterInfo(MockInterpreter2.class.getName(), "mock2", true, Maps.<String, Object>newHashMap()));
 
-    interpreterSettingManager.add("group1", interpreterInfos, Lists.<Dependency>newArrayList(), new InterpreterOption(), Maps.<String, InterpreterProperty>newHashMap(), "mock", null);
-    interpreterSettingManager.add("group2", interpreterInfos2, Lists.<Dependency>newArrayList(), new InterpreterOption(), Maps.<String, InterpreterProperty>newHashMap(), "mock", null);
+    interpreterSettingManager.add("group1", interpreterInfos, Lists.<Dependency>newArrayList(), new InterpreterOption(), Maps.<String, DefaultInterpreterProperty>newHashMap(), "mock", null);
+    interpreterSettingManager.add("group2", interpreterInfos2, Lists.<Dependency>newArrayList(), new InterpreterOption(), Maps.<String, DefaultInterpreterProperty>newHashMap(), "mock", null);
 
-    interpreterSettingManager.createNewSetting("group1", "group1", Lists.<Dependency>newArrayList(), new InterpreterOption(), new Properties());
-    interpreterSettingManager.createNewSetting("group2", "group2", Lists.<Dependency>newArrayList(), new InterpreterOption(), new Properties());
+    interpreterSettingManager.createNewSetting("group1", "group1", Lists.<Dependency>newArrayList(), new InterpreterOption(), new HashMap<String, InterpreterProperty>());
+    interpreterSettingManager.createNewSetting("group2", "group2", Lists.<Dependency>newArrayList(), new InterpreterOption(), new HashMap<String, InterpreterProperty>());
 
 
   }
