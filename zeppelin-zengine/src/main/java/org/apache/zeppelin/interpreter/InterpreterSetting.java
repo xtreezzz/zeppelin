@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.annotations.SerializedName;
 
 import static org.apache.zeppelin.notebook.utility.IdHashes.generateId;
 
