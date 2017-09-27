@@ -707,7 +707,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   var getInterpreterName = function(paragraphText) {
-    var intpNameRegexp = /^\s*%(.+?)\s/g;
+    var intpNameRegexp = /^\s*%(.+?)(\s|\()/g;
     var match = intpNameRegexp.exec(paragraphText);
     if (match) {
       return match[1].trim();
