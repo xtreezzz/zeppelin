@@ -40,6 +40,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.interpreter.InterpreterPropertyType;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.rest.message.RestartInterpreterRequest;
+import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,14 +63,16 @@ public class InterpreterRestApi {
   private static final Logger logger = LoggerFactory.getLogger(InterpreterRestApi.class);
 
   private InterpreterSettingManager interpreterSettingManager;
+  private NotebookServer notebookServer;
 
   Gson gson = new Gson();
 
   public InterpreterRestApi() {
   }
 
-  public InterpreterRestApi(InterpreterSettingManager interpreterSettingManager) {
+  public InterpreterRestApi(InterpreterSettingManager interpreterSettingManager, NotebookServer notebookServer) {
     this.interpreterSettingManager = interpreterSettingManager;
+    this.notebookServer = notebookServer;
   }
 
   /**
@@ -189,6 +192,7 @@ public class InterpreterRestApi {
       } else {
         interpreterSettingManager.restart(settingId, noteId, SecurityUtils.getPrincipal());
       }
+      notebookServer.clearParagraphRuntimeInfo(setting);
 
     } catch (InterpreterException e) {
       logger.error("Exception in InterpreterRestApi while restartSetting ", e);

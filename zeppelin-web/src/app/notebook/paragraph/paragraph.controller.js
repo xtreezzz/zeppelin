@@ -959,6 +959,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
   });
 
+  $scope.$on('updateParaInfos', function(event, data) {
+    if (data.id === $scope.paragraph.id) {
+      $scope.paragraph.runtimeInfos = data.infos;
+    }
+  });
+
   $scope.$on('angularObjectRemove', function(event, data) {
     var noteId = $route.current.pathParams.noteId;
     if (!data.noteId || data.noteId === noteId) {
@@ -1004,7 +1010,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       isEmpty(data.paragraph.results) !== isEmpty($scope.paragraph.results) ||
       data.paragraph.errorMessage !== $scope.paragraph.errorMessage ||
       !angular.equals(data.paragraph.settings, $scope.paragraph.settings) ||
-      !angular.equals(data.paragraph.config, $scope.paragraph.config))
+      !angular.equals(data.paragraph.runtimeInfos, $scope.paragraph.runtimeInfos))
     ) {
       var statusChanged = (data.paragraph.status !== $scope.paragraph.status);
       var resultRefreshed = (data.paragraph.dateFinished !== $scope.paragraph.dateFinished) ||
@@ -1062,6 +1068,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.paragraph.results = data.paragraph.results;
       }
       $scope.paragraph.settings = data.paragraph.settings;
+      $scope.paragraph.runtimeInfos = data.paragraph.runtimeInfos;
       if ($scope.editor) {
         $scope.editor.setReadOnly($scope.isRunning(data.paragraph));
       }

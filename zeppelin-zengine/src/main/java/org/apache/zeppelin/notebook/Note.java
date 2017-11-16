@@ -409,6 +409,7 @@ public class Note implements Serializable, ParagraphJobListener {
         }
 
         p.setReturn(null, null);
+        p.clearRuntimeInfo(null);
         return originParagraph;
       }
     }
@@ -596,6 +597,7 @@ public class Note implements Serializable, ParagraphJobListener {
       return;
     }
 
+    p.clearRuntimeInfo(null);
     String requiredReplName = p.getRequiredReplName();
     Interpreter intp = factory.getInterpreter(p.getUser(), getId(), requiredReplName);
 
