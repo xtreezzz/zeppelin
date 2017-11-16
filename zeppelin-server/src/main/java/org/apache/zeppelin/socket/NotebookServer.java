@@ -1586,7 +1586,10 @@ public class NotebookServer extends WebSocketServlet
       Paragraph p = setParagraphUsingMessage(note, fromMessage,
           paragraphId, text, title, params, config);
 
-      persistAndExecuteSingleParagraph(conn, note, p);
+      if (!persistAndExecuteSingleParagraph(conn, note, p, true)) {
+        // stop execution when one paragraph fails.
+        break;
+      }
     }
   }
 
@@ -1613,33 +1616,48 @@ public class NotebookServer extends WebSocketServlet
     Paragraph p = setParagraphUsingMessage(note, fromMessage, paragraphId,
         text, title, params, config);
 
-    persistAndExecuteSingleParagraph(conn, note, p);
+    persistAndExecuteSingleParagraph(conn, note, p, false);
   }
 
-  private void persistAndExecuteSingleParagraph(NotebookSocket conn,
-                                                Note note, Paragraph p) throws IOException {
-    // if it's the last paragraph and empty, let's add a new one
+  private void addNewParagraphIfLastParagraphIsExecuted(Note note, Paragraph p) {
+    // if it's the last paragraph and not empty, let's add a new one
     boolean isTheLastParagraph = note.isLastParagraph(p.getId());
-    if (!(p.getText().trim().equals(p.getMagic()) ||
-        Strings.isNullOrEmpty(p.getText())) &&
-        isTheLastParagraph) {
-      Paragraph newPara = note.addParagraph(p.getAuthenticationInfo());
+    if (!(Strings.isNullOrEmpty(p.getText()) ||
+            p.getText().trim().equals(p.getMagic())) &&
+            isTheLastParagraph) {
+      Paragraph newPara = note.addNewParagraph(p.getAuthenticationInfo());
       broadcastNewParagraph(note, newPara);
     }
+  }
 
+  /**
+   * @return false if failed to save a note
+   */
+  private boolean persistNoteWithAuthInfo(NotebookSocket conn,
+                                          Note note, Paragraph p) throws IOException {
     try {
       note.persist(p.getAuthenticationInfo());
+      return true;
     } catch (FileSystemException ex) {
       LOG.error("Exception from run", ex);
       conn.send(serializeMessage(new Message(OP.ERROR_INFO).put("info",
-          "Oops! There is something wrong with the notebook file system. "
-              + "Please check the logs for more details.")));
+              "Oops! There is something wrong with the notebook file system. "
+                      + "Please check the logs for more details.")));
       // don't run the paragraph when there is error on persisting the note information
-      return;
+      return false;
+    }
+  }
+
+  private boolean persistAndExecuteSingleParagraph(NotebookSocket conn,
+                                                   Note note, Paragraph p,
+                                                   boolean blocking) throws IOException {
+    addNewParagraphIfLastParagraphIsExecuted(note, p);
+    if (!persistNoteWithAuthInfo(conn, note, p)) {
+      return false;
     }
 
     try {
-      note.run(p.getId());
+      return note.run(p.getId(), blocking);
     } catch (Exception ex) {
       LOG.error("Exception from run", ex);
       if (p != null) {
@@ -1647,6 +1665,7 @@ public class NotebookServer extends WebSocketServlet
         p.setStatus(Status.ERROR);
         broadcast(note.getId(), new Message(OP.PARAGRAPH).put("paragraph", p));
       }
+      return false;
     }
   }
 

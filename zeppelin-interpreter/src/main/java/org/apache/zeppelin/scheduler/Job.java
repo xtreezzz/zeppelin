@@ -62,6 +62,10 @@ public abstract class Job {
     public boolean isPending() {
       return this == PENDING;
     }
+
+    public boolean isCompleted() {
+      return this == FINISHED || this == ERROR || this == ABORT;
+    }
   }
 
 
