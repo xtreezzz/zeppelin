@@ -70,7 +70,8 @@ public class InterpreterRestApi {
   public InterpreterRestApi() {
   }
 
-  public InterpreterRestApi(InterpreterSettingManager interpreterSettingManager, NotebookServer notebookServer) {
+  public InterpreterRestApi(InterpreterSettingManager interpreterSettingManager,
+                            NotebookServer notebookServer) {
     this.interpreterSettingManager = interpreterSettingManager;
     this.notebookServer = notebookServer;
   }
