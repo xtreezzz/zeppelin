@@ -4,10 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
  * Wrapper arnd RemoteInterpreterEventClient
  * to expose methods in the client
- *
  */
 public class RemoteEventClient implements RemoteEventClientWrapper {
 
@@ -24,7 +22,7 @@ public class RemoteEventClient implements RemoteEventClientWrapper {
 
   @Override
   public void onParaInfosReceived(String noteId, String paragraphId, Map<String, String> infos) {
-    Map<String, String> paraInfos =  new HashMap<String, String>(infos);
+    Map<String, String> paraInfos = new HashMap<String, String>(infos);
     paraInfos.put("noteId", noteId);
     paraInfos.put("paraId", paragraphId);
     client.onParaInfosReceived(paraInfos);
