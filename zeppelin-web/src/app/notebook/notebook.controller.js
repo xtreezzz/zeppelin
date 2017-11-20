@@ -43,6 +43,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   $scope.tableToggled = false;
   $scope.viewOnly = false;
   $scope.showSetting = false;
+  $scope.showRevisionsComparator = false;
   $scope.looknfeelOption = ['default', 'simple', 'report'];
   $scope.cronOption = [
     {name: 'None', value: undefined},
@@ -235,13 +236,24 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     });
   };
 
+  $scope.preVisibleRevisionsComparator = function() {
+    $scope.mergeNoteRevisionsForCompare = null;
+    $scope.firstNoteRevisionForCompare = null;
+    $scope.secondNoteRevisionForCompare = null;
+    $scope.currentFirstRevisionForCompare = 'Choose...';
+    $scope.currentSecondRevisionForCompare = 'Choose...';
+    $scope.$apply();
+  }
+
   $scope.$on('listRevisionHistory', function(event, data) {
     console.log('received list of revisions %o', data);
     $scope.noteRevisions = data.revisionList;
-    $scope.noteRevisions.splice(0, 0, {
-      id: 'Head',
-      message: 'Head'
-    });
+    if ($scope.noteRevisions.length === 0 || $scope.noteRevisions[0].id !== 'Head') {
+      $scope.noteRevisions.splice(0, 0, {
+        id: 'Head',
+        message: 'Head'
+      })
+    }
     if ($routeParams.revisionId) {
       var index = _.findIndex($scope.noteRevisions, {'id': $routeParams.revisionId});
       if (index > -1) {
@@ -561,6 +573,12 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     orderChanged: function(event) {}
   };
 
+  $scope.closeAdditionalBoards = function() {
+    $scope.closeSetting();
+    $scope.closePermissions();
+    $scope.closeRevisionsComparator();
+  }
+
   $scope.openSetting = function() {
     $scope.showSetting = true;
     getInterpreterBindings();
@@ -606,14 +624,33 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     $scope.showSetting = false;
   };
 
-  $scope.toggleSetting = function() {
+  $scope.toggleSetting = function () {
     if ($scope.showSetting) {
-      $scope.closeSetting();
+      $scope.closeSetting()
     } else {
-      $scope.openSetting();
-      $scope.closePermissions();
+      $scope.closeAdditionalBoards()
+      $scope.openSetting()
+      angular.element('html, body').animate({ scrollTop: 0 }, 'slow')
     }
-  };
+  }
+
+  $scope.openRevisionsComparator = function () {
+    $scope.showRevisionsComparator = true
+  }
+
+  $scope.closeRevisionsComparator = function () {
+    $scope.showRevisionsComparator = false
+  }
+
+  $scope.toggleRevisionsComparator = function () {
+    if ($scope.showRevisionsComparator) {
+      $scope.closeRevisionsComparator()
+    } else {
+      $scope.closeAdditionalBoards()
+      $scope.openRevisionsComparator()
+      angular.element('html, body').animate({ scrollTop: 0 }, 'slow')
+    }
+  }
 
   var getPermissions = function(callback) {
     $http.get(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.id + '/permissions').
@@ -813,8 +850,8 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
         angular.element('#selectReaders').select2({});
         angular.element('#selectWriters').select2({});
       } else {
-        $scope.openPermissions();
-        $scope.closeSetting();
+        $scope.closeAdditionalBoards()
+        $scope.openPermissions()
       }
     }
   };

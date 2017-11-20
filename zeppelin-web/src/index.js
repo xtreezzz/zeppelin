@@ -41,6 +41,7 @@ import './app/interpreter/interpreter.controller.js';
 import './app/interpreter/interpreter.filter.js';
 import './app/credential/credential.controller.js';
 import './app/configuration/configuration.controller.js';
+import './app/notebook/revisions-comparator/revisions-comparator.component.js'
 import './app/notebook/paragraph/paragraph.controller.js';
 import './app/notebook/paragraph/result/result.controller.js';
 import './app/search/result-list.controller.js';

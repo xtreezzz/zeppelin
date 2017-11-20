@@ -149,6 +149,10 @@ public class Message {
     SET_NOTE_REVISION,            // [c-s] set current notebook head to this revision
                                   // @param noteId
                                   // @param revisionId
+    NOTE_REVISION_FOR_COMPARE,    // [c-s] get certain revision of note for compare
+                                  // @param noteId
+                                  // @param revisionId
+                                  // @param position
     APP_APPEND_OUTPUT,            // [s-c] append output
     APP_UPDATE_OUTPUT,            // [s-c] update (replace) output
     APP_LOAD,                     // [s-c] on app load
