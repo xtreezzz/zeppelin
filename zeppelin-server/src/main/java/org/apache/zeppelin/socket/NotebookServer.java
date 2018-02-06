@@ -74,8 +74,6 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 import com.google.common.collect.Queues;
 import com.google.gson.reflect.TypeToken;
 
