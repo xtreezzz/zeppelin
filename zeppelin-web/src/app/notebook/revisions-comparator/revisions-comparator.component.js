@@ -13,7 +13,6 @@
  */
 
 import revisionsComparatorTemplate from './revisions-comparator.html'
-import './revisions-comparator.css'
 import moment from 'moment'
 
 function RevisionsComparatorController($scope, websocketMsgSrv, $routeParams) {

@@ -40,6 +40,7 @@ import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
 import org.apache.zeppelin.interpreter.WrappedInterpreter;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
@@ -284,7 +285,8 @@ public class DepInterpreter extends Interpreter {
   }
 
   @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor) {
+  public List<InterpreterCompletion> completion(String buf, int cursor,
+                                                InterpreterContext interpreterContext) {
     if (Utils.isScala2_10()) {
       ScalaCompleter c = (ScalaCompleter) Utils.invokeMethod(completer, "completer");
       Candidates ret = c.complete(buf, cursor);
@@ -293,7 +295,8 @@ public class DepInterpreter extends Interpreter {
       List<InterpreterCompletion> completions = new LinkedList<>();
 
       for (String candidate : candidates) {
-        completions.add(new InterpreterCompletion(candidate, candidate));
+        completions.add(new InterpreterCompletion(candidate, candidate,
+            CompletionType.keyword.name()));
       }
 
       return completions;

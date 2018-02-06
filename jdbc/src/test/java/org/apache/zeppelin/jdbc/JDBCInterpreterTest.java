@@ -359,13 +359,14 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
 
     jdbcInterpreter.interpret("", interpreterContext);
 
-    List<InterpreterCompletion> completionList = jdbcInterpreter.completion("SEL", 0);
+    List<InterpreterCompletion> completionList = jdbcInterpreter.completion("SEL", 0, null);
 
-    InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("SELECT", "SELECT");
+    InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("SELECT",
+        "SELECT", "keyword");
 
     assertEquals(2, completionList.size());
     assertEquals(true, completionList.contains(correctCompletionKeyword));
-    assertEquals(0, jdbcInterpreter.completion("SEL", 100).size());
+    assertEquals(0, jdbcInterpreter.completion("SEL", 100, null).size());
   }
 
   private Properties getDBProperty(String dbUser, String dbPassowrd) throws IOException {

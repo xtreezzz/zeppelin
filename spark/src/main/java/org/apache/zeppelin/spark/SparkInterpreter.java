@@ -48,6 +48,7 @@ import org.apache.spark.ui.SparkUI;
 import org.apache.spark.ui.jobs.JobProgressListener;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.util.InterpreterOutputStream;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.WellKnownResourceName;
@@ -1031,7 +1032,8 @@ public class SparkInterpreter extends Interpreter {
   }
 
   @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor) {
+  public List<InterpreterCompletion> completion(String buf, int cursor,
+                                                InterpreterContext interpreterContext) {
     if (completer == null) {
       logger.warn("Can't find completer");
       return new LinkedList<>();
@@ -1053,7 +1055,8 @@ public class SparkInterpreter extends Interpreter {
     List<InterpreterCompletion> completions = new LinkedList<>();
 
     for (String candidate : candidates) {
-      completions.add(new InterpreterCompletion(candidate, candidate));
+      completions.add(new InterpreterCompletion(candidate, candidate,
+          CompletionType.keyword.name()));
     }
 
     return completions;

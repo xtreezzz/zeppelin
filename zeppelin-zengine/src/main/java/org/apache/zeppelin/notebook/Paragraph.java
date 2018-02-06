@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.helium.HeliumPackage;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
@@ -268,10 +269,11 @@ public class Paragraph extends Job implements Serializable, Cloneable {
       if (intInfo.size() > 1) {
         for (InterpreterInfo info : intInfo) {
           String name = intp.getName() + "." + info.getName();
-          completion.add(new InterpreterCompletion(name, name));
+          completion.add(new InterpreterCompletion(name, name, CompletionType.setting.name()));
         }
       } else {
-        completion.add(new InterpreterCompletion(intp.getName(), intp.getName()));
+        completion.add(new InterpreterCompletion(intp.getName(), intp.getName(), CompletionType
+            .setting.name()));
       }
     }
     return completion;
@@ -297,8 +299,9 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     if (repl == null) {
       return null;
     }
+    InterpreterContext interpreterContext = getInterpreterContextWithoutRunner(null);
 
-    List completion = repl.completion(body, cursor);
+    List completion = repl.completion(body, cursor, interpreterContext);
     return completion;
   }
 

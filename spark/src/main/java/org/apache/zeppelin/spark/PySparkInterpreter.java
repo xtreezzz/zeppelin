@@ -48,6 +48,7 @@ import org.apache.spark.sql.SQLContext;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.InterpreterHookRegistry.HookType;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.interpreter.util.InterpreterOutputStream;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
@@ -448,7 +449,8 @@ public class PySparkInterpreter extends Interpreter implements ExecuteResultHand
 
 
   @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor) {
+  public List<InterpreterCompletion> completion(String buf, int cursor,
+                                                InterpreterContext interpreterContext) {
     if (buf.length() < cursor) {
       cursor = buf.length();
     }
@@ -500,7 +502,7 @@ public class PySparkInterpreter extends Interpreter implements ExecuteResultHand
 
     List<InterpreterCompletion> results = new LinkedList<>();
     for (String name: completionList) {
-      results.add(new InterpreterCompletion(name, name));
+      results.add(new InterpreterCompletion(name, name, CompletionType.keyword.name()));
     }
     return results;
   }

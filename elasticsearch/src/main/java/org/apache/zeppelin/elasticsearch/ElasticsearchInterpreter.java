@@ -42,6 +42,7 @@ import org.apache.zeppelin.elasticsearch.client.TransportBasedClient;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -239,12 +240,13 @@ public class ElasticsearchInterpreter extends Interpreter {
   }
 
   @Override
-  public List<InterpreterCompletion> completion(String s, int i) {
+  public List<InterpreterCompletion> completion(String s, int i,
+                                                InterpreterContext interpreterContext) {
     final List suggestions = new ArrayList<>();
 
     for (final String cmd : COMMANDS) {
       if (cmd.toLowerCase().contains(s)) {
-        suggestions.add(new InterpreterCompletion(cmd, cmd));
+        suggestions.add(new InterpreterCompletion(cmd, cmd, CompletionType.command.name()));
       }
     }
     return suggestions;

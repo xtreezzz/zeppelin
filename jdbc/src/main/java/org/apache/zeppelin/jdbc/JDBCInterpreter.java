@@ -53,6 +53,7 @@ import org.apache.hadoop.security.alias.CredentialProviderFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import org.apache.zeppelin.interpreter.completer.CompletionType;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.jdbc.security.JDBCSecurityImpl;
 import org.apache.zeppelin.scheduler.Scheduler;
@@ -137,7 +138,8 @@ public class JDBCInterpreter extends Interpreter {
   private static final Function<CharSequence, InterpreterCompletion> sequenceToStringTransformer =
       new Function<CharSequence, InterpreterCompletion>() {
         public InterpreterCompletion apply(CharSequence seq) {
-          return new InterpreterCompletion(seq.toString(), seq.toString());
+          return new InterpreterCompletion(seq.toString(), seq.toString(),
+              CompletionType.keyword.name());
         }
       };
 
@@ -790,7 +792,8 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor) {
+  public List<InterpreterCompletion> completion(String buf, int cursor,
+                                                InterpreterContext interpreterContext) {
     List<CharSequence> candidates = new ArrayList<>();
     SqlCompleter sqlCompleter = propertyKeySqlCompleterMap.get(getPropertyKey(buf));
     if (sqlCompleter != null && sqlCompleter.complete(buf, cursor, candidates) >= 0) {
