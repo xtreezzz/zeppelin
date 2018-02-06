@@ -118,7 +118,8 @@ public class PySparkInterpreterTest {
   @Test
   public void testCompletion() {
     if (getSparkVersionNumber() > 11) {
-      List<InterpreterCompletion> completions = pySparkInterpreter.completion("sc.", "sc.".length());
+      List<InterpreterCompletion> completions = pySparkInterpreter.completion("sc.", "sc.".length(),
+          null);
       assertTrue(completions.size() > 0);
     }
   }
