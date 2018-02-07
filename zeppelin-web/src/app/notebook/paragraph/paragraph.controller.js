@@ -511,16 +511,32 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         // not applying emacs key binding while the binding override Ctrl-v. default behavior of paste text on windows.
       }
 
-      var remoteCompleter = {
+      let remoteCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
-          if (!editor.isFocused()) {
-            return;
+          let langTools = ace.require('ace/ext/language_tools')
+          let defaultKeywords = new Set()
+
+          // eslint-disable-next-line handle-callback-err
+          let getDefaultKeywords = function(err, completions) {
+            if (completions !== undefined) {
+              completions.forEach(function(c) {
+                defaultKeywords.add(c.value)
+              })
+            }
+          }
+          if (langTools.keyWordCompleter !== undefined) {
+            langTools.keyWordCompleter.getCompletions(editor, session, pos, prefix,
+              getDefaultKeywords)
           }
 
-          pos = session.getTextRange(new Range(0, 0, pos.row, pos.column)).length;
-          var buf = session.getValue();
+          if (!editor.isFocused()) {
+            return
+          }
 
-          websocketMsgSrv.completion($scope.paragraph.id, buf, pos);
+          pos = session.getTextRange(new Range(0, 0, pos.row, pos.column)).length
+          let buf = session.getValue()
+
+          websocketMsgSrv.completion($scope.paragraph.id, buf, pos)
 
           $scope.$on('completionList', function(event, data) {
             let computeCaption = function(value, meta) {
@@ -535,30 +551,36 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               return value
             }
             if (data.completions) {
-              var completions = [];
-              for (var c in data.completions) {
-                var v = data.completions[c];
+              let completions = []
+              for (let c in data.completions) {
+                let v = data.completions[c]
+                if (v.meta !== undefined && v.meta === 'keyword'
+                  && defaultKeywords.has(v.value.trim())) {
+                  continue
+                }
                 completions.push({
                   name: v.name,
                   value: v.value,
+                  meta: v.meta,
                   caption: computeCaption(v.name, v.meta),
                   score: 300
-                });
+                })
               }
-              callback(null, completions);
+              callback(null, completions)
             }
-          });
+          })
         }
-      };
+      }
 
-      langTools.setCompleters([remoteCompleter, langTools.keyWordCompleter, langTools.snippetCompleter,
-        langTools.textCompleter]);
+      langTools.setCompleters([remoteCompleter, langTools.keyWordCompleter,
+        langTools.snippetCompleter, langTools.textCompleter])
 
       $scope.editor.setOptions({
+        fontSize: $scope.paragraph.config.fontSize + 'pt',
         enableBasicAutocompletion: true,
         enableSnippets: false,
         enableLiveAutocompletion: false
-      });
+      })
 
       $scope.editor.on('focus', function() {
         handleFocus(true);
