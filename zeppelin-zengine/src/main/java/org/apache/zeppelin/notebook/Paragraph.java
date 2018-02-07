@@ -360,7 +360,9 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   protected Object jobRun() throws Throwable {
     String replName = getRequiredReplName();
     Interpreter repl = getRepl(replName);
-    logger.info("run paragraph {} using {} " + repl, getId(), replName);
+    logger.info("Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
+        getId(), repl, note.getId(), authenticationInfo.getUser());
+
     if (repl == null) {
       logger.error("Can not find interpreter name " + repl);
       throw new RuntimeException("Can not find interpreter for " + getRequiredReplName());
