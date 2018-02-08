@@ -114,12 +114,7 @@ public class UniverseInterpreter extends Interpreter {
         String delimiter = getProperty("output.delimiter");
         List<String> formattedResults = new ArrayList<>();
         for (List<String> result : results) {
-          StringBuilder l = new StringBuilder();
-          for (String s : result) {
-            l.append(s);
-            l.append(delimiter);
-          }
-          formattedResults.add(l.toString());
+          formattedResults.add(StringUtils.join(result, delimiter));
         }
         Files.createDirectories(Paths.get(String.format("%s/%s", directory, context.getNoteId())));
         Files.write(Paths.get(String.format("%s/%s/%s", directory, context.getNoteId(),

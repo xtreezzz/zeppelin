@@ -43,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -52,6 +54,7 @@ import com.google.common.annotations.VisibleForTesting;
 public class Paragraph extends Job implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -6328572073497992016L;
+  private static Pattern REPL_PATTERN = Pattern.compile("(\\s*)%([\\w\\.]+).*", Pattern.DOTALL);
 
   private static Logger logger = LoggerFactory.getLogger(Paragraph.class);
   private transient InterpreterFactory factory;
@@ -63,6 +66,8 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   String title;
   String text;
   String user;
+  private transient String intpText;
+  private transient String scriptText;
   Date dateUpdated;
   private Map<String, Object> config; // paragraph configs like isOpen, colWidth, etc
   public GUI settings;          // form and parameter settings
@@ -171,6 +176,22 @@ public class Paragraph extends Job implements Serializable, Cloneable {
   public void setText(String newText) {
     this.text = newText;
     this.dateUpdated = new Date();
+    parseText();
+  }
+
+  public void parseText() {
+    // parse text to get interpreter component
+    if (this.text != null) {
+      Matcher matcher = REPL_PATTERN.matcher(this.text);
+      if (matcher.matches()) {
+        String headingSpace = matcher.group(1);
+        this.intpText = matcher.group(2);
+        this.scriptText = this.text.substring(headingSpace.length() + intpText.length() + 1).trim();
+      } else {
+        this.intpText = "";
+        this.scriptText = this.text.trim();
+      }
+    }
   }
 
   public AuthenticationInfo getAuthenticationInfo() {
@@ -290,19 +311,34 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     }
 
     String replName = getRequiredReplName(buffer);
-    if (replName != null && cursor > replName.length()) {
-      cursor -= replName.length() + 1;
-    }
 
-    String body = getScriptBody(buffer);
     Interpreter repl = getRepl(replName);
     if (repl == null) {
       return null;
     }
+
+    setText(buffer);
+
+    cursor = calculateCursorPosition(buffer, cursor);
+
     InterpreterContext interpreterContext = getInterpreterContextWithoutRunner(null);
 
-    List completion = repl.completion(body, cursor, interpreterContext);
+    List completion = repl.completion(this.scriptText, cursor, interpreterContext);
     return completion;
+  }
+
+  public int calculateCursorPosition(String buffer, int cursor) {
+    // scriptText trimmed
+
+    if (this.scriptText.isEmpty()) {
+      return 0;
+    }
+    int countCharactersBeforeScript = buffer.indexOf(this.scriptText);
+    if (countCharactersBeforeScript > 0) {
+      cursor -= countCharactersBeforeScript;
+    }
+
+    return cursor;
   }
 
   public void setInterpreterFactory(InterpreterFactory factory) {
