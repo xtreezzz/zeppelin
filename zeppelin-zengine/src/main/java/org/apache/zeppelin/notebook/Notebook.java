@@ -883,7 +883,7 @@ public class Notebook implements NoteEventListener {
 
       String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
-      logger.info("Start schedule run note: " + noteId + ", cronExpr: " +  note.getConfig().get("cron"));
+      logger.info("Start schedule run note: " + noteId + ", cronExpr:\"" +  note.getConfig().get("cron") + "\"");
       note.runAll();
       logger.info("End schedule run note: " + noteId);
 
