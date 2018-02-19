@@ -397,7 +397,7 @@ public class Paragraph extends Job implements Serializable, Cloneable {
     String replName = getRequiredReplName();
     Interpreter repl = getRepl(replName);
     logger.info("Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
-        getId(), repl, note.getId(), authenticationInfo.getUser());
+        getId(), replName, note.getId(), authenticationInfo.getUser());
 
     if (repl == null) {
       logger.error("Can not find interpreter name " + repl);
@@ -460,6 +460,9 @@ public class Paragraph extends Job implements Serializable, Cloneable {
         p.settings.setParams(settings.getParams());
       }
 
+      logger.info("End of Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
+              getId(), replName, note.getId(), authenticationInfo.getUser());
+      
       return res;
     } finally {
       InterpreterContext.remove();
