@@ -351,6 +351,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getRelativeDir(getString(ConfVars.ZEPPELIN_PLUGINS_DIR));
   }
 
+  public String getMetadataLocalRepoDir() {
+    return getRelativeDir(getString(ConfVars.ZEPPELIN_METADATA_LOCALREPO));
+  }
+
   public String getRecoveryDir() {
     return getRelativeDir(ConfVars.ZEPPELIN_RECOVERY_DIR);
   }
@@ -434,6 +438,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
 
   public String getInterpreterSettingPath() {
     return getConfigFSDir() + "/interpreter.json";
+  }
+
+  public String getMetadataGeneratorSettingsPath() {
+    return getConfigFSDir() + "/metadata.json";
   }
 
   public String getHeliumConfPath() {
@@ -603,6 +611,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getString(ConfVars.ZEPPELIN_NOTEBOOK_CRON_FOLDERS);
   }
 
+  public Integer getZeppelinMetadataSchedulerThreads() {
+    return getInt(ConfVars.ZEPPELIN_METADATA_SCHEDULER_THREADS);
+  }
+
   public Map<String, String> dumpConfigurations(ZeppelinConfiguration conf,
                                                 ConfigurationKeyPredicate predicate) {
     Map<String, String> configurations = new HashMap<>();
@@ -714,6 +726,7 @@ public class ZeppelinConfiguration extends XMLConfiguration {
         + "livy,alluxio,file,psql,flink,python,ignite,lens,cassandra,geode,kylin,elasticsearch,"
         + "scalding,jdbc,hbase,bigquery,beam,pig,scio,groovy,neo4j"),
     ZEPPELIN_INTERPRETER_OUTPUT_LIMIT("zeppelin.interpreter.output.limit", 1024 * 100),
+    ZEPPELIN_METADATA_LOCALREPO("zeppelin.metadata.localRepo", "local-repo"),
     ZEPPELIN_ENCODING("zeppelin.encoding", "UTF-8"),
     ZEPPELIN_NOTEBOOK_DIR("zeppelin.notebook.dir", "notebook"),
     ZEPPELIN_RECOVERY_DIR("zeppelin.recovery.dir", "recovery"),
@@ -797,7 +810,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_NOTEBOOK_GIT_REMOTE_ACCESS_TOKEN("zeppelin.notebook.git.remote.access-token", ""),
     ZEPPELIN_NOTEBOOK_GIT_REMOTE_ORIGIN("zeppelin.notebook.git.remote.origin", "origin"),
     ZEPPELIN_NOTEBOOK_CRON_ENABLE("zeppelin.notebook.cron.enable", false),
-    ZEPPELIN_NOTEBOOK_CRON_FOLDERS("zeppelin.notebook.cron.folders", null);
+    ZEPPELIN_NOTEBOOK_CRON_FOLDERS("zeppelin.notebook.cron.folders", null),
+    ZEPPELIN_METADATA_SCHEDULER_THREADS("zeppelin.metadata.scheduler.threads", 100);
 
     private String varName;
     @SuppressWarnings("rawtypes")

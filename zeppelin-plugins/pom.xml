@@ -46,6 +46,7 @@
         <module>notebookrepo/mongodb</module>
         <module>notebookrepo/zeppelin-hub</module>
         <module>notebookrepo/filesystem</module>
+        <module>metadata/jdbc</module>
     </modules>
 
     <dependencies>

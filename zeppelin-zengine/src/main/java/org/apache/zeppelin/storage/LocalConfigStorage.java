@@ -18,8 +18,10 @@
 package org.apache.zeppelin.storage;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.fs.Path;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.InterpreterInfoSaving;
+import org.apache.zeppelin.metadata.MetadataGeneratorsInfoSettings;
 import org.apache.zeppelin.notebook.NotebookAuthorizationInfoSaving;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +42,14 @@ public class LocalConfigStorage extends ConfigStorage {
   private File interpreterSettingPath;
   private File authorizationPath;
   private File credentialPath;
+  private File metadataGeneratorSettingsPath;
 
   public LocalConfigStorage(ZeppelinConfiguration zConf) {
     super(zConf);
     this.interpreterSettingPath = new File(zConf.getInterpreterSettingPath());
     this.authorizationPath = new File(zConf.getNotebookAuthorizationPath());
     this.credentialPath = new File(zConf.getCredentialsPath());
+    this.metadataGeneratorSettingsPath = new File(zConf.getMetadataGeneratorSettingsPath());
   }
 
   @Override
@@ -96,6 +100,25 @@ public class LocalConfigStorage extends ConfigStorage {
   public void saveCredentials(String credentials) throws IOException {
     LOGGER.info("Save Credentials to file: " + credentialPath);
     writeToFile(credentials, credentialPath);
+  }
+
+  @Override
+  public void saveMetadataGeneratorSettings(
+      MetadataGeneratorsInfoSettings metadataGeneratorsInfoSettings) throws IOException {
+    LOGGER.info("Save metadata generators settings to file: " + metadataGeneratorsInfoSettings);
+    writeToFile(metadataGeneratorsInfoSettings.toJson(), metadataGeneratorSettingsPath);
+  }
+
+  @Override
+  public MetadataGeneratorsInfoSettings loadMetadataGeneratorsSettings() throws IOException {
+    if (!metadataGeneratorSettingsPath.exists()) {
+      LOGGER.warn("Metadata Generators Settings file {} is not existed",
+          metadataGeneratorSettingsPath);
+      return null;
+    }
+    LOGGER.info("Load Metadata Generators Settings from file: " + metadataGeneratorSettingsPath);
+    String json = readFromFile(metadataGeneratorSettingsPath);
+    return MetadataGeneratorsInfoSettings.fromJson(json);
   }
 
   private String readFromFile(File file) throws IOException {

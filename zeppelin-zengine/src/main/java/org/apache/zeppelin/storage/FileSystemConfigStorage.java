@@ -18,20 +18,18 @@
 
 package org.apache.zeppelin.storage;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.hadoop.fs.Path;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.helium.HeliumConf;
 import org.apache.zeppelin.interpreter.InterpreterInfoSaving;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.metadata.MetadataGeneratorSetting;
+import org.apache.zeppelin.metadata.MetadataGeneratorsInfoSettings;
 import org.apache.zeppelin.notebook.FileSystemStorage;
 import org.apache.zeppelin.notebook.NotebookAuthorizationInfoSaving;
-import org.apache.zeppelin.user.CredentialsInfoSaving;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * It could be used either local file system or hadoop distributed file system,
@@ -46,6 +44,7 @@ public class FileSystemConfigStorage extends ConfigStorage {
   private Path interpreterSettingPath;
   private Path authorizationPath;
   private Path credentialPath;
+  private Path metadataGeneratorSettingsPath;
 
   public FileSystemConfigStorage(ZeppelinConfiguration zConf) throws IOException {
     super(zConf);
@@ -58,6 +57,8 @@ public class FileSystemConfigStorage extends ConfigStorage {
     this.interpreterSettingPath = fs.makeQualified(new Path(zConf.getInterpreterSettingPath()));
     this.authorizationPath = fs.makeQualified(new Path(zConf.getNotebookAuthorizationPath()));
     this.credentialPath = fs.makeQualified(new Path(zConf.getCredentialsPath()));
+    this.metadataGeneratorSettingsPath =
+        fs.makeQualified(new Path(zConf.getMetadataGeneratorSettingsPath()));
   }
 
   @Override
@@ -109,4 +110,22 @@ public class FileSystemConfigStorage extends ConfigStorage {
     fs.writeFile(credentials, credentialPath, false);
   }
 
+  @Override
+  public void saveMetadataGeneratorSettings(
+      MetadataGeneratorsInfoSettings metadataGeneratorsSettings) throws IOException {
+    LOGGER.info("Save Metadata Generators Settings to " + metadataGeneratorSettingsPath);
+    fs.writeFile(metadataGeneratorsSettings.toJson(), metadataGeneratorSettingsPath, false);
+  }
+
+  @Override
+  public MetadataGeneratorsInfoSettings loadMetadataGeneratorsSettings() throws IOException {
+    if (!fs.exists(metadataGeneratorSettingsPath)) {
+      LOGGER.warn("Metadata generators Setting file {} is not existed",
+          metadataGeneratorSettingsPath);
+      return null;
+    }
+    LOGGER.info("Load metadata generators settings from file: " + metadataGeneratorSettingsPath);
+    String json = fs.readFile(metadataGeneratorSettingsPath);
+    return MetadataGeneratorsInfoSettings.fromJson(json);
+  }
 }

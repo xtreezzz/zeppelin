@@ -25,6 +25,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.helium.HeliumConf;
 import org.apache.zeppelin.interpreter.InterpreterInfoSaving;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.metadata.MetadataGeneratorsInfoSettings;
 import org.apache.zeppelin.notebook.NotebookAuthorizationInfoSaving;
 import org.apache.zeppelin.user.Credentials;
 import org.apache.zeppelin.user.CredentialsInfoSaving;
@@ -79,6 +80,12 @@ public abstract class ConfigStorage {
   public abstract String loadCredentials() throws IOException;
 
   public abstract void saveCredentials(String credentials) throws IOException;
+
+  public abstract void saveMetadataGeneratorSettings(
+      MetadataGeneratorsInfoSettings metadataGeneratorsInfoSettings) throws IOException;
+
+  public abstract MetadataGeneratorsInfoSettings loadMetadataGeneratorsSettings()
+      throws IOException;
 
   protected InterpreterInfoSaving buildInterpreterInfoSaving(String json) {
     //TODO(zjffdu) This kind of post processing is ugly.

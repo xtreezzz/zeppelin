@@ -975,6 +975,7 @@
               <exclude>**/logs/**</exclude>
               <exclude>**/run/**</exclude>
               <exclude>**/interpreter/**</exclude>
+              <exclude>**/metadata/**</exclude>
               <exclude>**/local-repo/**</exclude>
               <exclude>**/null/**</exclude>
               <exclude>**/notebook/**</exclude>
@@ -988,6 +989,7 @@
               <exclude>**/licenses/**</exclude>
               <exclude>**/zeppelin-distribution/src/bin_license/**</exclude>
               <exclude>conf/interpreter.json</exclude>
+              <exclude>conf/metadata.json</exclude>
               <exclude>conf/notebook-authorization.json</exclude>
               <exclude>conf/credentials.json</exclude>
               <exclude>conf/zeppelin-env.sh</exclude>
