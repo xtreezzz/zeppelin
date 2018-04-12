@@ -20,15 +20,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.alias.CredentialProvider;
 import org.apache.hadoop.security.alias.CredentialProviderFactory;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.ldap.AbstractLdapRealm;
 import org.apache.shiro.realm.ldap.DefaultLdapContextFactory;
 import org.apache.shiro.realm.ldap.LdapContextFactory;
@@ -37,6 +36,16 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -44,11 +53,9 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
-import java.util.*;
-
 
 /**
- * A {@link Realm} that authenticates with an active directory LDAP
+ * A {@link org.apache.shiro.realm.Realm} that authenticates with an active directory LDAP
  * server to determine the roles for a particular user.  This implementation
  * queries for the user's groups and then maps the group names to roles using the
  * {@link #groupRolesMap}.
@@ -56,21 +63,16 @@ import java.util.*;
  * @since 0.1
  */
 public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
-
   private static final Logger log = LoggerFactory.getLogger(ActiveDirectoryGroupRealm.class);
 
   private static final String ROLE_NAMES_DELIMETER = ",";
 
-  String KEYSTORE_PASS = "activeDirectoryRealm.systemPassword";
+  final String keystorePass = "activeDirectoryRealm.systemPassword";
   private String hadoopSecurityCredentialPath;
 
   public void setHadoopSecurityCredentialPath(String hadoopSecurityCredentialPath) {
     this.hadoopSecurityCredentialPath = hadoopSecurityCredentialPath;
   }
-
-    /*--------------------------------------------
-    |    I N S T A N C E   V A R I A B L E S    |
-    ============================================*/
 
   /**
    * Mapping from fully qualified active directory
@@ -79,17 +81,9 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
    */
   private Map<String, String> groupRolesMap;
 
-    /*--------------------------------------------
-    |         C O N S T R U C T O R S           |
-    ============================================*/
-
   public void setGroupRolesMap(Map<String, String> groupRolesMap) {
     this.groupRolesMap = groupRolesMap;
   }
-
-    /*--------------------------------------------
-    |               M E T H O D S               |
-    ============================================*/
 
   LdapContextFactory ldapContextFactory;
 
@@ -150,16 +144,15 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
       try {
         Configuration configuration = new Configuration();
         configuration.set(CredentialProviderFactory.CREDENTIAL_PROVIDER_PATH,
-          this.hadoopSecurityCredentialPath);
-        CredentialProvider provider =
-          CredentialProviderFactory.getProviders(configuration).get(0);
+                this.hadoopSecurityCredentialPath);
+        CredentialProvider provider = CredentialProviderFactory.getProviders(configuration).get(0);
         CredentialProvider.CredentialEntry credEntry = provider.getCredentialEntry(
-            KEYSTORE_PASS);
+                keystorePass);
         if (credEntry != null) {
           password = new String(credEntry.getCredential());
         }
       } catch (Exception e) {
-
+        log.debug("ignored error from getting credential entry from keystore", e);
       }
     }
     return password;
@@ -221,7 +214,6 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     }
     return new SimpleAuthenticationInfo(username, password, getName());
   }
-
 
   /**
    * Builds an {@link org.apache.shiro.authz.AuthorizationInfo} object by querying the active
@@ -297,10 +289,20 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     return userNameList;
   }
 
-  private Set<String> getRoleNamesForUser(String username, LdapContext ldapContext)
-      throws NamingException {
-    Set<String> roleNames = new LinkedHashSet<>();
+  public Map<String, String> getListRoles() {
+    Map<String, String> roles = new HashMap<>();
+    Iterator it = this.groupRolesMap.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry pair = (Map.Entry) it.next();
+      roles.put((String) pair.getValue(), "*");
+    }
+    return roles;
+  }
 
+  private Set<String> getRoleNamesForUser(final String username, LdapContext ldapContext)
+      throws NamingException {
+
+    final Set<String> roleNames = new LinkedHashSet<>();
     SearchControls searchCtls = new SearchControls();
     searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
     String userPrincipalName = username;
@@ -310,37 +312,55 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
 
     String searchFilter = "(&(objectClass=*)(userPrincipalName=" + userPrincipalName + "))";
     Object[] searchArguments = new Object[]{userPrincipalName};
-
-    NamingEnumeration answer = ldapContext.search(searchBase, searchFilter, searchArguments,
+    final NamingEnumeration answer = ldapContext.search(searchBase, searchFilter, searchArguments,
         searchCtls);
 
-    while (answer.hasMoreElements()) {
-      SearchResult sr = (SearchResult) answer.next();
-
-      if (log.isDebugEnabled()) {
-        log.debug("Retrieving group names for user [" + sr.getName() + "]");
-      }
-
-      Attributes attrs = sr.getAttributes();
-
-      if (attrs != null) {
-        NamingEnumeration ae = attrs.getAll();
-        while (ae.hasMore()) {
-          Attribute attr = (Attribute) ae.next();
-
-          if (attr.getID().equals("memberOf")) {
-
-            Collection<String> groupNames = LdapUtils.getAllAttributeValues(attr);
-
+    Thread getRoleNamesThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          while (answer.hasMoreElements()) {
+            SearchResult sr = (SearchResult) answer.next();
             if (log.isDebugEnabled()) {
-              log.debug("Groups found for user [" + username + "]: " + groupNames);
+              log.debug("Retrieving group names for user [" + sr.getName() + "]");
             }
+            Attributes attrs = sr.getAttributes();
+            if (attrs != null) {
+              NamingEnumeration ae = attrs.getAll();
+              while (ae.hasMore()) {
+                Attribute attr = (Attribute) ae.next();
+                if (attr.getID().equals("memberOf")) {
+                  Collection<String> groupNames = LdapUtils.getAllAttributeValues(attr);
 
-            Collection<String> rolesForGroups = getRoleNamesForGroups(groupNames);
-            roleNames.addAll(rolesForGroups);
+                  if (log.isDebugEnabled()) {
+                    log.debug("Groups found for user [" + username + "]: " + groupNames);
+                  }
+
+                  Collection<String> rolesForGroups = getRoleNamesForGroups(groupNames);
+                  roleNames.addAll(rolesForGroups);
+                }
+              }
+            }
           }
+        } catch (Exception e) {
+          log.error(e.getMessage(), e);
         }
       }
+    });
+
+    getRoleNamesThread.start();
+    try {
+      int millis = 0;
+      while (getRoleNamesThread.isAlive() && millis < 500) {
+        Thread.sleep(10);
+        millis += 10;
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
+
+    if (getRoleNamesThread.isAlive()) {
+      log.debug("getRoleNamesThread thread is frozen! skip wait. close thread!");
     }
     return roleNames;
   }
@@ -375,6 +395,4 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     }
     return roleNames;
   }
-
 }
-
