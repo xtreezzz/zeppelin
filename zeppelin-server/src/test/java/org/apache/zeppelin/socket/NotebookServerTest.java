@@ -18,6 +18,7 @@ package org.apache.zeppelin.socket;
 
 import com.google.gson.Gson;
 
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectBuilder;
 import org.apache.zeppelin.display.AngularObjectRegistry;
@@ -396,8 +397,12 @@ public class NotebookServerTest extends AbstractTestRestApi {
         .put("name", noteName)
         .put("defaultInterpreterId", defaultInterpreterId).toJson());
 
+    int sendCount = 2;
+    if (ZeppelinConfiguration.create().isZeppelinNotebookCollaborativeModeEnable()) {
+      sendCount++;
+    }
     // expect the events are broadcasted properly
-    verify(sock1, times(2)).send(anyString());
+    verify(sock1, times(sendCount)).send(anyString());
 
     Note createdNote = null;
     for (Note note : notebook.getAllNotes()) {
