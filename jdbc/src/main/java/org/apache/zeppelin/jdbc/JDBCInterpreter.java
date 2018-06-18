@@ -338,7 +338,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   public JDBCUserConfigurations getJDBCConfiguration(String user) {
     JDBCUserConfigurations jdbcUserConfigurations =
-      jdbcUserConfigurationsMap.get(user);
+        jdbcUserConfigurationsMap.get(user);
 
     if (jdbcUserConfigurations == null) {
       jdbcUserConfigurations = new JDBCUserConfigurations();
@@ -361,7 +361,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
     JDBCUserConfigurations jdbcUserConfigurations =
-      getJDBCConfiguration(user);
+        getJDBCConfiguration(user);
     if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
         !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
       String password = getPassword(basePropretiesMap.get(propertyKey));
@@ -376,7 +376,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
-      getEntityName(interpreterContext.getReplName()));
+        getEntityName(interpreterContext.getReplName()));
     if (usernamePassword != null) {
       jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
     } else {
@@ -387,10 +387,10 @@ public class JDBCInterpreter extends KerberosInterpreter {
   private void createConnectionPool(String url, String user, String propertyKey,
       Properties properties) throws SQLException, ClassNotFoundException {
     ConnectionFactory connectionFactory =
-      new DriverManagerConnectionFactory(url, properties);
+        new DriverManagerConnectionFactory(url, properties);
 
     PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(
-      connectionFactory, null);
+        connectionFactory, null);
     ObjectPool connectionPool = new GenericObjectPool(poolableConnectionFactory);
 
     poolableConnectionFactory.setPool(connectionPool);
@@ -710,8 +710,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
           String statementPrecode =
               getProperty(String.format(STATEMENT_PRECODE_KEY_TEMPLATE, propertyKey));
-          
-          if (StringUtils.isNotBlank(statementPrecode)) {
+          String noteId = interpreterContext.getNoteId();
+          String noteUser = interpreterContext.getAuthenticationInfo().getUser();
+          final String NOTE_ID_TEMPLATE = "#{noteId}";
+          final String NOTE_USER_TEMPLATE = "#{user}";
+          String replaceStatementPrecode = statementPrecode.replace(NOTE_ID_TEMPLATE, noteId)
+              .replace(NOTE_USER_TEMPLATE, noteUser);
+
+          if (StringUtils.isNotBlank(replaceStatementPrecode)) {
             statement.execute(statementPrecode);
           }
 
@@ -806,7 +812,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     logger.info("Cancel current query statement.");
     String paragraphId = context.getParagraphId();
     JDBCUserConfigurations jdbcUserConfigurations =
-      getJDBCConfiguration(context.getAuthenticationInfo().getUser());
+        getJDBCConfiguration(context.getAuthenticationInfo().getUser());
     try {
       jdbcUserConfigurations.cancelStatement(paragraphId);
     } catch (SQLException e) {
