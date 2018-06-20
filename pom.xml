@@ -398,7 +398,7 @@
               <goal>check</goal>
             </goals>
             <configuration>
-              <failOnViolation>true</failOnViolation>
+              <failOnViolation>false</failOnViolation>
               <excludes>org/apache/zeppelin/interpreter/thrift/*,org/apache/zeppelin/scio/avro/*,org/apache/zeppelin/python/proto/*</excludes>
             </configuration>
           </execution>

@@ -52,8 +52,6 @@ import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.UserCredentials;
 import org.apache.zeppelin.user.UsernamePassword;
-import org.junit.Before;
-import org.junit.Test;
 
 import com.mockrunner.jdbc.BasicJDBCTestCaseAdapter;
 
@@ -66,7 +64,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
   InterpreterContext interpreterContext;
 
   private static String getJdbcConnection() throws IOException {
-    if(null == jdbcConnection) {
+    if (null == jdbcConnection) {
       Path tmpDir = Files.createTempDirectory("h2-test-");
       tmpDir.toFile().deleteOnExit();
       jdbcConnection = format("jdbc:h2:%s", tmpDir);
@@ -94,11 +92,13 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         "DROP TABLE IF EXISTS test_table; " +
         "CREATE TABLE test_table(id varchar(255), name varchar(255));");
 
-    PreparedStatement insertStatement = connection.prepareStatement("insert into test_table(id, name) values ('a', 'a_name'),('b', 'b_name'),('c', ?);");
+    PreparedStatement insertStatement = connection.
+        prepareStatement("insert into test_table(id, name) values ('a', 'a_name'),"
+            + "('b', 'b_name'),('c', ?);");
     insertStatement.setString(1, null);
     insertStatement.execute();
     interpreterContext = new InterpreterContext("", "1", null, "", "",
-        new AuthenticationInfo("testUser"), null, null, null,null, null, null, null);
+        new AuthenticationInfo("testUser"), null, null, null, null, null, null, null);
   }
 
 
@@ -116,7 +116,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         "default");
 
     // when you use a %jdbc(prefix1), prefix1 is the propertyKey as form part of the cmd string
-    assertEquals(t.getPropertyKey("(prefix1)\n select max(cant) from test_table where id >= 2452640"),
+    assertEquals(t.getPropertyKey("(prefix1)\n select max(cant) from"
+            + "test_table where id >= 2452640"),
         "prefix1");
 
     assertEquals(t.getPropertyKey("(prefix2) select max(cant) from test_table where id >= 2452640"),
@@ -263,7 +264,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     assertEquals(2, interpreterResult.message().size());
 
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
-    assertEquals("ID\tNAME\na\ta_name\nb\tb_name\nc\tnull\n", interpreterResult.message().get(0).getData());
+    assertEquals("ID\tNAME\na\ta_name\nb\tb_name\nc\tnull\n",
+        interpreterResult.message().get(0).getData());
 
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(1).getType());
     assertEquals("ID\tNAME\n", interpreterResult.message().get(1).getData());
@@ -288,7 +290,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     assertEquals(1, interpreterResult.message().size());
 
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
-    assertEquals("ID\tNAME\na\ta_name\nb\tb_name\nc\tnull\n", interpreterResult.message().get(0).getData());
+    assertEquals("ID\tNAME\na\ta_name\nb\tb_name\nc\tnull\n",
+        interpreterResult.message().get(0).getData());
   }
 
   @Test
@@ -374,9 +377,11 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
 
     jdbcInterpreter.interpret("", interpreterContext);
 
-    List<InterpreterCompletion> completionList = jdbcInterpreter.completion("sel", 3, interpreterContext);
+    List<InterpreterCompletion> completionList = jdbcInterpreter.
+        completion("sel", 3, interpreterContext);
 
-    InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("select", "select", CompletionType.keyword.name());
+    InterpreterCompletion correctCompletionKeyword =
+        new InterpreterCompletion("select", "select", CompletionType.keyword.name());
 
     assertEquals(1, completionList.size());
     assertEquals(true, completionList.contains(correctCompletionKeyword));
@@ -397,7 +402,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     return properties;
   }
 
-  private AuthenticationInfo getUserAuth(String user, String entityName, String dbUser, String dbPassword){
+  private AuthenticationInfo getUserAuth(String user, String entityName,
+                                         String dbUser, String dbPassword) {
     UserCredentials userCredentials = new UserCredentials();
     if (entityName != null && dbUser != null && dbPassword != null) {
       UsernamePassword up = new UsernamePassword(dbUser, dbPassword);
@@ -424,12 +430,12 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     JDBCInterpreter jdbc2 = new JDBCInterpreter(getDBProperty("", ""));
 
     AuthenticationInfo user1Credential = getUserAuth("user1", null, null, null);
-    AuthenticationInfo user2Credential = getUserAuth("user2", "jdbc.jdbc2", "user2Id","user2Pw");
+    AuthenticationInfo user2Credential = getUserAuth("user2", "jdbc.jdbc2", "user2Id", "user2Pw");
 
     // user1 runs jdbc1
     jdbc1.open();
     InterpreterContext ctx1 = new InterpreterContext("", "1", "jdbc1", "", "", user1Credential,
-      null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null);
     jdbc1.interpret("", ctx1);
 
     JDBCUserConfigurations user1JDBC1Conf = jdbc1.getJDBCConfiguration("user1");
@@ -440,7 +446,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     // user1 runs jdbc2
     jdbc2.open();
     InterpreterContext ctx2 = new InterpreterContext("", "1", "jdbc2", "", "", user1Credential,
-      null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null);
     jdbc2.interpret("", ctx2);
 
     JDBCUserConfigurations user1JDBC2Conf = jdbc2.getJDBCConfiguration("user1");
@@ -451,7 +457,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     // user2 runs jdbc1
     jdbc1.open();
     InterpreterContext ctx3 = new InterpreterContext("", "1", "jdbc1", "", "", user2Credential,
-      null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null);
     jdbc1.interpret("", ctx3);
 
     JDBCUserConfigurations user2JDBC1Conf = jdbc1.getJDBCConfiguration("user2");
@@ -462,7 +468,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     // user2 runs jdbc2
     jdbc2.open();
     InterpreterContext ctx4 = new InterpreterContext("", "1", "jdbc2", "", "", user2Credential,
-      null, null, null, null, null, null, null);
+        null, null, null, null, null, null, null);
     jdbc2.interpret("", ctx4);
 
     JDBCUserConfigurations user2JDBC2Conf = jdbc2.getJDBCConfiguration("user2");
@@ -478,7 +484,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     properties.setProperty("default.url", getJdbcConnection());
     properties.setProperty("default.user", "");
     properties.setProperty("default.password", "");
-    properties.setProperty(DEFAULT_PRECODE, "create table test_precode (id int); insert into test_precode values (1);");
+    properties.setProperty(DEFAULT_PRECODE,
+        "create table test_precode (id int); insert into test_precode values (1);");
     JDBCInterpreter jdbcInterpreter = new JDBCInterpreter(properties);
     jdbcInterpreter.open();
     jdbcInterpreter.executePrecode(interpreterContext);
@@ -520,7 +527,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     properties.setProperty("anotherPrefix.url", getJdbcConnection());
     properties.setProperty("anotherPrefix.user", "");
     properties.setProperty("anotherPrefix.password", "");
-    properties.setProperty(String.format(PRECODE_KEY_TEMPLATE, "anotherPrefix"), "create table test_precode_2 (id int); insert into test_precode_2 values (2);");
+    properties.setProperty(String.format(PRECODE_KEY_TEMPLATE, "anotherPrefix"),
+        "create table test_precode_2 (id int); insert into test_precode_2 values (2);");
     JDBCInterpreter jdbcInterpreter = new JDBCInterpreter(properties);
     jdbcInterpreter.open();
     jdbcInterpreter.executePrecode(interpreterContext);

@@ -25,6 +25,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Test for SqlStatement
+ */
+
 public class SqlStatementTest {
   private String defaultSchema = "prod_dds";
   private Collection<String> schemas = new TreeSet<>();

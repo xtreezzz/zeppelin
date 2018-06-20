@@ -18,7 +18,9 @@ import jline.console.completer.Completer;
 
 /**
  * Completer with time to live.
+ * @param <T> - Completer
  */
+
 public class CachedCompleter<T extends Completer>  {
   private T completer;
   private int ttlInSeconds;
