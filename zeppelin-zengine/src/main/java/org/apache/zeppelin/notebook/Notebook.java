@@ -934,7 +934,9 @@ public class Notebook implements NoteEventListener {
         return;
       }
 
+      logger.info("Start schedule run note: " + noteId + ", cronExpr:\"" + note.getConfig().get("cron") + "\"");
       note.runAll();
+      logger.info("End schedule run note: " + noteId);
 
       boolean releaseResource = false;
       String cronExecutingUser = null;

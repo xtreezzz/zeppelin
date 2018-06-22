@@ -457,6 +457,9 @@ public class Paragraph extends Job implements Cloneable, JsonSerializable {
         p.settings.setParams(settings.getParams());
       }
 
+      logger.info("End of Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
+          getId(), intpText, note.getId(), authenticationInfo.getUser());
+
       return res;
     } finally {
       InterpreterContext.remove();
