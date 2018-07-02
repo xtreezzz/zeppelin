@@ -446,6 +446,37 @@ public class NotebookRestApi {
   }
 
   /**
+   * Rename note REST API
+   *
+   * @param message - JSON containing new name
+   * @return JSON with status.OK
+   * @throws IOException
+   */
+  @PUT
+  @Path("{noteId}/rename")
+  @ZeppelinApi
+  public Response renameNote(@PathParam("noteId") String noteId, String message) throws IOException {
+    LOG.info("rename note by JSON {}", message);
+    RenameNoteRequest request = gson.fromJson(message, RenameNoteRequest.class);
+    AuthenticationInfo subject = new AuthenticationInfo(SecurityUtils.getPrincipal());
+
+    checkIfUserCanWrite(noteId, "Insufficient privileges you cannot rename this note");
+    Note note = notebook.getNote(noteId);
+    checkIfNoteIsNotNull(note);
+
+    String newName = request.getName();
+    if (newName.isEmpty()) {
+      LOG.warn("Trying to rename notebook {} with empty name parameter", noteId);
+      throw new BadRequestException("name can not be empty");
+    }
+    note.setName(newName);
+
+    notebookServer.broadcastNote(note);
+    notebookServer.broadcastNoteList(subject, SecurityUtils.getRoles());
+    return new JsonResponse(Status.OK, "").build();
+  }
+
+  /**
    * Insert paragraph REST API
    *
    * @param message - JSON containing paragraph's information
