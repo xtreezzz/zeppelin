@@ -438,3 +438,17 @@
 .notebook-form-title {
   padding: 3px;
 }
+
+/*Bootstrap uib-tooltip: max-width = 200px
+  because of this the string can come out */
+.tooltip-inner {
+  max-width: none !important;
+}
+
+.tooltip-inner {
+  max-width: 450px;
+}
+
+.notebook-form-title {
+  padding: 3px;
+}

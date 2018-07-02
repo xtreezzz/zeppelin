@@ -14,7 +14,7 @@
 
 angular.module('zeppelinWebApp').factory('websocketEvents', WebsocketEventFactory);
 
-function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv) {
+function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv, ngToast) {
   'ngInject';
 
   let websocketCalls = {};
@@ -110,6 +110,12 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv) {
       });
     } else if (op === 'PARAGRAPH') {
       $rootScope.$broadcast('updateParagraph', data);
+    } else if (op === 'SELECTED_PARAGRAPHS') {
+      let paragraphs = data.paragraphs;
+      paragraphs.forEach((para) => {
+        let obj = {'paragraph': para};
+        $rootScope.$broadcast('updateParagraph', obj);
+      });
     } else if (op === 'PATCH_PARAGRAPH') {
       $rootScope.$broadcast('patchReceived', data);
     } else if (op === 'COLLABORATIVE_MODE_STATUS') {
@@ -173,14 +179,22 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv) {
       $rootScope.$broadcast('addParagraph', data.paragraph, data.index);
     } else if (op === 'PARAGRAPH_REMOVED') {
       $rootScope.$broadcast('removeParagraph', data.id);
+    } else if (op === 'SELECTED_PARAGRAPHS_REMOVED') {
+      $rootScope.$broadcast('selectedParagraphsRemoved', data.idList);
     } else if (op === 'PARAGRAPH_MOVED') {
       $rootScope.$broadcast('moveParagraph', data.id, data.index);
+    } else if (op === 'PARAGRAPHS_MOVED') {
+      $rootScope.$broadcast('paragraphsMoved', data.id, data.index);
     } else if (op === 'NOTE_UPDATED') {
       $rootScope.$broadcast('updateNote', data.name, data.config, data.info);
     } else if (op === 'SET_NOTE_REVISION') {
       $rootScope.$broadcast('setNoteRevisionResult', data);
     } else if (op === 'PARAS_INFO') {
       $rootScope.$broadcast('updateParaInfos', data);
+    } else if (op === 'INTERPRETER_INSTALL_STARTED') {
+      ngToast.info(data.message);
+    } else if (op === 'INTERPRETER_INSTALL_RESULT') {
+      ngToast.info(data.message);
     } else {
       console.error(`unknown websocket op: ${op}`);
     }

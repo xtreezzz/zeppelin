@@ -189,6 +189,12 @@ public class Message implements JsonSerializable {
     REMOVE_NOTE_FORMS,            // remove note forms
     INTERPRETER_INSTALL_STARTED,  // [s-c] start to download an interpreter
     INTERPRETER_INSTALL_RESULT,   // [s-c] Status of an interpreter installation
+    REMOVE_SELECTED_PARAGRAPHS,   // [c-s] remove selected paragraphs
+    SELECTED_PARAGRAPHS_REMOVED,  // [s-c] selected paragraphs removed
+    CLEAR_SELECTED_PARAGRAPHS_OUTPUT,   // [c-s] clear output selected paragraphs
+    SELECTED_PARAGRAPHS,                // [s-c] selected paragraph info
+    MOVE_PARAGRAPHS,            // [c-s] move paragraphs on new index
+    PARAGRAPHS_MOVED,            // [s-c] several paragraph moved
     COLLABORATIVE_MODE_STATUS,    // [s-c] collaborative mode status
     PATCH_PARAGRAPH               // [c-s][s-c] patch editor text
   }
