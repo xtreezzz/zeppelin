@@ -196,7 +196,8 @@ public class Message implements JsonSerializable {
     MOVE_PARAGRAPHS,            // [c-s] move paragraphs on new index
     PARAGRAPHS_MOVED,            // [s-c] several paragraph moved
     COLLABORATIVE_MODE_STATUS,    // [s-c] collaborative mode status
-    PATCH_PARAGRAPH               // [c-s][s-c] patch editor text
+    PATCH_PARAGRAPH,               // [c-s][s-c] patch editor text
+    NOTICE                        // [s-c] Notice
   }
 
   private static final Gson gson = new Gson();
