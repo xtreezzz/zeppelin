@@ -710,15 +710,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
           String statementPrecode =
               getProperty(String.format(STATEMENT_PRECODE_KEY_TEMPLATE, propertyKey));
-          String noteId = interpreterContext.getNoteId();
-          String noteUser = interpreterContext.getAuthenticationInfo().getUser();
-          final String NOTE_ID_TEMPLATE = "#{noteId}";
-          final String NOTE_USER_TEMPLATE = "#{user}";
-          String replaceStatementPrecode = statementPrecode.replace(NOTE_ID_TEMPLATE, noteId)
-              .replace(NOTE_USER_TEMPLATE, noteUser);
-
-          if (StringUtils.isNotBlank(replaceStatementPrecode)) {
-            statement.execute(statementPrecode);
+          if (StringUtils.isNotBlank(statementPrecode)) {
+            String noteId = interpreterContext.getNoteId();
+            String noteUser = interpreterContext.getAuthenticationInfo().getUser();
+            final String NOTE_ID_TEMPLATE = "#{noteId}";
+            final String NOTE_USER_TEMPLATE = "#{user}";
+            String contextStatementPrecode = statementPrecode.replace(NOTE_ID_TEMPLATE, noteId)
+                .replace(NOTE_USER_TEMPLATE, noteUser);
+            statement.execute(contextStatementPrecode);
           }
 
           boolean isResultSetAvailable = statement.execute(sqlToExecute);
