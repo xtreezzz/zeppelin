@@ -114,8 +114,8 @@ public class UniverseClient {
 
   public UniverseClient(String user, String password, String apiUrl, String authType) {
     RequestConfig requestConfig = RequestConfig.custom()
-        .setConnectTimeout(20 * 60 * 1000)
-        .setSocketTimeout(20 * 60 * 1000)
+        .setConnectTimeout(120 * 60 * 1000)
+        .setSocketTimeout(120 * 60 * 1000)
         .build();
     PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
     cm.setMaxTotal(100);
