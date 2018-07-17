@@ -416,7 +416,7 @@ public class JDBCInterpreter extends Interpreter {
             connection = getConnectionFromPool(url, user, propertyKey, properties);
       }
     }
-    propertyKeySqlCompleterMap.put(propertyKey, createSqlCompleter(connection));
+    // propertyKeySqlCompleterMap.put(propertyKey, createSqlCompleter(connection));
     return connection;
   }
 
