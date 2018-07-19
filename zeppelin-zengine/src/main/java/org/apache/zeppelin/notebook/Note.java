@@ -364,14 +364,14 @@ public class Note implements ParagraphJobListener, JsonSerializable {
     LinkedHashMap<String, Input> form = srcParagraph.settings.getForms();
 
     logger.debug("srcParagraph user: " + srcParagraph.getUser());
-    
+
     newParagraph.setAuthenticationInfo(subject);
     newParagraph.setConfig(config);
     newParagraph.settings.setParams(param);
     newParagraph.settings.setForms(form);
     newParagraph.setText(srcParagraph.getText());
     newParagraph.setTitle(srcParagraph.getTitle());
-    
+
     logger.debug("newParagraph user: " + newParagraph.getUser());
 
 
@@ -905,6 +905,20 @@ public class Note implements ParagraphJobListener, JsonSerializable {
 
   public void setInfo(Map<String, Object> info) {
     this.info = info;
+  }
+
+  public void setSequentialRunStatus(boolean isRunning) {
+    Map<String, Object> infoMap = getInfo();
+    infoMap.put("isRunning", isRunning);
+  }
+
+  public boolean isNowRunningSequentially() {
+    Map<String, Object> infoMap = getInfo();
+    if (infoMap.containsKey("isRunning")) {
+      return (boolean) infoMap.get("isRunning");
+    } else {
+      return false;
+    }
   }
 
   @Override

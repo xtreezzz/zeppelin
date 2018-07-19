@@ -119,6 +119,18 @@ public class NotebookServer extends WebSocketServlet
   final Map<String, List<NotebookSocket>> noteSocketMap = new HashMap<>();
   final Queue<NotebookSocket> connectedSockets = new ConcurrentLinkedQueue<>();
   final Map<String, Queue<NotebookSocket>> userConnectedSockets = new ConcurrentHashMap<>();
+  final List<OP> sequentialRunExcludeMessageList = Arrays.asList(
+          OP.COMMIT_PARAGRAPH,
+          OP.RUN_PARAGRAPH,
+          OP.RUN_PARAGRAPH_USING_SPELL,
+          OP.RUN_ALL_PARAGRAPHS,
+          OP.PARAGRAPH_CLEAR_OUTPUT,
+          OP.PARAGRAPH_CLEAR_ALL_OUTPUT,
+          OP.INSERT_PARAGRAPH,
+          OP.MOVE_PARAGRAPH,
+          OP.COPY_PARAGRAPH,
+          OP.PARAGRAPH_REMOVE,
+          OP.MOVE_NOTE_TO_TRASH);
 
   /**
    * This is a special endpoint in the notebook websoket, Every connection in this Queue
@@ -195,6 +207,15 @@ public class NotebookServer extends WebSocketServlet
       boolean allowAnonymous = conf.isAnonymousAllowed();
       if (!allowAnonymous && messagereceived.principal.equals("anonymous")) {
         throw new Exception("Anonymous access not allowed ");
+      }
+
+      if (sequentialRunExcludeMessageList.contains(messagereceived.op)) {
+        String noteId = (String) messagereceived.get("noteId");
+        Note note = notebook.getNote(noteId);
+        if (note != null && note.isNowRunningSequentially()) {
+          throw new Exception("Note is now running sequentially. Can not be performed: " +
+                  messagereceived.op);
+        }
       }
 
       HashSet<String> userAndRoles = new HashSet<>();
@@ -914,10 +935,32 @@ public class NotebookServer extends WebSocketServlet
       if (note.isPersonalizedMode()) {
         note = note.getUserNote(user);
       }
+      checkSequentialRunStatus(note);
       conn.send(serializeMessage(new Message(OP.NOTE).put("note", note)));
       sendAllAngularObjects(note, user, conn);
     } else {
       conn.send(serializeMessage(new Message(OP.NOTE).put("note", null)));
+    }
+  }
+
+  //check sequential running status (if NoteServer crash last time, it recover really status)
+  private void checkSequentialRunStatus(Note note) {
+    boolean isRunInInfo = note.isNowRunningSequentially();
+    if (!isRunInInfo) {
+      return;
+    }
+    List<Paragraph> paragraphs = note.getParagraphs();
+
+    boolean isRun = false;
+    for (Paragraph p: paragraphs) {
+      if (p.getStatus().isRunning()) {
+        isRun = true;
+        break;
+      }
+    }
+
+    if (!isRun) {
+      note.setSequentialRunStatus(false);
     }
   }
 
@@ -1873,9 +1916,8 @@ public class NotebookServer extends WebSocketServlet
     p.abort();
   }
 
-  private void runAllParagraphs(NotebookSocket conn, HashSet<String> userAndRoles,
-                                Notebook notebook,
-      Message fromMessage) throws IOException {
+    private void runAllParagraphs(final NotebookSocket conn, HashSet<String> userAndRoles,
+                                  Notebook notebook, final Message fromMessage) throws IOException {
     final String noteId = (String) fromMessage.get("noteId");
     if (StringUtils.isBlank(noteId)) {
       return;
@@ -1886,30 +1928,57 @@ public class NotebookServer extends WebSocketServlet
       return;
     }
 
-    List<Map<String, Object>> paragraphs =
+    final Note note = notebook.getNote(noteId);
+
+    final List<Map<String, Object>> paragraphs =
         gson.fromJson(String.valueOf(fromMessage.data.get("paragraphs")),
             new TypeToken<List<Map<String, Object>>>() {}.getType());
 
-    for (Map<String, Object> raw : paragraphs) {
-      String paragraphId = (String) raw.get("id");
-      if (paragraphId == null) {
-        continue;
+    runAllStatusBroadcast(note, true);
+
+    Thread runAllThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        for (Map<String, Object> raw : paragraphs) {
+          String paragraphId = (String) raw.get("id");
+          if (paragraphId == null) {
+            continue;
+          }
+
+          String text = (String) raw.get("paragraph");
+          String title = (String) raw.get("title");
+          Map<String, Object> params = (Map<String, Object>) raw.get("params");
+          Map<String, Object> config = (Map<String, Object>) raw.get("config");
+
+          Paragraph p = setParagraphUsingMessage(note, fromMessage,
+              paragraphId, text, title, params, config);
+
+          try {
+            if (p.isEnabled() && !persistAndExecuteSingleParagraph(conn, note, p, true)) {
+              // stop execution when one paragraph fails.
+              runAllStatusBroadcast(note, false);
+              break;
+            }
+          } catch (Exception e) {
+            LOG.error("Error in runAllParagraphs()", e);
+            runAllStatusBroadcast(note, false);
+          }
+        }
+        runAllStatusBroadcast(note, false);
       }
+    });
+    runAllThread.start();
+  }
 
-      String text = (String) raw.get("paragraph");
-      String title = (String) raw.get("title");
-      Map<String, Object> params = (Map<String, Object>) raw.get("params");
-      Map<String, Object> config = (Map<String, Object>) raw.get("config");
-
-      Note note = notebook.getNote(noteId);
-      Paragraph p = setParagraphUsingMessage(note, fromMessage,
-          paragraphId, text, title, params, config);
-
-      if (p.isEnabled() && !persistAndExecuteSingleParagraph(conn, note, p, true)) {
-        // stop execution when one paragraph fails.
-        break;
-      }
+  private void runAllStatusBroadcast(Note note, boolean status) {
+    if (note == null) {
+      return;
     }
+    if (note.isNowRunningSequentially() == status) {
+      return;
+    }
+    note.setSequentialRunStatus(status);
+    broadcast(note.getId(), new Message(OP.SEQUENTIAL_RUN_STATUS).put("status", status));
   }
 
   private List<Map<String, Object>> getParagraphsFromMessage(Message message) {

@@ -209,6 +209,9 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
 
   // Move the note to trash and go back to the main page
   $scope.moveNoteToTrash = function(noteId) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     noteActionService.moveNoteToTrash(noteId, true);
   };
 
@@ -1179,6 +1182,12 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     }
   };
 
+  $scope.isSequentialRun = function() {
+    return $scope.hasOwnProperty('info') &&
+           $scope.info.hasOwnProperty('isRunning') &&
+           $scope.info.isRunning === true;
+  };
+
   $scope.setIamOwner = function() {
     if ($scope.permissions.owners.length > 0 &&
       _.indexOf($scope.permissions.owners, $rootScope.ticket.principal) < 0) {
@@ -1556,6 +1565,13 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     let row = angParagEditor.selection.lead.row;
     $scope.$broadcast('focusParagraph', paragraph.id, row + 1, col);
   };
+
+  $scope.$on('sequentialRunStatus', function(event, status) {
+    if (!$scope.hasOwnProperty('info')) {
+      $scope.info = {};
+    }
+    $scope.info.isRunning = status;
+  });
 
   $scope.$on('setConnectedStatus', function(event, param) {
     if (connectedOnce && param) {

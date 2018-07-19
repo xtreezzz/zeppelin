@@ -45,6 +45,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   $scope.editor = null;
   $scope.cursorPosition = null;
   $scope.diffMatchPatch = new DiffMatchPatch();
+  $scope.isNoteRunSequential = null;
 
   // transactional info for spell execution
   $scope.spellTransaction = {
@@ -147,10 +148,26 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       $scope.paragraph.config = {};
     }
 
+    if (note && note.hasOwnProperty('info') &&
+      note.info.hasOwnProperty('isRunning') && note.info.isRunning === true) {
+      $scope.isNoteRunSequential = true;
+    } else {
+      $scope.isNoteRunSequential = false;
+    }
+
     noteVarShareService.put($scope.paragraph.id + '_paragraphScope', paragraphScope);
 
     initializeDefault($scope.paragraph.config);
   };
+
+  $scope.isSequentialRun = function() {
+    return $scope.isNoteRunSequential;
+  };
+
+  $scope.$on('sequentialRunStatus', function(event, status) {
+    $scope.isNoteRunSequential = status;
+    $scope.editor.setReadOnly(status);
+  });
 
   const initializeDefault = function(config) {
     let forms = $scope.paragraph.settings.forms;
@@ -266,6 +283,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.cancelParagraph = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     console.log('Cancel %o', paragraph.id);
     websocketMsgSrv.cancelParagraphRun(paragraph.id);
   };
@@ -430,6 +450,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.toggleEnableDisable = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     paragraph.config.enabled = !paragraph.config.enabled;
     commitParagraph(paragraph);
   };
@@ -473,14 +496,23 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
   $scope.runParagraphFromButton = function() {
     // we come here from the view, so we don't need to call `$digest()`
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.runParagraph($scope.getEditorValue(), false, false);
   };
 
   $scope.runAllToThis = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.$emit('runAllAbove', paragraph, true);
   };
 
   $scope.runAllFromThis = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.$emit('runAllBelowAndCurrent', paragraph, true);
   };
 
@@ -519,14 +551,23 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.moveUp = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.$emit('moveParagraphUp', paragraph);
   };
 
   $scope.moveDown = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.$emit('moveParagraphDown', paragraph);
   };
 
   $scope.insertNew = function(position) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     $scope.$emit('insertParagraph', $scope.paragraph.id, position);
   };
 
@@ -538,6 +579,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.copyParagraph = function(data, position) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     let newIndex = -1;
     for (let i = 0; i < $scope.note.paragraphs.length; i++) {
       if ($scope.note.paragraphs[i].id === $scope.paragraph.id) {
@@ -563,6 +607,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.removeParagraph = function(paragraph) {
+    if ($scope.isSequentialRun()) {
+      return;
+    }
     if ($scope.note.paragraphs.length === 1) {
       BootstrapDialog.alert({
         closable: true,
@@ -1485,7 +1532,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.paragraph.settings = newPara.settings;
     $scope.paragraph.runtimeInfos = newPara.runtimeInfos;
     if ($scope.editor) {
-      $scope.editor.setReadOnly($scope.isRunning(newPara));
+      let isReadOnly = $scope.isRunning(newPara) || $scope.isNoteRunSequential;
+      $scope.editor.setReadOnly(isReadOnly);
     }
 
     if (!$scope.asIframe) {
