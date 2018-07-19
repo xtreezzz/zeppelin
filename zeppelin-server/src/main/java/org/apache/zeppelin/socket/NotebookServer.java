@@ -467,19 +467,22 @@ public class NotebookServer extends WebSocketServlet
   }
 
   private void broadcast(String noteId, Message m) {
+    LOG.debug("broadcast " + noteId);
+    List<NotebookSocket> socketLists = new LinkedList<>();
     synchronized (noteSocketMap) {
       broadcastToWatchers(noteId, StringUtils.EMPTY, m);
-      List<NotebookSocket> socketLists = noteSocketMap.get(noteId);
+      socketLists = noteSocketMap.get(noteId);
       if (socketLists == null || socketLists.size() == 0) {
         return;
       }
-      LOG.debug("SEND >> " + m.op);
-      for (NotebookSocket conn : socketLists) {
-        try {
-          conn.send(serializeMessage(m));
-        } catch (IOException e) {
-          LOG.error("socket error", e);
-        }
+    }
+
+    for (NotebookSocket conn : socketLists) {
+      try {
+        LOG.debug("broadcast SEND >> " + noteId + ", " + conn.getUser() + ", " + m.op);
+        conn.send(serializeMessage(m));
+      } catch (IOException e) {
+        LOG.error("socket error", e);
       }
     }
   }
