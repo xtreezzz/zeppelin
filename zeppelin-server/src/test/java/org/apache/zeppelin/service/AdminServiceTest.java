@@ -17,32 +17,93 @@
 
 package org.apache.zeppelin.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-
+import static org.powermock.api.mockito.PowerMockito.mock;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.interpreter.InterpreterFactory;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
+import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.NotebookAuthorization;
+import org.apache.zeppelin.notebook.repo.NotebookRepo;
+import org.apache.zeppelin.search.SearchService;
+import org.apache.zeppelin.user.Credentials;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.quartz.SchedulerException;
+import java.io.IOException;
 
 public class AdminServiceTest {
+  private Notebook notebook;
+
+  /**
+   * Creates <code>{@link Notebook}</code> instance.
+   *
+   * @see Notebook#quartzSched
+   *
+   * @throws IOException
+   * @throws SchedulerException
+   */
+  @Before
+  public void setUp() throws IOException, SchedulerException {
+    System.setProperty("org.quartz.properties", "./quartz.properties");
+    notebook = new Notebook(
+            mock(ZeppelinConfiguration.class), mock(NotebookRepo.class),
+            mock(InterpreterFactory.class), mock(InterpreterSettingManager.class),
+            mock(SearchService.class), mock(NotebookAuthorization.class),
+            mock(Credentials.class)
+    );
+  }
+
+  @After
+  public void tearDown() {
+    System.clearProperty("org.quartz.properties");
+    notebook.close();
+  }
 
   @Test
   public void testSetLoggerLevel() {
     AdminService adminService = new AdminService();
     String testLoggerName = "test";
-    org.apache.log4j.Logger logger = adminService.getLogger(testLoggerName);
-    org.apache.log4j.Level level = logger.getLevel();
+    Logger logger = adminService.getLogger(testLoggerName);
+    Level level = logger.getLevel();
     boolean setInfo = false;
-    if (org.apache.log4j.Level.INFO == level) {
+    if (Level.INFO == level) {
       // if a current level is INFO, set DEBUG to check if it's changed or not
-      logger.setLevel(org.apache.log4j.Level.DEBUG);
+      logger.setLevel(Level.DEBUG);
     } else {
-      logger.setLevel(org.apache.log4j.Level.INFO);
+      logger.setLevel(Level.INFO);
       setInfo = true;
     }
 
     logger = adminService.getLogger(testLoggerName);
     assertTrue(
-        "Level of logger should be changed",
-        (setInfo && org.apache.log4j.Level.INFO == logger.getLevel())
-            || (!setInfo && Level.DEBUG == logger.getLevel()));
+            "Level of logger should be changed",
+            (setInfo && Level.INFO == logger.getLevel())
+                    || (!setInfo && Level.DEBUG == logger.getLevel()));
+  }
+
+  @Test
+  public void testChangeThreadPoolSize() throws SchedulerException {
+    try {
+      Integer newPoolSize = AdminService.getSchedulerPoolSize() + 1;
+      AdminService.setSchedulerThreadPoolSize(AdminService.getSchedulerId(), newPoolSize);
+      assertEquals(newPoolSize, AdminService.getSchedulerPoolSize());
+      assertEquals(
+              "org.apache.zeppelin.scheduler.pool.DynamicThreadPool",
+              AdminService.getSchedulerThreadPoolClass()
+      );
+      AdminService.setSchedulerThreadPoolSize(AdminService.getSchedulerId(), newPoolSize - 1);
+    } catch (SchedulerException e) {
+      assertNotEquals(
+              "org.apache.zeppelin.scheduler.pool.DynamicThreadPool",
+              AdminService.getSchedulerThreadPoolClass()
+      );
+      assertEquals("Thread pool size is constant.", e.getMessage());
+    }
   }
 }

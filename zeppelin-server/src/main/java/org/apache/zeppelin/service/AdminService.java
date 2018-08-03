@@ -17,33 +17,58 @@
 
 package org.apache.zeppelin.service;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.SchedulerRepository;
+import javax.ws.rs.BadRequestException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.ws.rs.BadRequestException;
-import org.apache.log4j.LogManager;
-import org.apache.zeppelin.rest.message.LoggerRequest;
 
 /** This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}. */
 public class AdminService {
 
-  public List<org.apache.log4j.Logger> getLoggers() {
+  private static Scheduler scheduler;
+
+  public static Scheduler getScheduler() throws SchedulerException {
+    if (scheduler != null) {
+      return scheduler;
+    }
+    ArrayList<Scheduler> allSchedulers =
+            new ArrayList<>(SchedulerRepository.getInstance().lookupAll());
+
+    if (allSchedulers.size() > 0) {
+      scheduler = allSchedulers.get(0);
+      return scheduler;
+    }
+    throw new SchedulerException("Scheduler isn't configured");
+  }
+
+  public List<Logger> getLoggers() {
     Enumeration loggers = LogManager.getCurrentLoggers();
     return StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(
-                new Iterator<org.apache.log4j.Logger>() {
+                new Iterator<Logger>() {
                   @Override
                   public boolean hasNext() {
                     return loggers.hasMoreElements();
                   }
 
                   @Override
-                  public org.apache.log4j.Logger next() {
-                    return org.apache.log4j.Logger.class.cast(loggers.nextElement());
+                  public Logger next() {
+                    return Logger.class.cast(loggers.nextElement());
                   }
                 },
                 Spliterator.ORDERED),
@@ -51,7 +76,7 @@ public class AdminService {
         .collect(Collectors.toList());
   }
 
-  public org.apache.log4j.Logger getLogger(String name) {
+  public Logger getLogger(String name) {
     return LogManager.getLogger(name);
   }
 
@@ -63,16 +88,56 @@ public class AdminService {
           "The class of '" + loggerRequest.getName() + "' doesn't exists");
     }
 
-    org.apache.log4j.Logger logger = LogManager.getLogger(loggerRequest.getName());
+    Logger logger = LogManager.getLogger(loggerRequest.getName());
     if (null == logger) {
       throw new BadRequestException("The name of the logger is wrong");
     }
 
-    org.apache.log4j.Level level = org.apache.log4j.Level.toLevel(loggerRequest.getLevel(), null);
+    Level level = Level.toLevel(loggerRequest.getLevel(), null);
     if (null == level) {
       throw new BadRequestException("The level of the logger is wrong");
     }
 
     logger.setLevel(level);
+  }
+
+  public static Map<String, String> getSchedulerInfo() throws SchedulerException {
+    Map<String, String> info = new HashMap<>();
+    info.put("name", getSchedulerName());
+    info.put("id", getSchedulerId());
+    info.put("poolSize", String.valueOf(getSchedulerPoolSize()));
+    info.put("poolClass", getSchedulerThreadPoolClass());
+    info.put("storeClass", getSchedulerJobStoreClass());
+    return info;
+  }
+
+  public static void setSchedulerThreadPoolSize(
+          String schedulerId, Integer size) throws SchedulerException {
+    DynamicThreadPool threadPool =
+            DynamicThreadPool.getInstance(schedulerId);
+    if (threadPool == null) {
+      throw new SchedulerException("Wrong schedulerId - " + schedulerId);
+    }
+    threadPool.setThreadCount(size);
+  }
+
+  public static String getSchedulerName() throws SchedulerException {
+    return getScheduler().getSchedulerName();
+  }
+
+  public static String getSchedulerId() throws SchedulerException {
+    return getScheduler().getSchedulerInstanceId();
+  }
+
+  public static Integer getSchedulerPoolSize() throws SchedulerException {
+    return getScheduler().getMetaData().getThreadPoolSize();
+  }
+
+  public static String getSchedulerThreadPoolClass() throws SchedulerException {
+    return getScheduler().getMetaData().getThreadPoolClass().getName();
+  }
+
+  public static String getSchedulerJobStoreClass() throws SchedulerException {
+    return getScheduler().getMetaData().getJobStoreClass().getName();
   }
 }

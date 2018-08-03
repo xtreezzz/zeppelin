@@ -58,3 +58,65 @@ Set property **zeppelin.notebook.cron.enable** to **true** in `$ZEPPELIN_HOME/co
 ### Run cron selectively on folders
 
 In `$ZEPPELIN_HOME/conf/zeppelin-site.xml` make sure the property **zeppelin.notebook.cron.enable** is set to **true**, and then set property **zeppelin.notebook.cron.folders** to the desired folder as comma-separated values, e.g. `*yst*, Sys?em, System`. This property accepts wildcard and joker.
+
+## Configure Quartz Settings
+By default, Zeppelin uses `quartz.properties` file located in `org.quartz`.
+
+In case you didn't configure quartz.properties:
+1. Create file `quartz.properties` from default properties;
+2. Add it to `conf` directory;
+3. Specify parameters you wish according to quartz docs.
+
+### Configure DynamicThreadPool
+  <table class="table-configuration">
+    <col width="200">
+    <tr>
+        <td>Property Name</td>
+        <td>Description</td>
+        <td>Required</td>
+        <td>Type</td>
+        <td>Value</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.threadPool.class```</td>
+      <td>Name of the ThreadPool implementation you wish to use.</td>
+      <td>yes</td>
+      <td>string (class name)</td>
+      <td>```org.apache.zeppelin.scheduler.pool.DynamicThreadPool```</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.threadPool.threadCount```</td>
+      <td>Thread Pool Size - the number of threads available for concurrent execution of jobs.</td>
+      <td>yes</td>
+      <td>int</td>
+      <td>Default: 0</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.scheduler.instanceName```</td>
+      <td>Scheduler instance name.</td>
+      <td>yes</td>
+      <td>string</td>
+      <td>Any string</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.scheduler.instanceId```</td>
+      <td>Scheduler instance id. You can get pool by ```instanceId```.</td>
+      <td>no</td>
+      <td>string</td>
+      <td>Any string</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.threadPool.threadPriority```</td>
+      <td>Priority of threads created by pool. Can be any int between Thread.MIN_PRIORITY (which is 1) and Thread.MAX_PRIORITY (which is 10).</td>
+      <td>no</td>
+      <td>int</td>
+      <td>Default: ```Thread.NORM_PRIORITY (5)```</td>
+    </tr>
+    <tr>
+      <td>```org.quartz.threadPool.threadNamePrefix```</td>
+      <td>Thread names correspond to format {threadNamePrefix}-{threadNo}.</td>
+      <td>no</td>
+      <td>string</td>
+      <td>Default:```instanceName```</td>
+    </tr>
+  </table>
