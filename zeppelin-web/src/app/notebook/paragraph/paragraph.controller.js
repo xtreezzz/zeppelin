@@ -802,8 +802,13 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       }
 
       autoAdjustEditorHeight(_editor);
-      angular.element(window).resize(function() {
-        autoAdjustEditorHeight(_editor);
+
+      $scope.addEvent({
+        eventID: _editor.container.id,
+        eventType: 'resize',
+        element: window,
+        onDestroyElement: _editor.container,
+        handler: () => autoAdjustEditorHeight(_editor),
       });
 
       if (navigator.appVersion.indexOf('Mac') !== -1) {
