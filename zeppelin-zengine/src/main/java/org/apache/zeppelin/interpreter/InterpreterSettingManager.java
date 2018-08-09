@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
 import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -869,12 +870,17 @@ public class InterpreterSettingManager implements InterpreterSettingManagerMBean
   }
 
   @Override
-  public Set<String> getRunningInterpreters() {
-    Set<String> runningInterpreters = Sets.newHashSet();
+  public List<Map<String, String>> getRunningInterpreters() {
+    List<Map<String, String>> runningInterpreters = new ArrayList<>();
     for (Map.Entry<String, InterpreterSetting> entry : interpreterSettings.entrySet()) {
       for (ManagedInterpreterGroup mig : entry.getValue().getAllInterpreterGroups()) {
-        if (null != mig.getRemoteInterpreterProcess()) {
-          runningInterpreters.add(entry.getKey());
+        if (mig.getRemoteInterpreterProcess() != null) {
+          Map<String, String> interpreterInfo = new HashMap<>();
+          interpreterInfo.put("name", mig.getId());
+          interpreterInfo.put("group", mig.getInterpreterSetting().getGroup());
+          interpreterInfo.put("host", mig.getInterpreterProcess().getHost());
+          interpreterInfo.put("port", String.valueOf(mig.getInterpreterProcess().getPort()));
+          runningInterpreters.add(interpreterInfo);
         }
       }
     }

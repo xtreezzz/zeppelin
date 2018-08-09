@@ -267,6 +267,10 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     return enabled == null || enabled.booleanValue();
   }
 
+  public Interpreter getInterpreter() {
+    return interpreter;
+  }
+
   public Interpreter getBindedInterpreter() throws InterpreterNotFoundException {
     return this.note.getInterpreterFactory().getInterpreter(user, note.getId(), intpText,
         note.getDefaultInterpreterGroup());

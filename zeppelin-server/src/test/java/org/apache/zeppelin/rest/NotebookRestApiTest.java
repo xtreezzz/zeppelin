@@ -21,10 +21,16 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
@@ -325,6 +331,146 @@ public class NotebookRestApiTest extends AbstractTestRestApi {
 
     //cleanup
     ZeppelinServer.notebook.removeNote(note.getId(), anonymous);
+  }
+
+  private Map<String, Object> waitForInterpretersSetUp() throws IOException, InterruptedException {
+    long startTimeInMins = (System.currentTimeMillis() / (1000 * 60)) % 60;
+    Map<String, Object> runningInterpreters = new HashMap<>();
+    while (!(runningInterpreters.containsKey("sh-shared_process")
+        && runningInterpreters.containsKey("spark-shared_process"))) {
+      GetMethod get = httpGet("/notebook/jobmanager/running");
+      assertThat(get, isAllowed());
+      Map<String, Object> resp = gson.fromJson(get.getResponseBodyAsString(),
+          new TypeToken<Map<String, Object>>() {
+          }.getType());
+      runningInterpreters =
+          (Map<String, Object>) resp.get("body");
+      runningInterpreters =
+          (Map<String, Object>) runningInterpreters.get("runningInterpreters");
+      get.releaseConnection();
+      LOG.info("Result of query is {}", runningInterpreters.toString());
+      long currentTimeInMins = (System.currentTimeMillis() / (1000 * 60)) % 60;
+      if (currentTimeInMins - startTimeInMins > 1) {
+        if (runningInterpreters.containsKey("sh") && runningInterpreters.containsKey("spark")) {
+          return runningInterpreters;
+        }
+        // lasts too long
+        return null;
+      }
+      TimeUnit.SECONDS.sleep(10);
+    }
+    return runningInterpreters;
+  }
+
+  private boolean checkParagraph(Map<String, String> response, Paragraph p) {
+    return response.get("interpreterText").equals(p.getIntpText()) &&
+        response.get("noteName").equals(p.getNote().getName()) &&
+        response.get("noteId").equals(p.getNote().getId()) &&
+        response.get("id").equals(p.getId()) &&
+        response.get("user").equals(anonymous.getUser());
+  }
+
+  private void addData(List<Map<String, Object>> list, String groupName, Paragraph paragraph) {
+    Map<String, Object> data = new HashMap<>();
+    data.put("groupName", groupName);
+    data.put("paragraph", paragraph);
+    list.add(data);
+  }
+
+  @Test
+  public void testGetRunningParagraphsGroupedByInterpreters()
+      throws IOException, InterruptedException {
+    Note note1 = ZeppelinServer.notebook.createNote("TestNote", anonymous);
+    // 2 paragraphs
+    // P1:
+    //    %sh
+    //    sleep 300s
+    //
+    // P2:
+    //    %spark.pyspark
+    //    import time
+    //    time.sleep(300)
+    //
+    Paragraph shParagraph = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+    Paragraph sparkParagraph = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+    shParagraph.setText("%sh\nsleep 300s\n");
+    sparkParagraph.setText("%spark.pyspark\nimport time\ntime.sleep(300)\n");
+    List<Map<String, Object>> expectedData = new ArrayList<>();
+    addData(expectedData, "sh-shared_process", shParagraph);
+    addData(expectedData, "spark-shared_process", sparkParagraph);
+    PostMethod shPost = httpPost(
+        String.format(
+            "/notebook/job/%s/%s",
+            note1.getId(),
+            shParagraph.getId()
+        ),
+        "");
+    assertThat(shPost, isAllowed());
+    PostMethod sparkPost = httpPost(
+        String.format(
+            "/notebook/job/%s/%s",
+            note1.getId(),
+            sparkParagraph.getId()
+        ),
+        "");
+    assertThat(sparkPost, isAllowed());
+    Map<String, Object> runningInterpreters = waitForInterpretersSetUp();
+    shPost.releaseConnection();
+    sparkPost.releaseConnection();
+    assertNotNull("Interpreters setup lasts too long", runningInterpreters);
+
+    // Map<String, String> pids = getPids();
+    //assertNotNull("There is no running interpreters", pids);
+    for (Map<String, Object> expectedInterpreterInfo : expectedData) {
+      String groupName = (String) expectedInterpreterInfo.get("groupName");
+      Paragraph paragraph = (Paragraph) expectedInterpreterInfo.get("paragraph");
+      Map<String, Object> interpreterInfo =
+          (Map<String, Object>) runningInterpreters.get(groupName);
+      assertNotNull(
+          String.format(
+              "%s interpreter isn't running",
+              groupName
+          ),
+          interpreterInfo
+      );
+      Map<String, String> interpreterParagraphInfo =
+          ((List<Map<String, String>>) interpreterInfo.get("paragraphs")).get(0);
+      assertNotNull(
+          String.format(
+              "%s paragraph isn't running",
+              groupName
+          ),
+          interpreterParagraphInfo
+      );
+      assertTrue(
+          String.format(
+              "%s running paragraph info is incorrect",
+              groupName
+          ),
+          checkParagraph(interpreterParagraphInfo, paragraph));
+    }
+
+    // cleanup
+    DeleteMethod shDelete = httpDelete(
+        String.format(
+            "/notebook/job/%s/%s",
+            note1.getId(),
+            shParagraph.getId()
+        )
+    );
+    assertThat(shDelete, isAllowed());
+    shDelete.releaseConnection();
+
+    DeleteMethod sparkDelete = httpDelete(
+        String.format(
+            "/notebook/job/%s/%s",
+            note1.getId(),
+            sparkParagraph.getId()
+        )
+    );
+    assertThat(sparkDelete, isAllowed());
+    sparkDelete.releaseConnection();
+    ZeppelinServer.notebook.removeNote(note1.getId(), anonymous);
   }
 
   @Test

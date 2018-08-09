@@ -959,6 +959,22 @@ public class NotebookRestApi extends AbstractRestApi {
   }
 
   /**
+   * Get running paragraphs grouped by interpreters.
+   *
+   * @return JSON with status.OK
+   */
+  @GET
+  @Path("jobmanager/running")
+  @ZeppelinApi
+  public Response getRunning() {
+    Map<String, Object> response = new HashMap<>();
+    response.put("lastResponseUnixTime", System.currentTimeMillis());
+    response.put("runningInterpreters", notebookServer.getRunningParagraphInterpreterInfo());
+
+    return new JsonResponse<>(Status.OK, "", response).build();
+  }
+
+  /**
    * Get updated note jobs for job manager
    * <p>
    * Return the `Note` change information within the post unix timestamp.
