@@ -17,10 +17,17 @@
 
 package org.apache.zeppelin.socket;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.apache.zeppelin.notebook.NoteInfo;
 
 public interface NotebookServerMBean {
   Set<String> getConnectedUsers();
+
+  List<Map<String, String>> getParagraphsInfo(String noteId);
+
+  Map<String, Object> getRunningParagraphsGroupedByInterpreters();
 
   void sendMessage(String message);
 }

@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import java.util.LinkedList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -31,10 +32,13 @@ import org.apache.zeppelin.display.Input;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
+import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
+import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.Note;
@@ -1819,6 +1823,99 @@ public class NotebookServer extends WebSocketServlet
   @Override
   public Set<String> getConnectedUsers() {
     return connectionManager.getConnectedUsers();
+  }
+
+  @Override
+  public List<Map<String, String>> getParagraphsInfo(String noteId) {
+    Note note = notebook().getNote(noteId);
+    return note.generateParagraphsInfo();
+  }
+
+  /**
+   * Extract running paragraphs info grouped by running interpreters.
+   */
+  @Override
+  public Map<String, Object> getRunningParagraphsGroupedByInterpreters() {
+    Map<String, Object> runningInterpretersInfo = new HashMap<>();
+    for (Note currentNote : notebook().getAllNotes()) {
+      for (Paragraph currentParagraph : currentNote.getParagraphs()) {
+        if (currentParagraph.isRunning()) {
+          updateRunningInterpreterInfo(runningInterpretersInfo, currentParagraph);
+        }
+      }
+    }
+    return runningInterpretersInfo;
+  }
+
+  /**
+   * Update running interpreter info with paragraph data.
+   */
+  private void updateRunningInterpreterInfo(Map<String, Object> runningInterpretersInfo,
+                                            Paragraph paragraph) {
+    List<Map<String, String>> runningInterpreters = notebook()
+        .getInterpreterSettingManager()
+        .getRunningInterpreters();
+
+    for (Map<String, String> baseRunningInterpreterInfo : runningInterpreters) {
+      RemoteInterpreterProcess process = ((ManagedInterpreterGroup) paragraph.getInterpreter()
+          .getInterpreterGroup()).getInterpreterProcess();
+      if (process.getPort() == Integer.valueOf(baseRunningInterpreterInfo.get("port"))
+          && process.getHost().equals(baseRunningInterpreterInfo.get("host"))) {
+
+        Map<String, Object> interpreterInfoBeforeUpdate =
+            (Map<String, Object>) runningInterpretersInfo
+                .get(baseRunningInterpreterInfo.get("name"));
+        if (interpreterInfoBeforeUpdate == null) {
+          // create interpreter info
+          interpreterInfoBeforeUpdate = new HashMap<>();
+          interpreterInfoBeforeUpdate.put("port", baseRunningInterpreterInfo.get("port"));
+          interpreterInfoBeforeUpdate.put("host", baseRunningInterpreterInfo.get("host"));
+
+          // set running interpreter paragraphs
+          List<Map<String, String>> paragraphsInfo = new ArrayList<>();
+          interpreterInfoBeforeUpdate.put("paragraphs", paragraphsInfo);
+        }
+        // update interpreter info
+        List<Map<String, String>> paragraphsInfoBeforeUpdate =
+                (List<Map<String, String>>) interpreterInfoBeforeUpdate.get("paragraphs");
+        addParagraphInfo(paragraphsInfoBeforeUpdate, paragraph);
+
+        runningInterpretersInfo
+            .put(baseRunningInterpreterInfo.get("name"), interpreterInfoBeforeUpdate);
+      }
+    }
+  }
+
+  /**
+   * Extract interpreter name from paragraph's binded interpreter group if it contains ":".
+   */
+  private String getParagraphInterpreterName(Paragraph p) {
+    String intpGroupName = "";
+    try {
+      intpGroupName = p.getBindedInterpreter().getInterpreterGroup().getId();
+      if (intpGroupName.contains("-")) {
+        intpGroupName = intpGroupName.split("-")[0];
+      }
+    } catch (InterpreterNotFoundException exp) {
+      intpGroupName = exp.getMessage();
+    }
+    return intpGroupName;
+  }
+
+  /**
+   * Add paragraph info to interpreter paragraph info list.
+   */
+  private void addParagraphInfo(List<Map<String, String>> paragraphsInfoBeforeUpdate,
+                                Paragraph paragraph) {
+    Note parentNote = paragraph.getNote();
+    Map<String, String> newParagraphInfo = new HashMap<>();
+
+    newParagraphInfo.put("interpreterText", paragraph.getIntpText());
+    newParagraphInfo.put("noteName", parentNote.getName());
+    newParagraphInfo.put("noteId", parentNote.getId());
+    newParagraphInfo.put("id", paragraph.getId());
+    newParagraphInfo.put("user", paragraph.getUser());
+    paragraphsInfoBeforeUpdate.add(newParagraphInfo);
   }
 
   @Override
