@@ -31,7 +31,6 @@ export default class TableData extends Dataset {
     }
     let columnNames = [];
     let rows = [];
-    let array = [];
     let textRows = paragraphResult.msg.split('\n');
     let comment = '';
     let commentRow = false;
@@ -52,7 +51,6 @@ export default class TableData extends Dataset {
       }
       let textCols = textRow.split('\t');
       let cols = [];
-      let cols2 = [];
       for (let j = 0; j < textCols.length; j++) {
         let col = textCols[j];
         if (i === 0) {
@@ -62,13 +60,11 @@ export default class TableData extends Dataset {
           if (isNaN(valueOfCol) || valueOfCol > Number.MAX_SAFE_INTEGER || valueOfCol < Number.MIN_SAFE_INTEGER) {
             valueOfCol = col;
           }
-          cols.push(valueOfCol);
-          cols2.push({key: (columnNames[i]) ? columnNames[i].name : undefined, value: col});
+          cols.push(col);
         }
       }
       if (i !== 0) {
         rows.push(cols);
-        array.push(cols2);
       }
     }
     this.comment = comment;
