@@ -63,6 +63,7 @@ import org.apache.zeppelin.util.WatcherSecurityKey;
 import org.apache.zeppelin.utils.InterpreterBindingUtils;
 import org.apache.zeppelin.utils.SecurityUtils;
 import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
+import org.eclipse.jetty.websocket.api.WebSocketException;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.joda.time.DateTime;
@@ -540,7 +541,7 @@ public class NotebookServer extends WebSocketServlet
       for (NotebookSocket ns : connectedSockets) {
         try {
           ns.send(serializeMessage(m));
-        } catch (IOException e) {
+        } catch (IOException | WebSocketException e) {
           LOG.error("Send error: " + m, e);
         }
       }
@@ -561,7 +562,7 @@ public class NotebookServer extends WebSocketServlet
     for (NotebookSocket conn : socketsToBroadcast) {
       try {
         conn.send(serializeMessage(m));
-      } catch (IOException e) {
+      } catch (IOException | WebSocketException e) {
         LOG.error("socket error", e);
       }
     }
@@ -585,7 +586,7 @@ public class NotebookServer extends WebSocketServlet
       }
       try {
         conn.send(serializeMessage(m));
-      } catch (IOException e) {
+      } catch (IOException | WebSocketException e) {
         LOG.error("socket error", e);
       }
     }
@@ -605,7 +606,7 @@ public class NotebookServer extends WebSocketServlet
   private void unicast(Message m, NotebookSocket conn) {
     try {
       conn.send(serializeMessage(m));
-    } catch (IOException e) {
+    } catch (IOException | WebSocketException e) {
       LOG.error("socket error", e);
     }
     broadcastToWatchers(StringUtils.EMPTY, StringUtils.EMPTY, m);
@@ -2845,7 +2846,7 @@ public class NotebookServer extends WebSocketServlet
 
         try {
           conn.send(serialized);
-        } catch (IOException e) {
+        } catch (IOException | WebSocketException e) {
           LOG.error("Cannot broadcast message to watcher", e);
         }
       }
@@ -2859,7 +2860,7 @@ public class NotebookServer extends WebSocketServlet
           watcher.send(
               WatcherMessage.builder(noteId).subject(subject).message(serializeMessage(message))
                   .build().toJson());
-        } catch (IOException e) {
+        } catch (IOException | WebSocketException e) {
           LOG.error("Cannot broadcast message to watcher", e);
         }
       }
