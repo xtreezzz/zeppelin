@@ -43,6 +43,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -269,23 +272,36 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     NamingEnumeration answer = ldapContext.search(searchBase, searchFilter, searchArguments,
         searchCtls);
 
-    while (answer.hasMoreElements()) {
-      SearchResult sr = (SearchResult) answer.next();
+    ExecutorService getUserNamesService = Executors.newSingleThreadExecutor();
+    getUserNamesService.submit(() -> {
+      try {
+        while (answer.hasMoreElements()) {
+          SearchResult sr = (SearchResult) answer.next();
 
-      if (log.isDebugEnabled()) {
-        log.debug("Retrieving userprincipalname names for user [" + sr.getName() + "]");
-      }
+          if (log.isDebugEnabled()) {
+            log.debug("Retrieving userprincipalname names for user [" + sr.getName() + "]");
+          }
 
-      Attributes attrs = sr.getAttributes();
-      if (attrs != null) {
-        NamingEnumeration ae = attrs.getAll();
-        while (ae.hasMore()) {
-          Attribute attr = (Attribute) ae.next();
-          if (attr.getID().toLowerCase().equals("cn")) {
-            userNameList.addAll(LdapUtils.getAllAttributeValues(attr));
+          Attributes attrs = sr.getAttributes();
+          if (attrs != null) {
+            NamingEnumeration ae = attrs.getAll();
+            while (ae.hasMore()) {
+              Attribute attr = (Attribute) ae.next();
+              if (attr.getID().toLowerCase().equals("cn")) {
+                userNameList.addAll(LdapUtils.getAllAttributeValues(attr));
+              }
+            }
           }
         }
+      } catch (Exception e) {
+        log.error("Error retrieving User list from ActiveDirectory Realm", e);
       }
+    });
+    try {
+      getUserNamesService.shutdown();
+      getUserNamesService.awaitTermination(500, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      log.error("Long login detected!");
     }
     return userNameList;
   }
