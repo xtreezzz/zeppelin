@@ -66,6 +66,8 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+
 /**
  * Collection of Notes.
  */
@@ -795,8 +797,8 @@ public class Notebook implements NoteEventListener {
       info.put("noteName", "Note " + jobNote.getId());
     }
     // set note type ( cron or normal )
-    if (jobNote.getConfig().containsKey(CRON_TYPE_NOTE_KEYWORD) && !jobNote.getConfig()
-            .get(CRON_TYPE_NOTE_KEYWORD).equals("")) {
+    if (jobNote.getConfig().containsKey(CRON_TYPE_NOTE_KEYWORD)
+            && isNotBlank((String) jobNote.getConfig().get(CRON_TYPE_NOTE_KEYWORD))) {
       info.put("noteType", "cron");
     } else {
       info.put("noteType", "normal");
@@ -867,8 +869,8 @@ public class Notebook implements NoteEventListener {
       }
 
       // set note type ( cron or normal )
-      if (note.getConfig().containsKey(CRON_TYPE_NOTE_KEYWORD) && !note.getConfig()
-          .get(CRON_TYPE_NOTE_KEYWORD).equals("")) {
+      if (note.getConfig().containsKey(CRON_TYPE_NOTE_KEYWORD)
+              && isNotBlank((String) note.getConfig().get(CRON_TYPE_NOTE_KEYWORD))) {
         info.put("noteType", "cron");
       } else {
         info.put("noteType", "normal");
