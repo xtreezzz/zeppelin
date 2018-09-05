@@ -296,7 +296,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
 
     if ($scope.type === 'TABLE' || $scope.type === 'NETWORK') {
       tableData = new DatasetFactory().createDataset($scope.type);
-      tableData.loadParagraphResult({type: $scope.type, msg: data});
+      tableData.loadParagraphResult({type: $scope.type, msg: data, mode: config.graph.mode});
       $scope.tableDataColumns = tableData.columns;
       $scope.tableDataComment = tableData.comment;
       if ($scope.type === 'NETWORK') {
@@ -683,8 +683,18 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
           builtInViz.instance.render(transformed);
           builtInViz.instance.renderSetting(visualizationSettingTargetEl);
           builtInViz.instance.activate();
-          angular.element(window).resize(() => {
-            builtInViz.instance.resize();
+
+          let eventID = builtInViz.instance.targetEl.id;
+          if (!eventID) {
+            eventID = builtInViz.instance.targetEl[0].id;
+          }
+
+          $scope.addEvent({
+            eventID: eventID,
+            eventType: 'resize',
+            element: window,
+            onDestroyElement: builtInViz.instance.targetEl,
+            handler: () => builtInViz.instance.resize(),
           });
         } catch (err) {
           console.error('Graph drawing error %o', err);
