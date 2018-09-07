@@ -625,20 +625,20 @@ public class NotebookServer extends WebSocketServlet
   }
 
   public void broadcastUpdateNoteJobInfo(long lastUpdateUnixTime) throws IOException {
-    List<Map<String, Object>> noteJobs = new LinkedList<>();
-    Notebook notebookObject = notebook();
-    List<Map<String, Object>> jobNotes = null;
-    if (notebookObject != null) {
-      jobNotes = notebook().getJobListByUnixTime(false, lastUpdateUnixTime, null);
-      noteJobs = jobNotes == null ? noteJobs : jobNotes;
-    }
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("lastResponseUnixTime", System.currentTimeMillis());
-    response.put("jobs", noteJobs != null ? noteJobs : new LinkedList<>());
-
-    broadcast(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(),
-        new Message(OP.LIST_UPDATE_NOTE_JOBS).put("noteRunningJobs", response));
+//    List<Map<String, Object>> noteJobs = new LinkedList<>();
+//    Notebook notebookObject = notebook();
+//    List<Map<String, Object>> jobNotes = null;
+//    if (notebookObject != null) {
+//      jobNotes = notebook().getJobListByUnixTime(false, lastUpdateUnixTime, null);
+//      noteJobs = jobNotes == null ? noteJobs : jobNotes;
+//    }
+//
+//    Map<String, Object> response = new HashMap<>();
+//    response.put("lastResponseUnixTime", System.currentTimeMillis());
+//    response.put("jobs", noteJobs != null ? noteJobs : new LinkedList<>());
+//
+//    broadcast(JOB_MANAGER_SERVICE.JOB_MANAGER_PAGE.getKey(),
+//        new Message(OP.LIST_UPDATE_NOTE_JOBS).put("noteRunningJobs", response));
   }
 
   public void unsubscribeNoteJobInfo(NotebookSocket conn) {
