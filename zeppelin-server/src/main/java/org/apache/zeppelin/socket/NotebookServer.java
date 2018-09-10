@@ -2629,10 +2629,10 @@ public class NotebookServer extends WebSocketServlet
 
       if (job.isTerminated()) {
         if (job.getStatus() == Status.FINISHED) {
-          LOG.info("Job {} is finished successfully, status: {}", job.getId(), job.getStatus());
+          LOG.info("Note {}, job {} is finished successfully, status: {}", note.getId(), job.getId(), job.getStatus());
         } else {
-          LOG.warn("Job {} is finished, status: {}, exception: {}, result: {}" , job.getId(),
-              job.getStatus(), job.getException(), job.getReturn());
+          LOG.warn("Note {}, job {} is finished, status: {}, exception: {}, result:\n@@@@@ Result start @@@@@\n{}\n@@@@@ Result end @@@@@" ,
+                  note.getId(), job.getId(), job.getStatus(), job.getException(), job.getReturn());
         }
 
         try {
