@@ -961,6 +961,7 @@ public class NotebookRestApi {
     Map<String, Object> response = new HashMap<>();
     response.put("cron", note.getConfig().get("cron"));
     response.put("releaseResource", note.getConfig().get("releaseresource"));
+    response.put("cronExecutingUser", note.getConfig().get("cronExecutingUser"));
 
     return new JsonResponse<>(Status.OK, response).build();
   }
