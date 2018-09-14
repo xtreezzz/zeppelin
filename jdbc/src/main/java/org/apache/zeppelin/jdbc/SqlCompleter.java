@@ -227,7 +227,7 @@ public class SqlCompleter {
               new BufferedReader(new InputStreamReader(
                   SqlCompleter.class.getResourceAsStream(driverSpecificKeywords)))
                   .readLine();
-          keywords += "," + driverKeywords.toUpperCase();
+          keywords += ";" + driverKeywords;
         }
       } catch (Exception e) {
         logger.debug("fail to get driver specific SQL completions for "
@@ -236,42 +236,33 @@ public class SqlCompleter {
 
       // Add the keywords from the current JDBC connection
       try {
-        keywords += "," + meta.getSQLKeywords();
+        keywords += ";" + meta.getSQLKeywords().replace(",", ";").toLowerCase();
       } catch (Exception e) {
         logger.debug("fail to get SQL key words from database metadata: " + e, e);
       }
       try {
-        keywords += "," + meta.getStringFunctions();
+        keywords += ";" + meta.getStringFunctions().replace(",", ";").toLowerCase();
       } catch (Exception e) {
         logger.debug("fail to get string function names from database metadata: " + e, e);
       }
       try {
-        keywords += "," + meta.getNumericFunctions();
+        keywords += ";" + meta.getNumericFunctions().replace(",", ";").toLowerCase();
       } catch (Exception e) {
         logger.debug("fail to get numeric function names from database metadata: " + e, e);
       }
       try {
-        keywords += "," + meta.getSystemFunctions();
+        keywords += ";" + meta.getSystemFunctions().replace(",", ";").toLowerCase();
       } catch (Exception e) {
         logger.debug("fail to get system function names from database metadata: " + e, e);
       }
       try {
-        keywords += "," + meta.getTimeDateFunctions();
+        keywords += ";" + meta.getTimeDateFunctions().replace(",", ";").toLowerCase();
       } catch (Exception e) {
         logger.debug("fail to get time date function names from database metadata: " + e, e);
       }
-
-      // Set all keywords to lower-case versions
-      keywords = keywords.toLowerCase();
-
     }
 
-    StringTokenizer tok = new StringTokenizer(keywords, ", ");
-    while (tok.hasMoreTokens()) {
-      completions.add(tok.nextToken());
-    }
-
-    return completions;
+    return new HashSet<>(Arrays.asList(keywords.split(";")));
   }
 
   private SqlStatement getStatementParameters(String buffer, int cursor) {

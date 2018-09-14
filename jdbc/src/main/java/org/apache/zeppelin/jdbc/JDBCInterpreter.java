@@ -61,6 +61,7 @@ import org.apache.zeppelin.user.UsernamePassword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.nanoTime;
 import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
@@ -242,12 +243,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
     } else {
       completer = sqlCompleter;
     }
-    ExecutorService executorService = Executors.newFixedThreadPool(1);
-    executorService.execute(new Runnable() {
-      @Override
-      public void run() {
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    executorService.submit(() -> {
         completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
-      }
     });
 
     executorService.shutdown();
