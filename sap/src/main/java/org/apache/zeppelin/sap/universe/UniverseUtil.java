@@ -232,7 +232,8 @@ public class UniverseUtil {
           continue;
         }
         if (pathClosed && singleQuoteClosed && c == ',') {
-          select.append(parseResultObj(resultObj.toString().replaceAll("(?i)distinc", ""), nodeInfos));
+          select.append(parseResultObj(resultObj.toString().replaceAll("(?i)distinc", ""),
+            nodeInfos));
           resultObj = new StringBuilder();
         } else {
           resultObj.append(c);
@@ -241,7 +242,7 @@ public class UniverseUtil {
       }
 
       if (wherePart) {
-        if (c == ';' && pathClosed && singleQuoteClosed) {
+        if (c == ';' && pathClosed && singleQuoteClosed) { // todo: check for limit
           wherePart = false;
           where = parseWhere(whereBuf.toString(), nodeInfos);
         } else {

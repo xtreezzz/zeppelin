@@ -300,7 +300,6 @@ while True :
 
       to_run_exec, to_run_single = (code.body[:-(nhooks + 1)],
                                    [code.body[-(nhooks + 1)]] if len(code.body) > nhooks else [])
-
       try:
         for node in to_run_exec:
           mod = ast.Module([node])

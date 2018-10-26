@@ -16,7 +16,26 @@
  */
 package org.apache.zeppelin.realm;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -33,27 +52,6 @@ import org.apache.shiro.realm.ldap.LdapUtils;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.LdapContext;
 
 
 /**
@@ -259,12 +257,13 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     return new SimpleAuthorizationInfo(roleNames);
   }
 
-  public List<String> searchForUserName(String containString, LdapContext ldapContext) throws
-      NamingException {
+  public List<String> searchForUserName(String containString, LdapContext ldapContext,
+      int numUsersToFetch) throws NamingException {
     List<String> userNameList = new ArrayList<>();
 
     SearchControls searchCtls = new SearchControls();
     searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+    searchCtls.setCountLimit(numUsersToFetch);
 
     String searchFilter = "(&(objectClass=*)(userPrincipalName=*" + containString + "*))";
     Object[] searchArguments = new Object[]{containString};

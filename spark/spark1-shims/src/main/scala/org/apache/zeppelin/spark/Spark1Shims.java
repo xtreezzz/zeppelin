@@ -22,17 +22,26 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.scheduler.SparkListenerJobStart;
 import org.apache.spark.ui.jobs.JobProgressListener;
 
+import java.util.Properties;
+
 /**
  * Shims for Spark 1.x
  */
 public class Spark1Shims extends SparkShims {
 
+  public Spark1Shims(Properties properties) {
+    super(properties);
+  }
+
   public void setupSparkListener(final String master, final String sparkWebUrl) {
-    SparkContext sc = SparkContext.getOrCreate();
+    final SparkContext sc = SparkContext.getOrCreate();
     sc.addSparkListener(new JobProgressListener(sc.getConf()) {
       @Override
       public void onJobStart(SparkListenerJobStart jobStart) {
-        buildSparkJobUrl(master, sparkWebUrl, jobStart.jobId(), jobStart.properties());
+        if (sc.getConf().getBoolean("spark.ui.enabled", true) &&
+            !Boolean.parseBoolean(properties.getProperty("zeppelin.spark.ui.hidden", "false"))) {
+          buildSparkJobUrl(master, sparkWebUrl, jobStart.jobId(), jobStart.properties());
+        }
       }
     });
   }

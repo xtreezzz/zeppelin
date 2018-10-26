@@ -112,9 +112,12 @@ public class NewSparkInterpreter extends AbstractSparkInterpreter {
       sqlContext = this.innerInterpreter.sqlContext();
       sparkSession = this.innerInterpreter.sparkSession();
       sparkUrl = this.innerInterpreter.sparkUrl();
-      sparkShims = SparkShims.getInstance(sc.version());
+      String sparkUrlProp = getProperty("zeppelin.spark.uiWebUrl", "");
+      if (!StringUtils.isBlank(sparkUrlProp)) {
+        sparkUrl = sparkUrlProp;
+      }
+      sparkShims = SparkShims.getInstance(sc.version(), getProperties());
       sparkShims.setupSparkListener(sc.master(), sparkUrl);
-
       hooks = getInterpreterGroup().getInterpreterHookRegistry();
       z = new SparkZeppelinContext(sc, hooks,
           Integer.parseInt(getProperty("zeppelin.spark.maxResult")));

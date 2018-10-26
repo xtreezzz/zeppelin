@@ -90,7 +90,7 @@ public class SparkShimsTest {
     @Test
     public void checkYarnVersionTest() {
       SparkShims sparkShims =
-          new SparkShims() {
+          new SparkShims(new Properties()) {
             @Override
             public void setupSparkListener(String master, String sparkWebUrl) {}
           };
@@ -120,16 +120,15 @@ public class SparkShimsTest {
       when(mockProperties.getProperty("spark.jobGroup.id")).thenReturn("job-note-paragraph");
 
       try {
-        sparkShims = SparkShims.getInstance(SparkVersion.SPARK_2_0_0.toString());
+        sparkShims = SparkShims.getInstance(SparkVersion.SPARK_2_0_0.toString(), new Properties());
       } catch (Throwable ignore) {
-        sparkShims = SparkShims.getInstance(SparkVersion.SPARK_1_6_0.toString());
+        sparkShims = SparkShims.getInstance(SparkVersion.SPARK_1_6_0.toString(), new Properties());
       }
     }
 
     @Test
     public void runUnerLocalTest() {
       sparkShims.buildSparkJobUrl("local", "http://sparkurl", 0, mockProperties);
-
       Map<String, String> mapValue = argumentCaptor.getValue();
       assertTrue(mapValue.keySet().contains("jobUrl"));
       assertTrue(mapValue.get("jobUrl").contains("/jobs/job?id="));
@@ -137,7 +136,6 @@ public class SparkShimsTest {
 
     @Test
     public void runUnerYarnTest() {
-
       sparkShims.buildSparkJobUrl("yarn", "http://sparkurl", 0, mockProperties);
 
       Map<String, String> mapValue = argumentCaptor.getValue();
