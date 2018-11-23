@@ -13,7 +13,7 @@
  * the License.
  */
 
-package org.apache.zeppelin.jdbc;
+package ru.tinkoff.zeppelin.tjdbc;
 
 import org.apache.commons.lang.StringUtils;
 import jline.console.completer.ArgumentCompleter;

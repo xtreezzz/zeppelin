@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
  * agreements. See the NOTICE file distributed with this work for additional information regarding
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
@@ -12,13 +12,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.zeppelin.jdbc;
+package ru.tinkoff.zeppelin.tjdbc;
 
-import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
-
+import com.google.common.base.Preconditions;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
@@ -32,8 +28,20 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.alias.CredentialProvider;
 import org.apache.hadoop.security.alias.CredentialProviderFactory;
+import org.apache.zeppelin.interpreter.InterpreterContext;
+import org.apache.zeppelin.interpreter.InterpreterException;
+import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import org.apache.zeppelin.interpreter.KerberosInterpreter;
+import org.apache.zeppelin.interpreter.ResultMessages;
+import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import org.apache.zeppelin.scheduler.Scheduler;
+import org.apache.zeppelin.scheduler.SchedulerFactory;
+import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.user.UsernamePassword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.zeppelin.tjdbc.security.JDBCSecurityImpl;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -44,29 +52,20 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.KerberosInterpreter;
-import org.apache.zeppelin.interpreter.ResultMessages;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.jdbc.security.JDBCSecurityImpl;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
-import org.apache.zeppelin.user.UserCredentials;
-import org.apache.zeppelin.user.UsernamePassword;
+import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
+import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
+import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
 
 /**
  * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ,
@@ -130,7 +129,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   static final String DEFAULT_PRECODE = DEFAULT_KEY + DOT + PRECODE_KEY;
   static final String DEFAULT_STATEMENT_PRECODE = DEFAULT_KEY + DOT + STATEMENT_PRECODE_KEY;
 
-  static final String EMPTY_COLUMN_VALUE = "";
+  private static final String EMPTY_COLUMN_VALUE = "";
 
   private static final String CONCURRENT_EXECUTION_KEY = "zeppelin.jdbc.concurrent.use";
   private static final String CONCURRENT_EXECUTION_COUNT =
@@ -157,7 +156,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
       if (UserGroupInformation.isLoginKeytabBased()) {
         UserGroupInformation.getLoginUser().reloginFromKeytab();
         return true;
-      } else if (UserGroupInformation.isLoginTicketBased()) {
+      }
+      if (UserGroupInformation.isLoginTicketBased()) {
         UserGroupInformation.getLoginUser().reloginFromTicketCache();
         return true;
       }
@@ -167,17 +167,13 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return false;
   }
 
-  public HashMap<String, Properties> getPropertiesMap() {
-    return basePropretiesMap;
-  }
-
   @Override
   public void open() {
     super.open();
     for (String propertyKey : properties.stringPropertyNames()) {
       logger.debug("propertyKey: {}", propertyKey);
       String[] keyValue = propertyKey.split("\\.", 2);
-      if (2 == keyValue.length) {
+      if (keyValue.length == 2) {
         logger.debug("key: {}, value: {}", keyValue[0], keyValue[1]);
 
         Properties prefixProperties;
@@ -212,13 +208,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   protected boolean isKerboseEnabled() {
-    if (!isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
-      UserGroupInformation.AuthenticationMethod authType = JDBCSecurityImpl.getAuthtype(properties);
-      if (authType.equals(KERBEROS)) {
-        return true;
-      }
-    }
-    return false;
+    return !isEmpty(getProperty("zeppelin.jdbc.auth.type"))
+            && JDBCSecurityImpl.getAuthtype(properties).equals(KERBEROS);
   }
 
   private void setMaxLineResults() {
@@ -229,42 +220,46 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private SqlCompleter createOrUpdateSqlCompleter(SqlCompleter sqlCompleter,
-      final Connection connection, String propertyKey, final String buf, final int cursor) {
+                                                  final Connection connection,
+                                                  String propertyKey,
+                                                  final String buf,
+                                                  final int cursor) {
+
     String schemaFiltersKey = String.format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY);
-    String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
     final String schemaFiltersString = getProperty(schemaFiltersKey);
+
+    String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
     int ttlInSeconds = Integer.valueOf(
-        StringUtils.defaultIfEmpty(getProperty(sqlCompleterTtlKey), DEFAULT_COMPLETER_TTL)
-    );
-    final SqlCompleter completer;
-    if (sqlCompleter == null) {
-      completer = new SqlCompleter(ttlInSeconds);
-    } else {
-      completer = sqlCompleter;
-    }
-    ExecutorService executorService = Executors.newFixedThreadPool(1);
-    executorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
-      }
-    });
+        defaultIfEmpty(getProperty(sqlCompleterTtlKey), DEFAULT_COMPLETER_TTL));
 
-    executorService.shutdown();
+    final SqlCompleter completer = Optional.ofNullable(sqlCompleter)
+            .orElse(new SqlCompleter(ttlInSeconds));
 
+    Thread worker = new Thread(() -> completer.createOrUpdateFromConnection(
+                    connection, schemaFiltersString, buf, cursor));
+    worker.run();
+
+    // protection to release connection
+    boolean needToCloseConnection = false;
     try {
-      // protection to release connection
-      executorService.awaitTermination(3, TimeUnit.SECONDS);
+      worker.join(3000);
+      if (worker.isAlive()) {
+        logger.warn("Completion timeout");
+        needToCloseConnection = true;
+      }
     } catch (InterruptedException e) {
-      logger.warn("Completion timeout", e);
-      if (connection != null) {
-        try {
-          connection.close();
-        } catch (SQLException e1) {
-          logger.warn("Error close connection", e1);
-        }
+      logger.warn("Completion exception", e);
+      needToCloseConnection = true;
+    }
+
+    if (needToCloseConnection) {
+      try {
+        connection.close();
+      } catch (SQLException e1) {
+        logger.warn("Error close connection", e1);
       }
     }
+
     return completer;
   }
 
@@ -306,34 +301,25 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private String getEntityName(String replName) {
-    StringBuffer entityName = new StringBuffer();
-    entityName.append(INTERPRETER_NAME);
-    entityName.append(".");
-    entityName.append(replName);
-    return entityName.toString();
+    return INTERPRETER_NAME + DOT + replName;
   }
 
   private String getJDBCDriverName(String user, String propertyKey) {
-    StringBuffer driverName = new StringBuffer();
-    driverName.append(DBCP_STRING);
-    driverName.append(propertyKey);
-    driverName.append(user);
-    return driverName.toString();
+    return DBCP_STRING + propertyKey + user;
   }
 
   private boolean existAccountInBaseProperty(String propertyKey) {
-    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY)) &&
-        basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
+    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY)
+            && !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY))
+            && basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
   }
 
-  private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
-                                               String replName) {
-    UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
-    if (uc != null) {
-      return uc.getUsernamePassword(replName);
-    }
-    return null;
+  private Optional<UsernamePassword> getUsernamePassword(InterpreterContext interpreterContext,
+                                                         String replName) {
+    return Optional.ofNullable(interpreterContext)
+            .map(InterpreterContext::getAuthenticationInfo)
+            .map(AuthenticationInfo::getUserCredentials)
+            .map(credentials -> credentials.getUsernamePassword(replName));
   }
 
   public JDBCUserConfigurations getJDBCConfiguration(String user) {
@@ -373,24 +359,30 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
-    UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
-            getEntityName(interpreterContext.getReplName()));
-    if (usernamePassword != null) {
-      jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
+    String entityName = getEntityName(interpreterContext.getReplName());
+    Optional<UsernamePassword> optUsernamePassword
+            = getUsernamePassword(interpreterContext, entityName);
+    if (optUsernamePassword.isPresent()) {
+      jdbcUserConfigurations.setUserProperty(propertyKey, optUsernamePassword.get());
     } else {
       closeDBPool(user, propertyKey);
     }
   }
 
-  private void createConnectionPool(String url, String user, String propertyKey,
-      Properties properties) throws SQLException, ClassNotFoundException {
+  private void createConnectionPool(String url,
+                                    String user,
+                                    String propertyKey,
+                                    Properties properties)
+          throws SQLException, ClassNotFoundException {
     ConnectionFactory connectionFactory =
             new DriverManagerConnectionFactory(url, properties);
 
-    PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(
-            connectionFactory, null);
+    PoolableConnectionFactory poolableConnectionFactory =
+            new PoolableConnectionFactory(connectionFactory, null);
+
     final String maxConnectionLifetime =
-        StringUtils.defaultIfEmpty(getProperty("zeppelin.jdbc.maxConnLifetime"), "-1");
+        defaultIfEmpty(getProperty("zeppelin.jdbc.maxConnLifetime"), "-1");
+
     poolableConnectionFactory.setMaxConnLifetimeMillis(Long.parseLong(maxConnectionLifetime));
 
     ObjectPool connectionPool = new GenericObjectPool(poolableConnectionFactory);
@@ -402,17 +394,31 @@ public class JDBCInterpreter extends KerberosInterpreter {
     getJDBCConfiguration(user).saveDBDriverPool(propertyKey, driver);
   }
 
-  private Connection getConnectionFromPool(String url, String user, String propertyKey,
-      Properties properties) throws SQLException, ClassNotFoundException {
+  private Connection getConnectionFromPool(String url,
+                                           String user,
+                                           String propertyKey,
+                                           Properties properties)
+          throws SQLException, ClassNotFoundException {
     String jdbcDriver = getJDBCDriverName(user, propertyKey);
-
     if (!getJDBCConfiguration(user).isConnectionInDBDriverPool(propertyKey)) {
       createConnectionPool(url, user, propertyKey, properties);
     }
     return DriverManager.getConnection(jdbcDriver);
   }
 
-  public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
+  private Optional<Connection> establishConnection(InterpreterContext interpreterContext,
+                                                   String propertyKey) {
+    try {
+      return Optional.ofNullable(getConnection(interpreterContext, propertyKey));
+    } catch (InterpreterException e) {
+      throw new IllegalStateException(e.getCause());
+    } catch (IOException | SQLException | ClassNotFoundException e) {
+      logger.warn("Database connection cannot be established");
+      return Optional.empty();
+    }
+  }
+
+  private Connection getConnection(InterpreterContext interpreterContext, String propertyKey)
       throws ClassNotFoundException, SQLException, InterpreterException, IOException {
     final String user =  interpreterContext.getAuthenticationInfo().getUser();
     Connection connection;
@@ -577,7 +583,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private boolean isDDLCommand(int updatedCount, int columnCount) throws SQLException {
-    return updatedCount < 0 && columnCount <= 0 ? true : false;
+    return updatedCount < 0 && columnCount <= 0;
   }
 
   /*
@@ -675,32 +681,21 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
 
     InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
-    try {
-      connection = getConnection(propertyKey, interpreterContext);
-    } catch (Exception e) {
-      String errorMsg = ExceptionUtils.getStackTrace(e);
+    Optional<Connection> optionalConnection = establishConnection(interpreterContext, propertyKey);
+    if (!optionalConnection.isPresent()) {
       try {
         closeDBPool(user, propertyKey);
       } catch (SQLException e1) {
         logger.error("Cannot close DBPool for user, propertyKey: " + user + propertyKey, e1);
       }
-      interpreterResult.add(errorMsg);
-      return new InterpreterResult(Code.ERROR, interpreterResult.message());
+      return new InterpreterResult(Code.ERROR, "Connection cannot be established");
     }
-    if (connection == null) {
-      return new InterpreterResult(Code.ERROR, "Prefix not found.");
-    }
-
     try {
-      List<String> sqlArray;
-      if (splitQuery) {
-        sqlArray = splitSqlQueries(sql);
-      } else {
-        sqlArray = Arrays.asList(sql);
-      }
+      List<String> sqlArray = splitQuery
+              ? splitSqlQueries(sql)
+              : Collections.singletonList(sql);
 
-      for (int i = 0; i < sqlArray.size(); i++) {
-        String sqlToExecute = sqlArray.get(i);
+      for (String sqlToExecute : sqlArray) {
         statement = connection.createStatement();
 
         // fetch n+1 rows in order to indicate there's more rows available (for large selects)
@@ -854,26 +849,29 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) throws InterpreterException {
-    List<InterpreterCompletion> candidates = new ArrayList<>();
+  public List<InterpreterCompletion> completion(String buf,
+                                                int cursor,
+                                                InterpreterContext interpreterContext) {
+    Preconditions.checkArgument(buf != null && interpreterContext != null);
+
     String propertyKey = getPropertyKey(interpreterContext);
-    String sqlCompleterKey =
-        String.format("%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
-    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
-
-    Connection connection = null;
-    try {
-      if (interpreterContext != null) {
-        connection = getConnection(propertyKey, interpreterContext);
-      }
-    } catch (ClassNotFoundException | SQLException | IOException e) {
-      logger.warn("SQLCompleter will created without use connection");
+    Optional<Connection> optionalConnection = establishConnection(interpreterContext, propertyKey);
+    if (!optionalConnection.isPresent()) {
+      logger.warn("Cannot find completion candidates without database connection");
+      return Collections.emptyList();
     }
+    Connection connection = optionalConnection.get();
 
+    String sqlCompleterKey =
+            String.format(
+                    "%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey
+            );
+    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
     sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
     sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
-    sqlCompleter.complete(buf, cursor, candidates);
+
+    List<InterpreterCompletion> candidates = new ArrayList<>();
+    sqlCompleter.fillCandidates(buf, cursor, candidates);
 
     return candidates;
   }

@@ -13,7 +13,7 @@
  * the License.
  */
 
-package org.apache.zeppelin.jdbc;
+package ru.tinkoff.zeppelin.tjdbc;
 
 import org.junit.Before;
 import org.junit.Test;
