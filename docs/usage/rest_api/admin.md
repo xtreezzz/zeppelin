@@ -117,4 +117,3 @@ If you work with Apache Zeppelin and find a need for an additional REST API, ple
       </td>
     </tr>
   </table>
-  

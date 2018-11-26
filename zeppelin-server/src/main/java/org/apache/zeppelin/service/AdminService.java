@@ -17,15 +17,6 @@
 
 package org.apache.zeppelin.service;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.apache.zeppelin.rest.message.LoggerRequest;
-import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.SchedulerRepository;
-import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -36,8 +27,19 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.ws.rs.BadRequestException;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.SchedulerRepository;
 
-/** This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}. */
+/**
+ * This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}.
+ */
 public class AdminService {
 
   private static Scheduler scheduler;
@@ -47,7 +49,7 @@ public class AdminService {
       return scheduler;
     }
     ArrayList<Scheduler> allSchedulers =
-            new ArrayList<>(SchedulerRepository.getInstance().lookupAll());
+        new ArrayList<>(SchedulerRepository.getInstance().lookupAll());
 
     if (allSchedulers.size() > 0) {
       scheduler = allSchedulers.get(0);
@@ -59,20 +61,20 @@ public class AdminService {
   public List<Logger> getLoggers() {
     Enumeration loggers = LogManager.getCurrentLoggers();
     return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(
-                new Iterator<Logger>() {
-                  @Override
-                  public boolean hasNext() {
-                    return loggers.hasMoreElements();
-                  }
+        Spliterators.spliteratorUnknownSize(
+            new Iterator<Logger>() {
+              @Override
+              public boolean hasNext() {
+                return loggers.hasMoreElements();
+              }
 
-                  @Override
-                  public Logger next() {
-                    return Logger.class.cast(loggers.nextElement());
-                  }
-                },
-                Spliterator.ORDERED),
-            false)
+              @Override
+              public Logger next() {
+                return Logger.class.cast(loggers.nextElement());
+              }
+            },
+            Spliterator.ORDERED),
+        false)
         .collect(Collectors.toList());
   }
 
@@ -112,9 +114,9 @@ public class AdminService {
   }
 
   public static void setSchedulerThreadPoolSize(
-          String schedulerId, Integer size) throws SchedulerException {
+      String schedulerId, Integer size) throws SchedulerException {
     DynamicThreadPool threadPool =
-            DynamicThreadPool.getInstance(schedulerId);
+        DynamicThreadPool.getInstance(schedulerId);
     if (threadPool == null) {
       throw new SchedulerException("Wrong schedulerId - " + schedulerId);
     }

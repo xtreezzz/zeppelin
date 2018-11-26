@@ -17,8 +17,14 @@
 
 package org.apache.zeppelin.rest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.zeppelin.service.AdminService;
@@ -26,13 +32,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.quartz.SchedulerException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 public class AdminRestApiTest extends AbstractTestRestApi {
+
   private final Gson gson = new Gson();
 
   @BeforeClass
@@ -59,10 +61,10 @@ public class AdminRestApiTest extends AbstractTestRestApi {
     GetMethod getSchedulerSettings = httpGet("/admin/cron/pool/");
     assertThat(getSchedulerSettings, isAllowed());
     Map<String, Object> resp =
-            gson.fromJson(
-                    getSchedulerSettings.getResponseBodyAsString(),
-                    new TypeToken<Map<String, Object>>() {
-              }.getType());
+        gson.fromJson(
+            getSchedulerSettings.getResponseBodyAsString(),
+            new TypeToken<Map<String, Object>>() {
+            }.getType());
     System.out.println(resp.toString());
     Map<String, String> body = (Map<String, String>) resp.get("body");
     assertEquals(body, defaultSettings);
@@ -75,13 +77,13 @@ public class AdminRestApiTest extends AbstractTestRestApi {
     String updateRequest = String.format("{\"poolSize\": \"%d\"}", newPoolSize);
 
     PostMethod post = httpPost(
-            String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
-            updateRequest
+        String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
+        updateRequest
     );
 
     if (AdminService
-            .getSchedulerThreadPoolClass()
-            .equals("org.apache.zeppelin.scheduler.pool.DynamicThreadPool")) {
+        .getSchedulerThreadPoolClass()
+        .equals("org.apache.zeppelin.scheduler.pool.DynamicThreadPool")) {
       assertThat("Test update method:", post, isAllowed());
       post.releaseConnection();
       assertEquals(newPoolSize, AdminService.getSchedulerPoolSize());
@@ -91,8 +93,8 @@ public class AdminRestApiTest extends AbstractTestRestApi {
       // poolSize should be > 0
       updateRequest = "{\"poolSize\": \"0\"}";
       post = httpPost(
-              String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
-              updateRequest
+          String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
+          updateRequest
       );
       assertThat("Test update method:", post, isBadRequest());
       post.releaseConnection();

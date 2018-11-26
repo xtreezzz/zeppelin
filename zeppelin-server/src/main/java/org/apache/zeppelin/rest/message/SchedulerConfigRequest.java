@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
@@ -21,10 +22,12 @@ import org.apache.zeppelin.rest.AdminRestApi;
 
 /**
  * Scheduler configuration request message for admin rest api.
+ *
  * @see AdminRestApi#getQuartzSchedulerPoolInfo()
  * @see AdminRestApi#changeSchedulerPoolSize(String, String)
  */
 public class SchedulerConfigRequest {
+
   private static final Gson gson = new Gson();
 
   private Integer poolSize;

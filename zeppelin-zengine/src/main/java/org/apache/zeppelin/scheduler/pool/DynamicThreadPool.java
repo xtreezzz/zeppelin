@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zeppelin.scheduler.pool;
 
 import java.util.List;
@@ -26,8 +27,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import org.quartz.spi.ThreadPool;
 import org.quartz.SchedulerConfigException;
+import org.quartz.spi.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,20 +43,20 @@ import org.slf4j.LoggerFactory;
  *
  * Pool based on <code>{@link SynchronousQueue}</code>.
  *
- * The pool has a dynamic number of <code>Thread</code>s, and grows or
- * shrinks based on demand. It could be changed
- * by calling <code>{@link #setThreadCount(int)}</code>
+ * The pool has a dynamic number of <code>Thread</code>s, and grows or shrinks based on demand. It
+ * could be changed by calling <code>{@link #setThreadCount(int)}</code>
  *
  * Instance could be obtained using <code>{@link DynamicThreadPool#getInstance(String)}</code>
  */
 public class DynamicThreadPool implements ThreadPool {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicThreadPool.class);
 
   private static final Map<String, DynamicThreadPool> INSTANCES = new ConcurrentHashMap<>();
   private static final Object poolEvent = new Object();
 
   private ThreadPoolExecutor executor =
-          new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new SynchronousQueue<>());
+      new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new SynchronousQueue<>());
 
   private int threadCount;
   private int priority = Thread.NORM_PRIORITY;
@@ -116,7 +117,7 @@ public class DynamicThreadPool implements ThreadPool {
 
     if (priority <= 0 || priority > 9) {
       throw new SchedulerConfigException(
-              "Thread priority must be > 0 and <= 9");
+          "Thread priority must be > 0 and <= 9");
     }
 
     if (threadNamePrefix == null && schedulerInstanceName != null) {
@@ -130,14 +131,11 @@ public class DynamicThreadPool implements ThreadPool {
    *
    * Jobs currently in progress will complete.
    *
-   * @param waitForJobsToComplete
-   *          boolean flag for resource release:
-   *          if true: initiates an orderly shutdown in which previously
-   *                   submitted tasks are executed, but no new tasks will be accepted.
-   *                   @see ExecutorService#shutdown()
-   *          if false: Attempts to stop all actively executing tasks,
-   *                   halts the processing of waiting tasks.
-   *                   @see ExecutorService#shutdownNow()
+   * @param waitForJobsToComplete boolean flag for resource release: if true: initiates an orderly
+   * shutdown in which previously submitted tasks are executed, but no new tasks will be accepted.
+   * @see ExecutorService#shutdown() if false: Attempts to stop all actively executing tasks, halts
+   * the processing of waiting tasks.
+   * @see ExecutorService#shutdownNow()
    */
   @Override
   public void shutdown(boolean waitForJobsToComplete) {
@@ -168,8 +166,8 @@ public class DynamicThreadPool implements ThreadPool {
   }
 
   /**
-   * Set the number of worker threads in the pool.
-   * Increases <code>{@link ThreadPoolExecutor#maximumPoolSize}</code>
+   * Set the number of worker threads in the pool. Increases <code>{@link
+   * ThreadPoolExecutor#maximumPoolSize}</code>
    */
   public void setThreadCount(int threadCount) throws SchedulerConfigException {
     if (threadCount == this.threadCount) {
@@ -183,7 +181,7 @@ public class DynamicThreadPool implements ThreadPool {
     executor.setMaximumPoolSize(threadCount);
   }
 
-  public void setKeepAliveTime(long time, TimeUnit timeUnit){
+  public void setKeepAliveTime(long time, TimeUnit timeUnit) {
     executor.setKeepAliveTime(time, timeUnit);
   }
 
@@ -205,7 +203,7 @@ public class DynamicThreadPool implements ThreadPool {
 
   @Override
   public void setInstanceId(String schedInstId) {
-    if (schedulerInstanceId  != null && INSTANCES.get(schedulerInstanceId) != this) {
+    if (schedulerInstanceId != null && INSTANCES.get(schedulerInstanceId) != this) {
       INSTANCES.remove(schedulerInstanceId);
     }
     this.schedulerInstanceId = schedInstId;
@@ -232,6 +230,7 @@ public class DynamicThreadPool implements ThreadPool {
   }
 
   private class DynamicThreadFactory implements ThreadFactory {
+
     private final String nameFormat = threadNamePrefix + "-%d";
     private final AtomicLong count = new AtomicLong(0L);
 
@@ -248,6 +247,7 @@ public class DynamicThreadPool implements ThreadPool {
   }
 
   private static class NotifableJob implements Runnable {
+
     private Runnable job;
 
     NotifableJob(Runnable job) {
