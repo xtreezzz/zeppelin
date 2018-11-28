@@ -25,6 +25,6 @@ import org.apache.zeppelin.utils.ExceptionUtils;
 public class SchedulerConfigRuntimeException extends WebApplicationException {
   public SchedulerConfigRuntimeException(Throwable cause) {
     super(cause, ExceptionUtils.jsonResponseContent(
-        NOT_FOUND, "Scheduler isn't configured"));
+        NOT_FOUND, "Scheduler is not configured"));
   }
 }

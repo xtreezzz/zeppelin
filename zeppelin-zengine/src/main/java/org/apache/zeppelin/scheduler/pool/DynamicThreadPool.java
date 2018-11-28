@@ -74,7 +74,6 @@ public class DynamicThreadPool implements ThreadPool {
     }
     try {
       if (blockForAvailableThreads() > 0) {
-        LOGGER.info("submit job");
         executor.execute(new NotifableJob(runnable));
       }
       return true;
