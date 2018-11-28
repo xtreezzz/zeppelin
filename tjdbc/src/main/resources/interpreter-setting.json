@@ -1,6 +1,6 @@
 [
   {
-    "group": "jdbc",
+    "group": "tjdbc",
     "name": "sql",
     "className": "ru.tinkoff.zeppelin.tjdbc.JDBCInterpreter",
     "properties": {
