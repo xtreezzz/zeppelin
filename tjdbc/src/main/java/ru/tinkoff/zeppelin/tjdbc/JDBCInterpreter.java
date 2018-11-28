@@ -92,7 +92,7 @@ import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMeth
 public class JDBCInterpreter extends KerberosInterpreter {
   private Logger logger = LoggerFactory.getLogger(JDBCInterpreter.class);
 
-  static final String INTERPRETER_NAME = "jdbc";
+  static final String INTERPRETER_NAME = "tjdbc";
   static final String COMMON_KEY = "common";
   static final String MAX_LINE_KEY = "max_count";
   static final int MAX_LINE_DEFAULT = 1000;
@@ -114,12 +114,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
   static final String STATEMENT_PRECODE_KEY_TEMPLATE = "%s.statementPrecode";
   static final String DOT = ".";
 
-  private static final char WHITESPACE = ' ';
-  private static final char NEWLINE = '\n';
-  private static final char TAB = '\t';
-  private static final String TABLE_MAGIC_TAG = "%table ";
-  private static final String EXPLAIN_PREDICATE = "EXPLAIN ";
-
   static final String COMMON_MAX_LINE = COMMON_KEY + DOT + MAX_LINE_KEY;
 
   static final String DEFAULT_DRIVER = DEFAULT_KEY + DOT + DRIVER_KEY;
@@ -129,6 +123,12 @@ public class JDBCInterpreter extends KerberosInterpreter {
   static final String DEFAULT_PRECODE = DEFAULT_KEY + DOT + PRECODE_KEY;
   static final String DEFAULT_STATEMENT_PRECODE = DEFAULT_KEY + DOT + STATEMENT_PRECODE_KEY;
 
+  private static final char WHITESPACE = ' ';
+  private static final char NEWLINE = '\n';
+  private static final char TAB = '\t';
+  private static final String TABLE_MAGIC_TAG = "%table ";
+  private static final String EXPLAIN_PREDICATE = "EXPLAIN ";
+
   private static final String EMPTY_COLUMN_VALUE = "";
 
   private static final String CONCURRENT_EXECUTION_KEY = "zeppelin.jdbc.concurrent.use";
@@ -136,7 +136,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
           "zeppelin.jdbc.concurrent.max_connection";
   private static final String DBCP_STRING = "jdbc:apache:commons:dbcp:";
 
-  private final HashMap<String, Properties> basePropretiesMap;
+  private final HashMap<String, Properties> basePropertiesMap;
   private final HashMap<String, JDBCUserConfigurations> jdbcUserConfigurationsMap;
   private final HashMap<String, SqlCompleter> sqlCompletersMap;
 
@@ -145,9 +145,61 @@ public class JDBCInterpreter extends KerberosInterpreter {
   public JDBCInterpreter(Properties property) {
     super(property);
     jdbcUserConfigurationsMap = new HashMap<>();
-    basePropretiesMap = new HashMap<>();
+    basePropertiesMap = new HashMap<>();
     sqlCompletersMap = new HashMap<>();
     maxLineResults = MAX_LINE_DEFAULT;
+  }
+
+  @Override
+  public void open() {
+    super.open();
+    for (String propertyKey : properties.stringPropertyNames()) {
+      logger.debug("propertyKey: {}", propertyKey);
+      String[] keyValue = propertyKey.split("\\.", 2);
+      if (keyValue.length == 2) {
+        logger.debug("key: {}, value: {}", keyValue[0], keyValue[1]);
+
+        Properties prefixProperties;
+        if (basePropertiesMap.containsKey(keyValue[0])) {
+          prefixProperties = basePropertiesMap.get(keyValue[0]);
+        } else {
+          prefixProperties = new Properties();
+          basePropertiesMap.put(keyValue[0].trim(), prefixProperties);
+        }
+        prefixProperties.put(keyValue[1].trim(), getProperty(propertyKey));
+      }
+    }
+
+    Set<String> removeKeySet = new HashSet<>();
+    for (String key : basePropertiesMap.keySet()) {
+      if (!COMMON_KEY.equals(key)) {
+        Properties properties = basePropertiesMap.get(key);
+        if (!properties.containsKey(DRIVER_KEY) || !properties.containsKey(URL_KEY)) {
+          logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
+                  key, DRIVER_KEY, key, key, URL_KEY);
+          removeKeySet.add(key);
+        }
+      }
+    }
+
+    for (String key : removeKeySet) {
+      basePropertiesMap.remove(key);
+    }
+
+    logger.debug("JDBC PropretiesMap: {}", basePropertiesMap);
+
+    setMaxLineResults();
+  }
+
+  @Override
+  public void close() {
+    super.close();
+    try {
+      initStatementMap();
+      initConnectionPoolMap();
+    } catch (Exception e) {
+      logger.error("Error while closing...", e);
+    }
   }
 
   @Override
@@ -167,44 +219,193 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return false;
   }
 
+  public JDBCUserConfigurations getJDBCConfiguration(String user) {
+    return jdbcUserConfigurationsMap.computeIfAbsent(user, usr -> new JDBCUserConfigurations());
+  }
+
+  public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
+    InterpreterResult interpreterResult = null;
+    for (String propertyKey : basePropertiesMap.keySet()) {
+      String precode = getProperty(String.format("%s.precode", propertyKey));
+      if (StringUtils.isNotBlank(precode)) {
+        interpreterResult = executeSql(propertyKey, precode, interpreterContext);
+        if (interpreterResult.code() != Code.SUCCESS) {
+          break;
+        }
+      }
+    }
+    return interpreterResult;
+  }
+
+  public int getMaxResult() {
+    return maxLineResults;
+  }
+
+  boolean isConcurrentExecution() {
+    return Boolean.valueOf(getProperty(CONCURRENT_EXECUTION_KEY));
+  }
+
+  int getMaxConcurrentConnection() {
+    final int DEFAULT = 10;
+    try {
+      return Integer.valueOf(getProperty(CONCURRENT_EXECUTION_COUNT));
+    } catch (Exception e) {
+      return DEFAULT;
+    }
+  }
+
   @Override
-  public void open() {
-    super.open();
-    for (String propertyKey : properties.stringPropertyNames()) {
-      logger.debug("propertyKey: {}", propertyKey);
-      String[] keyValue = propertyKey.split("\\.", 2);
-      if (keyValue.length == 2) {
-        logger.debug("key: {}, value: {}", keyValue[0], keyValue[1]);
+  public InterpreterResult interpret(String originalCmd, InterpreterContext contextInterpreter) {
+    String cmd = Boolean.parseBoolean(getProperty("zeppelin.jdbc.interpolation"))
+            ? interpolate(originalCmd, contextInterpreter.getResourcePool())
+            : originalCmd;
+    cmd = cmd.trim();
+    logger.debug("Run SQL command '{}'", cmd);
+    String propertyKey = getPropertyKey(contextInterpreter);
+    logger.debug("PropertyKey: {}, SQL command: '{}'", propertyKey, cmd);
+    return executeSql(propertyKey, cmd, contextInterpreter);
+  }
 
-        Properties prefixProperties;
-        if (basePropretiesMap.containsKey(keyValue[0])) {
-          prefixProperties = basePropretiesMap.get(keyValue[0]);
-        } else {
-          prefixProperties = new Properties();
-          basePropretiesMap.put(keyValue[0].trim(), prefixProperties);
+  @Override
+  public void cancel(InterpreterContext context) {
+    logger.info("Cancel current query statement.");
+    String paragraphId = context.getParagraphId();
+    JDBCUserConfigurations jdbcUserConfigurations =
+            getJDBCConfiguration(context.getAuthenticationInfo().getUser());
+    try {
+      jdbcUserConfigurations.cancelStatement(paragraphId);
+    } catch (SQLException e) {
+      logger.error("Error while cancelling...", e);
+    }
+  }
+
+  public String getPropertyKey(InterpreterContext interpreterContext) {
+    Map<String, String> localProperties = interpreterContext.getLocalProperties();
+    // It is recommended to use this kind of format: %jdbc(db=mysql)
+    if (localProperties.containsKey("db")) {
+      return localProperties.get("db");
+    }
+    // %jdbc(mysql) is only for backward compatibility
+    for (Map.Entry<String, String> entry : localProperties.entrySet()) {
+      if (entry.getKey().equals(entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return DEFAULT_KEY;
+  }
+
+  @Override
+  public FormType getFormType() {
+    return FormType.SIMPLE;
+  }
+
+  @Override
+  public int getProgress(InterpreterContext context) {
+    return 0;
+  }
+
+  @Override
+  public Scheduler getScheduler() {
+    String schedulerName = JDBCInterpreter.class.getName() + this.hashCode();
+    return isConcurrentExecution()
+            ? SchedulerFactory.singleton().createOrGetParallelScheduler(
+                    schedulerName, getMaxConcurrentConnection())
+            : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
+  }
+
+  @Override
+  public List<InterpreterCompletion> completion(String buf,
+                                                int cursor,
+                                                InterpreterContext interpreterContext) {
+    Preconditions.checkArgument(buf != null && interpreterContext != null);
+
+    String propertyKey = getPropertyKey(interpreterContext);
+    Optional<Connection> optionalConnection = establishConnection(interpreterContext, propertyKey);
+    if (!optionalConnection.isPresent()) {
+      logger.warn("Cannot find completion candidates without database connection");
+      return Collections.emptyList();
+    }
+    Connection connection = optionalConnection.get();
+
+    String sqlCompleterKey =
+            String.format(
+                    "%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey
+            );
+    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
+    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
+    sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
+
+    List<InterpreterCompletion> candidates = new ArrayList<>();
+    sqlCompleter.fillCandidates(buf, cursor, candidates);
+
+    return candidates;
+  }
+
+  /* PROTECTED METHODS */
+
+  /*
+  inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
+    pgadmin/dlg/dlgProperty.cpp#L999-L1045
+   */
+  protected ArrayList<String> splitSqlQueries(String sql) {
+    ArrayList<String> queries = new ArrayList<>();
+    StringBuilder query = new StringBuilder();
+    char character;
+
+    Boolean multiLineComment = false;
+    Boolean singleLineComment = false;
+    Boolean quoteString = false;
+    Boolean doubleQuoteString = false;
+
+    for (int item = 0; item < sql.length(); item++) {
+      character = sql.charAt(item);
+
+      if (singleLineComment && (character == '\n' || item == sql.length() - 1)) {
+        singleLineComment = false;
+      }
+
+      if (multiLineComment && character == '/' && sql.charAt(item - 1) == '*') {
+        multiLineComment = false;
+      }
+
+      if (character == '\'') {
+        if (quoteString) {
+          quoteString = false;
+        } else if (!doubleQuoteString) {
+          quoteString = true;
         }
-        prefixProperties.put(keyValue[1].trim(), getProperty(propertyKey));
+      }
+
+      if (character == '"') {
+        if (doubleQuoteString && item > 0) {
+          doubleQuoteString = false;
+        } else if (!quoteString) {
+          doubleQuoteString = true;
+        }
+      }
+
+      if (!quoteString && !doubleQuoteString && !multiLineComment && !singleLineComment
+              && sql.length() > item + 1) {
+        if (character == '-' && sql.charAt(item + 1) == '-') {
+          singleLineComment = true;
+        } else if (character == '/' && sql.charAt(item + 1) == '*') {
+          multiLineComment = true;
+        }
+      }
+
+      if (character == ';' && !quoteString && !doubleQuoteString && !multiLineComment
+              && !singleLineComment) {
+        queries.add(StringUtils.trim(query.toString()));
+        query = new StringBuilder();
+      } else if (item == sql.length() - 1) {
+        query.append(character);
+        queries.add(StringUtils.trim(query.toString()));
+      } else {
+        query.append(character);
       }
     }
 
-    Set<String> removeKeySet = new HashSet<>();
-    for (String key : basePropretiesMap.keySet()) {
-      if (!COMMON_KEY.equals(key)) {
-        Properties properties = basePropretiesMap.get(key);
-        if (!properties.containsKey(DRIVER_KEY) || !properties.containsKey(URL_KEY)) {
-          logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
-              key, DRIVER_KEY, key, key, URL_KEY);
-          removeKeySet.add(key);
-        }
-      }
-    }
-
-    for (String key : removeKeySet) {
-      basePropretiesMap.remove(key);
-    }
-    logger.debug("JDBC PropretiesMap: {}", basePropretiesMap);
-
-    setMaxLineResults();
+    return queries;
   }
 
   protected boolean isKerboseEnabled() {
@@ -212,10 +413,12 @@ public class JDBCInterpreter extends KerberosInterpreter {
             && JDBCSecurityImpl.getAuthtype(properties).equals(KERBEROS);
   }
 
+  /* PRIVATE METHODS */
+
   private void setMaxLineResults() {
-    if (basePropretiesMap.containsKey(COMMON_KEY) &&
-        basePropretiesMap.get(COMMON_KEY).containsKey(MAX_LINE_KEY)) {
-      maxLineResults = Integer.valueOf(basePropretiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY));
+    if (basePropertiesMap.containsKey(COMMON_KEY) &&
+        basePropertiesMap.get(COMMON_KEY).containsKey(MAX_LINE_KEY)) {
+      maxLineResults = Integer.valueOf(basePropertiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY));
     }
   }
 
@@ -274,30 +477,18 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private void initConnectionPoolMap() {
-    for (String key : jdbcUserConfigurationsMap.keySet()) {
+    jdbcUserConfigurationsMap.forEach((user, config) -> {
       try {
-        closeDBPool(key, DEFAULT_KEY);
+        closeDBPool(user, DEFAULT_KEY);
       } catch (SQLException e) {
         logger.error("Error while closing database pool.", e);
       }
       try {
-        JDBCUserConfigurations configurations = jdbcUserConfigurationsMap.get(key);
-        configurations.initConnectionPoolMap();
+        config.initConnectionPoolMap();
       } catch (SQLException e) {
         logger.error("Error while closing initConnectionPoolMap.", e);
       }
-    }
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    try {
-      initStatementMap();
-      initConnectionPoolMap();
-    } catch (Exception e) {
-      logger.error("Error while closing...", e);
-    }
+    });
   }
 
   private String getEntityName(String replName) {
@@ -309,9 +500,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private boolean existAccountInBaseProperty(String propertyKey) {
-    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY)
-            && !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY))
-            && basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
+    return basePropertiesMap.get(propertyKey).containsKey(USER_KEY)
+            && !isEmpty((String) basePropertiesMap.get(propertyKey).get(USER_KEY))
+            && basePropertiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
   }
 
   private Optional<UsernamePassword> getUsernamePassword(InterpreterContext interpreterContext,
@@ -320,17 +511,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
             .map(InterpreterContext::getAuthenticationInfo)
             .map(AuthenticationInfo::getUserCredentials)
             .map(credentials -> credentials.getUsernamePassword(replName));
-  }
-
-  public JDBCUserConfigurations getJDBCConfiguration(String user) {
-    JDBCUserConfigurations jdbcUserConfigurations = jdbcUserConfigurationsMap.get(user);
-
-    if (jdbcUserConfigurations == null) {
-      jdbcUserConfigurations = new JDBCUserConfigurations();
-      jdbcUserConfigurationsMap.put(user, jdbcUserConfigurations);
-    }
-
-    return jdbcUserConfigurations;
   }
 
   private void closeDBPool(String user, String propertyKey) throws SQLException {
@@ -346,14 +526,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
     JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
-    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
-      String password = getPassword(basePropretiesMap.get(propertyKey));
+    if (basePropertiesMap.get(propertyKey).containsKey(USER_KEY) &&
+        !basePropertiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
+      String password = getPassword(basePropertiesMap.get(propertyKey));
       if (!isEmpty(password)) {
-        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
+        basePropertiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
       }
     }
-    jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
+    jdbcUserConfigurations.setPropertyMap(propertyKey, basePropertiesMap.get(propertyKey));
     if (existAccountInBaseProperty(propertyKey)) {
       return;
     }
@@ -422,7 +602,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       throws ClassNotFoundException, SQLException, InterpreterException, IOException {
     final String user =  interpreterContext.getAuthenticationInfo().getUser();
     Connection connection;
-    if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
+    if (propertyKey == null || basePropertiesMap.get(propertyKey) == null) {
       return null;
     }
 
@@ -447,7 +627,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
               getProperty("zeppelin.jdbc.auth.kerberos.proxy.enable"))) {
             connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
           } else {
-            if (basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
+            if (basePropertiesMap.get(propertyKey).containsKey("proxy.user.property")) {
               connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
             } else {
               UserGroupInformation ugi = null;
@@ -487,7 +667,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     StringBuilder connectionUrl = new StringBuilder(url);
 
     if (user != null && !user.equals("anonymous") &&
-        basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
+        basePropertiesMap.get(propertyKey).containsKey("proxy.user.property")) {
 
       Integer lastIndexOfUrl = connectionUrl.indexOf("?");
       if (lastIndexOfUrl == -1) {
@@ -495,9 +675,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
       }
       logger.info("Using proxy user as :" + user);
       logger.info("Using proxy property for user as :" +
-          basePropretiesMap.get(propertyKey).getProperty("proxy.user.property"));
+          basePropertiesMap.get(propertyKey).getProperty("proxy.user.property"));
       connectionUrl.insert(lastIndexOfUrl, ";" +
-          basePropretiesMap.get(propertyKey).getProperty("proxy.user.property") + "=" + user + ";");
+          basePropertiesMap.get(propertyKey).getProperty("proxy.user.property") + "=" + user + ";");
     } else if (user != null && !user.equals("anonymous") && url.contains("hive")) {
       logger.warn("User impersonation for hive has changed please refer: http://zeppelin.apache" +
           ".org/docs/latest/interpreter/jdbc.html#apache-hive");
@@ -584,86 +764,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   private boolean isDDLCommand(int updatedCount, int columnCount) throws SQLException {
     return updatedCount < 0 && columnCount <= 0;
-  }
-
-  /*
-  inspired from https://github.com/postgres/pgadmin3/blob/794527d97e2e3b01399954f3b79c8e2585b908dd/
-    pgadmin/dlg/dlgProperty.cpp#L999-L1045
-   */
-  protected ArrayList<String> splitSqlQueries(String sql) {
-    ArrayList<String> queries = new ArrayList<>();
-    StringBuilder query = new StringBuilder();
-    char character;
-
-    Boolean multiLineComment = false;
-    Boolean singleLineComment = false;
-    Boolean quoteString = false;
-    Boolean doubleQuoteString = false;
-
-    for (int item = 0; item < sql.length(); item++) {
-      character = sql.charAt(item);
-
-      if (singleLineComment && (character == '\n' || item == sql.length() - 1)) {
-        singleLineComment = false;
-      }
-
-      if (multiLineComment && character == '/' && sql.charAt(item - 1) == '*') {
-        multiLineComment = false;
-      }
-
-      if (character == '\'') {
-        if (quoteString) {
-          quoteString = false;
-        } else if (!doubleQuoteString) {
-          quoteString = true;
-        }
-      }
-
-      if (character == '"') {
-        if (doubleQuoteString && item > 0) {
-          doubleQuoteString = false;
-        } else if (!quoteString) {
-          doubleQuoteString = true;
-        }
-      }
-
-      if (!quoteString && !doubleQuoteString && !multiLineComment && !singleLineComment
-          && sql.length() > item + 1) {
-        if (character == '-' && sql.charAt(item + 1) == '-') {
-          singleLineComment = true;
-        } else if (character == '/' && sql.charAt(item + 1) == '*') {
-          multiLineComment = true;
-        }
-      }
-
-      if (character == ';' && !quoteString && !doubleQuoteString && !multiLineComment
-          && !singleLineComment) {
-        queries.add(StringUtils.trim(query.toString()));
-        query = new StringBuilder();
-      } else if (item == sql.length() - 1) {
-        query.append(character);
-        queries.add(StringUtils.trim(query.toString()));
-      } else {
-        query.append(character);
-      }
-    }
-
-    return queries;
-  }
-
-  public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
-    InterpreterResult interpreterResult = null;
-    for (String propertyKey : basePropretiesMap.keySet()) {
-      String precode = getProperty(String.format("%s.precode", propertyKey));
-      if (StringUtils.isNotBlank(precode)) {
-        interpreterResult = executeSql(propertyKey, precode, interpreterContext);
-        if (interpreterResult.code() != Code.SUCCESS) {
-          break;
-        }
-      }
-    }
-
-    return interpreterResult;
   }
 
   private InterpreterResult executeSql(String propertyKey, String sql,
@@ -788,107 +888,5 @@ public class JDBCInterpreter extends KerberosInterpreter {
       return EMPTY_COLUMN_VALUE;
     }
     return str.replace(TAB, WHITESPACE).replace(NEWLINE, WHITESPACE);
-  }
-
-  @Override
-  public InterpreterResult interpret(String originalCmd, InterpreterContext contextInterpreter) {
-    String cmd = Boolean.parseBoolean(getProperty("zeppelin.jdbc.interpolation")) ?
-            interpolate(originalCmd, contextInterpreter.getResourcePool()) : originalCmd;
-    logger.debug("Run SQL command '{}'", cmd);
-    String propertyKey = getPropertyKey(contextInterpreter);
-    cmd = cmd.trim();
-    logger.debug("PropertyKey: {}, SQL command: '{}'", propertyKey, cmd);
-    return executeSql(propertyKey, cmd, contextInterpreter);
-  }
-
-  @Override
-  public void cancel(InterpreterContext context) {
-    logger.info("Cancel current query statement.");
-    String paragraphId = context.getParagraphId();
-    JDBCUserConfigurations jdbcUserConfigurations =
-            getJDBCConfiguration(context.getAuthenticationInfo().getUser());
-    try {
-      jdbcUserConfigurations.cancelStatement(paragraphId);
-    } catch (SQLException e) {
-      logger.error("Error while cancelling...", e);
-    }
-  }
-
-  public String getPropertyKey(InterpreterContext interpreterContext) {
-    Map<String, String> localProperties = interpreterContext.getLocalProperties();
-    // It is recommended to use this kind of format: %jdbc(db=mysql)
-    if (localProperties.containsKey("db")) {
-      return localProperties.get("db");
-    }
-    // %jdbc(mysql) is only for backward compatibility
-    for (Map.Entry<String, String> entry : localProperties.entrySet()) {
-      if (entry.getKey().equals(entry.getValue())) {
-        return entry.getKey();
-      }
-    }
-    return DEFAULT_KEY;
-  }
-
-  @Override
-  public FormType getFormType() {
-    return FormType.SIMPLE;
-  }
-
-  @Override
-  public int getProgress(InterpreterContext context) {
-    return 0;
-  }
-
-  @Override
-  public Scheduler getScheduler() {
-    String schedulerName = JDBCInterpreter.class.getName() + this.hashCode();
-    return isConcurrentExecution() ?
-            SchedulerFactory.singleton().createOrGetParallelScheduler(schedulerName,
-                getMaxConcurrentConnection())
-            : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
-  }
-
-  @Override
-  public List<InterpreterCompletion> completion(String buf,
-                                                int cursor,
-                                                InterpreterContext interpreterContext) {
-    Preconditions.checkArgument(buf != null && interpreterContext != null);
-
-    String propertyKey = getPropertyKey(interpreterContext);
-    Optional<Connection> optionalConnection = establishConnection(interpreterContext, propertyKey);
-    if (!optionalConnection.isPresent()) {
-      logger.warn("Cannot find completion candidates without database connection");
-      return Collections.emptyList();
-    }
-    Connection connection = optionalConnection.get();
-
-    String sqlCompleterKey =
-            String.format(
-                    "%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey
-            );
-    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
-    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
-    sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
-
-    List<InterpreterCompletion> candidates = new ArrayList<>();
-    sqlCompleter.fillCandidates(buf, cursor, candidates);
-
-    return candidates;
-  }
-
-  public int getMaxResult() {
-    return maxLineResults;
-  }
-
-  boolean isConcurrentExecution() {
-    return Boolean.valueOf(getProperty(CONCURRENT_EXECUTION_KEY));
-  }
-
-  int getMaxConcurrentConnection() {
-    try {
-      return Integer.valueOf(getProperty(CONCURRENT_EXECUTION_COUNT));
-    } catch (Exception e) {
-      return 10;
-    }
   }
 }

@@ -2,7 +2,7 @@
   {
     "group": "jdbc",
     "name": "sql",
-    "className": "org.apache.zeppelin.jdbc.JDBCInterpreter",
+    "className": "ru.tinkoff.zeppelin.tjdbc.JDBCInterpreter",
     "properties": {
       "default.url": {
         "envName": null,
