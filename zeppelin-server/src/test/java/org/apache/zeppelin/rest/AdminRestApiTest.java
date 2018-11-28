@@ -23,10 +23,11 @@ import static org.junit.Assert.assertThat;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
 import org.apache.zeppelin.service.AdminService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,7 +35,6 @@ import org.junit.Test;
 import org.quartz.SchedulerException;
 
 public class AdminRestApiTest extends AbstractTestRestApi {
-
   private final Gson gson = new Gson();
 
   @BeforeClass
@@ -51,56 +51,47 @@ public class AdminRestApiTest extends AbstractTestRestApi {
 
   @Test
   public void testGetSchedulerSettings() throws IOException, SchedulerException {
-    Map<String, String> defaultSettings = new HashMap<>();
-    defaultSettings.put("storeClass", AdminService.getSchedulerJobStoreClass());
-    defaultSettings.put("poolSize", String.valueOf(AdminService.getSchedulerPoolSize()));
-    defaultSettings.put("name", AdminService.getSchedulerName());
-    defaultSettings.put("poolClass", AdminService.getSchedulerThreadPoolClass());
-    defaultSettings.put("id", AdminService.getSchedulerId());
-
     GetMethod getSchedulerSettings = httpGet("/admin/cron/pool/");
     assertThat(getSchedulerSettings, isAllowed());
+    LOG.info(getSchedulerSettings.getResponseBodyAsString());
     Map<String, Object> resp =
         gson.fromJson(
             getSchedulerSettings.getResponseBodyAsString(),
             new TypeToken<Map<String, Object>>() {
             }.getType());
-    System.out.println(resp.toString());
-    Map<String, String> body = (Map<String, String>) resp.get("body");
-    assertEquals(body, defaultSettings);
+
+    ArrayList<SchedulerConfigRequest> parsedResp =
+        gson.fromJson(
+            resp.get("body").toString(),
+            new TypeToken<ArrayList<SchedulerConfigRequest>>() {
+            }.getType());
+
+    assertEquals(AdminService.getSchedulersInfoList(), parsedResp);
     getSchedulerSettings.releaseConnection();
   }
 
   @Test
   public void testUpdateThreadPoolSize() throws SchedulerException, IOException {
-    Integer newPoolSize = AdminService.getSchedulerPoolSize() - 1;
+    SchedulerConfigRequest request = AdminService.getSchedulersInfoList().iterator().next();
+
+    String postUrl = String.format("/admin/cron/pool/%s", request.getId());
+    Integer newPoolSize = request.getPoolSize() - 1;
     String updateRequest = String.format("{\"poolSize\": \"%d\"}", newPoolSize);
 
-    PostMethod post = httpPost(
-        String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
-        updateRequest
-    );
+    PostMethod post = httpPost(postUrl, updateRequest);
+    assertThat("Test update method:", post, isAllowed());
+    post.releaseConnection();
 
-    if (AdminService
-        .getSchedulerThreadPoolClass()
-        .equals("org.apache.zeppelin.scheduler.pool.DynamicThreadPool")) {
-      assertThat("Test update method:", post, isAllowed());
-      post.releaseConnection();
-      assertEquals(newPoolSize, AdminService.getSchedulerPoolSize());
-      // set pool size to start state
-      AdminService.setSchedulerThreadPoolSize(AdminService.getSchedulerId(), newPoolSize + 1);
+    request = AdminService.getSchedulersInfoList().iterator().next();
+    assertEquals(newPoolSize, request.getPoolSize());
 
-      // poolSize should be > 0
-      updateRequest = "{\"poolSize\": \"0\"}";
-      post = httpPost(
-          String.format("/admin/cron/pool/%s/poolSize", AdminService.getSchedulerId()),
-          updateRequest
-      );
-      assertThat("Test update method:", post, isBadRequest());
-      post.releaseConnection();
-    } else {
-      assertThat(post, isBadRequest());
-      post.releaseConnection();
-    }
+    // set pool size to start state
+    AdminService.setSchedulerThreadPoolSize(request.getId(), newPoolSize + 1);
+
+    // poolSize should be > 0
+    updateRequest = "{\"poolSize\": \"0\"}";
+    post = httpPost(postUrl, updateRequest);
+    assertThat("Test update method:", post, isBadRequest());
+    post.releaseConnection();
   }
 }

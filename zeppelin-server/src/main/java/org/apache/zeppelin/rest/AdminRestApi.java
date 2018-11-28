@@ -18,8 +18,8 @@
 package org.apache.zeppelin.rest;
 
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
@@ -37,7 +37,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.LoggerRequest;
 import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
@@ -53,7 +52,6 @@ import org.slf4j.LoggerFactory;
 @Path("/admin")
 @Singleton
 public class AdminRestApi {
-
   private static final Logger logger = LoggerFactory.getLogger(AdminRestApi.class);
   private AdminService adminService;
 
@@ -107,15 +105,16 @@ public class AdminRestApi {
    * @return JSON with status.OK
    */
   @POST
-  @Path("cron/pool/{id}/poolSize")
+  @Path("cron/pool/{id}")
   @ZeppelinApi
-  public Response changeSchedulerPoolSize(@PathParam("id") String schedulerId, String message)
-      throws IllegalArgumentException {
+  public Response changeScheduler(@PathParam("id") String schedulerId, String message) {
     logger.info("Change cron pool size with msg={}", message);
     SchedulerConfigRequest request = SchedulerConfigRequest.fromJson(message);
 
     try {
-      AdminService.setSchedulerThreadPoolSize(schedulerId, request.getPoolSize());
+      if (request.getPoolSize() != null) {
+        AdminService.setSchedulerThreadPoolSize(schedulerId, request.getPoolSize());
+      }
     } catch (SchedulerException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -131,19 +130,12 @@ public class AdminRestApi {
   @Path("cron/pool")
   @ZeppelinApi
   public Response getQuartzSchedulerPoolInfo() {
-    try {
-      Map<String, String> settings = AdminService.getSchedulerInfo();
-      if (settings == null) {
-        return new JsonResponse<>(Response.Status.NOT_FOUND).build();
-      } else {
-        return new JsonResponse<>(Response.Status.OK, "", settings).build();
-      }
-    } catch (SchedulerException | NullPointerException e) {
-      logger.error("Exception in AdminRestApi while creating ", e);
-      return new JsonResponse<>(
-          Response.Status.INTERNAL_SERVER_ERROR,
-          e.getMessage(), ExceptionUtils.getStackTrace(e))
-          .build();
+    ArrayList<SchedulerConfigRequest> settings =
+        (ArrayList<SchedulerConfigRequest>) AdminService.getSchedulersInfoList();
+    if (settings == null) {
+      return new JsonResponse<>(Response.Status.NOT_FOUND).build();
+    } else {
+      return new JsonResponse<>(Response.Status.OK, "", settings).build();
     }
   }
 }

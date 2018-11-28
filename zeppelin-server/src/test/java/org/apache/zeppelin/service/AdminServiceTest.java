@@ -18,7 +18,6 @@
 package org.apache.zeppelin.service;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
@@ -31,6 +30,7 @@ import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.Credentials;
 import org.junit.After;
@@ -39,7 +39,6 @@ import org.junit.Test;
 import org.quartz.SchedulerException;
 
 public class AdminServiceTest {
-
   private Notebook notebook;
 
   /**
@@ -88,21 +87,16 @@ public class AdminServiceTest {
 
   @Test
   public void testChangeThreadPoolSize() throws SchedulerException {
-    try {
-      Integer newPoolSize = AdminService.getSchedulerPoolSize() + 1;
-      AdminService.setSchedulerThreadPoolSize(AdminService.getSchedulerId(), newPoolSize);
-      assertEquals(newPoolSize, AdminService.getSchedulerPoolSize());
-      assertEquals(
-          "org.apache.zeppelin.scheduler.pool.DynamicThreadPool",
-          AdminService.getSchedulerThreadPoolClass()
-      );
-      AdminService.setSchedulerThreadPoolSize(AdminService.getSchedulerId(), newPoolSize - 1);
-    } catch (SchedulerException e) {
-      assertNotEquals(
-          "org.apache.zeppelin.scheduler.pool.DynamicThreadPool",
-          AdminService.getSchedulerThreadPoolClass()
-      );
-      assertEquals("Thread pool size is constant.", e.getMessage());
-    }
+    SchedulerConfigRequest request = AdminService.getSchedulersInfoList().iterator().next();
+    Integer newPoolSize = request.getPoolSize() + 1;
+    AdminService.setSchedulerThreadPoolSize(request.getId(), newPoolSize);
+
+    request = AdminService.getSchedulersInfoList().iterator().next();
+    assertEquals(newPoolSize, request.getPoolSize());
+    assertEquals(
+        "org.apache.zeppelin.scheduler.pool.DynamicThreadPool",
+        request.getPoolClass()
+    );
+    AdminService.setSchedulerThreadPoolSize(request.getId(), newPoolSize - 1);
   }
 }

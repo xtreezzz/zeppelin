@@ -110,8 +110,7 @@ public class Notebook {
     this.noteSearchService = noteSearchService;
     this.notebookAuthorization = notebookAuthorization;
     this.credentials = credentials;
-    StdSchedulerFactory quartzSchedFact = new StdSchedulerFactory();
-    quartzSched = quartzSchedFact.getScheduler();
+    quartzSched = new StdSchedulerFactory().getScheduler();
     quartzSched.start();
     CronJob.notebook = this;
 

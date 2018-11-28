@@ -18,19 +18,33 @@
 package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
+import java.util.Objects;
+import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.rest.AdminRestApi;
 
 /**
  * Scheduler configuration request message for admin rest api.
  *
  * @see AdminRestApi#getQuartzSchedulerPoolInfo()
- * @see AdminRestApi#changeSchedulerPoolSize(String, String)
+ * @see AdminRestApi#changeScheduler(String, String)
  */
-public class SchedulerConfigRequest {
-
+public class SchedulerConfigRequest implements JsonSerializable {
   private static final Gson gson = new Gson();
 
+  public SchedulerConfigRequest(String name, String id, Integer poolSize,
+      String poolClass, String storeClass) {
+    this.name = name;
+    this.id = id;
+    this.poolSize = poolSize;
+    this.poolClass = poolClass;
+    this.storeClass = storeClass;
+  }
+
+  private String name;
+  private String id;
   private Integer poolSize;
+  private String poolClass;
+  private String storeClass;
 
   public Integer getPoolSize() {
     return poolSize;
@@ -42,5 +56,52 @@ public class SchedulerConfigRequest {
 
   public static SchedulerConfigRequest fromJson(String json) {
     return gson.fromJson(json, SchedulerConfigRequest.class);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getPoolClass() {
+    return poolClass;
+  }
+
+  public String getStoreClass() {
+    return storeClass;
+  }
+
+  @Override
+  public String toString() {
+    return String.join(" ",
+        "name:", name,
+        "id:", id,
+        "storeClass:", storeClass,
+        "poolClass:", poolClass,
+        "poolSize:", poolSize.toString());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (o == null || o.getClass() != this.getClass()) {
+      return false;
+    }
+    SchedulerConfigRequest other = (SchedulerConfigRequest) o;
+    return Objects.equals(this.id, other.id)
+        && Objects.equals(this.name, other.name)
+        && Objects.equals(this.poolSize, other.poolSize)
+        && Objects.equals(this.storeClass, other.storeClass)
+        && Objects.equals(this.poolClass, other.poolClass);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, id, poolSize, storeClass, poolClass);
   }
 }

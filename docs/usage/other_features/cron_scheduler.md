@@ -92,6 +92,13 @@ In case you didn't configure quartz.properties:
       <td>Default: 0</td>
     </tr>
     <tr>
+      <td>```org.quartz.threadPool.keepAliveTimeSec```</td>
+      <td>If the pool currently has more than corePoolSize threads, excess threads will be terminated if they have been idle for more than the keepAliveTime. This provides a means of reducing resource consumption when the pool is not being actively used. If the pool becomes more active later, new threads will be constructed.</td>
+      <td>no</td>
+      <td>long</td>
+      <td>Default: 60</td>
+    </tr>
+    <tr>
       <td>```org.quartz.scheduler.instanceName```</td>
       <td>Scheduler instance name.</td>
       <td>yes</td>

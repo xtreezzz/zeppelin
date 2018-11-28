@@ -17,12 +17,9 @@
 
 package org.apache.zeppelin.service;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -31,9 +28,10 @@ import javax.ws.rs.BadRequestException;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.zeppelin.rest.exception.SchedulerConfigRuntimeException;
 import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
 import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.SchedulerRepository;
 
@@ -41,22 +39,6 @@ import org.quartz.impl.SchedulerRepository;
  * This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}.
  */
 public class AdminService {
-
-  private static Scheduler scheduler;
-
-  public static Scheduler getScheduler() throws SchedulerException {
-    if (scheduler != null) {
-      return scheduler;
-    }
-    ArrayList<Scheduler> allSchedulers =
-        new ArrayList<>(SchedulerRepository.getInstance().lookupAll());
-
-    if (allSchedulers.size() > 0) {
-      scheduler = allSchedulers.get(0);
-      return scheduler;
-    }
-    throw new SchedulerException("Scheduler isn't configured");
-  }
 
   public List<Logger> getLoggers() {
     Enumeration loggers = LogManager.getCurrentLoggers();
@@ -103,14 +85,18 @@ public class AdminService {
     logger.setLevel(level);
   }
 
-  public static Map<String, String> getSchedulerInfo() throws SchedulerException {
-    Map<String, String> info = new HashMap<>();
-    info.put("name", getSchedulerName());
-    info.put("id", getSchedulerId());
-    info.put("poolSize", String.valueOf(getSchedulerPoolSize()));
-    info.put("poolClass", getSchedulerThreadPoolClass());
-    info.put("storeClass", getSchedulerJobStoreClass());
-    return info;
+  public static List<SchedulerConfigRequest> getSchedulersInfoList() {
+    return SchedulerRepository.getInstance().lookupAll().stream().map(scheduler -> {
+      try {
+        return new SchedulerConfigRequest(scheduler.getSchedulerName(),
+          scheduler.getSchedulerInstanceId(),
+          scheduler.getMetaData().getThreadPoolSize(),
+          scheduler.getMetaData().getThreadPoolClass().getName(),
+          scheduler.getMetaData().getJobStoreClass().getName());
+      } catch (SchedulerException e) {
+        throw new SchedulerConfigRuntimeException(e);
+      }
+    }).collect(Collectors.toList());
   }
 
   public static void setSchedulerThreadPoolSize(
@@ -121,25 +107,5 @@ public class AdminService {
       throw new SchedulerException("Wrong schedulerId - " + schedulerId);
     }
     threadPool.setThreadCount(size);
-  }
-
-  public static String getSchedulerName() throws SchedulerException {
-    return getScheduler().getSchedulerName();
-  }
-
-  public static String getSchedulerId() throws SchedulerException {
-    return getScheduler().getSchedulerInstanceId();
-  }
-
-  public static Integer getSchedulerPoolSize() throws SchedulerException {
-    return getScheduler().getMetaData().getThreadPoolSize();
-  }
-
-  public static String getSchedulerThreadPoolClass() throws SchedulerException {
-    return getScheduler().getMetaData().getThreadPoolClass().getName();
-  }
-
-  public static String getSchedulerJobStoreClass() throws SchedulerException {
-    return getScheduler().getMetaData().getJobStoreClass().getName();
   }
 }

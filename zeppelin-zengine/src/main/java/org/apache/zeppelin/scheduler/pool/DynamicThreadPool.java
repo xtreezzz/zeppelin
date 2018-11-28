@@ -49,17 +49,15 @@ import org.slf4j.LoggerFactory;
  * Instance could be obtained using <code>{@link DynamicThreadPool#getInstance(String)}</code>
  */
 public class DynamicThreadPool implements ThreadPool {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicThreadPool.class);
 
   private static final Map<String, DynamicThreadPool> INSTANCES = new ConcurrentHashMap<>();
-  private static final Object poolEvent = new Object();
+  private final Object poolEvent = new Object();
 
-  private ThreadPoolExecutor executor =
-      new ThreadPoolExecutor(1, 1, 1, TimeUnit.MINUTES, new SynchronousQueue<>());
+  private final ThreadPoolExecutor executor =
+      new ThreadPoolExecutor(1, 10, 1, TimeUnit.MINUTES, new SynchronousQueue<>());
 
-  private int threadCount;
-  private int priority = Thread.NORM_PRIORITY;
+  private volatile int priority = Thread.NORM_PRIORITY;
 
   private String threadNamePrefix;
   private String schedulerInstanceId;
@@ -88,7 +86,7 @@ public class DynamicThreadPool implements ThreadPool {
 
   @Override
   public int blockForAvailableThreads() {
-    int availableThreads = threadCount - executor.getActiveCount();
+    int availableThreads = executor.getMaximumPoolSize() - executor.getActiveCount();
     while (availableThreads <= 0) {
       synchronized (poolEvent) {
         try {
@@ -98,7 +96,7 @@ public class DynamicThreadPool implements ThreadPool {
           return 0;
         }
       }
-      availableThreads = threadCount - executor.getActiveCount();
+      availableThreads = executor.getMaximumPoolSize() - executor.getActiveCount();
     }
     return availableThreads;
   }
@@ -109,10 +107,6 @@ public class DynamicThreadPool implements ThreadPool {
     if (schedulerInstanceId != null && INSTANCES.get(schedulerInstanceId) != this) {
       // already initialized...
       return;
-    }
-
-    if (threadCount <= 0) {
-      throw new SchedulerConfigException("Thread count must be > 0");
     }
 
     if (priority <= 0 || priority > 9) {
@@ -161,36 +155,25 @@ public class DynamicThreadPool implements ThreadPool {
     this.threadNamePrefix = prfx;
   }
 
-  public String getThreadNamePrefix() {
-    return threadNamePrefix;
-  }
-
   /**
    * Set the number of worker threads in the pool. Increases <code>{@link
    * ThreadPoolExecutor#maximumPoolSize}</code>
    */
   public void setThreadCount(int threadCount) throws SchedulerConfigException {
-    if (threadCount == this.threadCount) {
+    if (executor.getMaximumPoolSize() == threadCount) {
       return;
     }
-    LOGGER.info("Changing ThreadPool size from {} to {}", this.threadCount, threadCount);
-    if (threadCount <= 0) {
+    LOGGER.info(
+        "Changing ThreadPool size from {} to {}", executor.getMaximumPoolSize(), threadCount);
+    try {
+      executor.setMaximumPoolSize(threadCount);
+    } catch (IllegalArgumentException e) {
       throw new SchedulerConfigException("Thread count must be > 0");
     }
-    this.threadCount = threadCount;
-    executor.setMaximumPoolSize(threadCount);
   }
 
-  public void setKeepAliveTime(long time, TimeUnit timeUnit) {
-    executor.setKeepAliveTime(time, timeUnit);
-  }
-
-  public void setMaximumPoolSize(int maximumPoolSize) throws SchedulerConfigException {
-    setThreadCount(maximumPoolSize);
-  }
-
-  public void setCorePoolSize(int corePoolSize) throws SchedulerConfigException {
-    setThreadCount(corePoolSize);
+  public void setKeepAliveTimeSec(long time) {
+    executor.setKeepAliveTime(time, TimeUnit.SECONDS);
   }
 
   /**
@@ -198,16 +181,18 @@ public class DynamicThreadPool implements ThreadPool {
    */
   @Override
   public int getPoolSize() {
-    return threadCount;
+    return executor.getMaximumPoolSize();
   }
 
   @Override
   public void setInstanceId(String schedInstId) {
-    if (schedulerInstanceId != null && INSTANCES.get(schedulerInstanceId) != this) {
-      INSTANCES.remove(schedulerInstanceId);
+    if (schedulerInstanceId != null) {
+      INSTANCES.remove(schedulerInstanceId, this);
     }
-    this.schedulerInstanceId = schedInstId;
-    INSTANCES.put(schedulerInstanceId, this);
+    schedulerInstanceId = schedInstId;
+    if (schedulerInstanceId != null) {
+      INSTANCES.put(schedulerInstanceId, this);
+    }
   }
 
   @Override
@@ -222,31 +207,22 @@ public class DynamicThreadPool implements ThreadPool {
     this.priority = priority;
   }
 
-  /**
-   * Get the thread priority of worker threads in the pool.
-   */
-  public int getThreadPriority() {
-    return priority;
-  }
-
   private class DynamicThreadFactory implements ThreadFactory {
-
-    private final String nameFormat = threadNamePrefix + "-%d";
     private final AtomicLong count = new AtomicLong(0L);
 
     @Override
     public Thread newThread(Runnable runnable) {
       Thread newThread = new Thread(runnable);
       newThread.setUncaughtExceptionHandler((th, e) -> LOGGER.error("ThreadPool error", e));
-      newThread.setName(String.format(nameFormat, count.getAndIncrement()));
+      newThread.setName(String.format("%s-%d", threadNamePrefix, count.getAndIncrement()));
       newThread.setPriority(priority);
 
-      LOGGER.info("Thread - {} created", newThread.toString());
+      LOGGER.info("Thread - {} created", newThread);
       return newThread;
     }
   }
 
-  private static class NotifableJob implements Runnable {
+  private class NotifableJob implements Runnable {
 
     private Runnable job;
 
@@ -265,7 +241,7 @@ public class DynamicThreadPool implements ThreadPool {
         job.run();
       } finally {
         synchronized (poolEvent) {
-          poolEvent.notify();
+          poolEvent.notifyAll();
         }
       }
     }
