@@ -59,9 +59,9 @@ public class DynamicThreadPool implements ThreadPool {
 
   private volatile int priority = Thread.NORM_PRIORITY;
 
-  private String threadNamePrefix;
-  private String schedulerInstanceId;
-  private String schedulerInstanceName;
+  private volatile String threadNamePrefix;
+  private volatile String schedulerInstanceId;
+  private volatile String schedulerInstanceName;
 
   public static DynamicThreadPool getInstance(String schedulerInstanceId) {
     return INSTANCES.get(schedulerInstanceId);
@@ -78,7 +78,7 @@ public class DynamicThreadPool implements ThreadPool {
       }
       return true;
     } catch (RejectedExecutionException e) {
-      LOGGER.error(e.toString());
+      LOGGER.error("Cron job rejected by thread pool", e);
       return false;
     }
   }
@@ -133,7 +133,7 @@ public class DynamicThreadPool implements ThreadPool {
   @Override
   public void shutdown(boolean waitForJobsToComplete) {
     LOGGER.info("Shutting down ThreadPool...");
-    if (!waitForJobsToComplete) {
+    if (waitForJobsToComplete) {
       try {
         executor.shutdown();
         final boolean done = executor.awaitTermination(1, TimeUnit.MINUTES);
@@ -212,7 +212,7 @@ public class DynamicThreadPool implements ThreadPool {
     @Override
     public Thread newThread(Runnable runnable) {
       Thread newThread = new Thread(runnable);
-      newThread.setUncaughtExceptionHandler((th, e) -> LOGGER.error("ThreadPool error", e));
+      newThread.setUncaughtExceptionHandler((th, e) -> LOGGER.error("Unexpected cron job error", e));
       newThread.setName(String.format("%s-%d", threadNamePrefix, count.getAndIncrement()));
       newThread.setPriority(priority);
 
@@ -223,7 +223,7 @@ public class DynamicThreadPool implements ThreadPool {
 
   private class NotifableJob implements Runnable {
 
-    private Runnable job;
+    private final Runnable job;
 
     NotifableJob(Runnable job) {
       this.job = job;
