@@ -593,7 +593,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     } catch (InterpreterException e) {
       throw new IllegalStateException(e.getCause());
     } catch (IOException | SQLException | ClassNotFoundException e) {
-      logger.warn("Database connection cannot be established");
+      logger.warn("Database connection cannot be established", e);
       return Optional.empty();
     }
   }
@@ -768,9 +768,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   private InterpreterResult executeSql(String propertyKey, String sql,
       InterpreterContext interpreterContext) {
-    Connection connection = null;
-    Statement statement;
     ResultSet resultSet = null;
+    Statement statement;
     String paragraphId = interpreterContext.getParagraphId();
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
@@ -788,8 +787,11 @@ public class JDBCInterpreter extends KerberosInterpreter {
       } catch (SQLException e1) {
         logger.error("Cannot close DBPool for user, propertyKey: " + user + propertyKey, e1);
       }
-      return new InterpreterResult(Code.ERROR, "Connection cannot be established");
+      return new InterpreterResult(Code.ERROR, "Database connection cannot be established");
     }
+
+    Connection connection = optionalConnection.get();
+
     try {
       List<String> sqlArray = splitQuery
               ? splitSqlQueries(sql)
@@ -798,13 +800,13 @@ public class JDBCInterpreter extends KerberosInterpreter {
       for (String sqlToExecute : sqlArray) {
         statement = connection.createStatement();
 
+        if (statement == null) {
+          return new InterpreterResult(Code.ERROR, "Cannot create statement.");
+        }
+
         // fetch n+1 rows in order to indicate there's more rows available (for large selects)
         statement.setFetchSize(getMaxResult());
         statement.setMaxRows(getMaxResult() + 1);
-
-        if (statement == null) {
-          return new InterpreterResult(Code.ERROR, "Prefix not found.");
-        }
 
         try {
           getJDBCConfiguration(user).saveStatement(paragraphId, statement);

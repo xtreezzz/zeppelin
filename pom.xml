@@ -66,6 +66,7 @@
     <module>hbase</module>
     <module>pig</module>
     <module>jdbc</module>
+    <module>tjdbc</module>
     <module>file</module>
     <module>flink</module>
     <module>ignite</module>
@@ -89,7 +90,6 @@
     <module>zeppelin-jupyter</module>
     <module>zeppelin-plugins</module>
     <module>zeppelin-distribution</module>
-    <module>tjdbc</module>
   </modules>
 
   <properties>
