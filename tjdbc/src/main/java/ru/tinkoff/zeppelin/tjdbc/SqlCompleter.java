@@ -19,6 +19,7 @@ package ru.tinkoff.zeppelin.tjdbc;
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
 
+import jline.console.completer.Completer;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -56,23 +58,23 @@ public class SqlCompleter {
   /**
    * Completer for sql keywords.
    */
-  private CachedCompleter<StringsCompleter> keywordCompleter;
+  private CachedCompleter keywordCompleter;
 
   /**
    * Schema completer.
    */
-  private CachedCompleter<StringsCompleter> schemasCompleter;
+  private CachedCompleter schemasCompleter;
 
   /**
    * Contain different completer with table list for every schema name.
    */
-  private Map<String, CachedCompleter<StringsCompleter>> tablesCompleters = new HashMap<>();
+  private Map<String, CachedCompleter> tablesCompleters = new HashMap<>();
 
   /**
    * Contains different completer with column list for every table name.
    * Table names store as schema_name.table_name
    */
-  private Map<String, CachedCompleter<StringsCompleter>> columnsCompleters = new HashMap<>();
+  private Map<String, CachedCompleter> columnsCompleters = new HashMap<>();
 
   private int ttlInSeconds;
 
@@ -274,17 +276,27 @@ public class SqlCompleter {
     return completions;
   }
 
+  // TODO(c47harsis): get rid of instanceof
   private SqlStatement getStatementParameters(String buffer, int cursor) {
-    Collection<String> schemas = schemasCompleter.getCompleter().getStrings();
-    Collection<String> keywords = keywordCompleter.getCompleter().getStrings();
+    Collection<String> schemas = null;
+    Collection<String> keywords = null;
+
+    Completer completer = schemasCompleter.getCompleter();
+    if (completer instanceof StringsCompleter) {
+      schemas = ((StringsCompleter) completer).getStrings();
+    }
+    completer = keywordCompleter.getCompleter();
+    if (completer instanceof StringsCompleter) {
+      keywords = ((StringsCompleter) completer).getStrings();
+    }
 
     Collection<String> tablesInDefaultSchema = new TreeSet<>();
     if (tablesCompleters.containsKey(defaultSchema)) {
-      tablesInDefaultSchema = tablesCompleters.get(defaultSchema)
-          .getCompleter().getStrings();
+      completer = tablesCompleters.get(defaultSchema).getCompleter();
+      if (completer instanceof StringsCompleter) {
+        tablesInDefaultSchema = ((StringsCompleter) completer).getStrings();
+      }
     }
-
-
 
     return new SqlStatement(buffer, cursor, defaultSchema, schemas,
         tablesInDefaultSchema, keywords);
@@ -334,7 +346,7 @@ public class SqlCompleter {
           logger.info("Schema completer initialized with " + schemas.size() + " schemas");
         }
 
-        CachedCompleter<StringsCompleter> tablesCompleterInDefaultSchema = tablesCompleters
+        CachedCompleter tablesCompleterInDefaultSchema = tablesCompleters
             .get(defaultSchema);
 
         if (tablesCompleterInDefaultSchema == null || tablesCompleterInDefaultSchema.isExpired()) {
