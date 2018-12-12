@@ -34,19 +34,29 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectBuilder;
+import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
+import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
+import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
+import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
+import org.apache.zeppelin.interpreter.remote.RemoteInterpreterRunningProcess;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.notebook.socket.Message;
 import org.apache.zeppelin.notebook.socket.Message.OP;
 import org.apache.zeppelin.rest.AbstractTestRestApi;
@@ -417,6 +427,58 @@ public class NotebookServerTest extends AbstractTestRestApi {
               createdNote.getId()).getId(), defaultInterpreterId);
     }
     notebook.removeNote(createdNote.getId(), anonymous);
+  }
+
+  @Test
+  public void testRunningInterpretersParagraphInfo()
+      throws InterpreterNotFoundException, IOException {
+    // Replace notebook with spy obj to mock interpreterSettingManager
+    Notebook originalNotebook = ZeppelinServer.notebook;
+    ZeppelinServer.notebook = spy(ZeppelinServer.notebook);
+
+    final InterpreterSettingManager intpSettingManager = mock(InterpreterSettingManager.class);
+    when(ZeppelinServer.notebook.getInterpreterSettingManager()).thenReturn(intpSettingManager);
+    List<Map<String, String>> fakeRunningInterpreterList = new ArrayList<>();
+    Map<String, String> interpreterInfo = new HashMap<>();
+    interpreterInfo.put("name", "fake");
+    interpreterInfo.put("group", "fake");
+    interpreterInfo.put("host", "1.1.1.1");
+    interpreterInfo.put("port", "1111");
+    fakeRunningInterpreterList.add(interpreterInfo);
+
+    when(intpSettingManager.getRunningInterpreters()).thenReturn(fakeRunningInterpreterList);
+
+    final Note note = ZeppelinServer.notebook.createNote("testNote", anonymous);
+    final Paragraph fakeParagraph = spy(new Paragraph(note, mock(ParagraphJobListener.class)));
+    note.addParagraph(fakeParagraph);
+
+    // mock bindedInterpreter related settings accroding to notebook's interpreterSettingManager
+    final Interpreter bindedInterpreter = mock(Interpreter.class);
+    final RemoteInterpreterProcess fakeProcess = mock(RemoteInterpreterRunningProcess.class);
+    // paragraphs's intpProcess (port, host) -> running interpreter (port, host)
+    when(fakeProcess.getPort()).thenReturn(1111);
+    when(fakeProcess.getHost()).thenReturn("1.1.1.1");
+    final ManagedInterpreterGroup fakeMIG = mock(ManagedInterpreterGroup.class);
+    when(fakeMIG.getInterpreterProcess()).thenReturn(fakeProcess);
+
+    when(bindedInterpreter.getInterpreterGroup()).thenReturn(fakeMIG);
+    when(fakeParagraph.getBindedInterpreter()).thenReturn(bindedInterpreter);
+    when(fakeParagraph.isRunning()).thenReturn(true);
+
+    Map<String, Object> result = notebookServer.getRunningInterpretersParagraphInfo();
+    LOG.info("Running interpreters paragraph info is {}", result);
+    Map<String, Object> resultInterpreterInfo = (Map<String, Object>) result.get("fake");
+    assertEquals("1111", resultInterpreterInfo.get("port"));
+    assertEquals("1.1.1.1", resultInterpreterInfo.get("host"));
+
+    Map<String, String> paragraphInfo =
+        ((List<Map<String, String>>) resultInterpreterInfo.get("paragraphs")).get(0);
+    assertEquals(fakeParagraph.getNote().getName(), paragraphInfo.get("noteName"));
+    assertEquals(fakeParagraph.getUser(), paragraphInfo.get("user"));
+
+    // clean
+    ZeppelinServer.notebook.removeNote(note.getId(), anonymous);
+    ZeppelinServer.notebook = originalNotebook;
   }
 
   private NotebookSocket createWebSocket() {
