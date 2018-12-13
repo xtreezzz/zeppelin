@@ -212,7 +212,8 @@ public class DynamicThreadPool implements ThreadPool {
     @Override
     public Thread newThread(Runnable runnable) {
       Thread newThread = new Thread(runnable);
-      newThread.setUncaughtExceptionHandler((th, e) -> LOGGER.error("Unexpected cron job error", e));
+      newThread.setUncaughtExceptionHandler(
+          (th, e) -> LOGGER.error("Unexpected cron job error", e));
       newThread.setName(String.format("%s-%d", threadNamePrefix, count.getAndIncrement()));
       newThread.setPriority(priority);
 

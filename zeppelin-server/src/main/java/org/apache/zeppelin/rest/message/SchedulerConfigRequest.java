@@ -31,6 +31,12 @@ import org.apache.zeppelin.rest.AdminRestApi;
 public class SchedulerConfigRequest implements JsonSerializable {
   private static final Gson gson = new Gson();
 
+  private String name;
+  private String id;
+  private Integer poolSize;
+  private String poolClass;
+  private String storeClass;
+
   public SchedulerConfigRequest(String name, String id, Integer poolSize,
       String poolClass, String storeClass) {
     this.name = name;
@@ -39,12 +45,6 @@ public class SchedulerConfigRequest implements JsonSerializable {
     this.poolClass = poolClass;
     this.storeClass = storeClass;
   }
-
-  private String name;
-  private String id;
-  private Integer poolSize;
-  private String poolClass;
-  private String storeClass;
 
   public Integer getPoolSize() {
     return poolSize;

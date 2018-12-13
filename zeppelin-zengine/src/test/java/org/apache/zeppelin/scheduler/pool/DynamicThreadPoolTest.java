@@ -33,22 +33,22 @@ public class DynamicThreadPoolTest {
    * Each <code>{@link SimpleTask}</code> decrements it and main test thread
    * waits for it's zeroing after jobs enqueuing.
    */
-  private static CountDownLatch MASTER_LATCH;
+  private static CountDownLatch masterLatch;
 
   /**
-   * Main test thread decrements it after MASTER_LATCH notification.
+   * Main test thread decrements it after masterLatch notification.
    * Each <code>{@link SimpleTask}</code> waits for it's zeroing.
-   * So all the jobs is active until SLAVE_LATCH zeroing.
+   * So all the jobs is active until slaveLatch zeroing.
    */
-  private static CountDownLatch SLAVE_LATCH;
+  private static CountDownLatch slaveLatch;
 
   /**
    * Setup {@link DynamicThreadPool}.
    */
   @Before
   public void beforeTests() throws SchedulerException {
-    MASTER_LATCH = new CountDownLatch(2);
-    SLAVE_LATCH = new CountDownLatch(1);
+    masterLatch = new CountDownLatch(2);
+    slaveLatch = new CountDownLatch(1);
 
     threadPool = new DynamicThreadPool();
     threadPool.setInstanceId("Test");
@@ -66,7 +66,7 @@ public class DynamicThreadPoolTest {
 
   /**
    * There are two <code>{@link SimpleTask}</code> jobs whereas threadCount is set to 1, therefore
-   * threadPool must wait for available thread before second job execution, thus MASTER_LATCH.await
+   * threadPool must wait for available thread before second job execution, thus masterLatch.await
    * should return false.
    */
   @Test
@@ -86,13 +86,13 @@ public class DynamicThreadPoolTest {
     t.start();
 
     Assert.assertTrue("Task has been rejected", isTasksFinished.get());
-    Assert.assertFalse(MASTER_LATCH.await(100, TimeUnit.MILLISECONDS));
-    SLAVE_LATCH.countDown();
+    Assert.assertFalse(masterLatch.await(100, TimeUnit.MILLISECONDS));
+    slaveLatch.countDown();
   }
 
   /**
    * There are two <code>{@link SimpleTask}</code> jobs whereas threadCount is set to 2, therefore
-   * threadPool jobs will be executed concurrently, thus MASTER_LATCH.await should return true.
+   * threadPool jobs will be executed concurrently, thus masterLatch.await should return true.
    */
   @Test
   public void testParallelExecution() throws Exception {
@@ -110,16 +110,16 @@ public class DynamicThreadPoolTest {
     t.start();
 
     Assert.assertTrue("Task has been rejected", isTasksFinished.get());
-    Assert.assertTrue(MASTER_LATCH.await(100, TimeUnit.MILLISECONDS));
-    SLAVE_LATCH.countDown();
+    Assert.assertTrue(masterLatch.await(100, TimeUnit.MILLISECONDS));
+    slaveLatch.countDown();
   }
 
   public static class SimpleTask implements Runnable {
     @Override
     public void run() {
-      MASTER_LATCH.countDown();
+      masterLatch.countDown();
       try {
-        SLAVE_LATCH.await(1, TimeUnit.SECONDS);
+        slaveLatch.await(1, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }

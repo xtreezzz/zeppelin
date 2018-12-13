@@ -110,7 +110,6 @@ public class AdminRestApi {
   public Response changeScheduler(@PathParam("id") String schedulerId, String message) {
     logger.info("Change cron pool size with msg={}", message);
     SchedulerConfigRequest request = SchedulerConfigRequest.fromJson(message);
-
     try {
       if (request.getPoolSize() != null) {
         AdminService.setSchedulerThreadPoolSize(schedulerId, request.getPoolSize());

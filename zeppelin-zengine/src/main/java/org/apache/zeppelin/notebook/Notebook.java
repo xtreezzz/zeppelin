@@ -79,7 +79,7 @@ public class Notebook {
   private InterpreterFactory replFactory;
   private InterpreterSettingManager interpreterSettingManager;
   private ZeppelinConfiguration conf;
-  private Scheduler quartzSched;
+  Scheduler quartzSched;
   private ParagraphJobListener paragraphJobListener;
   private NotebookRepo notebookRepo;
   private SearchService noteSearchService;
@@ -684,10 +684,6 @@ public class Notebook {
     } catch (SchedulerException e) {
       LOGGER.error("Can't remove quertz " + id, e);
     }
-  }
-
-  public Scheduler getQuartzSched() {
-    return quartzSched;
   }
 
   public InterpreterFactory getInterpreterFactory() {

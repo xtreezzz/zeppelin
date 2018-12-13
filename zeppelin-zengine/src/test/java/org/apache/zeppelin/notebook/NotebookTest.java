@@ -787,11 +787,9 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     config.put("cron", "* * * * * ?");
     note.setConfig(config);
 
-    final int jobsBeforeRefresh = notebook
-            .getQuartzSched().getJobKeys(GroupMatcher.anyGroup()).size();
+    final int jobsBeforeRefresh = notebook.quartzSched.getJobKeys(GroupMatcher.anyGroup()).size();
     notebook.refreshCron(note.getId());
-    final int jobsAfterRefresh = notebook
-            .getQuartzSched().getJobKeys(GroupMatcher.anyGroup()).size();
+    final int jobsAfterRefresh = notebook.quartzSched.getJobKeys(GroupMatcher.anyGroup()).size();
 
     assertEquals(jobsBeforeRefresh, jobsAfterRefresh);
 
