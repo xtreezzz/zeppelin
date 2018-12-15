@@ -104,7 +104,8 @@ public class AdminService {
     DynamicThreadPool threadPool =
         DynamicThreadPool.getInstance(schedulerId);
     if (threadPool == null) {
-      throw new SchedulerException("Wrong schedulerId - " + schedulerId);
+      throw new SchedulerException("Dynamic pool is not configured or scheduler is wrong, "
+          + "check setting for scheduler: " + schedulerId);
     }
     threadPool.setThreadCount(size);
   }
