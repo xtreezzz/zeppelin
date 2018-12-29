@@ -44,7 +44,10 @@ import org.slf4j.LoggerFactory;
  * Pool based on <code>{@link SynchronousQueue}</code>.
  *
  * The pool has a dynamic number of <code>Thread</code>s, and grows or shrinks based on demand. It
- * could be changed by calling <code>{@link #setThreadCount(int)}</code>
+ * could be changed by calling <code>{@link #setThreadCount(int)}</code>.
+ *
+ * Notice that real MaximumPoolSize is more than requested. This buffer is needed because in the
+ * extreme case new job could be rejected despite the available thread in pool.
  *
  * Instance could be obtained using <code>{@link DynamicThreadPool#getInstance(String)}</code>
  */
@@ -85,7 +88,7 @@ public class DynamicThreadPool implements ThreadPool {
 
   @Override
   public int blockForAvailableThreads() {
-    int availableThreads = executor.getMaximumPoolSize() - executor.getActiveCount();
+    int availableThreads = executor.getMaximumPoolSize() - 1 - executor.getActiveCount();
     while (availableThreads <= 0) {
       synchronized (poolEvent) {
         try {
@@ -95,7 +98,7 @@ public class DynamicThreadPool implements ThreadPool {
           return 0;
         }
       }
-      availableThreads = executor.getMaximumPoolSize() - executor.getActiveCount();
+      availableThreads = executor.getMaximumPoolSize() - 1 - executor.getActiveCount();
     }
     return availableThreads;
   }
@@ -155,19 +158,23 @@ public class DynamicThreadPool implements ThreadPool {
   }
 
   /**
-   * Set the number of worker threads in the pool. Increases <code>{@link
-   * ThreadPoolExecutor#maximumPoolSize}</code>
+   * Set the number of worker threads in the pool. Increases
+   * ThreadPoolExecutor#maximumPoolSize
    */
   public void setThreadCount(int threadCount) throws SchedulerConfigException {
-    if (executor.getMaximumPoolSize() == threadCount) {
+    if (executor.getMaximumPoolSize() == threadCount + 1) {
       return;
     }
+    if (threadCount <= 0) {
+      throw new SchedulerConfigException("Thread count must be above 0");
+    }
     LOGGER.info(
-        "Changing ThreadPool size from {} to {}", executor.getMaximumPoolSize(), threadCount);
+        "Changing ThreadPool size from {} to {}", executor.getMaximumPoolSize() - 1, threadCount
+    );
     try {
-      executor.setMaximumPoolSize(threadCount);
+      executor.setMaximumPoolSize(threadCount + 1);
     } catch (IllegalArgumentException e) {
-      throw new SchedulerConfigException("Thread count must be > 0");
+      throw new SchedulerConfigException(e.getMessage());
     }
   }
 
@@ -180,7 +187,7 @@ public class DynamicThreadPool implements ThreadPool {
    */
   @Override
   public int getPoolSize() {
-    return executor.getMaximumPoolSize();
+    return executor.getMaximumPoolSize() - 1;
   }
 
   @Override
