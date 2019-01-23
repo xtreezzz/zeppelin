@@ -57,33 +57,14 @@
     <module>zeppelin-interpreter-api</module>
     <module>zeppelin-zengine</module>
     <module>zeppelin-display</module>
-    <module>groovy</module>
     <module>spark</module>
     <module>markdown</module>
     <module>angular</module>
     <module>shell</module>
-    <module>livy</module>
-    <module>hbase</module>
-    <module>pig</module>
     <module>jdbc</module>
-    <module>file</module>
-    <module>flink</module>
     <module>ignite</module>
     <module>kylin</module>
     <module>python</module>
-    <module>lens</module>
-    <module>cassandra</module>
-    <module>elasticsearch</module>
-    <module>bigquery</module>
-    <module>alluxio</module>
-    <module>scio</module>
-    <module>neo4j</module>
-    <module>sap</module>
-    <module>scalding</module>
-    <module>java</module>
-    <module>beam</module>
-    <module>hazelcastjet</module>
-    <module>geode</module>
     <module>zeppelin-web</module>
     <module>zeppelin-server</module>
     <module>zeppelin-jupyter</module>
