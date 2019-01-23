@@ -41,7 +41,7 @@ addons:
 env:
   global:
     # Interpreters does not required by zeppelin-server integration tests
-    - INTERPRETERS='!angular,!jdbc,!md,!ignite,!python,!kylin,!shell'
+    - INTERPRETERS='!angular,!jdbc,!markdown,!ignite,!python,!kylin,!shell'
 
 matrix:
   include:
