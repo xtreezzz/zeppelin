@@ -321,11 +321,9 @@ public class PythonInterpreter extends Interpreter implements ExecuteResultHandl
   // called by Python Process
   public void onPythonScriptInitialized(long pid) {
     pythonPid = pid;
-    synchronized (pythonScriptInitialized) {
       LOGGER.debug("onPythonScriptInitialized is called");
       pythonScriptInitialized.set(true);
       pythonScriptInitialized.notifyAll();
-    }
   }
 
   // called by Python Process
@@ -372,18 +370,17 @@ public class PythonInterpreter extends Interpreter implements ExecuteResultHandl
 
     outputStream.setInterpreterOutput(context.out);
 
-    synchronized (pythonScriptInitialized) {
       long startTime = System.currentTimeMillis();
       while (!pythonScriptInitialized.get()
           && System.currentTimeMillis() - startTime < MAX_TIMEOUT_SEC * 1000) {
         try {
           LOGGER.info("Wait for PythonScript initialized");
-          pythonScriptInitialized.wait(100);
+          Thread.sleep(100);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
-    }
+
 
     List<InterpreterResultMessage> errorMessage;
     try {

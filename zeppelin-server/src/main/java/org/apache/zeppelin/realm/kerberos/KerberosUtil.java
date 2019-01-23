@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,18 +72,18 @@ public class KerberosUtil {
 
   // numeric oids will never generate a GSSException for a malformed oid.
   // use to initialize statics.
-  private static Oid getNumericOidInstance(String oidName) {
+  private static Oid getNumericOidInstance(final String oidName) {
     try {
       return new Oid(oidName);
-    } catch (GSSException ex) {
+    } catch (final GSSException ex) {
       throw new IllegalArgumentException(ex);
     }
   }
 
-  public static Oid getOidInstance(String oidName)
+  public static Oid getOidInstance(final String oidName)
     throws ClassNotFoundException, GSSException, NoSuchFieldException,
     IllegalAccessException {
-    Class<?> oidClass;
+    final Class<?> oidClass;
     if (IBM_JAVA) {
       if ("NT_GSS_KRB5_PRINCIPAL".equals(oidName)) {
         // IBM JDK GSSUtil class does not have field for krb5 principal oid
@@ -92,7 +93,7 @@ public class KerberosUtil {
     } else {
       oidClass = Class.forName("sun.security.jgss.GSSUtil");
     }
-    Field oidField = oidClass.getDeclaredField(oidName);
+    final Field oidField = oidClass.getDeclaredField(oidName);
     return (Oid)oidField.get(oidClass);
   }
 
@@ -100,19 +101,19 @@ public class KerberosUtil {
     throws ClassNotFoundException, NoSuchMethodException,
     IllegalArgumentException, IllegalAccessException,
     InvocationTargetException {
-    Object kerbConf;
-    Class<?> classRef;
-    Method getInstanceMethod;
-    Method getDefaultRealmMethod;
+    final Object kerbConf;
+    final Class<?> classRef;
+    final Method getInstanceMethod;
+    final Method getDefaultRealmMethod;
     if (System.getProperty("java.vendor").contains("IBM")) {
       classRef = Class.forName("com.ibm.security.krb5.internal.Config");
     } else {
       classRef = Class.forName("sun.security.krb5.Config");
     }
-    getInstanceMethod = classRef.getMethod("getInstance", new Class[0]);
-    kerbConf = getInstanceMethod.invoke(classRef, new Object[0]);
-    getDefaultRealmMethod = classRef.getDeclaredMethod("getDefaultRealm",
-      new Class[0]);
+    getInstanceMethod = classRef.getMethod("getInstance");
+    kerbConf = getInstanceMethod.invoke(classRef);
+    getDefaultRealmMethod = classRef.getDeclaredMethod("getDefaultRealm"
+    );
     return (String)getDefaultRealmMethod.invoke(kerbConf, new Object[0]);
   }
 
@@ -120,9 +121,9 @@ public class KerberosUtil {
     String realmString = null;
     try {
       realmString = getDefaultRealm();
-    } catch (RuntimeException rte) {
+    } catch (final RuntimeException rte) {
       //silently catch everything
-    } catch (Exception e) {
+    } catch (final Exception e) {
       //silently return null
     }
     return realmString;
@@ -145,9 +146,9 @@ public class KerberosUtil {
    * @return String value of Kerberos realm, mapped from host fqdn
    *     May be default realm, or may be null.
    */
-  public static String getDomainRealm(String shortprinc) {
-    Class<?> classRef;
-    Object principalName; //of type sun.security.krb5.PrincipalName or IBM equiv
+  public static String getDomainRealm(final String shortprinc) {
+    final Class<?> classRef;
+    final Object principalName; //of type sun.security.krb5.PrincipalName or IBM equiv
     String realmString = null;
     try {
       if (System.getProperty("java.vendor").contains("IBM")) {
@@ -155,14 +156,14 @@ public class KerberosUtil {
       } else {
         classRef = Class.forName("sun.security.krb5.PrincipalName");
       }
-      int tKrbNtSrvHst = classRef.getField("KRB_NT_SRV_HST").getInt(null);
+      final int tKrbNtSrvHst = classRef.getField("KRB_NT_SRV_HST").getInt(null);
       principalName = classRef.getConstructor(String.class, int.class).
         newInstance(shortprinc, tKrbNtSrvHst);
       realmString = (String)classRef.getMethod("getRealmString", new Class[0]).
         invoke(principalName, new Object[0]);
-    } catch (RuntimeException rte) {
+    } catch (final RuntimeException rte) {
       //silently catch everything
-    } catch (Exception e) {
+    } catch (final Exception e) {
       //silently return default realm (which may itself be null)
     }
     if (null == realmString || realmString.equals("")) {
@@ -196,8 +197,8 @@ public class KerberosUtil {
    * @throws UnknownHostException
    *           If no IP address for the local host could be found.
    */
-  public static final String getServicePrincipal(String service,
-    String hostname)
+  public static final String getServicePrincipal(final String service,
+                                                 final String hostname)
     throws UnknownHostException {
     String fqdn = hostname;
     String shortprinc = null;
@@ -227,11 +228,11 @@ public class KerberosUtil {
    * @throws IOException
    *          If keytab entries cannot be read from the file.
    */
-  static final String[] getPrincipalNames(String keytabFileName) throws IOException {
-    Keytab keytab = Keytab.read(new File(keytabFileName));
-    Set<String> principals = new HashSet<String>();
-    List<KeytabEntry> entries = keytab.getEntries();
-    for (KeytabEntry entry: entries){
+  static final String[] getPrincipalNames(final String keytabFileName) throws IOException {
+    final Keytab keytab = Keytab.read(new File(keytabFileName));
+    final Set<String> principals = new HashSet<String>();
+    final List<KeytabEntry> entries = keytab.getEntries();
+    for (final KeytabEntry entry: entries){
       principals.add(entry.getPrincipalName().replace("\\", "/"));
     }
     return principals.toArray(new String[0]);
@@ -245,12 +246,12 @@ public class KerberosUtil {
    * @return list of unique principals which matches the pattern.
    * @throws IOException if cannot get the principal name
    */
-  public static final String[] getPrincipalNames(String keytab,
-    Pattern pattern) throws IOException {
+  public static final String[] getPrincipalNames(final String keytab,
+                                                 final Pattern pattern) throws IOException {
     String[] principals = getPrincipalNames(keytab);
     if (principals.length != 0) {
-      List<String> matchingPrincipals = new ArrayList<String>();
-      for (String principal : principals) {
+      final List<String> matchingPrincipals = new ArrayList<String>();
+      for (final String principal : principals) {
         if (pattern.matcher(principal).matches()) {
           matchingPrincipals.add(principal);
         }
@@ -269,7 +270,7 @@ public class KerberosUtil {
    * @param subject subject to be checked
    * @return true if the subject contains Kerberos keytab
    */
-  public static boolean hasKerberosKeyTab(Subject subject) {
+  public static boolean hasKerberosKeyTab(final Subject subject) {
     return !subject.getPrivateCredentials(KeyTab.class).isEmpty();
   }
 
@@ -280,7 +281,7 @@ public class KerberosUtil {
    * @param subject subject to be checked
    * @return true if the subject contains Kerberos ticket
    */
-  public static boolean hasKerberosTicket(Subject subject) {
+  public static boolean hasKerberosTicket(final Subject subject) {
     return !subject.getPrivateCredentials(KerberosTicket.class).isEmpty();
   }
 
@@ -291,7 +292,7 @@ public class KerberosUtil {
    * @return String of server principal
    * @throws IllegalArgumentException if token is undecodable
    */
-  public static String getTokenServerName(byte[] rawToken) {
+  public static String getTokenServerName(final byte[] rawToken) {
     // subsequent comments include only relevant portions of the kerberos
     // DER encoding that will be extracted.
     DER token = new DER(rawToken);
@@ -323,7 +324,7 @@ public class KerberosUtil {
     // AP-REQ ::= [APPLICATION 14] SEQUENCE {
     //     ticket[3]      Ticket
     // }
-    DER ticket = token.next().get(0x6e, 0x30, 0xa3, 0x61, 0x30);
+    final DER ticket = token.next().get(0x6e, 0x30, 0xa3, 0x61, 0x30);
     // Ticket ::= [APPLICATION 1] SEQUENCE {
     //     realm[1]       String
     //     sname[2]       PrincipalName
@@ -331,9 +332,9 @@ public class KerberosUtil {
     // PrincipalName ::= SEQUENCE {
     //     name-string[1] SEQUENCE OF String
     // }
-    String realm = ticket.get(0xa1, 0x1b).getAsString();
-    DER names = ticket.get(0xa2, 0x30, 0xa1, 0x30);
-    StringBuilder sb = new StringBuilder();
+    final String realm = ticket.get(0xa1, 0x1b).getAsString();
+    final DER names = ticket.get(0xa2, 0x30, 0xa1, 0x30);
+    final StringBuilder sb = new StringBuilder();
     while (names.hasNext()) {
       if (sb.length() > 0) {
         sb.append('/');
@@ -348,10 +349,10 @@ public class KerberosUtil {
     static final DER SPNEGO_MECH_OID = getDER(GSS_SPNEGO_MECH_OID);
     static final DER KRB5_MECH_OID = getDER(GSS_KRB5_MECH_OID);
 
-    private static DER getDER(Oid oid) {
+    private static DER getDER(final Oid oid) {
       try {
         return new DER(oid.getDER());
-      } catch (GSSException ex) {
+      } catch (final GSSException ex) {
         // won't happen.  a proper OID is encodable.
         throw new IllegalArgumentException(ex);
       }
@@ -360,13 +361,13 @@ public class KerberosUtil {
     private final int tag;
     private final ByteBuffer bb;
 
-    DER(byte[] buf) {
+    DER(final byte[] buf) {
       this(ByteBuffer.wrap(buf));
     }
 
-    DER(ByteBuffer srcbb) {
+    DER(final ByteBuffer srcbb) {
       tag = srcbb.get() & 0xff;
-      int length = readLength(srcbb);
+      final int length = readLength(srcbb);
       bb = srcbb.slice();
       bb.limit(length);
       srcbb.position(srcbb.position() + length);
@@ -377,10 +378,10 @@ public class KerberosUtil {
     }
 
     // standard ASN.1 encoding.
-    private static int readLength(ByteBuffer bb) {
+    private static int readLength(final ByteBuffer bb) {
       int length = bb.get();
       if ((length & (byte)0x80) != 0) {
-        int varlength = length & 0x7f;
+        final int varlength = length & 0x7f;
         length = 0;
         for (int i=0; i < varlength; i++) {
           length = (length << 8) | (bb.get() & 0xff);
@@ -389,9 +390,9 @@ public class KerberosUtil {
       return length;
     }
 
-    DER choose(int subtag) {
+    DER choose(final int subtag) {
       while (hasNext()) {
-        DER der = next();
+        final DER der = next();
         if (der.getTag() == subtag) {
           return der;
         }
@@ -399,16 +400,16 @@ public class KerberosUtil {
       return null;
     }
 
-    DER get(int... tags) {
+    DER get(final int... tags) {
       DER der = this;
       for (int i=0; i < tags.length; i++) {
-        int expectedTag = tags[i];
+        final int expectedTag = tags[i];
         // lookup for exact match, else scan if it's sequenced.
         if (der.getTag() != expectedTag) {
           der = der.hasNext() ? der.choose(expectedTag) : null;
         }
         if (der == null) {
-          StringBuilder sb = new StringBuilder("Tag not found:");
+          final StringBuilder sb = new StringBuilder("Tag not found:");
           for (int ii=0; ii <= i; ii++) {
             sb.append(" 0x").append(Integer.toHexString(tags[ii]));
           }
@@ -419,12 +420,8 @@ public class KerberosUtil {
     }
 
     String getAsString() {
-      try {
-        return new String(bb.array(), bb.arrayOffset() + bb.position(),
-          bb.remaining(), "UTF-8");
-      } catch (UnsupportedEncodingException e) {
-        throw new IllegalCharsetNameException("UTF-8"); // won't happen.
-      }
+      return new String(bb.array(), bb.arrayOffset() + bb.position(),
+        bb.remaining(), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -433,7 +430,7 @@ public class KerberosUtil {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       return (o instanceof DER) &&
         tag == ((DER)o).tag && bb.equals(((DER)o).bb);
     }

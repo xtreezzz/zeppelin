@@ -24,14 +24,15 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.ws.rs.BadRequestException;
 import org.apache.log4j.LogManager;
 import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.springframework.stereotype.Component;
 
 /** This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}. */
+@Component
 public class AdminService {
 
-  public List<org.apache.log4j.Logger> getLoggers() {
+  /*public List<org.apache.log4j.Logger> getLoggers() {
     Enumeration loggers = LogManager.getCurrentLoggers();
     return StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(
@@ -75,4 +76,5 @@ public class AdminService {
 
     logger.setLevel(level);
   }
+  */
 }

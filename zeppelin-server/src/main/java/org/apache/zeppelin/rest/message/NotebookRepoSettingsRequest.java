@@ -45,7 +45,7 @@ public class NotebookRepoSettingsRequest implements JsonSerializable {
     return this == EMPTY;
   }
 
-  public static boolean isEmpty(NotebookRepoSettingsRequest repoSetting) {
+  public static boolean isEmpty(final NotebookRepoSettingsRequest repoSetting) {
     if (repoSetting == null) {
       return true;
     }
@@ -56,7 +56,7 @@ public class NotebookRepoSettingsRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static NotebookRepoSettingsRequest fromJson(String json) {
+  public static NotebookRepoSettingsRequest fromJson(final String json) {
     return gson.fromJson(json, NotebookRepoSettingsRequest.class);
   }
 }

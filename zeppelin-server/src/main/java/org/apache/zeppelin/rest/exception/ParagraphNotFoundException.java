@@ -17,15 +17,16 @@
 
 package org.apache.zeppelin.rest.exception;
 
-import org.apache.zeppelin.utils.ExceptionUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.ws.rs.WebApplicationException;
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "No such Paragraph")
+public class ParagraphNotFoundException extends RuntimeException {
 
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-public class ParagraphNotFoundException extends WebApplicationException {
-
-  public ParagraphNotFoundException(String paragraphId) {
-    super(ExceptionUtils.jsonResponseContent(NOT_FOUND, "No such paragraph: " + paragraphId));
+  public ParagraphNotFoundException(final String message) {
+    super(message);
   }
+
 }
+
+

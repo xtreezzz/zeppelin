@@ -16,30 +16,16 @@
  */
 package org.apache.zeppelin.rest.exception;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "No such note")
+public class BadRequestException extends RuntimeException {
 
-import org.apache.zeppelin.utils.ExceptionUtils;
-
-/**
- * BadRequestException handler for WebApplicationException.
- */
-public class BadRequestException extends WebApplicationException {
-  public BadRequestException() {
-    super(ExceptionUtils.jsonResponse(BAD_REQUEST));
+  public BadRequestException(final String message) {
+    super(message);
   }
 
-  private static Response badRequestJson(String message) {
-    return ExceptionUtils.jsonResponseContent(BAD_REQUEST, message);
-  }
-
-  public BadRequestException(Throwable cause, String message) {
-    super(cause, badRequestJson(message));
-  }
-
-  public BadRequestException(String message) {
-    super(badRequestJson(message));
-  }
 }
+
+

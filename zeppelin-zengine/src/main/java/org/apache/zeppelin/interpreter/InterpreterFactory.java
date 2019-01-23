@@ -22,6 +22,8 @@ import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -31,12 +33,13 @@ import java.util.List;
  * Factory class for creating interpreters.
  *
  */
+@Component
 public class InterpreterFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterFactory.class);
 
   private final InterpreterSettingManager interpreterSettingManager;
 
-  @Inject
+  @Autowired
   public InterpreterFactory(InterpreterSettingManager interpreterSettingManager) {
     this.interpreterSettingManager = interpreterSettingManager;
   }

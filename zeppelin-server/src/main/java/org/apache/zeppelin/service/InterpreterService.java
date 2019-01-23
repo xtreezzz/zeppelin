@@ -38,10 +38,13 @@ import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * This class handles all of business logic for {@link org.apache.zeppelin.rest.InterpreterRestApi}
  */
+@Component
 public class InterpreterService {
 
   private static final String ZEPPELIN_ARTIFACT_PREFIX = "zeppelin-";
@@ -55,9 +58,9 @@ public class InterpreterService {
   private final ZeppelinConfiguration conf;
   private final InterpreterSettingManager interpreterSettingManager;
 
-  @Inject
-  public InterpreterService(
-      ZeppelinConfiguration conf, InterpreterSettingManager interpreterSettingManager) {
+  @Autowired
+  public InterpreterService(final ZeppelinConfiguration conf,
+                            final InterpreterSettingManager interpreterSettingManager) {
     this.conf = conf;
     this.interpreterSettingManager = interpreterSettingManager;
   }
@@ -66,29 +69,29 @@ public class InterpreterService {
       final InterpreterInstallationRequest request, final ServiceCallback serviceCallback)
       throws Exception {
     Preconditions.checkNotNull(request);
-    String interpreterName = request.getName();
+    final String interpreterName = request.getName();
     Preconditions.checkNotNull(interpreterName);
     Preconditions.checkNotNull(request.getArtifact());
 
-    String interpreterBaseDir = conf.getInterpreterDir();
-    String localRepoPath = conf.getInterpreterLocalRepoPath();
+    final String interpreterBaseDir = conf.getInterpreterDir();
+    final String localRepoPath = conf.getInterpreterLocalRepoPath();
 
     final DependencyResolver dependencyResolver = new DependencyResolver(localRepoPath);
 
-    String proxyUrl = conf.getZeppelinProxyUrl();
+    final String proxyUrl = conf.getZeppelinProxyUrl();
     if (null != proxyUrl) {
-      String proxyUser = conf.getZeppelinProxyUser();
-      String proxyPassword = conf.getZeppelinProxyPassword();
+      final String proxyUser = conf.getZeppelinProxyUser();
+      final String proxyPassword = conf.getZeppelinProxyPassword();
       try {
         dependencyResolver.setProxy(new URL(proxyUrl), proxyUser, proxyPassword);
-      } catch (MalformedURLException e) {
+      } catch (final MalformedURLException e) {
         // TODO(jl): Not sure if it's good to raise an exception
         throw new Exception("Url is not valid format", e);
       }
     }
 
     // TODO(jl): Make a rule between an interpreter name and an installation directory
-    List<String> possibleInterpreterDirectories = Lists.newArrayList();
+    final List<String> possibleInterpreterDirectories = Lists.newArrayList();
     possibleInterpreterDirectories.add(interpreterName);
     if (interpreterName.startsWith(ZEPPELIN_ARTIFACT_PREFIX)) {
       possibleInterpreterDirectories.add(interpreterName.replace(ZEPPELIN_ARTIFACT_PREFIX, ""));
@@ -96,8 +99,8 @@ public class InterpreterService {
       possibleInterpreterDirectories.add(ZEPPELIN_ARTIFACT_PREFIX + interpreterName);
     }
 
-    for (String pn : possibleInterpreterDirectories) {
-      Path testInterpreterDir = Paths.get(interpreterBaseDir, pn);
+    for (final String pn : possibleInterpreterDirectories) {
+      final Path testInterpreterDir = Paths.get(interpreterBaseDir, pn);
       if (Files.exists(testInterpreterDir)) {
         throw new Exception("Interpreter " + interpreterName + " already exists with " + pn);
       }
@@ -107,7 +110,7 @@ public class InterpreterService {
 
     try {
       Files.createDirectories(interpreterDir);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new Exception("Cannot create " + interpreterDir.toString());
     }
 
@@ -122,10 +125,10 @@ public class InterpreterService {
   }
 
   void downloadInterpreter(
-      InterpreterInstallationRequest request,
-      DependencyResolver dependencyResolver,
-      Path interpreterDir,
-      ServiceCallback<String> serviceCallback) {
+          final InterpreterInstallationRequest request,
+          final DependencyResolver dependencyResolver,
+          final Path interpreterDir,
+          final ServiceCallback<String> serviceCallback) {
     try {
       logger.info("Start to download a dependency: {}", request.getName());
       if (null != serviceCallback) {
@@ -141,11 +144,11 @@ public class InterpreterService {
       if (null != serviceCallback) {
         serviceCallback.onSuccess(request.getName() + " downloaded", null);
       }
-    } catch (RepositoryException | IOException e) {
+    } catch (final RepositoryException | IOException e) {
       logger.error("Error while downloading dependencies", e);
       try {
         FileUtils.deleteDirectory(interpreterDir.toFile());
-      } catch (IOException e1) {
+      } catch (final IOException e1) {
         logger.error(
             "Error while removing directory. You should handle it manually: {}",
             interpreterDir.toString(),
@@ -156,7 +159,7 @@ public class InterpreterService {
           serviceCallback.onFailure(
               new Exception("Error while downloading " + request.getName() + " as " +
                   e.getMessage()), null);
-        } catch (IOException e1) {
+        } catch (final IOException e1) {
           logger.error("ServiceCallback failure", e1);
         }
       }

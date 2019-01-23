@@ -16,22 +16,16 @@
  */
 package org.apache.zeppelin.rest.exception;
 
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+@ResponseStatus(value = HttpStatus.FORBIDDEN, reason = "Forbidden")
+public class ForbiddenException extends RuntimeException {
 
-import org.apache.zeppelin.utils.ExceptionUtils;
-
-/**
- * UnauthorizedException handler for WebApplicationException.
- */
-public class ForbiddenException extends WebApplicationException {
-  private static Response forbiddenJson(String message) {
-    return ExceptionUtils.jsonResponseContent(FORBIDDEN, message);
+  public ForbiddenException(final String message) {
+    super(message);
   }
 
-  public ForbiddenException(String message) {
-    super(forbiddenJson(message));
-  }
 }
+
+

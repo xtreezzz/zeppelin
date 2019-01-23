@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 import org.apache.zeppelin.common.JsonSerializable;
 
 /**
- *  CronRequest rest api request message.
+ * CronRequest rest api request message.
  */
 public class CronRequest implements JsonSerializable {
   private static final Gson gson = new Gson();
@@ -29,7 +29,7 @@ public class CronRequest implements JsonSerializable {
   private String cron;
   private Boolean releaseResource;
 
-  public CronRequest (){
+  public CronRequest() {
   }
 
   public String getCronString() {
@@ -47,7 +47,7 @@ public class CronRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static CronRequest fromJson(String json) {
+  public static CronRequest fromJson(final String json) {
     return gson.fromJson(json, CronRequest.class);
   }
 }

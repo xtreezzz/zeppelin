@@ -20,8 +20,11 @@ package org.apache.zeppelin.user;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,6 +46,7 @@ import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 /**
  * Class defining credentials for data source authorization
  */
+@Component
 public class Credentials {
   private static final Logger LOG = LoggerFactory.getLogger(Credentials.class);
 
@@ -61,14 +65,15 @@ public class Credentials {
    * @param credentialsPath
    * @param encryptKey
    */
-  public Credentials(Boolean credentialsPersist, String credentialsPath, String encryptKey) {
-    if (encryptKey != null) {
-      this.encryptor = new Encryptor(encryptKey);
+  @Autowired
+  public Credentials(ZeppelinConfiguration conf) {
+    if (conf.getCredentialsEncryptKey() != null) {
+      this.encryptor = new Encryptor(conf.getCredentialsEncryptKey());
     }
 
-    this.credentialsPersist = credentialsPersist;
-    if (credentialsPath != null) {
-      credentialsFile = new File(credentialsPath);
+    this.credentialsPersist = conf.credentialsPersist();
+    if (conf.getCredentialsPath() != null) {
+      credentialsFile = new File(conf.getCredentialsPath());
     }
     credentialsMap = new HashMap<>();
 

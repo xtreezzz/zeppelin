@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryException;
@@ -42,17 +43,25 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.artifact.JavaScopes;
 import org.sonatype.aether.util.filter.DependencyFilterUtils;
 import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Deps resolver.
  * Add new dependencies from mvn repo (at runtime) to Zeppelin.
  */
+@Component
 public class DependencyResolver extends AbstractDependencyResolver {
   private Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
 
   private final String[] exclusions = new String[] {"org.apache.zeppelin:zeppelin-zengine",
                                                     "org.apache.zeppelin:zeppelin-interpreter",
                                                     "org.apache.zeppelin:zeppelin-server"};
+
+  @Autowired
+  public DependencyResolver(ZeppelinConfiguration configuration) {
+    super(configuration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_LOCALREPO));
+  }
 
   public DependencyResolver(String localRepoPath) {
     super(localRepoPath);

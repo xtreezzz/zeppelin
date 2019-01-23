@@ -39,8 +39,7 @@ public class SessionConfInterpreter extends ConfInterpreter {
   }
 
   @Override
-  public InterpreterResult interpret(String st, InterpreterContext context)
-      throws InterpreterException {
+  public InterpreterResult interpret(String st, InterpreterContext context) throws InterpreterException {
     try {
       Properties finalProperties = new Properties();
       finalProperties.putAll(this.properties);

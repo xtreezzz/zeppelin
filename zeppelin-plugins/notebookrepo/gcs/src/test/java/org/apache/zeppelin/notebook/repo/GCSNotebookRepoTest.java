@@ -42,12 +42,13 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+@Ignore
 @RunWith(Parameterized.class)
 public class GCSNotebookRepoTest {
   private static final AuthenticationInfo AUTH_INFO = AuthenticationInfo.ANONYMOUS;
@@ -65,13 +66,17 @@ public class GCSNotebookRepoTest {
     });
   }
 
-  @Parameter(0)
+
+  public GCSNotebookRepoTest(String bucketName, Optional<String> basePath, String uriPath) {
+    this.bucketName = bucketName;
+    this.basePath = basePath;
+    this.uriPath = uriPath;
+  }
+
   public String bucketName;
 
-  @Parameter(1)
   public Optional<String> basePath;
 
-  @Parameter(2)
   public String uriPath;
 
   private Note runningNote;

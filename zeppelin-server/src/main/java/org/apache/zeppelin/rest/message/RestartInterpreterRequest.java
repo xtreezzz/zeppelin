@@ -39,7 +39,7 @@ public class RestartInterpreterRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static RestartInterpreterRequest fromJson(String json) {
+  public static RestartInterpreterRequest fromJson(final String json) {
     return gson.fromJson(json, RestartInterpreterRequest.class);
   }
 }

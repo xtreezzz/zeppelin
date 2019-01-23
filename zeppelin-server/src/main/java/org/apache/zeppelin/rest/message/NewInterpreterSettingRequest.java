@@ -65,7 +65,7 @@ public class NewInterpreterSettingRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static NewInterpreterSettingRequest fromJson(String json) {
+  public static NewInterpreterSettingRequest fromJson(final String json) {
     return gson.fromJson(json, NewInterpreterSettingRequest.class);
   }
 }

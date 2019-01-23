@@ -18,12 +18,16 @@
 package org.apache.zeppelin.notebook.socket;
 
 import com.google.gson.Gson;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.hadoop.yarn.webapp.BadRequestException;
 import org.apache.zeppelin.common.JsonSerializable;
 import org.slf4j.Logger;
 /**
@@ -248,6 +252,19 @@ public class Message implements JsonSerializable {
       LOG.error("Failed to get " + key + " from message (Invalid type). " , e);
       return null;
     }
+  }
+
+  public <T> T safeGetType(String key, Logger LOG) {
+    T result = null;
+    try {
+      result = getType(key);
+    } catch (ClassCastException e) {
+      LOG.error("Failed to get " + key + " from message (Invalid type). " , e);
+    }
+    if(result == null) {
+      throw new IllegalArgumentException(key + " is not defined");
+    }
+    return result;
   }
 
   @Override

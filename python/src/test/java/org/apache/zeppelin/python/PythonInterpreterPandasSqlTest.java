@@ -27,6 +27,7 @@ import org.apache.zeppelin.interpreter.InterpreterResult.Type;
 import org.apache.zeppelin.interpreter.InterpreterResultMessageOutput;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -51,6 +52,7 @@ import static org.junit.Assert.assertTrue;
  * mvn -Dpython.test.exclude='' test -pl python -am
  * </code>
  */
+@Ignore
 public class PythonInterpreterPandasSqlTest implements InterpreterOutputListener {
 
   private InterpreterGroup intpGroup;

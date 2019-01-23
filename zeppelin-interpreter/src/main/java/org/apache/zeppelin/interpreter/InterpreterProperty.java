@@ -60,9 +60,4 @@ public class InterpreterProperty {
   public void setType(String type) {
     this.type = type;
   }
-
-  @Override
-  public String toString() {
-    return String.format("{name=%s, value=%s, type=%s}", name, value, type);
-  }
 }

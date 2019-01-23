@@ -19,89 +19,89 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonSyntaxException;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.service.SecurityService;
-import org.apache.zeppelin.service.ServiceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
 import org.apache.zeppelin.notebook.repo.NotebookRepoWithSettings;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.socket.NotebookServer;
+import org.apache.zeppelin.service.SecurityService;
+import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.user.AuthenticationInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * NoteRepo rest API endpoint.
  *
  */
-@Path("/notebook-repositories")
-@Produces("application/json")
-@Singleton
+//@Path("/notebook-repositories")
+//@Produces("application/json")
+//@Singleton
+@RestController
+@RequestMapping("/api/notebook-repositories")
 public class NotebookRepoRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRepoRestApi.class);
 
-  private NotebookRepoSync noteRepos;
-  private NotebookServer notebookWsServer;
-  private SecurityService securityService;
+  private final NotebookRepoSync noteRepos;
+  private final SecurityService securityService;
 
-  @Inject
-  public NotebookRepoRestApi(NotebookRepoSync noteRepos, NotebookServer notebookWsServer,
-      SecurityService securityService) {
+  @Autowired
+  public NotebookRepoRestApi(final NotebookRepoSync noteRepos,
+                             @Qualifier("NoSecurityService") final SecurityService securityService) {
     this.noteRepos = noteRepos;
-    this.notebookWsServer = notebookWsServer;
     this.securityService = securityService;
   }
 
   /**
    * List all notebook repository.
    */
-  @GET
+  //@GET
   @ZeppelinApi
-  public Response listRepoSettings() {
-    AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
+  @GetMapping( produces = "application/json")
+  public ResponseEntity listRepoSettings() {
+    final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     LOG.info("Getting list of NoteRepo with Settings for user {}", subject.getUser());
-    List<NotebookRepoWithSettings> settings = noteRepos.getNotebookRepos(subject);
-    return new JsonResponse<>(Status.OK, "", settings).build();
+    final List<NotebookRepoWithSettings> settings = noteRepos.getNotebookRepos(subject);
+    return new JsonResponse(HttpStatus.OK, "", settings).build();
   }
 
   /**
    * Reload notebook repository.
    */
-  @GET
-  @Path("reload")
+  //@GET
+  //@Path("reload")
   @ZeppelinApi
-  public Response refreshRepo(){
-    AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
+  @GetMapping(value = "/reload", produces = "application/json")
+  public ResponseEntity refreshRepo(){
+    final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     LOG.info("Reloading notebook repository for user {}", subject.getUser());
+    //TODO(KOT): FIX
+      /*
     try {
       notebookWsServer.broadcastReloadedNoteList(null, getServiceContext());
     } catch (IOException e) {
       LOG.error("Fail to refresh repo", e);
     }
-    return new JsonResponse<>(Status.OK, "", null).build();
+    */
+    return new JsonResponse(HttpStatus.OK, "", null).build();
   }
 
   private ServiceContext getServiceContext() {
-    AuthenticationInfo authInfo = new AuthenticationInfo(securityService.getPrincipal());
-    Set<String> userAndRoles = Sets.newHashSet();
+    final AuthenticationInfo authInfo = new AuthenticationInfo(securityService.getPrincipal());
+    final Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(securityService.getPrincipal());
     userAndRoles.addAll(securityService.getAssociatedRoles());
     return new ServiceContext(authInfo, userAndRoles);
@@ -113,38 +113,41 @@ public class NotebookRepoRestApi {
    * @param payload
    * @return
    */
-  @PUT
+  //@PUT
   @ZeppelinApi
-  public Response updateRepoSetting(String payload) {
+  @PutMapping(produces = "application/json")
+  public ResponseEntity updateRepoSetting(final String payload) {
     if (StringUtils.isBlank(payload)) {
-      return new JsonResponse<>(Status.NOT_FOUND, "", Collections.emptyMap()).build();
+      return new JsonResponse(HttpStatus.NOT_FOUND, "", Collections.emptyMap()).build();
     }
-    AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
-    NotebookRepoSettingsRequest newSettings;
+    final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
+    final NotebookRepoSettingsRequest newSettings;
     try {
       newSettings = NotebookRepoSettingsRequest.fromJson(payload);
-    } catch (JsonSyntaxException e) {
+    } catch (final JsonSyntaxException e) {
       LOG.error("Cannot update notebook repo settings", e);
-      return new JsonResponse<>(Status.NOT_ACCEPTABLE, "",
+      return new JsonResponse(HttpStatus.NOT_ACCEPTABLE, "",
           ImmutableMap.of("error", "Invalid payload structure")).build();
     }
 
     if (NotebookRepoSettingsRequest.isEmpty(newSettings)) {
       LOG.error("Invalid property");
-      return new JsonResponse<>(Status.NOT_ACCEPTABLE, "",
+      return new JsonResponse(HttpStatus.NOT_ACCEPTABLE, "",
           ImmutableMap.of("error", "Invalid payload")).build();
     }
     LOG.info("User {} is going to change repo setting", subject.getUser());
-    NotebookRepoWithSettings updatedSettings =
+    final NotebookRepoWithSettings updatedSettings =
         noteRepos.updateNotebookRepo(newSettings.name, newSettings.settings, subject);
     if (!updatedSettings.isEmpty()) {
       LOG.info("Broadcasting note list to user {}", subject.getUser());
+      //TODO(KOT): FIX
+      /*
       try {
         notebookWsServer.broadcastReloadedNoteList(null, getServiceContext());
       } catch (IOException e) {
         LOG.error("Fail to refresh repo.", e);
-      }
+      } */
     }
-    return new JsonResponse<>(Status.OK, "", updatedSettings).build();
+    return new JsonResponse(HttpStatus.OK, "", updatedSettings).build();
   }
 }

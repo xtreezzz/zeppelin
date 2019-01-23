@@ -16,6 +16,7 @@
  */
 package org.apache.zeppelin.realm.jwt;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -68,7 +69,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
   private String principalMapping;
   private String groupPrincipalMapping;
 
-  private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
+  private final SimplePrincipalMapper mapper = new SimplePrincipalMapper();
 
   /**
    * Configuration object needed by for Hadoop classes.
@@ -87,7 +88,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
         || groupPrincipalMapping != null && !groupPrincipalMapping.isEmpty()) {
       try {
         mapper.loadMappingTable(principalMapping, groupPrincipalMapping);
-      } catch (PrincipalMappingException e) {
+      } catch (final PrincipalMappingException e) {
         LOGGER.error("PrincipalMappingException in onInit", e);
       }
     }
@@ -101,72 +102,69 @@ public class KnoxJwtRealm extends AuthorizingRealm {
   }
 
   @Override
-  public boolean supports(AuthenticationToken token) {
+  public boolean supports(final AuthenticationToken token) {
     return token != null && token instanceof JWTAuthenticationToken;
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
-    JWTAuthenticationToken upToken = (JWTAuthenticationToken) token;
+  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token) {
+    final JWTAuthenticationToken upToken = (JWTAuthenticationToken) token;
 
     if (validateToken(upToken.getToken())) {
       try {
-        SimpleAccount account = new SimpleAccount(getName(upToken), upToken.getToken(), getName());
+        final SimpleAccount account = new SimpleAccount(getName(upToken), upToken.getToken(), getName());
         account.addRole(mapGroupPrincipals(getName(upToken)));
         return account;
-      } catch (ParseException e) {
+      } catch (final ParseException e) {
         LOGGER.error("ParseException in doGetAuthenticationInfo", e);
       }
     }
     return null;
   }
 
-  public String getName(JWTAuthenticationToken upToken) throws ParseException {
-    SignedJWT signed = SignedJWT.parse(upToken.getToken());
-    String userName = signed.getJWTClaimsSet().getSubject();
+  public String getName(final JWTAuthenticationToken upToken) throws ParseException {
+    final SignedJWT signed = SignedJWT.parse(upToken.getToken());
+    final String userName = signed.getJWTClaimsSet().getSubject();
     return userName;
   }
 
-  protected boolean validateToken(String token) {
+  protected boolean validateToken(final String token) {
     try {
-      SignedJWT signed = SignedJWT.parse(token);
-      boolean sigValid = validateSignature(signed);
+      final SignedJWT signed = SignedJWT.parse(token);
+      final boolean sigValid = validateSignature(signed);
       if (!sigValid) {
         LOGGER.warn("Signature of JWT token could not be verified. Please check the public key");
         return false;
       }
-      boolean expValid = validateExpiration(signed);
+      final boolean expValid = validateExpiration(signed);
       if (!expValid) {
         LOGGER.warn("Expiration time validation of JWT token failed.");
         return false;
       }
-      String currentUser = (String) org.apache.shiro.SecurityUtils.getSubject().getPrincipal();
+      final String currentUser = (String) org.apache.shiro.SecurityUtils.getSubject().getPrincipal();
       if (currentUser == null) {
         return true;
       }
-      String cookieUser = signed.getJWTClaimsSet().getSubject();
-      if (!cookieUser.equals(currentUser)) {
-        return false;
-      }
-      return true;
-    } catch (ParseException ex) {
+      final String cookieUser = signed.getJWTClaimsSet().getSubject();
+      return cookieUser.equals(currentUser);
+    } catch (final ParseException ex) {
       LOGGER.info("ParseException in validateToken", ex);
       return false;
     }
   }
 
-  public static RSAPublicKey parseRSAPublicKey(String pem) throws IOException, ServletException {
+  public static RSAPublicKey parseRSAPublicKey(final String pem) throws IOException, ServletException {
     final String pemHeader = "-----BEGIN CERTIFICATE-----\n";
     final String pemFooter = "\n-----END CERTIFICATE-----";
-    String fullPem = pemHeader + pem + pemFooter;
+    final String fullPem = pemHeader + pem + pemFooter;
     PublicKey key = null;
     try {
-      CertificateFactory fact = CertificateFactory.getInstance("X.509");
-      ByteArrayInputStream is = new ByteArrayInputStream(
-          FileUtils.readFileToString(new File(pem)).getBytes("UTF8"));
-      X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
+      final CertificateFactory fact = CertificateFactory.getInstance("X.509");
+      final ByteArrayInputStream is = new ByteArrayInputStream(
+          FileUtils.readFileToString(new File(pem)).getBytes(StandardCharsets.UTF_8));
+      final X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
       key = cer.getPublicKey();
-    } catch (CertificateException ce) {
+    } catch (final CertificateException ce) {
       String message = null;
       if (pem.startsWith(pemHeader)) {
         message = "CertificateException - be sure not to include PEM header "
@@ -175,25 +173,25 @@ public class KnoxJwtRealm extends AuthorizingRealm {
         message = "CertificateException - PEM may be corrupt";
       }
       throw new ServletException(message, ce);
-    } catch (UnsupportedEncodingException uee) {
+    } catch (final UnsupportedEncodingException uee) {
       throw new ServletException(uee);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new IOException(e);
     }
     return (RSAPublicKey) key;
   }
 
-  protected boolean validateSignature(SignedJWT jwtToken) {
+  protected boolean validateSignature(final SignedJWT jwtToken) {
     boolean valid = false;
     if (JWSObject.State.SIGNED == jwtToken.getState()) {
       if (jwtToken.getSignature() != null) {
         try {
-          RSAPublicKey publicKey = parseRSAPublicKey(publicKeyPath);
-          JWSVerifier verifier = new RSASSAVerifier(publicKey);
+          final RSAPublicKey publicKey = parseRSAPublicKey(publicKeyPath);
+          final JWSVerifier verifier = new RSASSAVerifier(publicKey);
           if (verifier != null && jwtToken.verify(verifier)) {
             valid = true;
           }
-        } catch (Exception e) {
+        } catch (final Exception e) {
           LOGGER.info("Exception in validateSignature", e);
         }
       }
@@ -210,10 +208,10 @@ public class KnoxJwtRealm extends AuthorizingRealm {
    *            the token that contains the expiration date to validate
    * @return valid true if the token has not expired; false otherwise
    */
-  protected boolean validateExpiration(SignedJWT jwtToken) {
+  protected boolean validateExpiration(final SignedJWT jwtToken) {
     boolean valid = false;
     try {
-      Date expires = jwtToken.getJWTClaimsSet().getExpirationTime();
+      final Date expires = jwtToken.getJWTClaimsSet().getExpirationTime();
       if (expires == null || new Date().before(expires)) {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("SSO token expiration date has been " + "successfully validated");
@@ -222,15 +220,15 @@ public class KnoxJwtRealm extends AuthorizingRealm {
       } else {
         LOGGER.warn("SSO expiration date validation failed.");
       }
-    } catch (ParseException pe) {
+    } catch (final ParseException pe) {
       LOGGER.warn("SSO expiration date validation failed.", pe);
     }
     return valid;
   }
 
   @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    Set<String> roles = mapGroupPrincipals(principals.toString());
+  protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
+    final Set<String> roles = mapGroupPrincipals(principals.toString());
     return new SimpleAuthorizationInfo(roles);
   }
 
@@ -270,7 +268,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return providerUrl;
   }
 
-  public void setProviderUrl(String providerUrl) {
+  public void setProviderUrl(final String providerUrl) {
     this.providerUrl = providerUrl;
   }
 
@@ -278,7 +276,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return redirectParam;
   }
 
-  public void setRedirectParam(String redirectParam) {
+  public void setRedirectParam(final String redirectParam) {
     this.redirectParam = redirectParam;
   }
 
@@ -286,7 +284,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return cookieName;
   }
 
-  public void setCookieName(String cookieName) {
+  public void setCookieName(final String cookieName) {
     this.cookieName = cookieName;
   }
 
@@ -294,7 +292,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return publicKeyPath;
   }
 
-  public void setPublicKeyPath(String publicKeyPath) {
+  public void setPublicKeyPath(final String publicKeyPath) {
     this.publicKeyPath = publicKeyPath;
   }
 
@@ -302,7 +300,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return login;
   }
 
-  public void setLogin(String login) {
+  public void setLogin(final String login) {
     this.login = login;
   }
 
@@ -310,7 +308,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return logout;
   }
 
-  public void setLogout(String logout) {
+  public void setLogout(final String logout) {
     this.logout = logout;
   }
 
@@ -318,7 +316,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return logoutAPI;
   }
 
-  public void setLogoutAPI(Boolean logoutAPI) {
+  public void setLogoutAPI(final Boolean logoutAPI) {
     this.logoutAPI = logoutAPI;
   }
 
@@ -326,7 +324,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return principalMapping;
   }
 
-  public void setPrincipalMapping(String principalMapping) {
+  public void setPrincipalMapping(final String principalMapping) {
     this.principalMapping = principalMapping;
   }
 
@@ -334,7 +332,7 @@ public class KnoxJwtRealm extends AuthorizingRealm {
     return groupPrincipalMapping;
   }
 
-  public void setGroupPrincipalMapping(String groupPrincipalMapping) {
+  public void setGroupPrincipalMapping(final String groupPrincipalMapping) {
     this.groupPrincipalMapping = groupPrincipalMapping;
   }
 }

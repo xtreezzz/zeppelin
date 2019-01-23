@@ -27,10 +27,10 @@ import java.util.Set;
  */
 public class ServiceContext {
 
-  private AuthenticationInfo autheInfo;
-  private Set<String> userAndRoles;
+  private final AuthenticationInfo autheInfo;
+  private final Set<String> userAndRoles;
 
-  public ServiceContext(AuthenticationInfo authInfo, Set<String> userAndRoles) {
+  public ServiceContext(final AuthenticationInfo authInfo, final Set<String> userAndRoles) {
     this.autheInfo = authInfo;
     this.userAndRoles = userAndRoles;
   }

@@ -17,16 +17,15 @@
 
 package org.apache.zeppelin.rest.exception;
 
-import org.apache.zeppelin.utils.ExceptionUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import javax.ws.rs.WebApplicationException;
+@ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "No such note")
+public class NoteNotFoundException extends RuntimeException {
 
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-public class NoteNotFoundException extends WebApplicationException {
-
-  public NoteNotFoundException(String noteId) {
-    super(ExceptionUtils.jsonResponseContent(NOT_FOUND, "No such note: " + noteId));
+  public NoteNotFoundException(final String message) {
+    super(message);
   }
 
 }
+

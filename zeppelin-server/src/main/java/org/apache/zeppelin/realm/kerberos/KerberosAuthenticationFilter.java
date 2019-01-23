@@ -36,7 +36,7 @@ public class KerberosAuthenticationFilter extends PassThruAuthenticationFilter {
   private static final Logger LOG = LoggerFactory.getLogger(KerberosAuthenticationFilter.class);
 
   @Override
-  protected void saveRequestAndRedirectToLogin(ServletRequest request, ServletResponse response) {
+  protected void saveRequestAndRedirectToLogin(final ServletRequest request, final ServletResponse response) {
     // We don't want to redirect request to loginUrl here
   }
 
@@ -53,16 +53,16 @@ public class KerberosAuthenticationFilter extends PassThruAuthenticationFilter {
    * @throws ServletException thrown if a processing error occurred.
    */
   @Override
-  public void doFilterInternal(ServletRequest request,
-                               ServletResponse response,
-                               FilterChain filterChain)
+  public void doFilterInternal(final ServletRequest request,
+                               final ServletResponse response,
+                               final FilterChain filterChain)
       throws IOException, ServletException {
     KerberosRealm kerberosRealm = null;
-    DefaultWebSecurityManager defaultWebSecurityManager;
-    String key = ThreadContext.SECURITY_MANAGER_KEY;
+    final DefaultWebSecurityManager defaultWebSecurityManager;
+    final String key = ThreadContext.SECURITY_MANAGER_KEY;
     defaultWebSecurityManager = (DefaultWebSecurityManager) ThreadContext.get(key);
-    Collection<Realm> realms = defaultWebSecurityManager.getRealms();
-    for (Object realm : realms) {
+    final Collection<Realm> realms = defaultWebSecurityManager.getRealms();
+    for (final Object realm : realms) {
       if (realm instanceof KerberosRealm) {
         kerberosRealm = (KerberosRealm) realm;
         break;

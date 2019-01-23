@@ -38,10 +38,12 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
+import org.springframework.stereotype.Component;
 
 /**
  * Contains authorization information for notes
  */
+@Component
 public class NotebookAuthorization implements NoteEventListener {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
   private static NotebookAuthorization instance = null;

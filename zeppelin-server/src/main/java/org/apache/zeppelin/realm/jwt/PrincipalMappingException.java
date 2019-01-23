@@ -21,11 +21,11 @@ package org.apache.zeppelin.realm.jwt;
  * {@link System}.
  */
 public class PrincipalMappingException extends Exception {
-  public PrincipalMappingException(String message) {
+  public PrincipalMappingException(final String message) {
     super(message);
   }
 
-  public PrincipalMappingException(String message, Exception e) {
+  public PrincipalMappingException(final String message, final Exception e) {
     super(message, e);
   }
 }

@@ -26,7 +26,7 @@ import java.security.Principal;
 public class UserPrincipal implements Principal {
   private final UnixUser userName;
 
-  public UserPrincipal(UnixUser userName) {
+  public UserPrincipal(final UnixUser userName) {
     this.userName = userName;
   }
 

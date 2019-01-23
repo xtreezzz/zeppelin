@@ -26,7 +26,7 @@ public class KerberosToken implements AuthenticationToken {
   private Object userId;
   private String token;
 
-  public KerberosToken(Object userId, String token) {
+  public KerberosToken(final Object userId, final String token) {
     this.userId = userId;
     this.token = token;
   }
@@ -45,7 +45,7 @@ public class KerberosToken implements AuthenticationToken {
     return userId;
   }
 
-  public void setUserId(long userId) {
+  public void setUserId(final long userId) {
     this.userId = userId;
   }
 
@@ -53,7 +53,7 @@ public class KerberosToken implements AuthenticationToken {
     return token;
   }
 
-  public void setToken(String token) {
+  public void setToken(final String token) {
     this.token = token;
   }
 }

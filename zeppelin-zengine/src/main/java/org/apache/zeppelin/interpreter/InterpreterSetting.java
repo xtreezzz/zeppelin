@@ -24,7 +24,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.StringMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.dep.Dependency;
@@ -48,14 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -257,7 +249,7 @@ public class InterpreterSetting {
     this.status = Status.READY;
     this.id = this.name;
     if (this.lifecycleManager == null) {
-      this.lifecycleManager = new NullLifecycleManager(conf);
+      this.lifecycleManager = new NullLifecycleManager();
     }
     if (this.recoveryStorage == null) {
       try {
@@ -497,11 +489,10 @@ public class InterpreterSetting {
   }
 
   public void setProperties(Object object) {
-    if (object instanceof StringMap) {
-      StringMap<String> map = (StringMap) properties;
+    if (object instanceof Map) {
       Properties newProperties = new Properties();
-      for (String key : map.keySet()) {
-        newProperties.put(key, map.get(key));
+      for (Object key : ((Map) object).keySet()) {
+        newProperties.put(key, ((Map) object).get(key));
       }
       this.properties = newProperties;
     } else {
@@ -864,12 +855,12 @@ public class InterpreterSetting {
 
   // For backward compatibility of interpreter.json format after ZEPPELIN-2403
   static Map<String, InterpreterProperty> convertInterpreterProperties(Object properties) {
-    if (properties != null && properties instanceof StringMap) {
+   /* if (properties != null && properties instanceof Map) {
       Map<String, InterpreterProperty> newProperties = new HashMap<>();
-      StringMap p = (StringMap) properties;
+      Map<String, String> p = (Map<String, String>) properties;
       for (Object o : p.entrySet()) {
         Map.Entry entry = (Map.Entry) o;
-        if (!(entry.getValue() instanceof StringMap)) {
+        if (!(entry.getValue() instanceof Map)) {
           InterpreterProperty newProperty = new InterpreterProperty(
               entry.getKey().toString(),
               entry.getValue(),
@@ -882,7 +873,7 @@ public class InterpreterSetting {
       }
       return newProperties;
 
-    } else if (properties instanceof Map) {
+    } else */if (properties instanceof Map) {
       Map<String, Object> dProperties =
           (Map<String, Object>) properties;
       Map<String, InterpreterProperty> newProperties = new HashMap<>();
@@ -890,8 +881,8 @@ public class InterpreterSetting {
         Object value = dProperties.get(key);
         if (value instanceof InterpreterProperty) {
           return (Map<String, InterpreterProperty>) properties;
-        } else if (value instanceof StringMap) {
-          StringMap stringMap = (StringMap) value;
+        } else if (value instanceof Map) {
+          Map<String, String> stringMap = (Map<String, String>) value;
           InterpreterProperty newProperty = new InterpreterProperty(
               key,
               stringMap.get("value"),

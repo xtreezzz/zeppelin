@@ -39,26 +39,25 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * HeliumApplicationFactory
  */
+@Component(value = "HeliumApplicationFactory")
 public class HeliumApplicationFactory implements ApplicationEventListener, NoteEventListener {
   private final Logger logger = LoggerFactory.getLogger(HeliumApplicationFactory.class);
   private final ExecutorService executor;
   private Notebook notebook;
   private ApplicationEventListener applicationEventListener;
 
-  @Inject
-  public HeliumApplicationFactory(
-      Notebook notebook, ApplicationEventListener applicationEventListener) {
-    this.executor =
-        ExecutorFactory.singleton().createOrGet(HeliumApplicationFactory.class.getName(), 10);
+  @Autowired
+  public HeliumApplicationFactory(Notebook notebook, @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener applicationEventListener) {
+    this.executor = ExecutorFactory.singleton().createOrGet(HeliumApplicationFactory.class.getName(), 10);
     this.notebook = notebook;
     this.applicationEventListener = applicationEventListener;
-
-    // TODO(jl): Hmmmmmmmm...
-    this.notebook.addNotebookEventListener(this);
   }
 
   private boolean isRemote(InterpreterGroup group) {

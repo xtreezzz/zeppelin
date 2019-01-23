@@ -16,60 +16,65 @@
  */
 package org.apache.zeppelin.rest;
 
-import java.io.IOException;
-import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.service.SecurityService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-/** Configurations Rest API Endpoint. */
-@Path("/configurations")
-@Produces("application/json")
-@Singleton
+import java.io.IOException;
+import java.util.Map;
+
+/**
+ * Configurations Rest API Endpoint.
+ */
+//@Path("/configurations")
+//@Produces("application/json")
+//@Singleton
+@RestController
+@RequestMapping("/api/configurations")
 public class ConfigurationsRestApi extends AbstractRestApi {
 
-  private ConfigurationService configurationService;
+  private final ConfigurationService configurationService;
 
-  @Inject
+  @Autowired
   public ConfigurationsRestApi(
-      SecurityService securityService, ConfigurationService configurationService) {
+          @Qualifier("NoSecurityService") final SecurityService securityService,
+          final ConfigurationService configurationService) {
     super(securityService);
     this.configurationService = configurationService;
   }
 
-  @GET
-  @Path("all")
+  //@GET
+  //@Path("all")
   @ZeppelinApi
-  public Response getAll() {
+  @GetMapping(value = "/all", produces = "application/json")
+  public ResponseEntity getAll() {
     try {
-      Map<String, String> properties =
-          configurationService.getAllProperties(getServiceContext(), new RestServiceCallback<>());
-      return new JsonResponse(Status.OK, "", properties).build();
-    } catch (IOException e) {
-      return new JsonResponse(Status.INTERNAL_SERVER_ERROR, "Fail to get configuration", e).build();
+      final Map<String, String> properties = configurationService.getAllProperties();
+      return new JsonResponse(HttpStatus.OK, "", properties).build();
+    } catch (final Exception e) {
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Fail to get configuration", e).build();
     }
   }
 
-  @GET
-  @Path("prefix/{prefix}")
+  // @GET
+//  @Path("prefix/{prefix}")
   @ZeppelinApi
-  public Response getByPrefix(@PathParam("prefix") final String prefix) {
+  @GetMapping(value = "/prefix/{prefix}", produces = "application/json")
+  public ResponseEntity getByPrefix(@PathVariable("prefix") final String prefix) {
     try {
-      Map<String, String> properties =
-          configurationService.getPropertiesWithPrefix(
-              prefix, getServiceContext(), new RestServiceCallback<>());
-      return new JsonResponse(Status.OK, "", properties).build();
-    } catch (IOException e) {
-      return new JsonResponse(Status.INTERNAL_SERVER_ERROR, "Fail to get configuration", e).build();
+      final Map<String, String> properties = configurationService.getPropertiesWithPrefix(prefix);
+      return new JsonResponse(HttpStatus.OK, "", properties).build();
+    } catch (final Exception e) {
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Fail to get configuration", e).build();
     }
   }
 }

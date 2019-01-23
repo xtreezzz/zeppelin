@@ -23,7 +23,7 @@ import java.util.List;
 import org.apache.zeppelin.common.JsonSerializable;
 
 /**
- *  NewNoteRequest rest api request message.
+ * NewNoteRequest rest api request message.
  */
 public class NewNoteRequest implements JsonSerializable {
   private static final Gson gson = new Gson();
@@ -31,7 +31,7 @@ public class NewNoteRequest implements JsonSerializable {
   String name;
   List<NewParagraphRequest> paragraphs;
 
-  public NewNoteRequest (){
+  public NewNoteRequest() {
   }
 
   public String getName() {
@@ -46,7 +46,7 @@ public class NewNoteRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static NewNoteRequest fromJson(String json) {
+  public static NewNoteRequest fromJson(final String json) {
     return gson.fromJson(json, NewNoteRequest.class);
   }
 }

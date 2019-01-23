@@ -27,6 +27,10 @@ import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
  */
 public class NullLifecycleManager implements LifecycleManager {
 
+  public NullLifecycleManager() {
+
+  }
+
   public NullLifecycleManager(ZeppelinConfiguration zConf) {
 
   }

@@ -61,6 +61,10 @@ import org.slf4j.LoggerFactory;
 import org.sonatype.aether.repository.Proxy;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -89,7 +93,7 @@ import java.util.stream.Collectors;
  * (load/create/update/remove/get)
  * TODO(zjffdu) We could move it into another separated component.
  */
-@ManagedObject("interpreterSettingManager")
+@Component
 public class InterpreterSettingManager implements NoteEventListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterSettingManager.class);
@@ -111,41 +115,39 @@ public class InterpreterSettingManager implements NoteEventListener {
    * id --> InterpreterSetting
    * TODO(zjffdu) change it to name --> InterpreterSetting
    */
-  private final Map<String, InterpreterSetting> interpreterSettings =
-      Maps.newConcurrentMap();
+  private final Map<String, InterpreterSetting> interpreterSettings = Maps.newConcurrentMap();
 
   private final List<RemoteRepository> interpreterRepositories;
   private InterpreterOption defaultOption;
   private String defaultInterpreterGroup;
   private final Gson gson;
 
-  private AngularObjectRegistryListener angularObjectRegistryListener;
   private RemoteInterpreterProcessListener remoteInterpreterProcessListener;
   private ApplicationEventListener appEventListener;
   private DependencyResolver dependencyResolver;
   private LifecycleManager lifecycleManager;
   private RecoveryStorage recoveryStorage;
   private ConfigStorage configStorage;
+
+  @Lazy
+  @Autowired
   private RemoteInterpreterEventServer interpreterEventServer;
 
-  @Inject
+  @Lazy
+  @Autowired
+  private AngularObjectRegistryListener angularObjectRegistryListener;
+
+  @Autowired
   public InterpreterSettingManager(ZeppelinConfiguration zeppelinConfiguration,
-                                   AngularObjectRegistryListener angularObjectRegistryListener,
-                                   RemoteInterpreterProcessListener
-                                       remoteInterpreterProcessListener,
-                                   ApplicationEventListener appEventListener)
+                                   @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener appEventListener)
       throws IOException {
     this(zeppelinConfiguration, new InterpreterOption(),
-        angularObjectRegistryListener,
-        remoteInterpreterProcessListener,
         appEventListener,
         ConfigStorage.getInstance(zeppelinConfiguration));
   }
 
   public InterpreterSettingManager(ZeppelinConfiguration conf,
       InterpreterOption defaultOption,
-      AngularObjectRegistryListener angularObjectRegistryListener,
-      RemoteInterpreterProcessListener remoteInterpreterProcessListener,
       ApplicationEventListener appEventListener,
       ConfigStorage configStorage)
       throws IOException {
@@ -153,14 +155,11 @@ public class InterpreterSettingManager implements NoteEventListener {
     this.defaultOption = defaultOption;
     this.interpreterDirPath = Paths.get(conf.getInterpreterDir());
     LOGGER.debug("InterpreterRootPath: {}", interpreterDirPath);
-    this.dependencyResolver =
-        new DependencyResolver(conf.getString(ConfVars.ZEPPELIN_INTERPRETER_LOCALREPO));
+    this.dependencyResolver = new DependencyResolver(conf.getString(ConfVars.ZEPPELIN_INTERPRETER_LOCALREPO));
     this.interpreterRepositories = dependencyResolver.getRepos();
     this.defaultInterpreterGroup = conf.getString(ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
     this.gson = new GsonBuilder().setPrettyPrinting().create();
 
-    this.angularObjectRegistryListener = angularObjectRegistryListener;
-    this.remoteInterpreterProcessListener = remoteInterpreterProcessListener;
     this.appEventListener = appEventListener;
     this.recoveryStorage =
         ReflectionUtils.createClazzInstance(
@@ -301,7 +300,8 @@ public class InterpreterSettingManager implements NoteEventListener {
     InterpreterInfoSaving info = new InterpreterInfoSaving();
     info.interpreterSettings = Maps.newHashMap(interpreterSettings);
     info.interpreterRepositories = interpreterRepositories;
-    configStorage.save(info);
+    //TODO(KOT) FIX THIS
+    //configStorage.save(info);
   }
 
   private void init() throws IOException {
@@ -389,8 +389,7 @@ public class InterpreterSettingManager implements NoteEventListener {
     return gson.fromJson(new InputStreamReader(stream), registeredInterpreterListType);
   }
 
-  private void registerInterpreterSetting(List<RegisteredInterpreter> registeredInterpreters,
-      String interpreterDir, boolean override) {
+  private void registerInterpreterSetting(List<RegisteredInterpreter> registeredInterpreters, String interpreterDir, boolean override) {
 
     Map<String, DefaultInterpreterProperty> properties = new HashMap<>();
     List<InterpreterInfo> interpreterInfos = new ArrayList<>();
@@ -540,9 +539,6 @@ public class InterpreterSettingManager implements NoteEventListener {
     return resourceSet;
   }
 
-  public RecoveryStorage getRecoveryStorage() {
-    return recoveryStorage;
-  }
 
   public void removeResourcesBelongsToParagraph(String noteId, String paragraphId) {
     for (ManagedInterpreterGroup intpGroup : getAllInterpreterGroup()) {

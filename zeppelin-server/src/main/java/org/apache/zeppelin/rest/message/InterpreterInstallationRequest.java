@@ -22,15 +22,15 @@ import com.google.gson.GsonBuilder;
 
 public class InterpreterInstallationRequest {
   private static final Gson gson = new GsonBuilder().create();
-  private String name;
-  private String artifact;
+  private final String name;
+  private final String artifact;
 
-  public InterpreterInstallationRequest(String name, String artifact) {
+  public InterpreterInstallationRequest(final String name, final String artifact) {
     this.name = name;
     this.artifact = artifact;
   }
 
-  public static InterpreterInstallationRequest fromJson(String message) {
+  public static InterpreterInstallationRequest fromJson(final String message) {
     return gson.fromJson(message, InterpreterInstallationRequest.class);
   }
 

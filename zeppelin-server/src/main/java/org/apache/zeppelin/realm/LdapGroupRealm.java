@@ -42,38 +42,38 @@ import javax.naming.ldap.LdapContext;
 public class LdapGroupRealm extends JndiLdapRealm {
   private static final Logger LOG = LoggerFactory.getLogger(LdapGroupRealm.class);
 
-  public AuthorizationInfo queryForAuthorizationInfo(PrincipalCollection principals,
-          LdapContextFactory ldapContextFactory) throws NamingException {
-    String username = (String) getAvailablePrincipal(principals);
-    LdapContext ldapContext = ldapContextFactory.getSystemLdapContext();
-    Set<String> roleNames = getRoleNamesForUser(username, ldapContext, getUserDnTemplate());
+  public AuthorizationInfo queryForAuthorizationInfo(final PrincipalCollection principals,
+                                                     final LdapContextFactory ldapContextFactory) throws NamingException {
+    final String username = (String) getAvailablePrincipal(principals);
+    final LdapContext ldapContext = ldapContextFactory.getSystemLdapContext();
+    final Set<String> roleNames = getRoleNamesForUser(username, ldapContext, getUserDnTemplate());
     return new SimpleAuthorizationInfo(roleNames);
   }
 
-  public Set<String> getRoleNamesForUser(String username, LdapContext ldapContext,
-          String userDnTemplate) throws NamingException {
+  public Set<String> getRoleNamesForUser(final String username, final LdapContext ldapContext,
+                                         final String userDnTemplate) throws NamingException {
     try {
-      Set<String> roleNames = new LinkedHashSet<>();
+      final Set<String> roleNames = new LinkedHashSet<>();
 
-      SearchControls searchCtls = new SearchControls();
+      final SearchControls searchCtls = new SearchControls();
       searchCtls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-      String searchFilter = "(&(objectClass=groupOfNames)(member=" + userDnTemplate + "))";
-      Object[] searchArguments = new Object[]{username};
+      final String searchFilter = "(&(objectClass=groupOfNames)(member=" + userDnTemplate + "))";
+      final Object[] searchArguments = new Object[]{username};
 
-      NamingEnumeration<?> answer = ldapContext.search(
+      final NamingEnumeration<?> answer = ldapContext.search(
           String.valueOf(ldapContext.getEnvironment().get("ldap.searchBase")),
           searchFilter,
           searchArguments,
           searchCtls);
 
       while (answer.hasMoreElements()) {
-        SearchResult sr = (SearchResult) answer.next();
-        Attributes attrs = sr.getAttributes();
+        final SearchResult sr = (SearchResult) answer.next();
+        final Attributes attrs = sr.getAttributes();
         if (attrs != null) {
-          NamingEnumeration<?> ae = attrs.getAll();
+          final NamingEnumeration<?> ae = attrs.getAll();
           while (ae.hasMore()) {
-            Attribute attr = (Attribute) ae.next();
+            final Attribute attr = (Attribute) ae.next();
             if (attr.getID().equals("cn")) {
               roleNames.add((String) attr.get());
             }
@@ -82,7 +82,7 @@ public class LdapGroupRealm extends JndiLdapRealm {
       }
       return roleNames;
 
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Error", e);
     }
 

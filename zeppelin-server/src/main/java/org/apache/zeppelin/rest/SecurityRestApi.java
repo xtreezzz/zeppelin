@@ -17,42 +17,40 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.ticket.TicketContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.*;
 
 /**
  * Zeppelin security rest api endpoint.
  */
-@Path("/security")
-@Produces("application/json")
-@Singleton
+//@Path("/security")
+//@Produces("application/json")
+//@Singleton
+@RestController
+@RequestMapping("/api/security")
 public class SecurityRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(SecurityRestApi.class);
   private static final Gson gson = new Gson();
 
   private final SecurityService securityService;
 
-  @Inject
-  public SecurityRestApi(SecurityService securityService) {
+  @Autowired
+  public SecurityRestApi(@Qualifier("NoSecurityService") final SecurityService securityService) {
     this.securityService = securityService;
   }
 
@@ -64,28 +62,29 @@ public class SecurityRestApi {
    *
    * @return 200 response
    */
-  @GET
-  @Path("ticket")
-  @ZeppelinApi
-  public Response ticket() {
-    ZeppelinConfiguration conf = ZeppelinConfiguration.create();
-    String principal = securityService.getPrincipal();
-    Set<String> roles = securityService.getAssociatedRoles();
-    JsonResponse response;
+  //@GET
+  //@Path("ticket")
+  //@ZeppelinApi
+  @GetMapping(value = "/ticket", produces = "application/json")
+  public ResponseEntity ticket() {
+    final ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+    final String principal = securityService.getPrincipal();
+    final Set<String> roles = securityService.getAssociatedRoles();
+    final JsonResponse response;
     // ticket set to anonymous for anonymous user. Simplify testing.
-    String ticket;
+    final String ticket;
     if ("anonymous".equals(principal)) {
       ticket = "anonymous";
     } else {
       ticket = TicketContainer.instance.getTicket(principal);
     }
 
-    Map<String, String> data = new HashMap<>();
+    final Map<String, String> data = new HashMap<>();
     data.put("principal", principal);
     data.put("roles", gson.toJson(roles));
     data.put("ticket", ticket);
 
-    response = new JsonResponse(Response.Status.OK, "", data);
+    response = new JsonResponse(HttpStatus.OK, "", data);
     LOG.warn(response.toString());
     return response.build();
   }
@@ -97,16 +96,17 @@ public class SecurityRestApi {
    *
    * @return 200 response
    */
-  @GET
-  @Path("userlist/{searchText}")
-  public Response getUserList(@PathParam("searchText") final String searchText) {
+  //@GET
+  //@Path("userlist/{searchText}")
+  @GetMapping(value = "/userlist/{searchText}", produces = "application/json")
+  public ResponseEntity getUserList(@PathVariable("searchText") final String searchText) {
 
     final int numUsersToFetch = 5;
-    List<String> usersList = securityService.getMatchedUsers(searchText, numUsersToFetch);
-    List<String> rolesList = securityService.getMatchedRoles();
+    final List<String> usersList = securityService.getMatchedUsers(searchText, numUsersToFetch);
+    final List<String> rolesList = securityService.getMatchedRoles();
 
-    List<String> autoSuggestUserList = new ArrayList<>();
-    List<String> autoSuggestRoleList = new ArrayList<>();
+    final List<String> autoSuggestUserList = new ArrayList<>();
+    final List<String> autoSuggestRoleList = new ArrayList<>();
     Collections.sort(usersList);
     Collections.sort(rolesList);
     Collections.sort(
@@ -120,7 +120,7 @@ public class SecurityRestApi {
           return 0;
         });
     int maxLength = 0;
-    for (String user : usersList) {
+    for (final String user : usersList) {
       if (StringUtils.containsIgnoreCase(user, searchText)) {
         autoSuggestUserList.add(user);
         maxLength++;
@@ -130,16 +130,16 @@ public class SecurityRestApi {
       }
     }
 
-    for (String role : rolesList) {
+    for (final String role : rolesList) {
       if (StringUtils.containsIgnoreCase(role, searchText)) {
         autoSuggestRoleList.add(role);
       }
     }
 
-    Map<String, List> returnListMap = new HashMap<>();
+    final Map<String, List> returnListMap = new HashMap<>();
     returnListMap.put("users", autoSuggestUserList);
     returnListMap.put("roles", autoSuggestRoleList);
 
-    return new JsonResponse<>(Response.Status.OK, "", returnListMap).build();
+    return new JsonResponse(HttpStatus.OK, "", returnListMap).build();
   }
 }

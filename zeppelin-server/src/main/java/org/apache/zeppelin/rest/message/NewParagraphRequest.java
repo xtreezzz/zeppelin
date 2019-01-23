@@ -24,7 +24,7 @@ import org.apache.zeppelin.common.JsonSerializable;
 
 /**
  * NewParagraphRequest rest api request message
- *
+ * <p>
  * index field will be ignored when it's used to provide initial paragraphs
  * visualization (optional) one of:
  * table,pieChart,multibarChart,stackedAreaChart,lineChart,scatterChart
@@ -36,7 +36,7 @@ public class NewParagraphRequest implements JsonSerializable {
   String title;
   String text;
   Double index;
-  HashMap< String, Object > config;
+  HashMap<String, Object> config;
 
   public NewParagraphRequest() {
   }
@@ -53,7 +53,7 @@ public class NewParagraphRequest implements JsonSerializable {
     return index;
   }
 
-  public HashMap< String, Object > getConfig() {
+  public HashMap<String, Object> getConfig() {
     return config;
   }
 
@@ -61,7 +61,7 @@ public class NewParagraphRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static NewParagraphRequest fromJson(String json) {
+  public static NewParagraphRequest fromJson(final String json) {
     return gson.fromJson(json, NewParagraphRequest.class);
   }
 }

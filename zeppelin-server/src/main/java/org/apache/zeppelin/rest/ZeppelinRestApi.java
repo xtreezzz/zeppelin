@@ -16,32 +16,27 @@
  */
 package org.apache.zeppelin.rest;
 
-import javax.inject.Singleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.util.Util;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Zeppelin root rest api endpoint.
  *
  * @since 0.3.4
  */
-@Path("/")
-@Singleton
+//@Path("/")
+//@Singleton
+@RestController
+@RequestMapping("/api/")
 public class ZeppelinRestApi {
 
   /**
@@ -49,21 +44,23 @@ public class ZeppelinRestApi {
    *
    * @return 200 response
    */
-  @GET
-  public Response getRoot() {
-    return Response.ok().build();
+  //@GET
+  @GetMapping(produces = "application/json")
+  public ResponseEntity getRoot() {
+    return new JsonResponse(HttpStatus.OK).build();
   }
 
-  @GET
-  @Path("version")
+  //@GET
+  //@Path("version")
   @ZeppelinApi
-  public Response getVersion() {
-    Map<String, String> versionInfo = new HashMap<>();
+  @GetMapping(value = "/version", produces = "application/json")
+  public ResponseEntity getVersion() {
+    final Map<String, String> versionInfo = new HashMap<>();
     versionInfo.put("version", Util.getVersion());
     versionInfo.put("git-commit-id", Util.getGitCommitId());
     versionInfo.put("git-timestamp", Util.getGitTimestamp());
 
-    return new JsonResponse<>(Response.Status.OK, "Zeppelin version", versionInfo).build();
+    return new JsonResponse(HttpStatus.OK, "Zeppelin version", versionInfo).build();
   }
 
   /**
@@ -73,18 +70,22 @@ public class ZeppelinRestApi {
    * @param logLevel new log level for Rootlogger
    * @return
    */
-  @PUT
-  @Path("log/level/{logLevel}")
-  public Response changeRootLogLevel(@Context HttpServletRequest request,
-      @PathParam("logLevel") String logLevel) {
+//TODO(KOT): FIX THIS
+  /*
+  //@PUT
+  //@Path("log/level/{logLevel}")
+  @PutMapping(value = "/log/level/{logLevel}", produces = "application/json")
+  public ResponseEntity changeRootLogLevel(@Context HttpServletRequest request,
+      @PathVariable("logLevel") String logLevel) {
     Level level = Level.toLevel(logLevel);
     if (logLevel.toLowerCase().equalsIgnoreCase(level.toString().toLowerCase())) {
       Logger.getRootLogger().setLevel(level);
-      return new JsonResponse<>(Response.Status.OK).build();
+      return new JsonResponse(HttpStatus.OK).build();
     } else {
-      return new JsonResponse<>(Response.Status.NOT_ACCEPTABLE,
+      return new JsonResponse(HttpStatus.NOT_ACCEPTABLE,
           "Please check LOG level specified. Valid values: DEBUG, ERROR, FATAL, "
               + "INFO, TRACE, WARN").build();
     }
   }
+  */
 }

@@ -26,14 +26,17 @@ import java.util.Map;
  * Event from remoteInterpreterProcess
  */
 public interface RemoteInterpreterProcessListener {
-  public void onOutputAppend(String noteId, String paragraphId, int index, String output);
-  public void onOutputUpdated(
-      String noteId, String paragraphId, int index, InterpreterResult.Type type, String output);
-  public void onOutputClear(String noteId, String paragraphId);
+  void onOutputAppend(String noteId, String paragraphId, int index, String output);
+
+  void onOutputUpdated(
+          String noteId, String paragraphId, int index, InterpreterResult.Type type, String output);
+
+  void onOutputClear(String noteId, String paragraphId);
+
   void runParagraphs(String noteId, List<Integer> paragraphIndices, List<String> paragraphIds,
                      String curParagraphId)
-      throws IOException;
+          throws IOException;
 
-  public void onParaInfosReceived(String noteId, String paragraphId,
-                                  String interpreterSettingId, Map<String, String> metaInfos);
+  void onParaInfosReceived(String noteId, String paragraphId,
+                           String interpreterSettingId, Map<String, String> metaInfos);
 }

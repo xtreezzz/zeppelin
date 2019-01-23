@@ -63,6 +63,9 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * High level api of Notebook related operations, such as create, move & delete note/folder.
@@ -70,6 +73,7 @@ import org.slf4j.LoggerFactory;
  * refresh cron and update InterpreterSetting, these are done through NoteEventListener.
  *
  */
+@Component
 public class Notebook {
   private static final Logger LOGGER = LoggerFactory.getLogger(Notebook.class);
 
@@ -80,19 +84,26 @@ public class Notebook {
   private ZeppelinConfiguration conf;
   private StdSchedulerFactory quertzSchedFact;
   org.quartz.Scheduler quartzSched;
-  private ParagraphJobListener paragraphJobListener;
   private NotebookRepo notebookRepo;
   private SearchService noteSearchService;
   private NotebookAuthorization notebookAuthorization;
-  private List<NoteEventListener> noteEventListeners = new ArrayList<>();
   private Credentials credentials;
 
+
+  @Lazy
+  @Autowired
+  private ParagraphJobListener paragraphJobListener;
+
+  @Lazy
+  @Autowired
+  private List<NoteEventListener> noteEventListeners = new ArrayList<>();
   /**
    * Main constructor \w manual Dependency Injection
    *
    * @throws IOException
    * @throws SchedulerException
    */
+  @Autowired
   public Notebook(
       ZeppelinConfiguration conf,
       NotebookRepo notebookRepo,
@@ -102,10 +113,10 @@ public class Notebook {
       NotebookAuthorization notebookAuthorization,
       Credentials credentials)
       throws IOException, SchedulerException {
+
     this.noteManager = new NoteManager(notebookRepo);
     this.conf = conf;
     this.notebookRepo = notebookRepo;
-    this.replFactory = replFactory;
     this.interpreterSettingManager = interpreterSettingManager;
     this.noteSearchService = noteSearchService;
     this.notebookAuthorization = notebookAuthorization;
@@ -115,34 +126,6 @@ public class Notebook {
     quartzSched.start();
     CronJob.notebook = this;
 
-    this.noteEventListeners.add(this.noteSearchService);
-    this.noteEventListeners.add(this.notebookAuthorization);
-    this.noteEventListeners.add(this.interpreterSettingManager);
-  }
-
-  @Inject
-  public Notebook(
-      ZeppelinConfiguration conf,
-      NotebookRepo notebookRepo,
-      InterpreterFactory replFactory,
-      InterpreterSettingManager interpreterSettingManager,
-      SearchService noteSearchService,
-      NotebookAuthorization notebookAuthorization,
-      Credentials credentials,
-      NoteEventListener noteEventListener)
-      throws IOException, SchedulerException {
-    this(
-        conf,
-        notebookRepo,
-        replFactory,
-        interpreterSettingManager,
-        noteSearchService,
-        notebookAuthorization,
-        credentials);
-    if (null != noteEventListener) {
-      this.noteEventListeners.add(noteEventListener);
-    }
-    this.paragraphJobListener = (ParagraphJobListener) noteEventListener;
   }
 
   /**
@@ -338,8 +321,7 @@ public class Notebook {
                                             String noteName,
                                             AuthenticationInfo subject) throws IOException {
     if (((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo()) {
-      return ((NotebookRepoWithVersionControl) notebookRepo)
-          .revisionHistory(noteId, noteName, subject);
+      return ((NotebookRepoWithVersionControl) notebookRepo).revisionHistory(noteId, noteName, subject);
     } else {
       return null;
     }

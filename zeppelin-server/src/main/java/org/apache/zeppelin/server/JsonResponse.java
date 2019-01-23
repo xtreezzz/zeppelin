@@ -18,95 +18,48 @@ package org.apache.zeppelin.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import java.util.ArrayList;
-
-import javax.ws.rs.core.NewCookie;
-import javax.ws.rs.core.Response.ResponseBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 /**
  * Json response builder.
- *
- * @param <T>
  */
-public class JsonResponse<T> {
-  private javax.ws.rs.core.Response.Status status;
+public class JsonResponse {
+  private HttpStatus status;
   private String message;
-  private T body;
-  transient ArrayList<NewCookie> cookies;
+  private final Object body;
+  //transient ArrayList<Coo> cookies;
   transient boolean pretty = false;
 
-  public JsonResponse(javax.ws.rs.core.Response.Status status) {
+  public JsonResponse(final HttpStatus status) {
     this.status = status;
     this.message = null;
     this.body = null;
   }
 
-  public JsonResponse(javax.ws.rs.core.Response.Status status, String message) {
+  public JsonResponse(final HttpStatus status, final String message) {
     this.status = status;
     this.message = message;
     this.body = null;
   }
 
-  public JsonResponse(javax.ws.rs.core.Response.Status status, T body) {
+  public JsonResponse(final HttpStatus status, final Object body) {
     this.status = status;
     this.message = null;
     this.body = body;
   }
 
-  public JsonResponse(javax.ws.rs.core.Response.Status status, String message, T body) {
+  public JsonResponse(final HttpStatus status, final String message, final Object body) {
     this.status = status;
     this.message = message;
     this.body = body;
   }
 
-  public JsonResponse<T> setPretty(boolean pretty) {
-    this.pretty = pretty;
-    return this;
-  }
-
-  /**
-   * Add cookie for building.
-   *
-   * @param newCookie
-   * @return
-   */
-  public JsonResponse<T> addCookie(NewCookie newCookie) {
-    if (cookies == null) {
-      cookies = new ArrayList<>();
-    }
-    cookies.add(newCookie);
-
-    return this;
-  }
-
-  /**
-   * Add cookie for building.
-   *
-   * @param name
-   * @param value
-   * @return
-   */
-  public JsonResponse<?> addCookie(String name, String value) {
-    return addCookie(new NewCookie(name, value));
-  }
-
-  @Override
-  public String toString() {
-    GsonBuilder gsonBuilder = new GsonBuilder();
-    if (pretty) {
-      gsonBuilder.setPrettyPrinting();
-    }
-    gsonBuilder.setExclusionStrategies(new JsonExclusionStrategy());
-    Gson gson = gsonBuilder.create();
-    return gson.toJson(this);
-  }
-
-  public javax.ws.rs.core.Response.Status getCode() {
+  public HttpStatus getCode() {
     return status;
   }
 
-  public void setCode(javax.ws.rs.core.Response.Status status) {
+  public void setCode(final HttpStatus status) {
     this.status = status;
   }
 
@@ -114,25 +67,21 @@ public class JsonResponse<T> {
     return message;
   }
 
-  public void setMessage(String message) {
+  public void setMessage(final String message) {
     this.message = message;
   }
 
-  public T getBody() {
-    return body;
+  public ResponseEntity build() {
+    return new ResponseEntity<>(this.toString(), status);
   }
 
-  public void setBody(T body) {
-    this.body = body;
-  }
-
-  public javax.ws.rs.core.Response build() {
-    ResponseBuilder r = javax.ws.rs.core.Response.status(status).entity(this.toString());
-    if (cookies != null) {
-      for (NewCookie nc : cookies) {
-        r.cookie(nc);
-      }
+  @Override
+  public String toString() {
+    final GsonBuilder gsonBuilder = new GsonBuilder();
+    if (pretty) {
+      gsonBuilder.setPrettyPrinting();
     }
-    return r.build();
+    final Gson gson = gsonBuilder.create();
+    return gson.toJson(this);
   }
 }

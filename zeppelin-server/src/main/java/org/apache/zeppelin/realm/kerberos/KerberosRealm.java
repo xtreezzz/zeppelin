@@ -182,7 +182,7 @@ public class KerberosRealm extends AuthorizingRealm {
   private Groups hadoopGroups;
 
   @Override
-  public boolean supports(org.apache.shiro.authc.AuthenticationToken token) {
+  public boolean supports(final org.apache.shiro.authc.AuthenticationToken token) {
     return token instanceof KerberosToken;
   }
 
@@ -209,7 +209,7 @@ public class KerberosRealm extends AuthorizingRealm {
         throw new RuntimeException("Keytab not defined in configuration");
       }
 
-      File keytabFile = new File(keytab);
+      final File keytabFile = new File(keytab);
       if (!keytabFile.exists()) {
         throw new RuntimeException("Keytab file does not exist: " + keytab);
       }
@@ -226,12 +226,12 @@ public class KerberosRealm extends AuthorizingRealm {
       } else {
         spnegoPrincipals = new String[]{principal};
       }
-      KeyTab keytabInstance = KeyTab.getInstance(keytabFile);
+      final KeyTab keytabInstance = KeyTab.getInstance(keytabFile);
 
       serverSubject = new Subject();
       serverSubject.getPrivateCredentials().add(keytabInstance);
-      for (String spnegoPrincipal : spnegoPrincipals) {
-        Principal krbPrincipal = new KerberosPrincipal(spnegoPrincipal);
+      for (final String spnegoPrincipal : spnegoPrincipals) {
+        final Principal krbPrincipal = new KerberosPrincipal(spnegoPrincipal);
         LOG.info("Using keytab {}, for principal {}",
             keytab, krbPrincipal);
         serverSubject.getPrincipals().add(krbPrincipal);
@@ -254,7 +254,7 @@ public class KerberosRealm extends AuthorizingRealm {
                 }
               });
           LOG.trace("SPNEGO gssManager initialized.");
-        } catch (PrivilegedActionException ex) {
+        } catch (final PrivilegedActionException ex) {
           throw ex.getException();
         }
       }
@@ -263,10 +263,10 @@ public class KerberosRealm extends AuthorizingRealm {
         initializeSecretProvider();
       }
 
-      Configuration hadoopConfig = new Configuration();
+      final Configuration hadoopConfig = new Configuration();
       hadoopGroups = new Groups(hadoopConfig);
 
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       throw new RuntimeException(ex);
     }
   }
@@ -276,13 +276,13 @@ public class KerberosRealm extends AuthorizingRealm {
       secretProvider = constructSecretProvider(true);
       destroySecretProvider = true;
       signer = new Signer(secretProvider);
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       throw new ServletException(ex);
     }
   }
 
   private SignerSecretProvider constructSecretProvider(
-      boolean fallbackToRandomSecretProvider) throws Exception {
+          final boolean fallbackToRandomSecretProvider) throws Exception {
     SignerSecretProvider provider;
     String secretProvider = config.getProperty(SIGNER_SECRET_PROVIDER);
 
@@ -296,7 +296,7 @@ public class KerberosRealm extends AuthorizingRealm {
         provider = new FileSignerSecretProvider();
         provider.init(config, null, tokenValidity);
         LOG.info("File based secret signer initialized.");
-      } catch (Exception e) {
+      } catch (final Exception e) {
         if (fallbackToRandomSecretProvider) {
           LOG.info("Unable to initialize FileSignerSecretProvider, " +
               "falling back to use random secrets.");
@@ -330,9 +330,9 @@ public class KerberosRealm extends AuthorizingRealm {
    * @throws IOException it is never thrown.
    * @throws AuthenticationException it is never thrown.
    */
-  public boolean managementOperation(AuthenticationToken token,
-                                     HttpServletRequest request,
-                                     HttpServletResponse response) {
+  public boolean managementOperation(final AuthenticationToken token,
+                                     final HttpServletRequest request,
+                                     final HttpServletResponse response) {
     return true;
   }
 
@@ -343,9 +343,9 @@ public class KerberosRealm extends AuthorizingRealm {
    * @return AuthorizationInfo
    */
   @Override
-  public AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals)
+  public AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals)
       throws AuthorizationException {
-    Set<String> roles = mapGroupPrincipals(principals.getPrimaryPrincipal().toString());
+    final Set<String> roles = mapGroupPrincipals(principals.getPrimaryPrincipal().toString());
     return new SimpleAuthorizationInfo(roles);
   }
 
@@ -388,11 +388,11 @@ public class KerberosRealm extends AuthorizingRealm {
    */
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(
-      org.apache.shiro.authc.AuthenticationToken authenticationToken)
+          final org.apache.shiro.authc.AuthenticationToken authenticationToken)
       throws org.apache.shiro.authc.AuthenticationException {
     if (null != authenticationToken) {
-      KerberosToken kerberosToken = (KerberosToken) authenticationToken;
-      SimpleAccount account = new SimpleAccount(kerberosToken.getPrincipal(),
+      final KerberosToken kerberosToken = (KerberosToken) authenticationToken;
+      final SimpleAccount account = new SimpleAccount(kerberosToken.getPrincipal(),
           kerberosToken.getCredentials(), kerberosToken.getClass().getName());
       account.addRole(mapGroupPrincipals((String)kerberosToken.getPrincipal()));
       return account;
@@ -409,18 +409,17 @@ public class KerberosRealm extends AuthorizingRealm {
    * @param response    the response object.
    * @param filterChain the filter chain object.
    * @throws IOException      thrown if an IO error occurred.
-   * @throws ServletException thrown if a processing error occurred.
    */
-  public void doKerberosAuth(ServletRequest request,
-                             ServletResponse response,
-                             FilterChain filterChain)
+  public void doKerberosAuth(final ServletRequest request,
+                             final ServletResponse response,
+                             final FilterChain filterChain)
       throws IOException, ServletException {
     boolean unauthorizedResponse = true;
     int errCode = HttpServletResponse.SC_UNAUTHORIZED;
     AuthenticationException authenticationEx = null;
     HttpServletRequest httpRequest = (HttpServletRequest) request;
-    HttpServletResponse httpResponse = (HttpServletResponse) response;
-    boolean isHttps = "https".equals(httpRequest.getScheme());
+    final HttpServletResponse httpResponse = (HttpServletResponse) response;
+    final boolean isHttps = "https".equals(httpRequest.getScheme());
     try {
       boolean newToken = false;
       AuthenticationToken token;
@@ -433,7 +432,7 @@ public class KerberosRealm extends AuthorizingRealm {
             LOG.debug("token.isExpired() = " + token.isExpired());
           }
         }
-      } catch (AuthenticationException ex) {
+      } catch (final AuthenticationException ex) {
         LOG.warn("AuthenticationToken ignored: " + ex.getMessage());
         if (!ex.getMessage().equals("Empty token")) {
           // will be sent back in a 401 unless filter authenticates
@@ -500,12 +499,12 @@ public class KerberosRealm extends AuthorizingRealm {
           }
           if (newToken && !token.isExpired()
               && token != AuthenticationToken.ANONYMOUS) {
-            String signedToken = signer.sign(token.toString());
+            final String signedToken = signer.sign(token.toString());
             createAuthCookie(httpResponse, signedToken, getCookieDomain(),
                 getCookiePath(), token.getExpires(),
                 isCookiePersistent(), isHttps);
           }
-          KerberosToken kerberosToken = new KerberosToken(token.getUserName(), token.toString());
+          final KerberosToken kerberosToken = new KerberosToken(token.getUserName(), token.toString());
           SecurityUtils.getSubject().login(kerberosToken);
           doFilter(filterChain, httpRequest, httpResponse);
         }
@@ -516,7 +515,7 @@ public class KerberosRealm extends AuthorizingRealm {
         }
         unauthorizedResponse = false;
       }
-    } catch (AuthenticationException ex) {
+    } catch (final AuthenticationException ex) {
       // exception from the filter itself is fatal
       errCode = HttpServletResponse.SC_FORBIDDEN;
       authenticationEx = ex;
@@ -558,7 +557,7 @@ public class KerberosRealm extends AuthorizingRealm {
    * @throws IOException             thrown if an IO error occurred.
    * @throws AuthenticationException thrown if Kerberos SPNEGO sequence failed.
    */
-  public AuthenticationToken authenticate(HttpServletRequest request,
+  public AuthenticationToken authenticate(final HttpServletRequest request,
                                           final HttpServletResponse response)
       throws IOException, AuthenticationException {
     AuthenticationToken token = null;
@@ -597,22 +596,22 @@ public class KerberosRealm extends AuthorizingRealm {
                     base64, response);
               }
             });
-      } catch (PrivilegedActionException ex) {
+      } catch (final PrivilegedActionException ex) {
         if (ex.getException() instanceof IOException) {
           throw (IOException) ex.getException();
         } else {
           throw new AuthenticationException(ex.getException());
         }
-      } catch (Exception ex) {
+      } catch (final Exception ex) {
         throw new AuthenticationException(ex);
       }
     }
     return token;
   }
 
-  private AuthenticationToken runWithPrincipal(String serverPrincipal,
-                                               byte[] clientToken, Base64 base64,
-                                               HttpServletResponse response)
+  private AuthenticationToken runWithPrincipal(final String serverPrincipal,
+                                               final byte[] clientToken, final Base64 base64,
+                                               final HttpServletResponse response)
       throws IOException, GSSException {
     GSSContext gssContext = null;
     GSSCredential gssCreds = null;
@@ -626,10 +625,10 @@ public class KerberosRealm extends AuthorizingRealm {
           new Oid[]{KerberosUtil.GSS_SPNEGO_MECH_OID, KerberosUtil.GSS_KRB5_MECH_OID},
           GSSCredential.ACCEPT_ONLY);
       gssContext = this.gssManager.createContext(gssCreds);
-      byte[] serverToken = gssContext.acceptSecContext(clientToken, 0,
+      final byte[] serverToken = gssContext.acceptSecContext(clientToken, 0,
           clientToken.length);
       if (serverToken != null && serverToken.length > 0) {
-        String authenticate = base64.encodeToString(serverToken);
+        final String authenticate = base64.encodeToString(serverToken);
         response.setHeader(KerberosAuthenticator.WWW_AUTHENTICATE,
             KerberosAuthenticator.NEGOTIATE + " " +
                 authenticate);
@@ -638,9 +637,9 @@ public class KerberosRealm extends AuthorizingRealm {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         LOG.trace("SPNEGO in progress");
       } else {
-        String clientPrincipal = gssContext.getSrcName().toString();
-        KerberosName kerberosName = new KerberosName(clientPrincipal);
-        String userName = kerberosName.getShortName();
+        final String clientPrincipal = gssContext.getSrcName().toString();
+        final KerberosName kerberosName = new KerberosName(clientPrincipal);
+        final String userName = kerberosName.getShortName();
         token = new AuthenticationToken(userName, clientPrincipal, TYPE);
         response.setStatus(HttpServletResponse.SC_OK);
         LOG.trace("SPNEGO completed for client principal [{}]",
@@ -665,8 +664,8 @@ public class KerberosRealm extends AuthorizingRealm {
    * @param request the request object.
    * @return the full URL of the request including the query string.
    */
-  protected String getRequestURL(HttpServletRequest request) {
-    StringBuffer sb = request.getRequestURL();
+  protected String getRequestURL(final HttpServletRequest request) {
+    final StringBuffer sb = request.getRequestURL();
     if (request.getQueryString() != null) {
       sb.append("?").append(request.getQueryString());
     }
@@ -691,20 +690,20 @@ public class KerberosRealm extends AuthorizingRealm {
    * @throws IOException             thrown if an IO error occurred.
    * @throws AuthenticationException thrown if the token is invalid or if it has expired.
    */
-  private AuthenticationToken getToken(HttpServletRequest request)
+  private AuthenticationToken getToken(final HttpServletRequest request)
       throws AuthenticationException {
-    AuthenticationToken token;
-    Cookie[] cookies = request.getCookies();
+    final AuthenticationToken token;
+    final Cookie[] cookies = request.getCookies();
     token = getTokenFromCookies(cookies);
     return token;
   }
 
-  private static AuthenticationToken getTokenFromCookies(Cookie[] cookies)
+  private static AuthenticationToken getTokenFromCookies(final Cookie[] cookies)
       throws AuthenticationException {
     AuthenticationToken token = null;
     String tokenStr = null;
     if (cookies != null) {
-      for (Cookie cookie : cookies) {
+      for (final Cookie cookie : cookies) {
         if (cookie.getName().equals(AuthenticatedURL.AUTH_COOKIE)) {
           tokenStr = cookie.getValue();
           if (tokenStr.isEmpty()) {
@@ -712,7 +711,7 @@ public class KerberosRealm extends AuthorizingRealm {
           }
           try {
             tokenStr = signer.verifyAndExtract(tokenStr);
-          } catch (SignerException ex) {
+          } catch (final SignerException ex) {
             throw new AuthenticationException(ex);
           }
           break;
@@ -721,7 +720,7 @@ public class KerberosRealm extends AuthorizingRealm {
     }
     if (tokenStr != null) {
       token = AuthenticationToken.parse(tokenStr);
-      boolean match = verifyTokenType(token);
+      final boolean match = verifyTokenType(token);
       if (!match) {
         throw new AuthenticationException("Invalid AuthenticationToken type");
       }
@@ -744,12 +743,12 @@ public class KerberosRealm extends AuthorizingRealm {
    * @throws org.apache.shiro.authc.AuthenticationException
    */
   public static KerberosToken getKerberosTokenFromCookies(
-      Map<String, javax.ws.rs.core.Cookie> cookies)
+          final Map<String, Cookie> cookies)
       throws org.apache.shiro.authc.AuthenticationException {
     KerberosToken kerberosToken = null;
     String tokenStr = null;
     if (cookies != null) {
-      for (javax.ws.rs.core.Cookie cookie : cookies.values()) {
+      for (final Cookie cookie : cookies.values()) {
         if (cookie.getName().equals(KerberosAuthenticator.AUTHORIZATION)) {
           tokenStr = cookie.getValue();
           if (tokenStr.isEmpty()) {
@@ -757,7 +756,7 @@ public class KerberosRealm extends AuthorizingRealm {
           }
           try {
             tokenStr = tokenStr.substring(KerberosAuthenticator.NEGOTIATE.length()).trim();
-          } catch (Exception ex) {
+          } catch (final Exception ex) {
             throw new org.apache.shiro.authc.AuthenticationException(ex);
           }
           break;
@@ -766,8 +765,8 @@ public class KerberosRealm extends AuthorizingRealm {
     }
     if (tokenStr != null) {
       try {
-        AuthenticationToken authToken = AuthenticationToken.parse(tokenStr);
-        boolean match = verifyTokenType(authToken);
+        final AuthenticationToken authToken = AuthenticationToken.parse(tokenStr);
+        final boolean match = verifyTokenType(authToken);
         if (!match) {
           throw new
               org.apache.shiro.authc.AuthenticationException("Invalid AuthenticationToken type");
@@ -776,7 +775,7 @@ public class KerberosRealm extends AuthorizingRealm {
           throw new org.apache.shiro.authc.AuthenticationException("AuthenticationToken expired");
         }
         kerberosToken = new KerberosToken(authToken.getUserName(), tokenStr);
-      } catch (AuthenticationException ex) {
+      } catch (final AuthenticationException ex) {
         throw new org.apache.shiro.authc.AuthenticationException(ex);
       }
     }
@@ -791,7 +790,7 @@ public class KerberosRealm extends AuthorizingRealm {
    * @return true   If the token type matches one of the supported token types
    * false  Otherwise
    */
-  protected static boolean verifyTokenType(AuthenticationToken token) {
+  protected static boolean verifyTokenType(final AuthenticationToken token) {
     return TYPE.equals(token.getType());
   }
 
@@ -803,10 +802,9 @@ public class KerberosRealm extends AuthorizingRealm {
    * @param request     the request object.
    * @param response    the response object.
    * @throws IOException      thrown if an IO error occurred.
-   * @throws ServletException thrown if a processing error occurred.
    */
-  protected void doFilter(FilterChain filterChain, HttpServletRequest request,
-                          HttpServletResponse response) throws IOException, ServletException {
+  protected void doFilter(final FilterChain filterChain, final HttpServletRequest request,
+                          final HttpServletResponse response) throws IOException, ServletException {
     filterChain.doFilter(request, response);
   }
 
@@ -826,11 +824,11 @@ public class KerberosRealm extends AuthorizingRealm {
    *                           because of the fact that Hadoop is stuck at servlet 2.5 and jetty 6
    *                           right now.
    */
-  public static void createAuthCookie(HttpServletResponse resp, String token,
-                                      String domain, String path, long expires,
-                                      boolean isCookiePersistent,
-                                      boolean isSecure) {
-    StringBuilder sb = new StringBuilder(AuthenticatedURL.AUTH_COOKIE)
+  public static void createAuthCookie(final HttpServletResponse resp, final String token,
+                                      final String domain, final String path, final long expires,
+                                      final boolean isCookiePersistent,
+                                      final boolean isSecure) {
+    final StringBuilder sb = new StringBuilder(AuthenticatedURL.AUTH_COOKIE)
         .append("=");
     if (token != null && token.length() > 0) {
       sb.append("\"").append(token).append("\"");
@@ -845,8 +843,8 @@ public class KerberosRealm extends AuthorizingRealm {
     }
 
     if (expires >= 0 && isCookiePersistent) {
-      Date date = new Date(expires);
-      SimpleDateFormat df = new SimpleDateFormat("EEE, " +
+      final Date date = new Date(expires);
+      final SimpleDateFormat df = new SimpleDateFormat("EEE, " +
           "dd-MMM-yyyy HH:mm:ss zzz");
       df.setTimeZone(TimeZone.getTimeZone("GMT"));
       sb.append("; Expires=").append(df.format(date));
@@ -866,7 +864,7 @@ public class KerberosRealm extends AuthorizingRealm {
    *
    */
   protected Properties getConfiguration() {
-    Properties props = new Properties();
+    final Properties props = new Properties();
     props.put(COOKIE_DOMAIN, cookieDomain);
     props.put(COOKIE_PATH, cookiePath);
     props.put(COOKIE_PERSISTENT, isCookiePersistent);
@@ -926,23 +924,23 @@ public class KerberosRealm extends AuthorizingRealm {
     return isCookiePersistent;
   }
 
-  public void setTokenMaxInactiveInterval(long tokenMaxInactiveInterval) {
+  public void setTokenMaxInactiveInterval(final long tokenMaxInactiveInterval) {
     this.tokenMaxInactiveInterval = tokenMaxInactiveInterval * 1000;
   }
 
-  public void setTokenValidity(long tokenValidity) {
+  public void setTokenValidity(final long tokenValidity) {
     this.tokenValidity = tokenValidity * 1000;
   }
 
-  public void setCookieDomain(String cookieDomain) {
+  public void setCookieDomain(final String cookieDomain) {
     this.cookieDomain = cookieDomain;
   }
 
-  public void setCookiePath(String cookiePath) {
+  public void setCookiePath(final String cookiePath) {
     this.cookiePath = cookiePath;
   }
 
-  public void setCookiePersistent(boolean cookiePersistent) {
+  public void setCookiePersistent(final boolean cookiePersistent) {
     isCookiePersistent = cookiePersistent;
   }
 
@@ -950,11 +948,11 @@ public class KerberosRealm extends AuthorizingRealm {
     return principal;
   }
 
-  public void setPrincipal(String principal) {
+  public void setPrincipal(final String principal) {
     this.principal = principal;
   }
 
-  public void setKeytab(String keytab) {
+  public void setKeytab(final String keytab) {
     this.keytab = keytab;
   }
 
@@ -962,7 +960,7 @@ public class KerberosRealm extends AuthorizingRealm {
     return nameRules;
   }
 
-  public void setNameRules(String nameRules) {
+  public void setNameRules(final String nameRules) {
     this.nameRules = nameRules;
   }
 
@@ -970,7 +968,7 @@ public class KerberosRealm extends AuthorizingRealm {
     return signatureSecretFile;
   }
 
-  public void setSignatureSecretFile(String signatureSecretFile) {
+  public void setSignatureSecretFile(final String signatureSecretFile) {
     this.signatureSecretFile = signatureSecretFile;
   }
 
@@ -978,7 +976,7 @@ public class KerberosRealm extends AuthorizingRealm {
     return signatureSecretProvider;
   }
 
-  public void setSignatureSecretProvider(String signatureSecretProvider) {
+  public void setSignatureSecretProvider(final String signatureSecretProvider) {
     this.signatureSecretProvider = signatureSecretProvider;
   }
 

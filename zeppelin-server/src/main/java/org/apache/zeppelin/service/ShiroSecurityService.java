@@ -55,26 +55,30 @@ import org.apache.zeppelin.realm.ActiveDirectoryGroupRealm;
 import org.apache.zeppelin.realm.LdapRealm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /** Tools for securing Zeppelin. */
+@Component(value="ShiroSecurityService")
 public class ShiroSecurityService implements SecurityService {
 
   private final Logger LOGGER = LoggerFactory.getLogger(ShiroSecurityService.class);
 
   private final ZeppelinConfiguration zeppelinConfiguration;
 
-  @Inject
-  public ShiroSecurityService(ZeppelinConfiguration zeppelinConfiguration) throws Exception {
+  @Autowired
+  public ShiroSecurityService(final ZeppelinConfiguration zeppelinConfiguration) throws Exception {
     LOGGER.info("NoSecurityService is initialized");
     this.zeppelinConfiguration = zeppelinConfiguration;
+
     if (zeppelinConfiguration.getShiroPath().length() > 0) {
       try {
-        Collection<Realm> realms =
+        final Collection<Realm> realms =
             ((DefaultWebSecurityManager) org.apache.shiro.SecurityUtils.getSecurityManager())
                 .getRealms();
         if (realms.size() > 1) {
           Boolean isIniRealmEnabled = false;
-          for (Object realm : realms) {
+          for (final Object realm : realms) {
             if (realm instanceof IniRealm && ((IniRealm) realm).getIni().get("users") != null) {
               isIniRealmEnabled = true;
               break;
@@ -86,7 +90,7 @@ public class ShiroSecurityService implements SecurityService {
                     + "Consider removing [users] block from shiro.ini");
           }
         }
-      } catch (UnavailableSecurityManagerException e) {
+      } catch (final UnavailableSecurityManagerException e) {
         LOGGER.error("Failed to initialise shiro configuraion", e);
       }
     }
@@ -99,7 +103,7 @@ public class ShiroSecurityService implements SecurityService {
    */
   @Override
   public String getPrincipal() {
-    Subject subject = org.apache.shiro.SecurityUtils.getSubject();
+    final Subject subject = org.apache.shiro.SecurityUtils.getSubject();
 
     String principal;
     if (subject.isAuthenticated()) {
@@ -116,9 +120,9 @@ public class ShiroSecurityService implements SecurityService {
     return principal;
   }
 
-  private String extractPrincipal(Subject subject) {
-    String principal;
-    Object principalObject = subject.getPrincipal();
+  private String extractPrincipal(final Subject subject) {
+    final String principal;
+    final Object principalObject = subject.getPrincipal();
     if (principalObject instanceof Principal) {
       principal = ((Principal) principalObject).getName();
     } else {
@@ -129,8 +133,8 @@ public class ShiroSecurityService implements SecurityService {
 
   @Override
   public Collection getRealmsList() {
-    DefaultWebSecurityManager defaultWebSecurityManager;
-    String key = ThreadContext.SECURITY_MANAGER_KEY;
+    final DefaultWebSecurityManager defaultWebSecurityManager;
+    final String key = ThreadContext.SECURITY_MANAGER_KEY;
     defaultWebSecurityManager = (DefaultWebSecurityManager) ThreadContext.get(key);
     return defaultWebSecurityManager.getRealms();
   }
@@ -149,13 +153,13 @@ public class ShiroSecurityService implements SecurityService {
    * @return
    */
   @Override
-  public List<String> getMatchedUsers(String searchText, int numUsersToFetch) {
-    List<String> usersList = new ArrayList<>();
+  public List<String> getMatchedUsers(final String searchText, final int numUsersToFetch) {
+    final List<String> usersList = new ArrayList<>();
     try {
-      Collection<Realm> realmsList = (Collection<Realm>) getRealmsList();
+      final Collection<Realm> realmsList = (Collection<Realm>) getRealmsList();
       if (realmsList != null) {
-        for (Realm realm : realmsList) {
-          String name = realm.getClass().getName();
+        for (final Realm realm : realmsList) {
+          final String name = realm.getClass().getName();
           LOGGER.debug("RealmClass.getName: " + name);
           if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
             usersList.addAll(getUserList((IniRealm) realm));
@@ -171,7 +175,7 @@ public class ShiroSecurityService implements SecurityService {
           }
         }
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Exception in retrieving Users from realms ", e);
     }
     return usersList;
@@ -184,13 +188,13 @@ public class ShiroSecurityService implements SecurityService {
    */
   @Override
   public List<String> getMatchedRoles() {
-    List<String> rolesList = new ArrayList<>();
+    final List<String> rolesList = new ArrayList<>();
     try {
-      Collection realmsList = getRealmsList();
+      final Collection realmsList = getRealmsList();
       if (realmsList != null) {
-        for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-          Realm realm = iterator.next();
-          String name = realm.getClass().getName();
+        for (final Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
+          final Realm realm = iterator.next();
+          final String name = realm.getClass().getName();
           LOGGER.debug("RealmClass.getName: " + name);
           if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
             rolesList.addAll(getRolesList((IniRealm) realm));
@@ -199,7 +203,7 @@ public class ShiroSecurityService implements SecurityService {
           }
         }
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Exception in retrieving Users from realms ", e);
     }
     return rolesList;
@@ -213,21 +217,21 @@ public class ShiroSecurityService implements SecurityService {
    */
   @Override
   public Set<String> getAssociatedRoles() {
-    Subject subject = org.apache.shiro.SecurityUtils.getSubject();
+    final Subject subject = org.apache.shiro.SecurityUtils.getSubject();
     HashSet<String> roles = new HashSet<>();
     Map allRoles = null;
 
     if (subject.isAuthenticated()) {
-      Collection realmsList = getRealmsList();
-      for (Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-        Realm realm = iterator.next();
-        String name = realm.getClass().getName();
+      final Collection realmsList = getRealmsList();
+      for (final Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
+        final Realm realm = iterator.next();
+        final String name = realm.getClass().getName();
         if (name.equals("org.apache.shiro.realm.text.IniRealm")) {
           allRoles = ((IniRealm) realm).getIni().get("roles");
           break;
         } else if (name.equals("org.apache.zeppelin.realm.LdapRealm")) {
           try {
-            AuthorizationInfo auth =
+            final AuthorizationInfo auth =
                 ((LdapRealm) realm)
                     .queryForAuthorizationInfo(
                         new SimplePrincipalCollection(subject.getPrincipal(), realm.getName()),
@@ -235,7 +239,7 @@ public class ShiroSecurityService implements SecurityService {
             if (auth != null) {
               roles = new HashSet<>(auth.getRoles());
             }
-          } catch (NamingException e) {
+          } catch (final NamingException e) {
             LOGGER.error("Can't fetch roles", e);
           }
           break;
@@ -245,9 +249,9 @@ public class ShiroSecurityService implements SecurityService {
         }
       }
       if (allRoles != null) {
-        Iterator it = allRoles.entrySet().iterator();
+        final Iterator it = allRoles.entrySet().iterator();
         while (it.hasNext()) {
-          Map.Entry pair = (Map.Entry) it.next();
+          final Map.Entry pair = (Map.Entry) it.next();
           if (subject.hasRole((String) pair.getKey())) {
             roles.add((String) pair.getKey());
           }
@@ -258,13 +262,13 @@ public class ShiroSecurityService implements SecurityService {
   }
 
   /** Function to extract users from shiro.ini. */
-  private List<String> getUserList(IniRealm r) {
-    List<String> userList = new ArrayList<>();
-    Map getIniUser = r.getIni().get("users");
+  private List<String> getUserList(final IniRealm r) {
+    final List<String> userList = new ArrayList<>();
+    final Map getIniUser = r.getIni().get("users");
     if (getIniUser != null) {
-      Iterator it = getIniUser.entrySet().iterator();
+      final Iterator it = getIniUser.entrySet().iterator();
       while (it.hasNext()) {
-        Map.Entry pair = (Map.Entry) it.next();
+        final Map.Entry pair = (Map.Entry) it.next();
         userList.add(pair.getKey().toString().trim());
       }
     }
@@ -277,13 +281,13 @@ public class ShiroSecurityService implements SecurityService {
    * @param r
    * @return
    */
-  private List<String> getRolesList(IniRealm r) {
-    List<String> roleList = new ArrayList<>();
-    Map getIniRoles = r.getIni().get("roles");
+  private List<String> getRolesList(final IniRealm r) {
+    final List<String> roleList = new ArrayList<>();
+    final Map getIniRoles = r.getIni().get("roles");
     if (getIniRoles != null) {
-      Iterator it = getIniRoles.entrySet().iterator();
+      final Iterator it = getIniRoles.entrySet().iterator();
       while (it.hasNext()) {
-        Map.Entry pair = (Map.Entry) it.next();
+        final Map.Entry pair = (Map.Entry) it.next();
         roleList.add(pair.getKey().toString().trim());
       }
     }
@@ -291,30 +295,30 @@ public class ShiroSecurityService implements SecurityService {
   }
 
   /** Function to extract users from LDAP. */
-  private List<String> getUserList(JndiLdapRealm r, String searchText, int numUsersToFetch) {
-    List<String> userList = new ArrayList<>();
-    String userDnTemplate = r.getUserDnTemplate();
-    String userDn[] = userDnTemplate.split(",", 2);
-    String userDnPrefix = userDn[0].split("=")[0];
-    String userDnSuffix = userDn[1];
-    JndiLdapContextFactory cf = (JndiLdapContextFactory) r.getContextFactory();
+  private List<String> getUserList(final JndiLdapRealm r, final String searchText, final int numUsersToFetch) {
+    final List<String> userList = new ArrayList<>();
+    final String userDnTemplate = r.getUserDnTemplate();
+    final String[] userDn = userDnTemplate.split(",", 2);
+    final String userDnPrefix = userDn[0].split("=")[0];
+    final String userDnSuffix = userDn[1];
+    final JndiLdapContextFactory cf = (JndiLdapContextFactory) r.getContextFactory();
     try {
-      LdapContext ctx = cf.getSystemLdapContext();
-      SearchControls constraints = new SearchControls();
+      final LdapContext ctx = cf.getSystemLdapContext();
+      final SearchControls constraints = new SearchControls();
       constraints.setCountLimit(numUsersToFetch);
       constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-      String[] attrIDs = {userDnPrefix};
+      final String[] attrIDs = {userDnPrefix};
       constraints.setReturningAttributes(attrIDs);
-      NamingEnumeration result =
+      final NamingEnumeration result =
           ctx.search(userDnSuffix, "(" + userDnPrefix + "=*" + searchText + "*)", constraints);
       while (result.hasMore()) {
-        Attributes attrs = ((SearchResult) result.next()).getAttributes();
+        final Attributes attrs = ((SearchResult) result.next()).getAttributes();
         if (attrs.get(userDnPrefix) != null) {
-          String currentUser = attrs.get(userDnPrefix).toString();
+          final String currentUser = attrs.get(userDnPrefix).toString();
           userList.add(currentUser.split(":")[1].trim());
         }
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from Ldap Realm", e);
     }
     LOGGER.info("UserList: " + userList);
@@ -322,21 +326,21 @@ public class ShiroSecurityService implements SecurityService {
   }
 
   /** Function to extract users from Zeppelin LdapRealm. */
-  private List<String> getUserList(LdapRealm r, String searchText, int numUsersToFetch) {
-    List<String> userList = new ArrayList<>();
+  private List<String> getUserList(final LdapRealm r, final String searchText, final int numUsersToFetch) {
+    final List<String> userList = new ArrayList<>();
     LOGGER.debug("SearchText: " + searchText);
-    String userAttribute = r.getUserSearchAttributeName();
-    String userSearchRealm = r.getUserSearchBase();
-    String userObjectClass = r.getUserObjectClass();
-    JndiLdapContextFactory cf = (JndiLdapContextFactory) r.getContextFactory();
+    final String userAttribute = r.getUserSearchAttributeName();
+    final String userSearchRealm = r.getUserSearchBase();
+    final String userObjectClass = r.getUserObjectClass();
+    final JndiLdapContextFactory cf = (JndiLdapContextFactory) r.getContextFactory();
     try {
-      LdapContext ctx = cf.getSystemLdapContext();
-      SearchControls constraints = new SearchControls();
+      final LdapContext ctx = cf.getSystemLdapContext();
+      final SearchControls constraints = new SearchControls();
       constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
       constraints.setCountLimit(numUsersToFetch);
-      String[] attrIDs = {userAttribute};
+      final String[] attrIDs = {userAttribute};
       constraints.setReturningAttributes(attrIDs);
-      NamingEnumeration result =
+      final NamingEnumeration result =
           ctx.search(
               userSearchRealm,
               "(&(objectclass="
@@ -348,9 +352,9 @@ public class ShiroSecurityService implements SecurityService {
                   + "*))",
               constraints);
       while (result.hasMore()) {
-        Attributes attrs = ((SearchResult) result.next()).getAttributes();
+        final Attributes attrs = ((SearchResult) result.next()).getAttributes();
         if (attrs.get(userAttribute) != null) {
-          String currentUser;
+          final String currentUser;
           if (r.getUserLowerCase()) {
             LOGGER.debug("userLowerCase true");
             currentUser = ((String) attrs.get(userAttribute).get()).toLowerCase();
@@ -362,7 +366,7 @@ public class ShiroSecurityService implements SecurityService {
           userList.add(currentUser.trim());
         }
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from Ldap Realm", e);
     }
     return userList;
@@ -374,13 +378,13 @@ public class ShiroSecurityService implements SecurityService {
    * @param r
    * @return
    */
-  private List<String> getRolesList(LdapRealm r) {
-    List<String> roleList = new ArrayList<>();
-    Map<String, String> roles = r.getListRoles();
+  private List<String> getRolesList(final LdapRealm r) {
+    final List<String> roleList = new ArrayList<>();
+    final Map<String, String> roles = r.getListRoles();
     if (roles != null) {
-      Iterator it = roles.entrySet().iterator();
+      final Iterator it = roles.entrySet().iterator();
       while (it.hasNext()) {
-        Map.Entry pair = (Map.Entry) it.next();
+        final Map.Entry pair = (Map.Entry) it.next();
         LOGGER.debug("RoleKeyValue: " + pair.getKey() + " = " + pair.getValue());
         roleList.add((String) pair.getKey());
       }
@@ -389,34 +393,34 @@ public class ShiroSecurityService implements SecurityService {
   }
 
   private List<String> getUserList(
-      ActiveDirectoryGroupRealm r, String searchText, int numUsersToFetch) {
+          final ActiveDirectoryGroupRealm r, final String searchText, final int numUsersToFetch) {
     List<String> userList = new ArrayList<>();
     try {
-      LdapContext ctx = r.getLdapContextFactory().getSystemLdapContext();
+      final LdapContext ctx = r.getLdapContextFactory().getSystemLdapContext();
       userList = r.searchForUserName(searchText, ctx, numUsersToFetch);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from ActiveDirectory Realm", e);
     }
     return userList;
   }
 
   /** Function to extract users from JDBCs. */
-  private List<String> getUserList(JdbcRealm obj) {
-    List<String> userlist = new ArrayList<>();
+  private List<String> getUserList(final JdbcRealm obj) {
+    final List<String> userlist = new ArrayList<>();
     Connection con = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
     DataSource dataSource = null;
     String authQuery = "";
-    String retval[];
+    String[] retval;
     String tablename = "";
     String username = "";
-    String userquery;
+    final String userquery;
     try {
       dataSource = (DataSource) FieldUtils.readField(obj, "dataSource", true);
       authQuery = (String) FieldUtils.readField(obj, "authenticationQuery", true);
       LOGGER.info(authQuery);
-      String authQueryLowerCase = authQuery.toLowerCase();
+      final String authQueryLowerCase = authQuery.toLowerCase();
       retval = authQueryLowerCase.split("from", 2);
       if (retval.length >= 2) {
         retval = retval[1].split("with|where", 2);
@@ -435,7 +439,7 @@ public class ShiroSecurityService implements SecurityService {
       }
 
       userquery = String.format("SELECT %s FROM %s", username, tablename);
-    } catch (IllegalAccessException e) {
+    } catch (final IllegalAccessException e) {
       LOGGER.error("Error while accessing dataSource for JDBC Realm", e);
       return Lists.newArrayList();
     }
@@ -447,7 +451,7 @@ public class ShiroSecurityService implements SecurityService {
       while (rs.next()) {
         userlist.add(rs.getString(1).trim());
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from JDBC Realm", e);
     } finally {
       JdbcUtils.closeResultSet(rs);

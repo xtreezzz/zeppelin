@@ -41,7 +41,7 @@ public class RunParagraphWithParametersRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static RunParagraphWithParametersRequest fromJson(String json) {
+  public static RunParagraphWithParametersRequest fromJson(final String json) {
     return gson.fromJson(json, RunParagraphWithParametersRequest.class);
   }
 }

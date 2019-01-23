@@ -176,11 +176,21 @@ public class OldAzureNotebookRepo implements OldNotebookRepo {
         delete(subItem);
       }
 
-      dir.deleteIfExists();
+      try {
+        dir.deleteIfExists();
+      } catch (URISyntaxException e) {
+        String msg = String.format("Error delete folder %s to Azure storage", dir);
+        LOG.error(msg, e);
+      }
     } else if (item.getClass() == CloudFile.class) {
       CloudFile file = (CloudFile) item;
 
-      file.deleteIfExists();
+      try {
+        file.deleteIfExists();
+      } catch (URISyntaxException e) {
+        String msg = String.format("Error delete folder %s to Azure storage", file);
+        LOG.error(msg, e);
+      }
     }
   }
 

@@ -65,10 +65,13 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Load helium visualization & spell
  */
+@Component
 public class HeliumBundleFactory {
   private Logger logger = LoggerFactory.getLogger(HeliumBundleFactory.class);
   private static final String NODE_VERSION = "v6.9.1";
@@ -106,7 +109,7 @@ public class HeliumBundleFactory {
 
   private ByteArrayOutputStream out  = new ByteArrayOutputStream();
 
-  @Inject
+  @Autowired
   public HeliumBundleFactory(ZeppelinConfiguration conf) {
     this.heliumLocalRepoDirectory =
         new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);

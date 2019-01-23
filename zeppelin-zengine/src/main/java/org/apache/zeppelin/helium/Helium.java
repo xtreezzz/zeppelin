@@ -47,10 +47,13 @@ import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Manages helium packages
  */
+@Component
 public class Helium {
   private Logger logger = LoggerFactory.getLogger(Helium.class);
   private List<HeliumRegistry> registry = new LinkedList<>();
@@ -66,7 +69,7 @@ public class Helium {
   private final HeliumApplicationFactory applicationFactory;
   private final InterpreterSettingManager interpreterSettingManager;
 
-  @Inject
+  @Autowired
   public Helium(
       ZeppelinConfiguration conf,
       HeliumBundleFactory heliumBundleFactory,

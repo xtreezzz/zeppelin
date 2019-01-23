@@ -37,7 +37,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
    * @see org.apache.hadoop.gateway.filter.PrincipalMapper#loadMappingTable(java.lang.String)
    */
   @Override
-  public void loadMappingTable(String principalMapping, String groupMapping)
+  public void loadMappingTable(final String principalMapping, final String groupMapping)
       throws PrincipalMappingException {
     if (principalMapping != null) {
       principalMappings = parseMapping(principalMapping);
@@ -45,28 +45,28 @@ public class SimplePrincipalMapper implements PrincipalMapper {
     }
   }
 
-  private HashMap<String, String[]> parseMapping(String mappings)
+  private HashMap<String, String[]> parseMapping(final String mappings)
       throws PrincipalMappingException {
     if (mappings == null) {
       return null;
     }
-    HashMap<String, String[]> table = new HashMap<>();
+    final HashMap<String, String[]> table = new HashMap<>();
     try {
-      StringTokenizer t = new StringTokenizer(mappings, ";");
+      final StringTokenizer t = new StringTokenizer(mappings, ";");
       if (t.hasMoreTokens()) {
         do {
-          String mapping = t.nextToken();
-          String principals = mapping.substring(0, mapping.indexOf('='));
-          String value = mapping.substring(mapping.indexOf('=') + 1);
-          String[] v = value.split(",");
-          String[] p = principals.split(",");
+          final String mapping = t.nextToken();
+          final String principals = mapping.substring(0, mapping.indexOf('='));
+          final String value = mapping.substring(mapping.indexOf('=') + 1);
+          final String[] v = value.split(",");
+          final String[] p = principals.split(",");
           for (int i = 0; i < p.length; i++) {
             table.put(p[i], v);
           }
         } while (t.hasMoreTokens());
       }
       return table;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // do not leave table in an unknown state - clear it instead
       // no principal mapping will occur
       table.clear();
@@ -80,7 +80,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
    * @see org.apache.hadoop.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
    */
   @Override
-  public String mapUserPrincipal(String principalName) {
+  public String mapUserPrincipal(final String principalName) {
     String[] p = null;
     if (principalMappings != null) {
       p = principalMappings.get(principalName);
@@ -96,7 +96,7 @@ public class SimplePrincipalMapper implements PrincipalMapper {
    * @see org.apache.hadoop.gateway.filter.PrincipalMapper#mapPrincipal(java.lang.String)
    */
   @Override
-  public String[] mapGroupPrincipal(String principalName) {
+  public String[] mapGroupPrincipal(final String principalName) {
     String[] groups = null;
     String[] wildCardGroups = null;
 
@@ -118,8 +118,8 @@ public class SimplePrincipalMapper implements PrincipalMapper {
    * @param wildCardGroups
    * @return
    */
-  public static <T> T[] concat(T[] groups, T[] wildCardGroups) {
-    T[] result = Arrays.copyOf(groups, groups.length + wildCardGroups.length);
+  public static <T> T[] concat(final T[] groups, final T[] wildCardGroups) {
+    final T[] result = Arrays.copyOf(groups, groups.length + wildCardGroups.length);
     System.arraycopy(wildCardGroups, 0, result, groups.length, wildCardGroups.length);
     return result;
   }

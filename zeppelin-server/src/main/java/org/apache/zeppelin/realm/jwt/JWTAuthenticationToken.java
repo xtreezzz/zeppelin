@@ -25,7 +25,7 @@ public class JWTAuthenticationToken implements AuthenticationToken {
   private Object userId;
   private String token;
 
-  public JWTAuthenticationToken(Object userId, String token) {
+  public JWTAuthenticationToken(final Object userId, final String token) {
     this.userId = userId;
     this.token = token;
   }
@@ -44,7 +44,7 @@ public class JWTAuthenticationToken implements AuthenticationToken {
     return userId;
   }
 
-  public void setUserId(long userId) {
+  public void setUserId(final long userId) {
     this.userId = userId;
   }
 
@@ -52,7 +52,7 @@ public class JWTAuthenticationToken implements AuthenticationToken {
     return token;
   }
 
-  public void setToken(String token) {
+  public void setToken(final String token) {
     this.token = token;
   }
 }

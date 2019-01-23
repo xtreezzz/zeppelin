@@ -20,18 +20,6 @@ package org.apache.zeppelin.rest;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.user.Credentials;
@@ -39,19 +27,29 @@ import org.apache.zeppelin.user.UserCredentials;
 import org.apache.zeppelin.user.UsernamePassword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.Map;
 
 /** Credential Rest API. */
-@Path("/credential")
-@Produces("application/json")
-@Singleton
+//@Path("/credential")
+//@Produces("application/json")
+//@Singleton
+@RestController
+@RequestMapping("/api/credential")
 public class CredentialRestApi {
   Logger logger = LoggerFactory.getLogger(CredentialRestApi.class);
-  private Credentials credentials;
-  private SecurityService securityService;
-  private Gson gson = new Gson();
+  private final Credentials credentials;
+  private final SecurityService securityService;
+  private final Gson gson = new Gson();
 
-  @Inject
-  public CredentialRestApi(Credentials credentials, SecurityService securityService) {
+  @Autowired
+  public CredentialRestApi(final Credentials credentials, @Qualifier("NoSecurityService") final SecurityService securityService) {
     this.credentials = credentials;
     this.securityService = securityService;
   }
@@ -64,26 +62,27 @@ public class CredentialRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @PUT
-  public Response putCredentials(String message) throws IOException, IllegalArgumentException {
-    Map<String, String> messageMap =
+  //@PUT
+  @PutMapping(produces = "application/json")
+  public ResponseEntity putCredentials(final String message) throws IOException, IllegalArgumentException {
+    final Map<String, String> messageMap =
         gson.fromJson(message, new TypeToken<Map<String, String>>() {}.getType());
-    String entity = messageMap.get("entity");
-    String username = messageMap.get("username");
-    String password = messageMap.get("password");
+    final String entity = messageMap.get("entity");
+    final String username = messageMap.get("username");
+    final String password = messageMap.get("password");
 
     if (Strings.isNullOrEmpty(entity)
         || Strings.isNullOrEmpty(username)
         || Strings.isNullOrEmpty(password)) {
-      return new JsonResponse(Status.BAD_REQUEST).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
     }
 
-    String user = securityService.getPrincipal();
+    final String user = securityService.getPrincipal();
     logger.info("Update credentials for user {} entity {}", user, entity);
-    UserCredentials uc = credentials.getUserCredentials(user);
+    final UserCredentials uc = credentials.getUserCredentials(user);
     uc.putUsernamePassword(entity, new UsernamePassword(username, password));
     credentials.putUserCredentials(user, uc);
-    return new JsonResponse(Status.OK).build();
+    return new JsonResponse(HttpStatus.OK).build();
   }
 
   /**
@@ -92,12 +91,13 @@ public class CredentialRestApi {
    * @return JSON with status.OK
    * @throws IllegalArgumentException
    */
-  @GET
-  public Response getCredentials() throws IllegalArgumentException {
-    String user = securityService.getPrincipal();
+  //@GET
+  @GetMapping(produces = "application/json")
+  public ResponseEntity getCredentials() throws IllegalArgumentException {
+    final String user = securityService.getPrincipal();
     logger.info("getCredentials credentials for user {} ", user);
-    UserCredentials uc = credentials.getUserCredentials(user);
-    return new JsonResponse<>(Status.OK, uc).build();
+    final UserCredentials uc = credentials.getUserCredentials(user);
+    return new JsonResponse(HttpStatus.OK, uc).build();
   }
 
   /**
@@ -107,15 +107,16 @@ public class CredentialRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @DELETE
-  public Response removeCredentials() throws IOException, IllegalArgumentException {
-    String user = securityService.getPrincipal();
+  //@DELETE
+  @DeleteMapping(produces = "application/json")
+  public ResponseEntity removeCredentials() throws IOException, IllegalArgumentException {
+    final String user = securityService.getPrincipal();
     logger.info("removeCredentials credentials for user {} ", user);
-    UserCredentials uc = credentials.removeUserCredentials(user);
+    final UserCredentials uc = credentials.removeUserCredentials(user);
     if (uc == null) {
-      return new JsonResponse(Status.NOT_FOUND).build();
+      return new JsonResponse(HttpStatus.NOT_FOUND).build();
     }
-    return new JsonResponse(Status.OK).build();
+    return new JsonResponse(HttpStatus.OK).build();
   }
 
   /**
@@ -126,15 +127,16 @@ public class CredentialRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @DELETE
-  @Path("{entity}")
-  public Response removeCredentialEntity(@PathParam("entity") String entity)
+ // @DELETE
+ // @Path("{entity}")
+  @DeleteMapping(value = "/{entity}", produces = "application/json")
+  public ResponseEntity removeCredentialEntity(@PathVariable("entity") final String entity)
       throws IOException, IllegalArgumentException {
-    String user = securityService.getPrincipal();
+    final String user = securityService.getPrincipal();
     logger.info("removeCredentialEntity for user {} entity {}", user, entity);
     if (!credentials.removeCredentialEntity(user, entity)) {
-      return new JsonResponse(Status.NOT_FOUND).build();
+      return new JsonResponse(HttpStatus.NOT_FOUND).build();
     }
-    return new JsonResponse(Status.OK).build();
+    return new JsonResponse(HttpStatus.OK).build();
   }
 }

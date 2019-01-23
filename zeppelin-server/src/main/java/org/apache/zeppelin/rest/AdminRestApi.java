@@ -18,31 +18,32 @@
 package org.apache.zeppelin.rest;
 
 import com.google.common.collect.Lists;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.LoggerRequest;
 import org.apache.zeppelin.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /** This rest apis support some of feature related admin. e.g. changin log level. */
-@Path("/admin")
-@Singleton
+//@Path("/admin")
+//@Singleton
+@RestController
+@RequestMapping("/api/admin")
 public class AdminRestApi {
   private static final Logger logger = LoggerFactory.getLogger(AdminRestApi.class);
 
-  private AdminService adminService;
+  private final AdminService adminService;
 
-  @Inject
-  public AdminRestApi(AdminService adminService) {
+  @Autowired
+  public AdminRestApi(final AdminService adminService) {
     this.adminService = adminService;
   }
 
@@ -53,23 +54,29 @@ public class AdminRestApi {
    * @return List of current loggers' name and level with json format. It returns all of loggers'
    *     name and level without name. With name, it returns only specific logger's name and level.
    */
-  @GET
+  //TODO(KOT): FIX THIS
+  /*
+ // @GET
   @ZeppelinApi
+  @GetMapping(produces = "application/json")
   public List<org.apache.log4j.Logger> getLoggerSetting(@QueryParam("name") String name) {
     logger.debug("name: {}", name);
     return null == name || name.isEmpty()
         ? adminService.getLoggers()
         : Lists.newArrayList(adminService.getLogger(name));
   }
-
+*/
   /**
    * It change logger's level.
    *
    * @param loggerRequest logger's name and level with json format
    * @return The changed logger's name and level.
    */
-  @POST
+  //@POST
+//TODO(KOT): FIX THIS
+  /*
   @ZeppelinApi
+  @PostMapping(produces = "application/json")
   public List<org.apache.log4j.Logger> setLoggerLevel(LoggerRequest loggerRequest) {
     if (null == loggerRequest
         || StringUtils.isEmpty(loggerRequest.getName())
@@ -83,4 +90,5 @@ public class AdminRestApi {
 
     return Lists.newArrayList(adminService.getLogger(loggerRequest.getName()));
   }
+  */
 }

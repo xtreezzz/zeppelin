@@ -33,7 +33,7 @@ public class KnoxAuthenticationFilter extends FormAuthenticationFilter {
   private static final Logger LOGGER = LoggerFactory.getLogger(KnoxAuthenticationFilter.class);
 
   protected boolean isAccessAllowed(
-      ServletRequest request, ServletResponse response, Object mappedValue) {
+          final ServletRequest request, final ServletResponse response, final Object mappedValue) {
     // Check with existing shiro authentication logic
     // https://github.com/apache/shiro/blob/shiro-root-1.3.2/web/src/main/java/org/apache/shiro/
     // web/filter/authc/AuthenticatingFilter.java#L123-L124
@@ -45,18 +45,18 @@ public class KnoxAuthenticationFilter extends FormAuthenticationFilter {
       accessAllowed = false;
       KnoxJwtRealm knoxJwtRealm = null;
       // TODO(jl): Is this logic really useful?
-      DefaultWebSecurityManager defaultWebSecurityManager;
-      String key = ThreadContext.SECURITY_MANAGER_KEY;
+      final DefaultWebSecurityManager defaultWebSecurityManager;
+      final String key = ThreadContext.SECURITY_MANAGER_KEY;
       defaultWebSecurityManager = (DefaultWebSecurityManager) ThreadContext.get(key);
-      Collection<Realm> realms = defaultWebSecurityManager.getRealms();
-      for (Object realm : realms) {
+      final Collection<Realm> realms = defaultWebSecurityManager.getRealms();
+      for (final Object realm : realms) {
         if (realm instanceof KnoxJwtRealm) {
           knoxJwtRealm = (KnoxJwtRealm) realm;
           break;
         }
       }
       if (null != knoxJwtRealm) {
-        for (Cookie cookie : ((ShiroHttpServletRequest) request).getCookies()) {
+        for (final Cookie cookie : ((ShiroHttpServletRequest) request).getCookies()) {
           if (cookie.getName().equals(knoxJwtRealm.getCookieName())) {
             if (knoxJwtRealm.validateToken(cookie.getValue())) {
               accessAllowed = true;

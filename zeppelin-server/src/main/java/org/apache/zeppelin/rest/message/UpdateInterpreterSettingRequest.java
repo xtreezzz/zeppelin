@@ -36,8 +36,8 @@ public class UpdateInterpreterSettingRequest implements JsonSerializable {
   List<Dependency> dependencies;
   InterpreterOption option;
 
-  public UpdateInterpreterSettingRequest(Map<String, InterpreterProperty> properties,
-      List<Dependency> dependencies, InterpreterOption option) {
+  public UpdateInterpreterSettingRequest(final Map<String, InterpreterProperty> properties,
+                                         final List<Dependency> dependencies, final InterpreterOption option) {
     this.properties = properties;
     this.dependencies = dependencies;
     this.option = option;
@@ -59,7 +59,7 @@ public class UpdateInterpreterSettingRequest implements JsonSerializable {
     return gson.toJson(this);
   }
 
-  public static UpdateInterpreterSettingRequest fromJson(String json) {
+  public static UpdateInterpreterSettingRequest fromJson(final String json) {
     return gson.fromJson(json, UpdateInterpreterSettingRequest.class);
   }
 }

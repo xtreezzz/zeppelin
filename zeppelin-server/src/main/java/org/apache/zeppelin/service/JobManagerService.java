@@ -17,7 +17,6 @@
 
 package org.apache.zeppelin.service;
 
-import javax.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
@@ -25,8 +24,9 @@ import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,56 +34,47 @@ import java.util.List;
 /**
  * Service class for JobManager Page
  */
+@Component
 public class JobManagerService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JobManagerService.class);
 
-  private Notebook notebook;
+  private final Notebook notebook;
 
-  @Inject
-  public JobManagerService(Notebook notebook) {
+  @Autowired
+  public JobManagerService(final Notebook notebook) {
     this.notebook = notebook;
   }
 
-  public List<NoteJobInfo> getNoteJobInfo(String noteId,
-                                          ServiceContext context,
-                                          ServiceCallback<List<NoteJobInfo>> callback)
-      throws IOException {
-    List<NoteJobInfo> notesJobInfo = new ArrayList<>();
-    Note jobNote = notebook.getNote(noteId);
+  public List<NoteJobInfo> getNoteJobInfo(final String noteId) {
+    final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
+    final Note jobNote = notebook.getNote(noteId);
     notesJobInfo.add(new NoteJobInfo(jobNote));
-    callback.onSuccess(notesJobInfo, context);
     return notesJobInfo;
   }
 
   /**
    * Get all NoteJobInfo after lastUpdateServerUnixTime
    */
-  public List<NoteJobInfo> getNoteJobInfoByUnixTime(long lastUpdateServerUnixTime,
-                                                    ServiceContext context,
-                                                    ServiceCallback<List<NoteJobInfo>> callback)
-      throws IOException {
-    List<Note> notes = notebook.getAllNotes();
-    List<NoteJobInfo> notesJobInfo = new ArrayList<>();
-    for (Note note : notes) {
-      NoteJobInfo noteJobInfo = new NoteJobInfo(note);
+  public List<NoteJobInfo> getNoteJobInfoByUnixTime(final long lastUpdateServerUnixTime) {
+    final List<Note> notes = notebook.getAllNotes();
+    final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
+    for (final Note note : notes) {
+      final NoteJobInfo noteJobInfo = new NoteJobInfo(note);
       if (noteJobInfo.unixTimeLastRun > lastUpdateServerUnixTime) {
         notesJobInfo.add(noteJobInfo);
       }
     }
-    callback.onSuccess(notesJobInfo, context);
     return notesJobInfo;
   }
 
-  public void removeNoteJobInfo(String noteId,
-                                ServiceContext context,
-                                ServiceCallback<List<NoteJobInfo>> callback) throws IOException {
-    List<NoteJobInfo> notesJobInfo = new ArrayList<>();
+  public List<NoteJobInfo> removeNoteJobInfo(final String noteId) {
+    final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
     notesJobInfo.add(new NoteJobInfo(noteId, true));
-    callback.onSuccess(notesJobInfo, context);
+    return notesJobInfo;
   }
 
-  private static long getUnixTimeLastRunParagraph(Paragraph paragraph) {
+  private static long getUnixTimeLastRunParagraph(final Paragraph paragraph) {
     if (paragraph.isTerminated() && paragraph.getDateFinished() != null) {
       return paragraph.getDateFinished().getTime();
     } else if (paragraph.isRunning()) {
@@ -95,11 +86,11 @@ public class JobManagerService {
 
 
   public static class ParagraphJobInfo {
-    private String id;
-    private String name;
-    private Job.Status status;
+    private final String id;
+    private final String name;
+    private final Job.Status status;
 
-    public ParagraphJobInfo(Paragraph p) {
+    public ParagraphJobInfo(final Paragraph p) {
       this.id = p.getId();
       if (StringUtils.isBlank(p.getTitle())) {
         this.name = p.getId();
@@ -111,7 +102,7 @@ public class JobManagerService {
   }
 
   public static class NoteJobInfo {
-    private String noteId;
+    private final String noteId;
     private String noteName;
     private String noteType;
     private String interpreter;
@@ -120,7 +111,7 @@ public class JobManagerService {
     private long unixTimeLastRun;
     private List<ParagraphJobInfo> paragraphs;
 
-    public NoteJobInfo(Note note) {
+    public NoteJobInfo(final Note note) {
       boolean isNoteRunning = false;
       long lastRunningUnixTime = 0;
       this.noteId = note.getId();
@@ -135,13 +126,13 @@ public class JobManagerService {
 
       // set paragraphs
       this.paragraphs = new ArrayList<>();
-      for (Paragraph paragraph : note.getParagraphs()) {
+      for (final Paragraph paragraph : note.getParagraphs()) {
         // check paragraph's status.
         if (paragraph.getStatus().isRunning()) {
           isNoteRunning = true;
         }
         // get data for the job manager.
-        ParagraphJobInfo paragraphItem = new ParagraphJobInfo(paragraph);
+        final ParagraphJobInfo paragraphItem = new ParagraphJobInfo(paragraph);
         lastRunningUnixTime = getUnixTimeLastRunParagraph(paragraph);
         paragraphs.add(paragraphItem);
       }
@@ -150,12 +141,12 @@ public class JobManagerService {
       this.unixTimeLastRun = lastRunningUnixTime;
     }
 
-    private boolean isCron(Note note) {
+    private boolean isCron(final Note note) {
       return note.getConfig().containsKey("cron") &&
-          !StringUtils.isBlank(note.getConfig().get("cron").toString());
+              !StringUtils.isBlank(note.getConfig().get("cron").toString());
     }
 
-    public NoteJobInfo(String noteId, boolean isRemoved) {
+    public NoteJobInfo(final String noteId, final boolean isRemoved) {
       this.noteId = noteId;
       this.isRemoved = isRemoved;
     }

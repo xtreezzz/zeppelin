@@ -30,6 +30,8 @@ import org.apache.zeppelin.plugin.PluginManager;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
@@ -37,6 +39,7 @@ import java.util.*;
 /**
  * Notebook repository sync with remote storage
  */
+@Component
 public class NotebookRepoSync implements NotebookRepoWithVersionControl {
   private static final Logger LOGGER = LoggerFactory.getLogger(NotebookRepoSync.class);
   private static final int maxRepoNum = 2;
@@ -53,7 +56,7 @@ public class NotebookRepoSync implements NotebookRepoWithVersionControl {
    * @param conf
    */
   @SuppressWarnings("static-access")
-  @Inject
+  @Autowired
   public NotebookRepoSync(ZeppelinConfiguration conf) throws IOException {
     init(conf);
   }

@@ -24,6 +24,7 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,17 +36,18 @@ import java.util.stream.Collectors;
 /**
  * Manager class for note. It handle all the note related operations, such as get, create,
  * delete & move note.
- *
+ * <p>
  * It load 2 kinds of metadata into memory:
  * 1. Mapping from noteId to note name
  * 2. The tree structure of notebook folder
- *
+ * <p>
  * Note will be loaded lazily. Initially only noteId nad note name is loaded,
  * other note content is loaded until getNote is called.
- *
+ * <p>
  * TODO(zjffdu) implement the lifecycle manager of Note
  * (release memory if note is not used for some period)
  */
+@Component
 public class NoteManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NoteManager.class);
   public static String TRASH_FOLDER = "~Trash";
@@ -64,17 +66,20 @@ public class NoteManager {
 
   // build the tree structure of notes
   private void init() throws IOException {
-    this.notesInfo = notebookRepo.list(AuthenticationInfo.ANONYMOUS).values().stream()
-        .collect(Collectors.toMap(noteInfo -> noteInfo.getId(), notesInfo -> notesInfo.getPath()));
+    this.notesInfo = notebookRepo.list(AuthenticationInfo.ANONYMOUS)
+            .values()
+            .stream()
+            .collect(Collectors.toMap(NoteInfo::getId, NoteInfo::getPath));
+
     this.notesInfo.entrySet().stream()
-        .forEach(entry ->
-        {
-          try {
-            addOrUpdateNoteNode(new Note(new NoteInfo(entry.getKey(), entry.getValue())));
-          } catch (IOException e) {
-            LOGGER.warn(e.getMessage());
-          }
-        });
+            .forEach(entry ->
+            {
+              try {
+                addOrUpdateNoteNode(new Note(new NoteInfo(entry.getKey(), entry.getValue())));
+              } catch (IOException e) {
+                LOGGER.warn(e.getMessage());
+              }
+            });
   }
 
   public Map<String, String> getNotesInfo() {
@@ -95,7 +100,6 @@ public class NoteManager {
   }
 
   /**
-   *
    * @throws IOException
    */
   public void reloadNotes() throws IOException {
@@ -116,7 +120,7 @@ public class NoteManager {
     if (checkDuplicates && curFolder.containsNote(tokens[tokens.length - 1])) {
       throw new IOException("Note " + note.getPath() + " existed");
     }
-    curFolder.addNote(tokens[tokens.length -1], note);
+    curFolder.addNote(tokens[tokens.length - 1], note);
     this.notesInfo.put(note.getId(), note.getPath());
   }
 
@@ -269,8 +273,7 @@ public class NoteManager {
   }
 
   /**
-   *
-   * @param folderName  Absolute path of folder name
+   * @param folderName Absolute path of folder name
    * @return
    */
   public Folder getOrCreateFolder(String folderName) {
@@ -415,6 +418,7 @@ public class NoteManager {
 
     /**
      * Attach note under this folder, this is used when moving note
+     *
      * @param noteNode
      */
     public void addNoteNode(NoteNode noteNode) {
@@ -480,7 +484,7 @@ public class NoteManager {
    * This class has 2 usage scenarios:
    * 1. metadata of note (only noteId and note name is loaded via reading the file name)
    * 2. the note object (note content is loaded from NotebookRepo)
-   *
+   * <p>
    * It will load note from NotebookRepo lazily until method getNote is called.
    */
   public static class NoteNode {
@@ -498,6 +502,7 @@ public class NoteManager {
     /**
      * This method will load note from NotebookRepo. If you just want to get noteId, noteName or
      * notePath, you can call method getNoteId, getNoteName & getNotePath
+     *
      * @return
      * @throws IOException
      */

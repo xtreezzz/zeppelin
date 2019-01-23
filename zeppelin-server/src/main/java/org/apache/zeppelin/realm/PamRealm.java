@@ -43,10 +43,10 @@ public class PamRealm extends AuthorizingRealm {
   private String service;
 
   @Override
-  protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    Set<String> roles = new LinkedHashSet<>();
+  protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
+    final Set<String> roles = new LinkedHashSet<>();
 
-    UserPrincipal user = principals.oneByType(UserPrincipal.class);
+    final UserPrincipal user = principals.oneByType(UserPrincipal.class);
 
     if (user != null){
       roles.addAll(user.getUnixUser().getGroups());
@@ -56,15 +56,15 @@ public class PamRealm extends AuthorizingRealm {
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token)
+  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
           throws AuthenticationException {
-    UsernamePasswordToken userToken = (UsernamePasswordToken) token;
-    UnixUser user;
+    final UsernamePasswordToken userToken = (UsernamePasswordToken) token;
+    final UnixUser user;
 
     try {
       user = (new PAM(this.getService()))
           .authenticate(userToken.getUsername(), new String(userToken.getPassword()));
-    } catch (PAMException e) {
+    } catch (final PAMException e) {
       throw new AuthenticationException("Authentication failed for PAM.", e);
     }
 
@@ -78,7 +78,7 @@ public class PamRealm extends AuthorizingRealm {
     return service;
   }
 
-  public void setService(String service) {
+  public void setService(final String service) {
     this.service = service;
   }
 }

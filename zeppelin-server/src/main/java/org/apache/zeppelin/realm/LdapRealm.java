@@ -191,25 +191,25 @@ public class LdapRealm extends JndiLdapRealm {
   private String userSearchAttributeName;
   private String userObjectClass = "person";
 
-  private HashService hashService = new DefaultHashService();
+  private final HashService hashService = new DefaultHashService();
 
 
 
-  public void setHadoopSecurityCredentialPath(String hadoopSecurityCredentialPath) {
+  public void setHadoopSecurityCredentialPath(final String hadoopSecurityCredentialPath) {
     this.hadoopSecurityCredentialPath = hadoopSecurityCredentialPath;
   }
 
   public LdapRealm() {
-    HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
+    final HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
     setCredentialsMatcher(credentialsMatcher);
   }
 
   @Override
-  protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token)
+  protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
       throws org.apache.shiro.authc.AuthenticationException {
     try {
       return super.doGetAuthenticationInfo(token);
-    } catch (org.apache.shiro.authc.AuthenticationException ae) {
+    } catch (final org.apache.shiro.authc.AuthenticationException ae) {
       throw ae;
     }
   }
@@ -223,19 +223,19 @@ public class LdapRealm extends JndiLdapRealm {
     }
   }
 
-  static String getSystemPassword(String hadoopSecurityCredentialPath,
-      String keystorePass) {
+  static String getSystemPassword(final String hadoopSecurityCredentialPath,
+                                  final String keystorePass) {
     String password = "";
     try {
-      Configuration configuration = new Configuration();
+      final Configuration configuration = new Configuration();
       configuration.set(CredentialProviderFactory.CREDENTIAL_PROVIDER_PATH,
           hadoopSecurityCredentialPath);
-      CredentialProvider provider = CredentialProviderFactory.getProviders(configuration).get(0);
-      CredentialProvider.CredentialEntry credEntry = provider.getCredentialEntry(keystorePass);
+      final CredentialProvider provider = CredentialProviderFactory.getProviders(configuration).get(0);
+      final CredentialProvider.CredentialEntry credEntry = provider.getCredentialEntry(keystorePass);
       if (credEntry != null) {
         password = new String(credEntry.getCredential());
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new ShiroException("Error from getting credential entry from keystore", e);
     }
     if (org.apache.commons.lang.StringUtils.isEmpty(password)) {
@@ -257,9 +257,9 @@ public class LdapRealm extends JndiLdapRealm {
    * @throws NamingException if any LDAP errors occur.
    */
   @Override
-  protected AuthenticationInfo queryForAuthenticationInfo(AuthenticationToken token,
-      LdapContextFactory ldapContextFactory) throws NamingException {
-    AuthenticationInfo info = super.queryForAuthenticationInfo(token, ldapContextFactory);
+  protected AuthenticationInfo queryForAuthenticationInfo(final AuthenticationToken token,
+                                                          final LdapContextFactory ldapContextFactory) throws NamingException {
+    final AuthenticationInfo info = super.queryForAuthenticationInfo(token, ldapContextFactory);
     // Credentials were verified. Verify that the principal has all allowedRulesForAuthentication
     if (!hasAllowedAuthenticationRules(info.getPrincipals(), ldapContextFactory)) {
       throw new NamingException("Principal does not have any of the allowedRolesForAuthentication");
@@ -290,18 +290,18 @@ public class LdapRealm extends JndiLdapRealm {
     if (log.isDebugEnabled()) {
       log.debug("RolesNames Authorization: " + roleNames);
     }
-    SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo(roleNames);
-    Set<String> stringPermissions = permsFor(roleNames);
+    final SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo(roleNames);
+    final Set<String> stringPermissions = permsFor(roleNames);
     simpleAuthorizationInfo.setStringPermissions(stringPermissions);
     return simpleAuthorizationInfo;
   }
 
-  private boolean hasAllowedAuthenticationRules(PrincipalCollection principals,
-          final LdapContextFactory ldapContextFactory) throws NamingException {
+  private boolean hasAllowedAuthenticationRules(final PrincipalCollection principals,
+                                                final LdapContextFactory ldapContextFactory) throws NamingException {
     boolean allowed = allowedRolesForAuthentication.isEmpty();
     if (!allowed) {
-      Set<String> roles = getRoles(principals, ldapContextFactory);
-      for (String allowedRole : allowedRolesForAuthentication) {
+      final Set<String> roles = getRoles(principals, ldapContextFactory);
+      for (final String allowedRole : allowedRolesForAuthentication) {
         if (roles.contains(allowedRole)) {
           log.debug("Allowed role for user [" + allowedRole + "] found.");
           allowed = true;
@@ -312,8 +312,8 @@ public class LdapRealm extends JndiLdapRealm {
     return allowed;
   }
 
-  private Set<String> getRoles(PrincipalCollection principals,
-          final LdapContextFactory ldapContextFactory) throws NamingException {
+  private Set<String> getRoles(final PrincipalCollection principals,
+                               final LdapContextFactory ldapContextFactory) throws NamingException {
     final String username = (String) getAvailablePrincipal(principals);
 
     LdapContext systemLdapCtx = null;
@@ -321,7 +321,7 @@ public class LdapRealm extends JndiLdapRealm {
       systemLdapCtx = ldapContextFactory.getSystemLdapContext();
       return rolesFor(principals, username, systemLdapCtx,
         ldapContextFactory, SecurityUtils.getSubject().getSession());
-    } catch (AuthenticationException ae) {
+    } catch (final AuthenticationException ae) {
       ae.printStackTrace();
       return Collections.emptySet();
     } finally {
@@ -329,8 +329,8 @@ public class LdapRealm extends JndiLdapRealm {
     }
   }
 
-  protected Set<String> rolesFor(PrincipalCollection principals, String userNameIn,
-          final LdapContext ldapCtx, final LdapContextFactory ldapContextFactory, Session session)
+  protected Set<String> rolesFor(final PrincipalCollection principals, final String userNameIn,
+                                 final LdapContext ldapCtx, final LdapContextFactory ldapContextFactory, final Session session)
           throws NamingException {
     final Set<String> roleNames = new HashSet<>();
     final Set<String> groupNames = new HashSet<>();
@@ -342,15 +342,15 @@ public class LdapRealm extends JndiLdapRealm {
       userName = userNameIn;
     }
     
-    String userDn = getUserDnForSearch(userName);
+    final String userDn = getUserDnForSearch(userName);
 
     // Activate paged results
-    int pageSize = getPagingSize();
+    final int pageSize = getPagingSize();
     if (log.isDebugEnabled()) {
       log.debug("Ldap PagingSize: " + pageSize);
     }
     int numResults = 0;
-    byte[] cookie = null;
+    final byte[] cookie = null;
     try {
       ldapCtx.addToEnvironment(Context.REFERRAL, "ignore");
         
@@ -362,7 +362,7 @@ public class LdapRealm extends JndiLdapRealm {
         // uid=guest,ou=people,dc=hadoop,dc=apache,dc=org -w guest-password
         // -b dc=hadoop,dc=apache,dc=org -s sub '(objectclass=*)'
         NamingEnumeration<SearchResult> searchResultEnum = null;
-        SearchControls searchControls = getGroupSearchControls();
+        final SearchControls searchControls = getGroupSearchControls();
         try {
           if (groupSearchEnableMatchingRuleInChain) {
             searchResultEnum = ldapCtx.search(
@@ -375,10 +375,10 @@ public class LdapRealm extends JndiLdapRealm {
               numResults++;
               final SearchResult group = searchResultEnum.next();
 
-              Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
-              String groupName = attribute.get().toString();            
+              final Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
+              final String groupName = attribute.get().toString();
               
-              String roleName = roleNameFor(groupName);
+              final String roleName = roleNameFor(groupName);
               if (roleName != null) {
                 roleNames.add(roleName);
               } else {
@@ -409,7 +409,7 @@ public class LdapRealm extends JndiLdapRealm {
               addRoleIfMember(userDn, group, roleNames, groupNames, ldapContextFactory);
             }
           }
-        } catch (PartialResultException e) {
+        } catch (final PartialResultException e) {
           log.debug("Ignoring PartitalResultException");
         } finally {
           if (searchResultEnum != null) {
@@ -420,10 +420,10 @@ public class LdapRealm extends JndiLdapRealm {
         ldapCtx.setRequestControls(new Control[]{new PagedResultsControl(pageSize,
             cookie, Control.CRITICAL)});
       } while (cookie != null);
-    } catch (SizeLimitExceededException e) {
+    } catch (final SizeLimitExceededException e) {
       log.info("Only retrieved first " + numResults +
           " groups due to SizeLimitExceededException.");
-    } catch (IOException e) {
+    } catch (final IOException e) {
       log.error("Unabled to setup paged results");
     }
     // save role names and group names in session so that they can be
@@ -439,7 +439,7 @@ public class LdapRealm extends JndiLdapRealm {
     return roleNames;
   }
 
-  protected String getUserDnForSearch(String userName) {
+  protected String getUserDnForSearch(final String userName) {
     if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
       // memberAttributeValuePrefix and memberAttributeValueSuffix
       // were computed from memberAttributeValueTemplate
@@ -455,9 +455,9 @@ public class LdapRealm extends JndiLdapRealm {
     NamingEnumeration<? extends Attribute> attributeEnum = null;
     NamingEnumeration<?> ne = null;
     try {
-      LdapName userLdapDn = new LdapName(userDn);
-      Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
-      String groupName = attribute.get().toString();
+      final LdapName userLdapDn = new LdapName(userDn);
+      final Attribute attribute = group.getAttributes().get(getGroupIdAttribute());
+      final String groupName = attribute.get().toString();
 
       attributeEnum = group.getAttributes().getAll();
       while (attributeEnum.hasMore()) {
@@ -469,11 +469,11 @@ public class LdapRealm extends JndiLdapRealm {
         while (ne.hasMore()) {
           String attrValue = ne.next().toString();
           if (memberAttribute.equalsIgnoreCase(MEMBER_URL)) {
-            boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userLdapDn, attrValue,
+            final boolean dynamicGroupMember = isUserMemberOfDynamicGroup(userLdapDn, attrValue,
                 ldapContextFactory);
             if (dynamicGroupMember) {
               groupNames.add(groupName);
-              String roleName = roleNameFor(groupName);
+              final String roleName = roleNameFor(groupName);
               if (roleName != null) {
                 roleNames.add(roleName);
               } else {
@@ -487,7 +487,7 @@ public class LdapRealm extends JndiLdapRealm {
             }
             if (userLdapDn.equals(new LdapName(attrValue))) {
               groupNames.add(groupName);
-              String roleName = roleNameFor(groupName);
+              final String roleName = roleNameFor(groupName);
               if (roleName != null) {
                 roleNames.add(roleName);
               } else {
@@ -511,27 +511,27 @@ public class LdapRealm extends JndiLdapRealm {
     }
   }
 
-  private String memberDn(String attrValue) {
+  private String memberDn(final String attrValue) {
     return memberAttributeValuePrefix + attrValue + memberAttributeValueSuffix;
   }
 
   public Map<String, String> getListRoles() {
-    Map<String, String> groupToRoles = getRolesByGroup();
-    Map<String, String> roles = new HashMap<>();
-    for (Map.Entry<String, String> entry : groupToRoles.entrySet()) {
+    final Map<String, String> groupToRoles = getRolesByGroup();
+    final Map<String, String> roles = new HashMap<>();
+    for (final Map.Entry<String, String> entry : groupToRoles.entrySet()) {
       roles.put(entry.getValue(), entry.getKey());
     }
     return roles;
   }
 
-  private String roleNameFor(String groupName) {
+  private String roleNameFor(final String groupName) {
     return !rolesByGroup.isEmpty() ? rolesByGroup.get(groupName) : groupName;
   }
 
-  private Set<String> permsFor(Set<String> roleNames) {
-    Set<String> perms = new LinkedHashSet<>(); // preserve order
-    for (String role : roleNames) {
-      List<String> permsForRole = permissionsByRole.get(role);
+  private Set<String> permsFor(final Set<String> roleNames) {
+    final Set<String> perms = new LinkedHashSet<>(); // preserve order
+    for (final String role : roleNames) {
+      final List<String> permsForRole = permissionsByRole.get(role);
       if (log.isDebugEnabled()) {
         log.debug("PermsForRole: " + role);
         log.debug("PermByRole: " + permsForRole);
@@ -547,7 +547,7 @@ public class LdapRealm extends JndiLdapRealm {
     return searchBase;
   }
 
-  public void setSearchBase(String searchBase) {
+  public void setSearchBase(final String searchBase) {
     this.searchBase = searchBase;
   }
 
@@ -555,7 +555,7 @@ public class LdapRealm extends JndiLdapRealm {
     return (userSearchBase != null && !userSearchBase.isEmpty()) ? userSearchBase : searchBase;
   }
 
-  public void setUserSearchBase(String userSearchBase) {
+  public void setUserSearchBase(final String userSearchBase) {
     this.userSearchBase = userSearchBase;
   }
 
@@ -563,7 +563,7 @@ public class LdapRealm extends JndiLdapRealm {
     return pagingSize;
   }
 
-  public void setPagingSize(int pagingSize) {
+  public void setPagingSize(final int pagingSize) {
     this.pagingSize = pagingSize;
   }
 
@@ -571,7 +571,7 @@ public class LdapRealm extends JndiLdapRealm {
     return (groupSearchBase != null && !groupSearchBase.isEmpty()) ? groupSearchBase : searchBase;
   }
 
-  public void setGroupSearchBase(String groupSearchBase) {
+  public void setGroupSearchBase(final String groupSearchBase) {
     this.groupSearchBase = groupSearchBase;
   }
 
@@ -579,7 +579,7 @@ public class LdapRealm extends JndiLdapRealm {
     return groupObjectClass;
   }
 
-  public void setGroupObjectClass(String groupObjectClassAttribute) {
+  public void setGroupObjectClass(final String groupObjectClassAttribute) {
     this.groupObjectClass = groupObjectClassAttribute;
   }
 
@@ -587,7 +587,7 @@ public class LdapRealm extends JndiLdapRealm {
     return memberAttribute;
   }
 
-  public void setMemberAttribute(String memberAttribute) {
+  public void setMemberAttribute(final String memberAttribute) {
     this.memberAttribute = memberAttribute;
   }
 
@@ -595,7 +595,7 @@ public class LdapRealm extends JndiLdapRealm {
     return groupIdAttribute;
   }
 
-  public void setGroupIdAttribute(String groupIdAttribute) {
+  public void setGroupIdAttribute(final String groupIdAttribute) {
     this.groupIdAttribute = groupIdAttribute;
   }
 
@@ -607,28 +607,28 @@ public class LdapRealm extends JndiLdapRealm {
   * @throws IllegalArgumentException
   *             if template is empty or null.
   */
-  public void setMemberAttributeValueTemplate(String template) {
+  public void setMemberAttributeValueTemplate(final String template) {
     if (!StringUtils.hasText(template)) {
-      String msg = "User DN template cannot be null or empty.";
+      final String msg = "User DN template cannot be null or empty.";
       throw new IllegalArgumentException(msg);
     }
-    int index = template.indexOf(MEMBER_SUBSTITUTION_TOKEN);
+    final int index = template.indexOf(MEMBER_SUBSTITUTION_TOKEN);
     if (index < 0) {
-      String msg = "Member attribute value template must contain the '" + MEMBER_SUBSTITUTION_TOKEN
+      final String msg = "Member attribute value template must contain the '" + MEMBER_SUBSTITUTION_TOKEN
           + "' replacement token to understand how to " + "parse the group members.";
       throw new IllegalArgumentException(msg);
     }
-    String prefix = template.substring(0, index);
-    String suffix = template.substring(prefix.length() + MEMBER_SUBSTITUTION_TOKEN.length());
+    final String prefix = template.substring(0, index);
+    final String suffix = template.substring(prefix.length() + MEMBER_SUBSTITUTION_TOKEN.length());
     this.memberAttributeValuePrefix = prefix;
     this.memberAttributeValueSuffix = suffix;
   }
 
-  public void setAllowedRolesForAuthentication(List<String> allowedRolesForAuthencation) {
+  public void setAllowedRolesForAuthentication(final List<String> allowedRolesForAuthencation) {
     this.allowedRolesForAuthentication.addAll(allowedRolesForAuthencation);
   }
 
-  public void setRolesByGroup(Map<String, String> rolesByGroup) {
+  public void setRolesByGroup(final Map<String, String> rolesByGroup) {
     this.rolesByGroup.putAll(rolesByGroup);
   }
 
@@ -636,7 +636,7 @@ public class LdapRealm extends JndiLdapRealm {
     return rolesByGroup;
   }
 
-  public void setPermissionsByRole(String permissionsByRoleStr) {
+  public void setPermissionsByRole(final String permissionsByRoleStr) {
     permissionsByRole.putAll(parsePermissionByRoleString(permissionsByRoleStr));
   }
 
@@ -648,7 +648,7 @@ public class LdapRealm extends JndiLdapRealm {
     return authorizationEnabled;
   }
 
-  public void setAuthorizationEnabled(boolean authorizationEnabled) {
+  public void setAuthorizationEnabled(final boolean authorizationEnabled) {
     this.authorizationEnabled = authorizationEnabled;
   }
 
@@ -673,25 +673,25 @@ public class LdapRealm extends JndiLdapRealm {
     return userObjectClass;
   }
 
-  public void setUserObjectClass(String userObjectClass) {
+  public void setUserObjectClass(final String userObjectClass) {
     this.userObjectClass = userObjectClass;
   }
 
-  private Map<String, List<String>> parsePermissionByRoleString(String permissionsByRoleStr) {
-    Map<String, List<String>> perms = new HashMap<String, List<String>>();
+  private Map<String, List<String>> parsePermissionByRoleString(final String permissionsByRoleStr) {
+    final Map<String, List<String>> perms = new HashMap<String, List<String>>();
 
     // split by semicolon ; then by eq = then by comma ,
-    StringTokenizer stSem = new StringTokenizer(permissionsByRoleStr, ";");
+    final StringTokenizer stSem = new StringTokenizer(permissionsByRoleStr, ";");
     while (stSem.hasMoreTokens()) {
-      String roleAndPerm = stSem.nextToken();
-      StringTokenizer stEq = new StringTokenizer(roleAndPerm, "=");
+      final String roleAndPerm = stSem.nextToken();
+      final StringTokenizer stEq = new StringTokenizer(roleAndPerm, "=");
       if (stEq.countTokens() != 2) {
         continue;
       }
-      String role = stEq.nextToken().trim();
-      String perm = stEq.nextToken().trim();
-      StringTokenizer stCom = new StringTokenizer(perm, ",");
-      List<String> permList = new ArrayList<String>();
+      final String role = stEq.nextToken().trim();
+      final String perm = stEq.nextToken().trim();
+      final StringTokenizer stCom = new StringTokenizer(perm, ",");
+      final List<String> permList = new ArrayList<String>();
       while (stCom.hasMoreTokens()) {
         permList.add(stCom.nextToken().trim());
       }
@@ -700,22 +700,22 @@ public class LdapRealm extends JndiLdapRealm {
     return perms;
   }
 
-  boolean isUserMemberOfDynamicGroup(LdapName userLdapDn, String memberUrl,
-      final LdapContextFactory ldapContextFactory) throws NamingException {
+  boolean isUserMemberOfDynamicGroup(final LdapName userLdapDn, final String memberUrl,
+                                     final LdapContextFactory ldapContextFactory) throws NamingException {
     // ldap://host:port/dn?attributes?scope?filter?extensions
     if (memberUrl == null) {
       return false;
     }
-    String[] tokens = memberUrl.split("\\?");
+    final String[] tokens = memberUrl.split("\\?");
     if (tokens.length < 4) {
       return false;
     }
 
-    String searchBaseString = tokens[0].substring(tokens[0].lastIndexOf("/") + 1);
-    String searchScope = tokens[2];
-    String searchFilter = tokens[3];
+    final String searchBaseString = tokens[0].substring(tokens[0].lastIndexOf("/") + 1);
+    final String searchScope = tokens[2];
+    final String searchFilter = tokens[3];
 
-    LdapName searchBaseDn = new LdapName(searchBaseString);
+    final LdapName searchBaseDn = new LdapName(searchBaseString);
 
     // do scope test
     if (searchScope.equalsIgnoreCase("base")) {
@@ -733,7 +733,7 @@ public class LdapRealm extends JndiLdapRealm {
     // search for base_dn=userDn, scope=base, filter=filter
     LdapContext systemLdapCtx = null;
     systemLdapCtx = ldapContextFactory.getSystemLdapContext();
-    boolean member = false;
+    final boolean member = false;
     NamingEnumeration<SearchResult> searchResultEnum = null;
     try {
       searchResultEnum = systemLdapCtx.search(userLdapDn, searchFilter,
@@ -769,7 +769,7 @@ public class LdapRealm extends JndiLdapRealm {
       principalRegex = DEFAULT_PRINCIPAL_REGEX;
     } else {
       regex = regex.trim();
-      Pattern pattern = Pattern.compile(regex);
+      final Pattern pattern = Pattern.compile(regex);
       principalPattern = pattern;
       principalRegex = regex;
     }
@@ -803,7 +803,7 @@ public class LdapRealm extends JndiLdapRealm {
     return userLowerCase;
   }
 
-  public void setUserLowerCase(boolean userLowerCase) {
+  public void setUserLowerCase(final boolean userLowerCase) {
     this.userLowerCase = userLowerCase;
   }
 
@@ -828,7 +828,7 @@ public class LdapRealm extends JndiLdapRealm {
   }
 
   public void setGroupSearchEnableMatchingRuleInChain(
-      boolean groupSearchEnableMatchingRuleInChain) {
+          final boolean groupSearchEnableMatchingRuleInChain) {
     this.groupSearchEnableMatchingRuleInChain = groupSearchEnableMatchingRuleInChain;
   }
 
@@ -858,7 +858,7 @@ public class LdapRealm extends JndiLdapRealm {
   }
 
   private String matchPrincipal(final String principal) {
-    Matcher matchedPrincipal = principalPattern.matcher(principal);
+    final Matcher matchedPrincipal = principalPattern.matcher(principal);
     if (!matchedPrincipal.matches()) {
       throw new IllegalArgumentException("Principal "
           + principal + " does not match " + principalRegex);
@@ -893,10 +893,10 @@ public class LdapRealm extends JndiLdapRealm {
   @Override
   protected String getUserDn(final String principal) throws IllegalArgumentException,
       IllegalStateException {
-    String userDn;
-    String matchedPrincipal = matchPrincipal(principal);
-    String userSearchBase = getUserSearchBase();
-    String userSearchAttributeName = getUserSearchAttributeName();
+    final String userDn;
+    final String matchedPrincipal = matchPrincipal(principal);
+    final String userSearchBase = getUserSearchBase();
+    final String userSearchAttributeName = getUserSearchAttributeName();
 
     // If not searching use the userDnTemplate and return.
     if ((userSearchBase == null || userSearchBase.isEmpty()) || (userSearchAttributeName == null
@@ -909,7 +909,7 @@ public class LdapRealm extends JndiLdapRealm {
     }
 
     // Create the searchBase and searchFilter from config.
-    String searchBase = expandTemplate(getUserSearchBase(), matchedPrincipal);
+    final String searchBase = expandTemplate(getUserSearchBase(), matchedPrincipal);
     String searchFilter = null;
     if (userSearchFilter == null) {
       if (userSearchAttributeName == null) {
@@ -922,7 +922,7 @@ public class LdapRealm extends JndiLdapRealm {
     } else {
       searchFilter = expandTemplate(userSearchFilter, matchedPrincipal);
     }
-    SearchControls searchControls = getUserSearchControls();
+    final SearchControls searchControls = getUserSearchControls();
 
     // Search for userDn and return.
     LdapContext systemLdapCtx = null;
@@ -936,7 +936,7 @@ public class LdapRealm extends JndiLdapRealm {
       searchResultEnum = systemLdapCtx.search(searchBase, searchFilter, searchControls);
       // SearchResults contains all the entries in search scope
       if (searchResultEnum.hasMore()) {
-        SearchResult searchResult = searchResultEnum.next();
+        final SearchResult searchResult = searchResultEnum.next();
         userDn = searchResult.getNameInNamespace();
         if (log.isDebugEnabled()) {
           log.debug("UserDN Returned,Principal: " + userDn + "," + principal);
@@ -945,17 +945,17 @@ public class LdapRealm extends JndiLdapRealm {
       } else {
         throw new IllegalArgumentException("Illegal principal name: " + principal);
       }
-    } catch (AuthenticationException ne) {
+    } catch (final AuthenticationException ne) {
       ne.printStackTrace();
       throw new IllegalArgumentException("Illegal principal name: " + principal);
-    } catch (NamingException ne) {
+    } catch (final NamingException ne) {
       throw new IllegalArgumentException("Hit NamingException: " + ne.getMessage());
     } finally {
       try {
         if (searchResultEnum != null) {
           searchResultEnum.close();
         }
-      } catch (NamingException ne) {
+      } catch (final NamingException ne) {
         // Ignore exception on close.
       } finally {
         LdapUtils.closeContext(systemLdapCtx);
@@ -964,11 +964,11 @@ public class LdapRealm extends JndiLdapRealm {
   }
 
   @Override
-  protected AuthenticationInfo createAuthenticationInfo(AuthenticationToken token,
-      Object ldapPrincipal, Object ldapCredentials, LdapContext ldapContext)
+  protected AuthenticationInfo createAuthenticationInfo(final AuthenticationToken token,
+                                                        final Object ldapPrincipal, final Object ldapCredentials, final LdapContext ldapContext)
       throws NamingException {
-    HashRequest.Builder builder = new HashRequest.Builder();
-    Hash credentialsHash = hashService
+    final HashRequest.Builder builder = new HashRequest.Builder();
+    final Hash credentialsHash = hashService
         .computeHash(builder.setSource(token.getCredentials())
             .setAlgorithmName(HASHING_ALGORITHM).build());
     return new SimpleAuthenticationInfo(token.getPrincipal(),

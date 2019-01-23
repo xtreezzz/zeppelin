@@ -16,7 +16,8 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -27,7 +28,6 @@
     <relativePath>..</relativePath>
   </parent>
 
-  <groupId>org.apache.zeppelin</groupId>
   <artifactId>zeppelin-zengine</artifactId>
   <packaging>jar</packaging>
   <version>0.9.0-SNAPSHOT</version>
@@ -37,130 +37,34 @@
   <properties>
     <!--library versions-->
     <hadoop.version>2.7.3</hadoop.version>
-    <commons.lang3.version>3.7</commons.lang3.version>
-    <jackrabbit.webdav.version>1.5.2</jackrabbit.webdav.version>
-    <quartz.scheduler.version>2.2.1</quartz.scheduler.version>
-    <lucene.version>5.3.1</lucene.version>
-    <org.reflections.version>0.9.8</org.reflections.version>
-    <xml.apis.version>1.4.01</xml.apis.version>
-    <frontend.maven.plugin.version>1.3</frontend.maven.plugin.version>
-    <aws.sdk.s3.version>1.10.62</aws.sdk.s3.version>
-    <!--test library versions-->
-    <google.truth.version>0.27</google.truth.version>
-    <google.testing.nio.version>0.32.0-alpha</google.testing.nio.version>
   </properties>
 
   <dependencies>
+
+    <!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>zeppelin-interpreter</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.1.4.RELEASE</version>
     </dependency>
 
+
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>zeppelin-interpreter</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.jackrabbit</groupId>
-      <artifactId>jackrabbit-webdav</artifactId>
-      <version>${jackrabbit.webdav.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-httpclient</groupId>
-          <artifactId>commons-httpclient</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpasyncclient</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-client</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-client</artifactId>
-      <version>${jetty.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.quartz-scheduler</groupId>
-      <artifactId>quartz</artifactId>
-      <version>${quartz.scheduler.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-core</artifactId>
-      <version>${lucene.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-analyzers-common</artifactId>
-      <version>${lucene.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-queryparser</artifactId>
-      <version>${lucene.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-highlighter</artifactId>
-      <version>${lucene.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-s3</artifactId>
-      <version>${aws.sdk.s3.version}</version>
+      <version>${dependency.org.slf4j}</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.eirslett</groupId>
       <artifactId>frontend-maven-plugin</artifactId>
-      <version>${frontend.maven.plugin.version}</version>
+      <version>${com.github.eirslett.frontend-maven-plugin}</version>
       <exclusions>
         <exclusion>
           <groupId>org.codehaus.plexus</groupId>
@@ -178,105 +82,181 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${org.apache.httpcomponents.httpclient}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpasyncclient</artifactId>
+      <version>${org.apache.httpcomponents.httpasyncclient}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-client</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty.websocket</groupId>
+      <artifactId>websocket-client</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <version>1.52</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${dependency.com.google.code.gson}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-analyzers-common</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-queryparser</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-highlighter</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>${commons-httpclient.commons-httpclient}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <version>${org.apache.commons.commons-exec}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>${org.quartz-scheduler.quartz}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+      <version>${org.apache.commons.commons-pool2}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>${dependency.org.apache.thrift}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>${dependency.junit}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
+      <version>${dependency.org.mockito}</version>
       <scope>test</scope>
     </dependency>
 
+    <!-- TODO: REMOVE THIS -->
     <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>${google.truth.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>${jetty.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-      <version>${jetty.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.websocket</groupId>
-      <artifactId>websocket-server</artifactId>
-      <version>${jetty.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${commons.lang3.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.5</version>
     </dependency>
 
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <forkMode>always</forkMode>
-          <systemProperties>
-            <java.io.tmpdir>${project.build.directory}/tmp</java.io.tmpdir>
-          </systemProperties>
-          <environmentVariables>
-            <ZEPPELIN_ZENGINE_TEST>1</ZEPPELIN_ZENGINE_TEST>
-          </environmentVariables>
-        </configuration>
-      </plugin>
-
-      <!-- publish test jar as well so that zeppelin-server module can use it -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-      </plugin>
-    </plugins>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${plugin.maven-compiler-plugin}</version>
+          <configuration>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.1</version>
+          <executions>
+            <execution>
+              <id>copy-dependencies</id>
+              <phase>package</phase>
+              <goals>
+                <goal>copy-dependencies</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.basedir}/../release/lib</outputDirectory>
+                <overWriteReleases>false</overWriteReleases>
+                <overWriteSnapshots>false</overWriteSnapshots>
+                <overWriteIfNewer>true</overWriteIfNewer>
+                <includeScope>compile</includeScope>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.7</version>
+          <executions>
+            <execution>
+              <id>copy-resource-one</id>
+              <phase>install</phase>
+              <goals>
+                <goal>copy-resources</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${project.basedir}/../release/lib</outputDirectory>
+                <resources>
+                  <resource>
+                    <directory>${project.basedir}/target</directory>
+                    <includes>
+                      <include>*.jar</include>
+                    </includes>
+                  </resource>
+                </resources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
   </build>
 
   <profiles>
@@ -365,91 +345,91 @@
           </exclusions>
         </dependency>
 
-          <dependency>
-              <groupId>org.apache.hadoop</groupId>
-              <artifactId>hadoop-common</artifactId>
-              <version>${hadoop.version}</version>
-              <classifier>tests</classifier>
-              <scope>test</scope>
-              <exclusions>
-                  <exclusion>
-                      <groupId>com.sun.jersey</groupId>
-                      <artifactId>jersey-core</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>com.sun.jersey</groupId>
-                      <artifactId>jersey-json</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>com.sun.jersey</groupId>
-                      <artifactId>jersey-client</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>com.sun.jersey</groupId>
-                      <artifactId>jersey-server</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>javax.servlet</groupId>
-                      <artifactId>servlet-api</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.apache.avro</groupId>
-                      <artifactId>avro</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.apache.jackrabbit</groupId>
-                      <artifactId>jackrabbit-webdav</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>io.netty</groupId>
-                      <artifactId>netty</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>commons-httpclient</groupId>
-                      <artifactId>commons-httpclient</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.eclipse.jgit</groupId>
-                      <artifactId>org.eclipse.jgit</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>com.jcraft</groupId>
-                      <artifactId>jsch</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.apache.commons</groupId>
-                      <artifactId>commons-compress</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>xml-apis</groupId>
-                      <artifactId>xml-apis</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>xerces</groupId>
-                      <artifactId>xercesImpl</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.codehaus.jackson</groupId>
-                      <artifactId>jackson-mapper-asl</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>org.codehaus.jackson</groupId>
-                      <artifactId>jackson-core-asl</artifactId>
-                  </exclusion>
-                  <exclusion>
-                      <groupId>com.google.guava</groupId>
-                      <artifactId>guava</artifactId>
-                  </exclusion>
-                <exclusion>
-                  <groupId>com.google.code.findbugs</groupId>
-                  <artifactId>jsr305</artifactId>
-                </exclusion>
-                <exclusion>
-                  <groupId>org.apache.commons</groupId>
-                  <artifactId>commons-math3</artifactId>
-                </exclusion>
-              </exclusions>
-          </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <version>${hadoop.version}</version>
+          <classifier>tests</classifier>
+          <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-json</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-client</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.sun.jersey</groupId>
+              <artifactId>jersey-server</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>javax.servlet</groupId>
+              <artifactId>servlet-api</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.avro</groupId>
+              <artifactId>avro</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.jackrabbit</groupId>
+              <artifactId>jackrabbit-webdav</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>io.netty</groupId>
+              <artifactId>netty</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>commons-httpclient</groupId>
+              <artifactId>commons-httpclient</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.eclipse.jgit</groupId>
+              <artifactId>org.eclipse.jgit</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.jcraft</groupId>
+              <artifactId>jsch</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-compress</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>xml-apis</groupId>
+              <artifactId>xml-apis</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>xerces</groupId>
+              <artifactId>xercesImpl</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.codehaus.jackson</groupId>
+              <artifactId>jackson-mapper-asl</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.codehaus.jackson</groupId>
+              <artifactId>jackson-core-asl</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>com.google.code.findbugs</groupId>
+              <artifactId>jsr305</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-math3</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
 
         <dependency>
           <groupId>org.apache.hadoop</groupId>
@@ -595,23 +575,23 @@
           </exclusions>
         </dependency>
 
-        <dependency>
+        <!-- <dependency>
           <groupId>org.apache.zeppelin</groupId>
           <artifactId>spark-interpreter</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
           <exclusions>
-            <!-- It is fine to exclude zeppelin-python, because it is only used at runtime when launching interpreter -->
+
             <exclusion>
               <groupId>org.apache.zeppelin</groupId>
               <artifactId>zeppelin-python</artifactId>
             </exclusion>
           </exclusions>
-        </dependency>
+        </dependency> -->
       </dependencies>
     </profile>
 
-    <profile>
+    <!-- <profile>
       <id>hadoop3</id>
       <properties>
         <hadoop.version>3.0.0</hadoop.version>
@@ -634,6 +614,6 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
-    </profile>
+    </profile> -->
   </profiles>
 </project>

@@ -21,28 +21,29 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import java.lang.reflect.Type;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Category;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.lang.reflect.Type;
+
 public class LoggerSerializer implements JsonSerializer<Logger> {
 
   @Override
   public JsonElement serialize(
-      Logger logger, Type type, JsonSerializationContext jsonSerializationContext) {
-    JsonObject jsonObject = new JsonObject();
+          final Logger logger, final Type type, final JsonSerializationContext jsonSerializationContext) {
+    final JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty("name", logger.getName());
     jsonObject.addProperty("level", getLoggerLevel(logger));
     return jsonObject;
   }
 
-  private String getLoggerLevel(Category logger) {
+  private String getLoggerLevel(final Category logger) {
     if (null == logger) {
       return StringUtils.EMPTY;
     }
-    Level level = logger.getLevel();
+    final Level level = logger.getLevel();
     if (null != level) {
       return level.toString();
     } else {
