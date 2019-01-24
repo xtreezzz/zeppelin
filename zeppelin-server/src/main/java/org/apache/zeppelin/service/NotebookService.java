@@ -25,12 +25,14 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import javax.inject.Inject;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
@@ -53,7 +55,6 @@ import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
 import org.joda.time.DateTime;
@@ -77,6 +78,8 @@ public class NotebookService {
   private static final Logger LOGGER = LoggerFactory.getLogger(NotebookService.class);
   private static final DateTimeFormatter TRASH_CONFLICT_TIMESTAMP_FORMATTER =
       DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+
+  private static Executor noteExecutor = Executors.newCachedThreadPool();
 
   private ZeppelinConfiguration zConf;
   private Notebook notebook;
@@ -325,10 +328,10 @@ public class NotebookService {
     }
   }
 
-  public void runAllParagraphs(String noteId,
+  public void runParagraphs(String noteId,
                                List<Map<String, Object>> paragraphs,
                                ServiceContext context,
-                               ServiceCallback<Paragraph> callback) throws IOException {
+                               ServiceCallback<Note> callback) throws IOException {
     if (!checkPermission(noteId, Permission.RUNNER, Message.OP.RUN_ALL_PARAGRAPHS, context,
         callback)) {
       return;
@@ -340,27 +343,57 @@ public class NotebookService {
       return;
     }
 
-    note.setRunning(true);
-    try {
-      for (Map<String, Object> raw : paragraphs) {
-        String paragraphId = (String) raw.get("id");
-        if (paragraphId == null) {
-          continue;
-        }
-        String text = (String) raw.get("paragraph");
-        String title = (String) raw.get("title");
-        Map<String, Object> params = (Map<String, Object>) raw.get("params");
-        Map<String, Object> config = (Map<String, Object>) raw.get("config");
+    synchronized (note) {
+      if (note.isRunning()) {
+        return;
+      }
+      List<Paragraph> paragraphsToRun = new ArrayList<>(paragraphs.size());
 
-        if (!runParagraph(noteId, paragraphId, title, text, params, config, false, true,
-                context, callback)) {
-          // stop execution when one paragraph fails.
+      for (Map<String, Object> raw : paragraphs) {
+        Paragraph paragraph = note.getParagraph((String) raw.get("id"));
+        if (paragraph == null) {
+          LOGGER.error("Can't find paragraph with id {}", raw.get("id"));
           break;
         }
+
+        paragraph.setText((String) raw.get("paragraph"));
+        paragraph.setTitle((String) raw.get("title"));
+        paragraph.settings.setParams((Map<String, Object>) raw.get("params"));
+        paragraph.setConfig((Map<String, Object>) raw.get("config"));
+
+        paragraphsToRun.add(paragraph);
       }
-    } finally {
-      note.setRunning(false);
+
+      note.runParagraphs(context.getAutheInfo(), false, true, paragraphsToRun);
     }
+  }
+
+
+  public void stopNoteExecution(String noteId,
+                               ServiceContext context,
+                               ServiceCallback<Note> callback) throws IOException {
+    if (!checkPermission(noteId, Permission.RUNNER, Message.OP.STOP_NOTE_EXECUTION, context,
+        callback)) {
+      return;
+    }
+
+    Note note = notebook.getNote(noteId);
+    if (note == null) {
+      callback.onFailure(new NoteNotFoundException(noteId), context);
+      return;
+    }
+
+    // prevent the run of new paragraphs
+    note.abortExecution();
+
+    // abort running paragraphs
+    for (Paragraph paragraph : note.getParagraphs()) {
+      if (paragraph.isRunning()) {
+        paragraph.abort();
+        break;
+      }
+    }
+    callback.onSuccess(note, context);
   }
 
   public void cancelParagraph(String noteId,

@@ -32,10 +32,21 @@ limitations under the License.
               class="btn btn-default btn-xs"
               ng-click="isSelectionMode() ? selectedParagraphsAction('run', true) : runAllParagraphs(note.id)"
               ng-class="{'disabled':isNoteRunning(), 'select-mode-background': isSelectionMode()}"
+              ng-if=!isNoteRunning()
               tooltip-placement="bottom"
               uib-tooltip="{{isSelectionMode() ? 'Run selected paragraphs' : 'Run all paragraphs'}}"
               ng-disabled="revisionView">
         <i class="icon-control-play"></i>
+      </button>
+      <button type="button"
+              class="btn btn-default btn-xs"
+              ng-click=stopNoteExecution(note.id)
+              style="color: red"
+              ng-if=isNoteRunning()
+              tooltip-placement="bottom"
+              uib-tooltip="Stop execution"
+              ng-disabled="revisionView">
+        <i class="icon-control-pause"></i>
       </button>
       <button type="button"
               class="btn btn-default btn-xs"
