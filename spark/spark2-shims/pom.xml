@@ -23,18 +23,16 @@
     <artifactId>spark-parent</artifactId>
     <groupId>org.apache.zeppelin</groupId>
     <version>0.9.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>..</relativePath>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.apache.zeppelin</groupId>
   <artifactId>spark2-shims</artifactId>
   <version>0.9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Zeppelin: Spark2 Shims</name>
 
   <properties>
-    <scala.binary.version>2.11</scala.binary.version>
     <spark.version>2.1.2</spark.version>
   </properties>
 
@@ -60,34 +58,16 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.zeppelin</groupId>
-      <artifactId>zeppelin-interpreter-api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${plugin.maven-compiler-plugin}</version>
         <configuration>
-          <skip>true</skip>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-interpreter-setting</id>
-            <phase>none</phase>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

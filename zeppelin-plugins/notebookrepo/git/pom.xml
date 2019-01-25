@@ -43,6 +43,20 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.zeppelin</groupId>
+            <artifactId>zeppelin-server</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${dependency.org.slf4j}</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.apache.zeppelin</groupId>
             <artifactId>notebookrepo-vfs</artifactId>
@@ -55,6 +69,7 @@
             <version>${eclipse.jgit.version}</version>
         </dependency>
 
+        <!-- TODO:: -->
         <dependency>
             <groupId>com.google.truth</groupId>
             <artifactId>truth</artifactId>

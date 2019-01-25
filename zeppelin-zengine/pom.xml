@@ -48,6 +48,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${dependency.org.slf4j}</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.github.eirslett</groupId>
       <artifactId>frontend-maven-plugin</artifactId>
       <version>${com.github.eirslett.frontend-maven-plugin}</version>

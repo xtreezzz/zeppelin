@@ -45,7 +45,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
@@ -65,13 +64,17 @@ public class GCSNotebookRepoTest {
     });
   }
 
-  @Parameter(0)
+
+  public GCSNotebookRepoTest(String bucketName, Optional<String> basePath, String uriPath) {
+    this.bucketName = bucketName;
+    this.basePath = basePath;
+    this.uriPath = uriPath;
+  }
+
   public String bucketName;
 
-  @Parameter(1)
   public Optional<String> basePath;
 
-  @Parameter(2)
   public String uriPath;
 
   private Note runningNote;
