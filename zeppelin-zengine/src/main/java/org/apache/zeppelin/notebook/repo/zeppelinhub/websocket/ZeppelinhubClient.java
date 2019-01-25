@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.listener.ZeppelinhubWebsocket;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.protocol.ZeppelinHubOp;
@@ -44,9 +45,6 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.util.json.JSONArray;
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -247,10 +245,12 @@ public class ZeppelinhubClient {
     client.relayToZeppelin(zeppelinMsg, hubMsg.meta.get("noteId"));
   }
 
+
+  //TODO: FIX THIS BULLSHIT
   boolean runAllParagraph(String noteId, String hubMsg) {
     LOG.info("Running paragraph with noteId {}", noteId);
-    try {
-      JSONObject data = new JSONObject(hubMsg);
+    /*try {
+      JsonObject data = new Gson().fromJson(hubMsg, JsonObject.class);
       if (data.equals(JSONObject.NULL) || !(data.get("data") instanceof JSONArray)) {
         LOG.error("Wrong \"data\" format for RUN_NOTEBOOK");
         return false;
@@ -279,7 +279,7 @@ public class ZeppelinhubClient {
     } catch (JSONException e) {
       LOG.error("Failed to parse RUN_NOTEBOOK message from ZeppelinHub ", e);
       return false;
-    }
+    }*/
     return true;
   }
 
