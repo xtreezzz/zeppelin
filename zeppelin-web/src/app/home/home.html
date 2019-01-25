@@ -54,6 +54,34 @@ limitations under the License.
              </div>
             </ul>
           </div>
+
+          <div style="margin: 30px 0" ng-if="home.favoriteNotes.length !== 0">
+            <h4>Favorite Notes</h4>
+            <ul>
+              <li style="color: #0b93d5; list-style: none" ng-repeat="note in home.favoriteNotes">
+                <a style="text-decoration: none;" href="#/notebook/{{note.id}}">
+                  <i style="font-size: 10px" class="icon-doc"></i>
+                  {{note.name}}
+                </a>
+                <i class="icon-star favorite-star"
+                   ng-class="{'favorite-star-on' : isFavoriteNote(note.id)}"
+                   ng-click="changeNoteFavoriteStatus(note.id)"></i>
+              </li>
+            </ul>
+          </div>
+
+          <div style="margin: 30px 0" ng-if="home.recentNotes.length !== 0">
+            <h4>Recent Notes</h4>
+            <ul>
+              <li style="color: #0b93d5; list-style: none" ng-repeat="note in home.recentNotes">
+                <a style="text-decoration: none;" href="#/notebook/{{note.id}}">
+                  <i style="font-size: 10px" class="icon-doc"></i>
+                  {{note.name}}
+                </a>
+              </li>
+            </ul>
+          </div>
+
         </div>
         <div class="col-md-6">
           <h4>Help</h4>

@@ -14,7 +14,7 @@
 
 angular.module('zeppelinWebApp').service('noteActionService', noteActionService);
 
-function noteActionService(websocketMsgSrv, $location, noteRenameService, noteListFactory) {
+function noteActionService(websocketMsgSrv, $location, noteRenameService, noteListFactory, favoriteNotesService) {
   'ngInject';
 
   this.moveNoteToTrash = function(noteId, redirectToHome) {
@@ -24,6 +24,8 @@ function noteActionService(websocketMsgSrv, $location, noteRenameService, noteLi
       message: 'This note will be moved to <strong>trash</strong>.',
       callback: function(result) {
         if (result) {
+          favoriteNotesService.removeNoteFromResent(noteId);
+          favoriteNotesService.removeNoteFromFavorite(noteId);
           websocketMsgSrv.moveNoteToTrash(noteId);
           if (redirectToHome) {
             $location.path('/');

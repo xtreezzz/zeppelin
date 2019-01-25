@@ -26,6 +26,7 @@ describe('Controller: NotebookCtrl', function() {
 
   beforeEach(inject(function($controller, $rootScope) {
     scope = $rootScope.$new();
+    $rootScope.ticket = {};
     $controller('NotebookCtrl', {
       $scope: scope,
       websocketMsgSrv: websocketMsgSrvMock,
