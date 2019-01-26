@@ -34,7 +34,7 @@
 
   <properties>
     <!--library versions-->
-    <interpreter.name>jdbc</interpreter.name>
+    <interpreter.name>tjdbc</interpreter.name>
     <postgresql.version>9.4-1201-jdbc41</postgresql.version>
     <hadoop.common.version>2.7.2</hadoop.common.version>
     <h2.version>1.4.190</h2.version>
@@ -63,6 +63,12 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-dbcp2</artifactId>
       <version>${commons.dbcp2.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.5</version>
     </dependency>
 
     <dependency>

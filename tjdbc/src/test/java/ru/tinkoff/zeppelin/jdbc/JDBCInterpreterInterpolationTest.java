@@ -30,7 +30,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Properties;
-import ru.tinkoff.zeppelin.jdbc.JDBCInterpreter;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
