@@ -134,8 +134,7 @@
     "editor": {
       "language": "sql",
       "editOnDblClick": false,
-      "completionSupport": false,
-      "completionKey": "TAB"
+      "completionSupport": true
     }
   }
 ]
