@@ -1,8 +1,8 @@
 [
   {
-    "group": "jdbc",
+    "group": "tjdbc",
     "name": "sql",
-    "className": "org.apache.zeppelin.jdbc.JDBCInterpreter",
+    "className": "ru.tinkoff.zeppelin.jdbc.JDBCInterpreter",
     "properties": {
       "default.url": {
         "envName": null,
