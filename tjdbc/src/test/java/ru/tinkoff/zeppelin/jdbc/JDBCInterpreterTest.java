@@ -457,13 +457,13 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     JDBCInterpreter jdbc2 = new JDBCInterpreter(getDBProperty("", ""));
 
     AuthenticationInfo user1Credential = getUserAuth("user1", null, null, null);
-    AuthenticationInfo user2Credential = getUserAuth("user2", "jdbc.jdbc2", "user2Id", "user2Pw");
+    AuthenticationInfo user2Credential = getUserAuth("user2", "tjdbc.tjdbc2", "user2Id", "user2Pw");
 
     // user1 runs jdbc1
     jdbc1.open();
     InterpreterContext ctx1 = InterpreterContext.builder()
         .setAuthenticationInfo(user1Credential)
-        .setReplName("jdbc1")
+        .setReplName("tjdbc1")
         .build();
     jdbc1.interpret("", ctx1);
 
@@ -476,7 +476,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     jdbc2.open();
     InterpreterContext ctx2 = InterpreterContext.builder()
         .setAuthenticationInfo(user1Credential)
-        .setReplName("jdbc2")
+        .setReplName("tjdbc2")
         .build();
     jdbc2.interpret("", ctx2);
 
@@ -489,7 +489,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     jdbc1.open();
     InterpreterContext ctx3 = InterpreterContext.builder()
         .setAuthenticationInfo(user2Credential)
-        .setReplName("jdbc1")
+        .setReplName("tjdbc1")
         .build();
     jdbc1.interpret("", ctx3);
 
@@ -502,7 +502,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
     jdbc2.open();
     InterpreterContext ctx4 = InterpreterContext.builder()
         .setAuthenticationInfo(user2Credential)
-        .setReplName("jdbc2")
+        .setReplName("tjdbc2")
         .build();
     jdbc2.interpret("", ctx4);
 
