@@ -79,11 +79,11 @@ public class SqlCompleter {
         defaultSchema = conn.getCatalog();
       }
     } catch (SQLException | AbstractMethodError e) {
-      logger.debug("Default schema is not defined" + e.getMessage());
+      logger.debug("Default schema is not defined", e);
       try {
         defaultSchema = meta.getUserName();
       } catch (Exception ee) {
-        logger.debug("User name is not defined" + ee.getMessage());
+        logger.debug("User name is not defined", ee);
       }
     }
     return defaultSchema;
@@ -102,20 +102,16 @@ public class SqlCompleter {
   private static Set<String> getSchemaNames(DatabaseMetaData meta, List<String> schemaFilters) {
     Set<String> res = new HashSet<>();
     try (ResultSet schemas = meta.getSchemas()) {
-      try {
-        while (schemas.next()) {
-          String schemaName = schemas.getString("TABLE_SCHEM");
-          if (schemaName == null) {
-            schemaName = "";
-          }
-          for (String schemaFilter : schemaFilters) {
-            if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%", ".*?"))) {
-              res.add(schemaName);
-            }
+      while (schemas.next()) {
+        String schemaName = schemas.getString("TABLE_SCHEM");
+        if (schemaName == null) {
+          schemaName = "";
+        }
+        for (String schemaFilter : schemaFilters) {
+          if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%", ".*?"))) {
+            res.add(schemaName);
           }
         }
-      } finally {
-        schemas.close();
       }
     } catch (SQLException t) {
       logger.error("Failed to retrieve the schema names", t);
@@ -157,14 +153,14 @@ public class SqlCompleter {
         new String[]{"TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL TEMPORARY",
             "LOCAL TEMPORARY"})) {
       if (!tbls.isBeforeFirst()) {
-        logger.debug("There is no tables for schema " + schema);
+        logger.debug("There is no tables for schema {}", schema);
       } else {
         while (tbls.next()) {
           String table = tbls.getString("TABLE_NAME");
           tables.add(table);
         }
       }
-    } catch (Throwable t) {
+    } catch (Exception t) {
       logger.error("Failed to retrieve the table name", t);
     }
   }
@@ -185,7 +181,7 @@ public class SqlCompleter {
         String column = cols.getString("COLUMN_NAME");
         columns.add(column);
       }
-    } catch (Throwable t) {
+    } catch (Exception t) {
       logger.error("Failed to retrieve the column name", t);
     }
   }
@@ -205,7 +201,7 @@ public class SqlCompleter {
       // Add the driver specific SQL completions
       String driverSpecificKeywords =
           "/" + meta.getDriverName().replace(" ", "-").toLowerCase() + "-sql.keywords";
-      logger.info("JDBC DriverName:" + driverSpecificKeywords);
+      logger.info("JDBC DriverName: {}", driverSpecificKeywords);
       try {
         if (SqlCompleter.class.getResource(driverSpecificKeywords) != null) {
           String driverKeywords =

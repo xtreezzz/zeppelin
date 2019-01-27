@@ -18,8 +18,35 @@ import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.COMMON_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.COMPLETER_SCHEMA_FILTERS_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.COMPLETER_TTL_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.CONCURRENT_EXECUTION_COUNT;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.CONCURRENT_EXECUTION_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DBCP_STRING;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DEFAULT_COMPLETER_TTL;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DEFAULT_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DRIVER_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.EMPTY_COLUMN_VALUE;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.EXPLAIN_PREDICATE;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.INTERPRETER_NAME;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.JDBC_JCEKS_CREDENTIAL_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.JDBC_JCEKS_FILE;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.MAX_LINE_DEFAULT;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.MAX_LINE_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.MAX_ROWS_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.NEWLINE;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.PASSWORD_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.SPLIT_QURIES_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.STATEMENT_PRECODE_KEY_TEMPLATE;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.TAB;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.TABLE_MAGIC_TAG;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.URL_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.USER_KEY;
+import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.WHITESPACE;
 
 import java.util.Collections;
+import java.util.Map.Entry;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
@@ -33,6 +60,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.alias.CredentialProvider;
 import org.apache.hadoop.security.alias.CredentialProviderFactory;
+import org.apache.zeppelin.interpreter.InterpreterResult.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +98,10 @@ import org.apache.zeppelin.user.UsernamePassword;
 
 import ru.tinkoff.zeppelin.jdbc.security.JDBCSecurityImpl;
 
+
 /**
- * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ,
- * GreenplumDB, MariaDB, MySQL, Postgres and Redshift.
+ * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ, GreenplumDB,
+ * MariaDB, MySQL, Postgres and Redshift.
  *
  * <ul>
  * <li>{@code default.url} - JDBC URL to connect to.</li>
@@ -83,62 +112,12 @@ import ru.tinkoff.zeppelin.jdbc.security.JDBCSecurityImpl;
  * </ul>
  *
  * <p>
- * How to use: <br/>
- * {@code %jdbc.sql} <br/>
- * {@code
- * SELECT store_id, count(*)
- * FROM retail_demo.order_lineitems_pxf
- * GROUP BY store_id;
- * }
+ * How to use: <br/> {@code %jdbc.sql} <br/> {@code SELECT store_id, count(*) FROM
+ * retail_demo.order_lineitems_pxf GROUP BY store_id; }
  * </p>
  */
 public class JDBCInterpreter extends KerberosInterpreter {
   private Logger logger = LoggerFactory.getLogger(JDBCInterpreter.class);
-
-  static final String INTERPRETER_NAME = "tjdbc";
-  static final String COMMON_KEY = "common";
-  static final String MAX_LINE_KEY = "max_count";
-  static final int MAX_LINE_DEFAULT = 1000;
-
-  static final String DEFAULT_KEY = "default";
-  static final String DRIVER_KEY = "driver";
-  static final String URL_KEY = "url";
-  static final String USER_KEY = "user";
-  static final String PASSWORD_KEY = "password";
-  static final String PRECODE_KEY = "precode";
-  static final String STATEMENT_PRECODE_KEY = "statementPrecode";
-  static final String COMPLETER_SCHEMA_FILTERS_KEY = "completer.schemaFilters";
-  static final String COMPLETER_TTL_KEY = "completer.ttlInSeconds";
-  static final String DEFAULT_COMPLETER_TTL = "120";
-  static final String SPLIT_QURIES_KEY = "splitQueries";
-  static final String JDBC_JCEKS_FILE = "jceks.file";
-  static final String JDBC_JCEKS_CREDENTIAL_KEY = "jceks.credentialKey";
-  static final String PRECODE_KEY_TEMPLATE = "%s.precode";
-  static final String STATEMENT_PRECODE_KEY_TEMPLATE = "%s.statementPrecode";
-  static final String DOT = ".";
-
-  private static final char WHITESPACE = ' ';
-  private static final char NEWLINE = '\n';
-  private static final char TAB = '\t';
-  private static final String TABLE_MAGIC_TAG = "%table ";
-  private static final String EXPLAIN_PREDICATE = "EXPLAIN ";
-
-  static final String COMMON_MAX_LINE = COMMON_KEY + DOT + MAX_LINE_KEY;
-
-  static final String DEFAULT_DRIVER = DEFAULT_KEY + DOT + DRIVER_KEY;
-  static final String DEFAULT_URL = DEFAULT_KEY + DOT + URL_KEY;
-  static final String DEFAULT_USER = DEFAULT_KEY + DOT + USER_KEY;
-  static final String DEFAULT_PASSWORD = DEFAULT_KEY + DOT + PASSWORD_KEY;
-  static final String DEFAULT_PRECODE = DEFAULT_KEY + DOT + PRECODE_KEY;
-  static final String DEFAULT_STATEMENT_PRECODE = DEFAULT_KEY + DOT + STATEMENT_PRECODE_KEY;
-
-  static final String EMPTY_COLUMN_VALUE = "";
-
-  private static final String CONCURRENT_EXECUTION_KEY = "zeppelin.jdbc.concurrent.use";
-  private static final String CONCURRENT_EXECUTION_COUNT =
-          "zeppelin.jdbc.concurrent.max_connection";
-  private static final String DBCP_STRING = "jdbc:apache:commons:dbcp:";
-  private static final String MAX_ROWS_KEY = "zeppelin.jdbc.maxRows";
 
   private final HashMap<String, Properties> basePropretiesMap;
   private final HashMap<String, JDBCUserConfigurations> jdbcUserConfigurationsMap;
@@ -152,7 +131,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     jdbcUserConfigurationsMap = new HashMap<>();
     basePropretiesMap = new HashMap<>();
     sqlCompletersMap = new HashMap<>();
-    maxLineResults = MAX_LINE_DEFAULT;
+    maxLineResults = Integer.valueOf(MAX_LINE_DEFAULT.getValue());
   }
 
   @Override
@@ -171,7 +150,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return false;
   }
 
-  public HashMap<String, Properties> getPropertiesMap() {
+  public Map<String, Properties> getPropertiesMap() {
     return basePropretiesMap;
   }
 
@@ -196,14 +175,16 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
 
     Set<String> removeKeySet = new HashSet<>();
-    for (String key : basePropretiesMap.keySet()) {
-      if (!COMMON_KEY.equals(key)) {
-        Properties properties = basePropretiesMap.get(key);
-        if (!properties.containsKey(DRIVER_KEY) || !properties.containsKey(URL_KEY)) {
-          logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
-              key, DRIVER_KEY, key, key, URL_KEY);
-          removeKeySet.add(key);
-        }
+    for (Entry<String, Properties> keyValuePair : basePropretiesMap.entrySet()) {
+      Properties properties = keyValuePair.getValue();
+      String key = keyValuePair.getKey();
+      if (!COMMON_KEY.getValue().equals(key)
+          && (!properties.containsKey(DRIVER_KEY.getValue())
+          || !properties.containsKey(URL_KEY.getValue()))) {
+
+        logger.error("{} will be ignored. {}.{} and {}.{} is mandatory.",
+            key, DRIVER_KEY.getValue(), key, key, URL_KEY.getValue());
+        removeKeySet.add(key);
       }
     }
 
@@ -219,35 +200,35 @@ public class JDBCInterpreter extends KerberosInterpreter {
   protected boolean isKerboseEnabled() {
     if (!isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
       UserGroupInformation.AuthenticationMethod authType = JDBCSecurityImpl.getAuthtype(properties);
-      if (authType.equals(KERBEROS)) {
-        return true;
-      }
+      return authType.equals(KERBEROS);
     }
     return false;
   }
 
   private void setMaxLineResults() {
-    if (basePropretiesMap.containsKey(COMMON_KEY) &&
-        basePropretiesMap.get(COMMON_KEY).containsKey(MAX_LINE_KEY)) {
-      maxLineResults = Integer.valueOf(basePropretiesMap.get(COMMON_KEY).getProperty(MAX_LINE_KEY));
+    if (basePropretiesMap.containsKey(COMMON_KEY.getValue()) &&
+        basePropretiesMap.get(COMMON_KEY.getValue()).containsKey(MAX_LINE_KEY.getValue())) {
+      maxLineResults = Integer.valueOf(
+          basePropretiesMap.get(COMMON_KEY.getValue()).getProperty(MAX_LINE_KEY.getValue()));
     }
   }
 
   /**
-   * Fetch MAX_ROWS_KEYS value from property file and set it to
-   * "maxRows" value.
+   * Fetch MAX_ROWS_KEYS value from property file and set it to "maxRows" value.
    */
   private void setMaxRows() {
-    maxRows = Integer.valueOf(getProperty(MAX_ROWS_KEY, "1000"));
+    maxRows = Integer.valueOf(getProperty(MAX_ROWS_KEY.getValue(), "1000"));
   }
 
   private SqlCompleter createOrUpdateSqlCompleter(SqlCompleter sqlCompleter,
       final Connection connection, String propertyKey, final String buf, final int cursor) {
-    String schemaFiltersKey = String.format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY);
-    String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
+    String schemaFiltersKey = String
+        .format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY.getValue());
+    String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY.getValue());
     final String schemaFiltersString = getProperty(schemaFiltersKey);
     int ttlInSeconds = Integer.valueOf(
-        StringUtils.defaultIfEmpty(getProperty(sqlCompleterTtlKey), DEFAULT_COMPLETER_TTL)
+        StringUtils
+            .defaultIfEmpty(getProperty(sqlCompleterTtlKey), DEFAULT_COMPLETER_TTL.getValue())
     );
     final SqlCompleter completer;
     if (sqlCompleter == null) {
@@ -256,11 +237,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
       completer = sqlCompleter;
     }
     ExecutorService executorService = Executors.newFixedThreadPool(1);
-    executorService.execute(new Runnable() {
-      @Override
-      public void run() {
-        completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
-      }
+    executorService.execute(() -> {
+      completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
     });
 
     executorService.shutdown();
@@ -292,18 +270,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private void initConnectionPoolMap() {
-    for (String key : jdbcUserConfigurationsMap.keySet()) {
+    for (Entry<String, JDBCUserConfigurations> keyValuePair : jdbcUserConfigurationsMap
+        .entrySet()) {
       try {
-        closeDBPool(key, DEFAULT_KEY);
+        closeDBPool(keyValuePair.getKey(), DEFAULT_KEY.getValue());
       } catch (SQLException e) {
         logger.error("Error while closing database pool.", e);
       }
-      try {
-        JDBCUserConfigurations configurations = jdbcUserConfigurationsMap.get(key);
-        configurations.initConnectionPoolMap();
-      } catch (SQLException e) {
-        logger.error("Error while closing initConnectionPoolMap.", e);
-      }
+      keyValuePair.getValue().initConnectionPoolMap();
     }
   }
 
@@ -319,29 +293,21 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private String getEntityName(String replName) {
-    StringBuffer entityName = new StringBuffer();
-    entityName.append(INTERPRETER_NAME);
-    entityName.append(".");
-    entityName.append(replName);
-    return entityName.toString();
+    return String.join("", INTERPRETER_NAME.getValue(), ".", replName);
   }
 
   private String getJDBCDriverName(String user, String propertyKey) {
-    StringBuffer driverName = new StringBuffer();
-    driverName.append(DBCP_STRING);
-    driverName.append(propertyKey);
-    driverName.append(user);
-    return driverName.toString();
+    return String.join("", DBCP_STRING.getValue(), propertyKey, user);
   }
 
   private boolean existAccountInBaseProperty(String propertyKey) {
-    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY)) &&
-        basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
+    return basePropretiesMap.get(propertyKey).containsKey(USER_KEY.getValue()) &&
+        !isEmpty((String) basePropretiesMap.get(propertyKey).get(USER_KEY.getValue())) &&
+        basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY.getValue());
   }
 
   private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
-                                               String replName) {
+      String replName) {
     UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
     if (uc != null) {
       return uc.getUsernamePassword(replName);
@@ -350,14 +316,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   public JDBCUserConfigurations getJDBCConfiguration(String user) {
-    JDBCUserConfigurations jdbcUserConfigurations = jdbcUserConfigurationsMap.get(user);
-
-    if (jdbcUserConfigurations == null) {
-      jdbcUserConfigurations = new JDBCUserConfigurations();
-      jdbcUserConfigurationsMap.put(user, jdbcUserConfigurations);
-    }
-
-    return jdbcUserConfigurations;
+    return jdbcUserConfigurationsMap.computeIfAbsent(user, v -> new JDBCUserConfigurations());
   }
 
   private void closeDBPool(String user, String propertyKey) throws SQLException {
@@ -373,11 +332,11 @@ public class JDBCInterpreter extends KerberosInterpreter {
     String user = interpreterContext.getAuthenticationInfo().getUser();
 
     JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
-    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
-        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY).isEmpty()) {
+    if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY.getValue()) &&
+        !basePropretiesMap.get(propertyKey).getProperty(USER_KEY.getValue()).isEmpty()) {
       String password = getPassword(basePropretiesMap.get(propertyKey));
       if (!isEmpty(password)) {
-        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY, password);
+        basePropretiesMap.get(propertyKey).setProperty(PASSWORD_KEY.getValue(), password);
       }
     }
     jdbcUserConfigurations.setPropertyMap(propertyKey, basePropretiesMap.get(propertyKey));
@@ -387,7 +346,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
     UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
-            getEntityName(interpreterContext.getReplName()));
+        getEntityName(interpreterContext.getReplName()));
     if (usernamePassword != null) {
       jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
     } else {
@@ -396,12 +355,12 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private void createConnectionPool(String url, String user, String propertyKey,
-      Properties properties) throws SQLException, ClassNotFoundException {
+      Properties properties) throws ClassNotFoundException {
     ConnectionFactory connectionFactory =
-            new DriverManagerConnectionFactory(url, properties);
+        new DriverManagerConnectionFactory(url, properties);
 
     PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(
-            connectionFactory, null);
+        connectionFactory, null);
     final String maxConnectionLifetime =
         StringUtils.defaultIfEmpty(getProperty("zeppelin.jdbc.maxConnLifetime"), "-1");
     poolableConnectionFactory.setMaxConnLifetimeMillis(Long.parseLong(maxConnectionLifetime));
@@ -409,7 +368,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     ObjectPool connectionPool = new GenericObjectPool(poolableConnectionFactory);
 
     poolableConnectionFactory.setPool(connectionPool);
-    Class.forName(properties.getProperty(DRIVER_KEY));
+    Class.forName(properties.getProperty(DRIVER_KEY.getValue()));
     PoolingDriver driver = new PoolingDriver();
     driver.registerPool(propertyKey + user, connectionPool);
     getJDBCConfiguration(user).saveDBDriverPool(propertyKey, driver);
@@ -425,9 +384,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return DriverManager.getConnection(jdbcDriver);
   }
 
-  public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
+  private Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
       throws ClassNotFoundException, SQLException, InterpreterException, IOException {
-    final String user =  interpreterContext.getAuthenticationInfo().getUser();
+    final String user = interpreterContext.getAuthenticationInfo().getUser();
     Connection connection;
     if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
       return null;
@@ -437,7 +396,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     setUserProperty(propertyKey, interpreterContext);
 
     final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
-    final String url = properties.getProperty(URL_KEY);
+    final String url = properties.getProperty(URL_KEY.getValue());
 
     if (isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
       connection = getConnectionFromPool(url, user, propertyKey, properties);
@@ -448,42 +407,36 @@ public class JDBCInterpreter extends KerberosInterpreter {
       final String connectionUrl = appendProxyUserToURL(url, user, propertyKey);
 
       JDBCSecurityImpl.createSecureConfiguration(getProperties(), authType);
-      switch (authType) {
-        case KERBEROS:
-          if (user == null || "false".equalsIgnoreCase(
-              getProperty("zeppelin.jdbc.auth.kerberos.proxy.enable"))) {
+      if (authType == KERBEROS) {
+        if (user == null || "false".equalsIgnoreCase(
+            getProperty("zeppelin.jdbc.auth.kerberos.proxy.enable"))) {
+          connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
+        } else {
+          if (basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
             connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
           } else {
-            if (basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
-              connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
-            } else {
-              UserGroupInformation ugi = null;
-              try {
-                ugi = UserGroupInformation.createProxyUser(
-                    user, UserGroupInformation.getCurrentUser());
-              } catch (Exception e) {
-                logger.error("Error in getCurrentUser", e);
-                throw new InterpreterException("Error in getCurrentUser", e);
-              }
+            UserGroupInformation ugi = null;
+            try {
+              ugi = UserGroupInformation.createProxyUser(
+                  user, UserGroupInformation.getCurrentUser());
+            } catch (Exception e) {
+              logger.error("Error in getCurrentUser", e);
+              throw new InterpreterException("Error in getCurrentUser", e);
+            }
 
-              final String poolKey = propertyKey;
-              try {
-                connection = ugi.doAs(new PrivilegedExceptionAction<Connection>() {
-                  @Override
-                  public Connection run() throws Exception {
-                    return getConnectionFromPool(connectionUrl, user, poolKey, properties);
-                  }
-                });
-              } catch (Exception e) {
-                logger.error("Error in doAs", e);
-                throw new InterpreterException("Error in doAs", e);
-              }
+            final String poolKey = propertyKey;
+            try {
+              connection = ugi.doAs(
+                  (PrivilegedExceptionAction<Connection>) () ->
+                      getConnectionFromPool(connectionUrl, user, poolKey, properties));
+            } catch (Exception e) {
+              logger.error("Error in doAs", e);
+              throw new InterpreterException("Error in doAs", e);
             }
           }
-          break;
-
-        default:
-          connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
+        }
+      } else {
+        connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
       }
     }
 
@@ -496,11 +449,11 @@ public class JDBCInterpreter extends KerberosInterpreter {
     if (user != null && !user.equals("anonymous") &&
         basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
 
-      Integer lastIndexOfUrl = connectionUrl.indexOf("?");
+      int lastIndexOfUrl = connectionUrl.indexOf("?");
       if (lastIndexOfUrl == -1) {
         lastIndexOfUrl = connectionUrl.length();
       }
-      logger.info("Using proxy user as :" + user);
+      logger.info("Using proxy user as : {}", user);
       logger.info("Using proxy property for user as :" +
           basePropretiesMap.get(propertyKey).getProperty("proxy.user.property"));
       connectionUrl.insert(lastIndexOfUrl, ";" +
@@ -514,27 +467,28 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private String getPassword(Properties properties) throws IOException, InterpreterException {
-    if (isNotEmpty(properties.getProperty(PASSWORD_KEY))) {
-      return properties.getProperty(PASSWORD_KEY);
-    } else if (isNotEmpty(properties.getProperty(JDBC_JCEKS_FILE))
-        && isNotEmpty(properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY))) {
+    if (isNotEmpty(properties.getProperty(PASSWORD_KEY.getValue()))) {
+      return properties.getProperty(PASSWORD_KEY.getValue());
+    } else if (isNotEmpty(properties.getProperty(JDBC_JCEKS_FILE.getValue()))
+        && isNotEmpty(properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY.getValue()))) {
       try {
         Configuration configuration = new Configuration();
         configuration.set(CredentialProviderFactory.CREDENTIAL_PROVIDER_PATH,
-            properties.getProperty(JDBC_JCEKS_FILE));
+            properties.getProperty(JDBC_JCEKS_FILE.getValue()));
         CredentialProvider provider = CredentialProviderFactory.getProviders(configuration).get(0);
         CredentialProvider.CredentialEntry credEntry =
-            provider.getCredentialEntry(properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY));
+            provider
+                .getCredentialEntry(properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY.getValue()));
         if (credEntry != null) {
           return new String(credEntry.getCredential());
         } else {
           throw new InterpreterException("Failed to retrieve password from JCEKS from key: "
-              + properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY));
+              + properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY.getValue()));
         }
       } catch (Exception e) {
         logger.error("Failed to retrieve password from JCEKS \n" +
-            "For file: " + properties.getProperty(JDBC_JCEKS_FILE) +
-            "\nFor key: " + properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY), e);
+            "For file: " + properties.getProperty(JDBC_JCEKS_FILE.getValue()) +
+            "\nFor key: " + properties.getProperty(JDBC_JCEKS_CREDENTIAL_KEY.getValue()), e);
         throw e;
       }
     }
@@ -546,14 +500,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
     ResultSetMetaData md = resultSet.getMetaData();
     StringBuilder msg;
     if (isTableType) {
-      msg = new StringBuilder(TABLE_MAGIC_TAG);
+      msg = new StringBuilder(TABLE_MAGIC_TAG.getValue());
     } else {
       msg = new StringBuilder();
     }
 
     for (int i = 1; i < md.getColumnCount() + 1; i++) {
       if (i > 1) {
-        msg.append(TAB);
+        msg.append(TAB.getValue());
       }
       if (StringUtils.isNotEmpty(md.getColumnLabel(i))) {
         msg.append(replaceReservedChars(md.getColumnLabel(i)));
@@ -561,7 +515,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
         msg.append(replaceReservedChars(md.getColumnName(i)));
       }
     }
-    msg.append(NEWLINE);
+    msg.append(NEWLINE.getValue());
 
     int displayRowCount = 0;
     while (resultSet.next()) {
@@ -580,17 +534,17 @@ public class JDBCInterpreter extends KerberosInterpreter {
         }
         msg.append(replaceReservedChars(resultValue));
         if (i != md.getColumnCount()) {
-          msg.append(TAB);
+          msg.append(TAB.getValue());
         }
       }
-      msg.append(NEWLINE);
+      msg.append(NEWLINE.getValue());
       displayRowCount++;
     }
     return msg.toString();
   }
 
-  private boolean isDDLCommand(int updatedCount, int columnCount) throws SQLException {
-    return updatedCount < 0 && columnCount <= 0 ? true : false;
+  private boolean isDDLCommand(int updatedCount, int columnCount) {
+    return updatedCount < 0 && columnCount <= 0;
   }
 
   /*
@@ -602,10 +556,10 @@ public class JDBCInterpreter extends KerberosInterpreter {
     StringBuilder query = new StringBuilder();
     char character;
 
-    Boolean multiLineComment = false;
-    Boolean singleLineComment = false;
-    Boolean quoteString = false;
-    Boolean doubleQuoteString = false;
+    boolean multiLineComment = false;
+    boolean singleLineComment = false;
+    boolean quoteString = false;
+    boolean doubleQuoteString = false;
 
     for (int item = 0; item < sql.length(); item++) {
       character = sql.charAt(item);
@@ -658,6 +612,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return queries;
   }
 
+  @Override
   public InterpreterResult executePrecode(InterpreterContext interpreterContext) {
     InterpreterResult interpreterResult = null;
     for (String propertyKey : basePropretiesMap.keySet()) {
@@ -712,24 +667,23 @@ public class JDBCInterpreter extends KerberosInterpreter {
         sqlArray = Arrays.asList(sql);
       }
 
-      for (int i = 0; i < sqlArray.size(); i++) {
-        String sqlToExecute = sqlArray.get(i);
+      for (String sqlToExecute : sqlArray) {
         statement = connection.createStatement();
+
+        if (statement == null) {
+          return new InterpreterResult(Code.ERROR, "Cannot create statement.");
+        }
 
         // fetch n+1 rows in order to indicate there's more rows available (for large selects)
         statement.setFetchSize(getMaxResult());
         statement.setMaxRows(maxRows);
 
-        if (statement == null) {
-          return new InterpreterResult(Code.ERROR, "Prefix not found.");
-        }
-
         try {
           getJDBCConfiguration(user).saveStatement(paragraphId, statement);
 
           String statementPrecode =
-              getProperty(String.format(STATEMENT_PRECODE_KEY_TEMPLATE, propertyKey));
-          
+              getProperty(String.format(STATEMENT_PRECODE_KEY_TEMPLATE.getValue(), propertyKey));
+
           if (StringUtils.isNotBlank(statementPrecode)) {
             statement.execute(statementPrecode);
           }
@@ -742,12 +696,12 @@ public class JDBCInterpreter extends KerberosInterpreter {
             // Regards that the command is DDL.
             if (isDDLCommand(statement.getUpdateCount(),
                 resultSet.getMetaData().getColumnCount())) {
-              interpreterResult.add(InterpreterResult.Type.TEXT,
+              interpreterResult.add(Type.TEXT,
                   "Query executed successfully.");
             } else {
               MutableBoolean isComplete = new MutableBoolean(true);
               String results = getResults(resultSet,
-                  !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE), isComplete);
+                  !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE.getValue()), isComplete);
               interpreterResult.add(results);
               if (!isComplete.booleanValue()) {
                 interpreterResult.add(ResultMessages.getExceedsLimitRowsMessage(getMaxResult(),
@@ -757,7 +711,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
           } else {
             // Response contains either an update count or there are no results.
             int updateCount = statement.getUpdateCount();
-            interpreterResult.add(InterpreterResult.Type.TEXT,
+            interpreterResult.add(Type.TEXT,
                 "Query executed successfully. Affected rows : " +
                     updateCount);
           }
@@ -767,28 +721,24 @@ public class JDBCInterpreter extends KerberosInterpreter {
               resultSet.close();
             } catch (SQLException e) { /*ignored*/ }
           }
-          if (statement != null) {
-            try {
-              statement.close();
-            } catch (SQLException e) { /*ignored*/ }
-          }
+          try {
+            statement.close();
+          } catch (SQLException e) { /*ignored*/ }
         }
       }
-    } catch (Throwable e) {
+    } catch (Exception e) {
       logger.error("Cannot run " + sql, e);
       String errorMsg = ExceptionUtils.getStackTrace(e);
       interpreterResult.add(errorMsg);
       return new InterpreterResult(Code.ERROR, interpreterResult.message());
     } finally {
       //In case user ran an insert/update/upsert statement
-      if (connection != null) {
-        try {
-          if (!connection.getAutoCommit()) {
-            connection.commit();
-          }
-          connection.close();
-        } catch (SQLException e) { /*ignored*/ }
-      }
+      try {
+        if (!connection.getAutoCommit()) {
+          connection.commit();
+        }
+        connection.close();
+      } catch (SQLException e) { /*ignored*/ }
       getJDBCConfiguration(user).removeStatement(paragraphId);
     }
     return interpreterResult;
@@ -799,15 +749,16 @@ public class JDBCInterpreter extends KerberosInterpreter {
    */
   private String replaceReservedChars(String str) {
     if (str == null) {
-      return EMPTY_COLUMN_VALUE;
+      return EMPTY_COLUMN_VALUE.getValue();
     }
-    return str.replace(TAB, WHITESPACE).replace(NEWLINE, WHITESPACE);
+    return str.replace(TAB.getValue(), WHITESPACE.getValue())
+        .replace(NEWLINE.getValue(), WHITESPACE.getValue());
   }
 
   @Override
   public InterpreterResult interpret(String originalCmd, InterpreterContext contextInterpreter) {
     String cmd = Boolean.parseBoolean(getProperty("zeppelin.jdbc.interpolation")) ?
-            interpolate(originalCmd, contextInterpreter.getResourcePool()) : originalCmd;
+        interpolate(originalCmd, contextInterpreter.getResourcePool()) : originalCmd;
     logger.debug("Run SQL command '{}'", cmd);
     String propertyKey = getPropertyKey(contextInterpreter);
     cmd = cmd.trim();
@@ -820,7 +771,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     logger.info("Cancel current query statement.");
     String paragraphId = context.getParagraphId();
     JDBCUserConfigurations jdbcUserConfigurations =
-            getJDBCConfiguration(context.getAuthenticationInfo().getUser());
+        getJDBCConfiguration(context.getAuthenticationInfo().getUser());
     try {
       jdbcUserConfigurations.cancelStatement(paragraphId);
     } catch (SQLException e) {
@@ -840,7 +791,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
         return entry.getKey();
       }
     }
-    return DEFAULT_KEY;
+    return DEFAULT_KEY.getValue();
   }
 
   @Override
@@ -857,9 +808,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
   public Scheduler getScheduler() {
     String schedulerName = JDBCInterpreter.class.getName() + this.hashCode();
     return isConcurrentExecution() ?
-            SchedulerFactory.singleton().createOrGetParallelScheduler(schedulerName,
-                getMaxConcurrentConnection())
-            : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
+        SchedulerFactory.singleton().createOrGetParallelScheduler(schedulerName,
+            getMaxConcurrentConnection())
+        : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
   }
 
   @Override
@@ -878,7 +829,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     Connection connection = null;
     try {
-        connection = getConnection(propertyKey, interpreterContext);
+      connection = getConnection(propertyKey, interpreterContext);
     } catch (ClassNotFoundException | SQLException | IOException e) {
       logger.warn("SQLCompleter will created without use connection", e);
     }
@@ -890,17 +841,17 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return candidates;
   }
 
-  public int getMaxResult() {
+  private int getMaxResult() {
     return maxLineResults;
   }
 
   boolean isConcurrentExecution() {
-    return Boolean.valueOf(getProperty(CONCURRENT_EXECUTION_KEY));
+    return Boolean.valueOf(getProperty(CONCURRENT_EXECUTION_KEY.getValue()));
   }
 
   int getMaxConcurrentConnection() {
     try {
-      return Integer.valueOf(getProperty(CONCURRENT_EXECUTION_COUNT));
+      return Integer.valueOf(getProperty(CONCURRENT_EXECUTION_COUNT.getValue()));
     } catch (Exception e) {
       return 10;
     }

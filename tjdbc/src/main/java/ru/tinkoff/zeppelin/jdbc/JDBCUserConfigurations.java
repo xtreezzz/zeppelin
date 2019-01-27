@@ -47,7 +47,7 @@ public class JDBCUserConfigurations {
     paragraphIdStatementMap.clear();
   }
 
-  public void initConnectionPoolMap() throws SQLException {
+  public void initConnectionPoolMap() {
     poolingDriverMap.clear();
     isSuccessful.clear();
   }
@@ -71,7 +71,7 @@ public class JDBCUserConfigurations {
     propertiesMap.get(propertyKey).setProperty("password", usernamePassword.getPassword());
   }
 
-  public void saveStatement(String key, Statement statement) throws SQLException {
+  public void saveStatement(String key, Statement statement) {
     paragraphIdStatementMap.put(key, statement);
   }
 
@@ -83,11 +83,11 @@ public class JDBCUserConfigurations {
     paragraphIdStatementMap.remove(key);
   }
 
-  public void saveDBDriverPool(String key, PoolingDriver driver) throws SQLException {
+  public void saveDBDriverPool(String key, PoolingDriver driver) {
     poolingDriverMap.put(key, driver);
     isSuccessful.put(key, false);
   }
-  public PoolingDriver removeDBDriverPool(String key) throws SQLException {
+  public PoolingDriver removeDBDriverPool(String key) {
     isSuccessful.remove(key);
     return poolingDriverMap.remove(key);
   }
