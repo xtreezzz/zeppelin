@@ -20,6 +20,8 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URISyntaxException;
@@ -49,9 +51,11 @@ import org.apache.zeppelin.display.Input;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
+import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
@@ -1861,6 +1865,48 @@ public class NotebookServer extends WebSocketServlet
   @ManagedAttribute
   public Set<String> getConnectedUsers() {
     return connectionManager.getConnectedUsers();
+  }
+
+  @ManagedOperation
+  public List<Map<String, String>> getParagraphsInfo(String noteId) {
+    Note note = getNotebook().getNote(noteId);
+    return note.generateParagraphsInfo();
+  }
+
+  /**
+   * Extract info about running interpreters with additional paragraph info.
+   */
+  @ManagedOperation
+  public List<Map<String, String>> getRunningInterpretersParagraphInfo() {
+    return getNotebook().getAllNotes().stream()
+        .map(Note::getParagraphs)
+        .flatMap(Collection::stream)
+        .filter(Paragraph::isRunning)
+        .map(this::extractParagraphInfo)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Extract paragraph's interpreter info with paragraph data.
+   */
+  private Map<String, String> extractParagraphInfo(Paragraph paragraph) {
+    try {
+      final ManagedInterpreterGroup process = (ManagedInterpreterGroup) paragraph
+          .getBindedInterpreter().getInterpreterGroup();
+      // add all info about binded interpreter
+      HashMap<String, String> info = new HashMap<>(
+          getNotebook().getInterpreterSettingManager().extractProcessInfo(process));
+      // add paragraph info
+      info.put("interpreterText", paragraph.getIntpText());
+      info.put("noteName", paragraph.getNote().getName());
+      info.put("noteId", paragraph.getNote().getId());
+      info.put("id", paragraph.getId());
+      info.put("user", paragraph.getUser());
+      return info;
+    } catch (InterpreterNotFoundException e) {
+      LOG.error("Failed to get binded interpreter for paragraph {}", paragraph, e);
+      return new HashMap<>();
+    }
   }
 
   @ManagedOperation
