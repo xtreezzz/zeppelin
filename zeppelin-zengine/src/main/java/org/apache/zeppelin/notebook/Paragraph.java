@@ -95,6 +95,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   /************** Transient fields which are not serializabled  into note json **************/
   private transient String intpText;
   private transient String scriptText;
+  private transient String selectedText;
   private transient Interpreter interpreter;
   private transient Note note;
   private transient AuthenticationInfo subject;
@@ -181,6 +182,21 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     this.text = newText;
     this.dateUpdated = new Date();
     parseText();
+  }
+
+  public void setSelectedText(String text) {
+    this.selectedText = null;
+    if (text != null && !text.isEmpty()) {
+      Matcher matcher = REPL_PATTERN.matcher(text);
+      int skipCount = 0;
+      if (matcher.matches()) {
+        skipCount += 1;
+        for (int i = 1; i <= matcher.groupCount(); i++) {
+          skipCount += matcher.group(i) == null ? 0 : matcher.group(i).length();
+        }
+      }
+      this.selectedText = text.substring(skipCount).trim();
+    }
   }
 
   public void parseText() {
@@ -397,8 +413,8 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       p.setText(getText());
     }
 
+    String script = this.selectedText == null ? this.scriptText : this.selectedText;
     // inject form
-    String script = this.scriptText;
     if (interpreter.getFormType() == FormType.NATIVE) {
       settings.clear();
     } else if (interpreter.getFormType() == FormType.SIMPLE) {
