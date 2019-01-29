@@ -55,7 +55,7 @@
     <module>zeppelin-interpreter</module>
     <module>zeppelin-zengine</module>
     <!-- <module>zeppelin-display</module> -->
-    <!--<module>spark</module> -->
+    <module>spark</module>
     <module>markdown</module>
     <module>angular</module>
     <module>shell</module>
@@ -106,6 +106,7 @@
     <javax.inject>1</javax.inject>
     <org.apache.commons.commons-lang3>3.8.1</org.apache.commons.commons-lang3>
     <org.apache.shiro>1.4.0</org.apache.shiro>
+    <plugin.scala.version>2.15.2</plugin.scala.version>
 
     <com.microsoft.azure.azure-data-lake-store-sdk>2.3.3</com.microsoft.azure.azure-data-lake-store-sdk>
     <com.microsoft.azure.azure-storage>8.0.0</com.microsoft.azure.azure-storage>

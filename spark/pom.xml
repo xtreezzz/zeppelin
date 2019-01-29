@@ -16,50 +16,258 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <artifactId>zeppelin</artifactId>
-        <groupId>org.apache.zeppelin</groupId>
-        <version>0.9.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
-    </parent>
-
-    <artifactId>spark-parent</artifactId>
-    <packaging>pom</packaging>
+  <parent>
+    <artifactId>zeppelin</artifactId>
+    <groupId>org.apache.zeppelin</groupId>
     <version>0.9.0-SNAPSHOT</version>
-    <name>Zeppelin: Spark Parent</name>
-    <description>Zeppelin Spark Support</description>
+    <relativePath>..</relativePath>
+  </parent>
 
-    <properties>
-        <!--library versions-->
-        <datanucleus.rdbms.version>3.2.9</datanucleus.rdbms.version>
-        <datanucleus.apijdo.version>3.2.6</datanucleus.apijdo.version>
-        <datanucleus.core.version>3.2.10</datanucleus.core.version>
+  <artifactId>spark-interpreter</artifactId>
+  <packaging>jar</packaging>
+  <version>0.9.0-SNAPSHOT</version>
+  <name>Zeppelin: Spark Interpreter</name>
+  <description>Zeppelin spark support</description>
 
-        <!--plugin versions-->
-        <plugin.scala.version>2.15.2</plugin.scala.version>
-        <!-- spark versions -->
-        <spark.version>2.1.2</spark.version>
-        <py4j.version>0.10.4</py4j.version>
-        <scala.version>2.10.5</scala.version>
-        <scala.binary.version>2.10</scala.binary.version>
-        <scala.compile.version>${scala.version}</scala.compile.version>
+  <properties>
+    <interpreter.name>spark</interpreter.name>
+    <!--library versions-->
+    <jsoup.version>1.8.2</jsoup.version>
+    <commons.exec.version>1.3</commons.exec.version>
+    <commons.compress.version>1.9</commons.compress.version>
+    <maven.plugin.api.version>3.0</maven.plugin.api.version>
+    <aether.version>1.12</aether.version>
+    <maven.aeither.provider.version>3.0.3</maven.aeither.provider.version>
+    <wagon.version>1.0</wagon.version>
 
-        <spark.archive>spark-${spark.version}</spark.archive>
-        <spark.src.download.url>
-            https://archive.apache.org/dist/spark/${spark.archive}/${spark.archive}.tgz
-        </spark.src.download.url>
-        <spark.bin.download.url>
-            https://archive.apache.org/dist/spark/${spark.archive}/${spark.archive}-bin-without-hadoop.tgz
-        </spark.bin.download.url>
-    </properties>
+    <datanucleus.rdbms.version>3.2.9</datanucleus.rdbms.version>
+    <datanucleus.apijdo.version>3.2.6</datanucleus.apijdo.version>
+    <datanucleus.core.version>3.2.10</datanucleus.core.version>
 
-    <modules>
-        <module>interpreter</module>
-    </modules>
+    <scala.compile.version>${scala.version}</scala.compile.version>
+    <!-- settings -->
+    <pyspark.test.exclude>**/PySparkInterpreterMatplotlibTest.java</pyspark.test.exclude>
+    <pyspark.test.include>**/*Test.*</pyspark.test.include>
 
+
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>zeppelin-interpreter</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>zeppelin-python</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.11</artifactId>
+      <version>2.1.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.11</artifactId>
+      <version>2.2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.11</artifactId>
+      <version>2.2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-hive_2.11</artifactId>
+      <version>2.2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-repl_2.11</artifactId>
+      <version>2.2.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${dependency.junit}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>${dependency.org.mockito}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${org.powermock}</version>
+      <scope>test</scope>
+    </dependency>
+
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>${plugin.scala.version}</version>
+        <executions>
+          <execution>
+            <id>generate</id>
+            <phase>generate-sources</phase>
+          </execution>
+          <execution>
+            <id>compile</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+          <execution>
+            <id>test-compile</id>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <phase>test-compile</phase>
+          </execution>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${plugin.maven-compiler-plugin}</version>
+        <configuration>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/../interpreter/spark</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resource-one</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/../interpreter/spark</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/target</directory>
+                  <includes>
+                    <include>*.jar</include>
+                  </includes>
+                </resource>
+                <resource>
+                  <directory>${project.basedir}/src/main/resources</directory>
+                  <includes>
+                    <include>interpreter-setting.json</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <profiles>
+
+    <profile>
+      <id>spark-2.2</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.zeppelin</groupId>
+          <artifactId>spark-scala-2.10</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>spark-2.1</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.zeppelin</groupId>
+          <artifactId>spark-scala-2.10</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>spark-2.0</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.zeppelin</groupId>
+          <artifactId>spark-scala-2.10</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>spark-1.6</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.zeppelin</groupId>
+          <artifactId>spark-scala-2.10</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+  </profiles>
 </project>
