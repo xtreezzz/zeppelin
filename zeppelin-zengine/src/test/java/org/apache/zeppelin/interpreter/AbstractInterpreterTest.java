@@ -36,35 +36,45 @@ public abstract class AbstractInterpreterTest {
 
   @Before
   public void setUp() throws Exception {
-    // copy the resources files to a temp folder
-    zeppelinHome = new File("..");
-    LOGGER.info("ZEPPELIN_HOME: " + zeppelinHome.getAbsolutePath());
-    interpreterDir = new File(zeppelinHome, "interpreter_" + getClass().getSimpleName());
-    confDir = new File(zeppelinHome, "conf_" + getClass().getSimpleName());
-    notebookDir = new File(zeppelinHome, "notebook_" + getClass().getSimpleName());
+    try {
+      // copy the resources files to a temp folder
+      zeppelinHome = new File("..");
+      LOGGER.info("ZEPPELIN_HOME: " + zeppelinHome.getAbsolutePath());
+      interpreterDir = new File(zeppelinHome, "interpreter_" + getClass().getSimpleName());
+      confDir = new File(zeppelinHome, "conf_" + getClass().getSimpleName());
+      notebookDir = new File(zeppelinHome, "notebook_" + getClass().getSimpleName());
 
-    interpreterDir.mkdirs();
-    confDir.mkdirs();
-    notebookDir.mkdirs();
+      interpreterDir.mkdirs();
+      confDir.mkdirs();
+      notebookDir.mkdirs();
 
-    FileUtils.copyDirectory(new File("src/test/resources/interpreter"), interpreterDir);
-    FileUtils.copyDirectory(new File("src/test/resources/conf"), confDir);
+      try {
+        FileUtils.copyDirectory(new File("src/test/resources/interpreter"), interpreterDir);
+        FileUtils.copyDirectory(new File("src/test/resources/conf"), confDir);
+      } catch (Exception e) {
+        //skip
+      }
 
-    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), zeppelinHome.getAbsolutePath());
-    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_CONF_DIR.getVarName(), confDir.getAbsolutePath());
-    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_DIR.getVarName(), interpreterDir.getAbsolutePath());
-    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_DIR.getVarName(), notebookDir.getAbsolutePath());
-    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT.getVarName(), "test");
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), zeppelinHome.getAbsolutePath());
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_CONF_DIR.getVarName(), confDir.getAbsolutePath());
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_DIR.getVarName(), interpreterDir.getAbsolutePath());
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_DIR.getVarName(), notebookDir.getAbsolutePath());
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT.getVarName(), "test");
 
-    conf = new ZeppelinConfiguration();
-    interpreterSettingManager = new InterpreterSettingManager(conf,
-        mock(AngularObjectRegistryListener.class), mock(RemoteInterpreterProcessListener.class), mock(ApplicationEventListener.class));
-    interpreterFactory = new InterpreterFactory(interpreterSettingManager);
+      conf = new ZeppelinConfiguration();
+      interpreterSettingManager = new InterpreterSettingManager(conf,
+              mock(AngularObjectRegistryListener.class), mock(RemoteInterpreterProcessListener.class), mock(ApplicationEventListener.class));
+      interpreterFactory = new InterpreterFactory(interpreterSettingManager);
+    } catch (Exception e) {
+      LOGGER.error("setUp" , e);
+    }
   }
 
   @After
   public void tearDown() throws Exception {
-    interpreterSettingManager.close();
+    if(interpreterSettingManager != null) {
+      interpreterSettingManager.close();
+    }
     FileUtils.deleteDirectory(interpreterDir);
     FileUtils.deleteDirectory(confDir);
     FileUtils.deleteDirectory(notebookDir);

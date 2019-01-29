@@ -25,6 +25,7 @@ import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.utils.TestUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -57,6 +58,7 @@ import org.apache.zeppelin.user.AuthenticationInfo;
 /**
  * Test against spark cluster.
  */
+@Ignore
 @RunWith(value = Parameterized.class)
 public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
 

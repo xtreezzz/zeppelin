@@ -22,6 +22,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.repo.mock.VFSNotebookRepoMock;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,7 @@ public class NotebookRepoSyncInitializationTest {
     assertTrue(notebookRepoSync.getRepo(0) instanceof VFSNotebookRepo);
   }
 
+  @Ignore
   @Test
   public void validInitTwoStorageTest() throws IOException {
     // initialize folders for each storage
@@ -108,6 +110,7 @@ public class NotebookRepoSyncInitializationTest {
     assertTrue(notebookRepoSync.getRepo(0) instanceof VFSNotebookRepo);
   }
 
+  @Ignore
   @Test
   public void initUnsupportedNumberStoragesTest() throws IOException {
     // initialize folders for each storage, currently for 2 only
@@ -135,6 +138,7 @@ public class NotebookRepoSyncInitializationTest {
     assertTrue(notebookRepoSync.getRepo(1) instanceof VFSNotebookRepoMock);
   }
 
+  @Ignore
   @Test
   public void initEmptyStorageTest() throws IOException {
     // set confs
@@ -147,6 +151,7 @@ public class NotebookRepoSyncInitializationTest {
     assertTrue(notebookRepoSync.getRepo(0) instanceof NotebookRepoWithVersionControl);
   }
 
+  @Ignore
   @Test
   public void initOneDummyStorageTest() throws IOException {
  // set confs

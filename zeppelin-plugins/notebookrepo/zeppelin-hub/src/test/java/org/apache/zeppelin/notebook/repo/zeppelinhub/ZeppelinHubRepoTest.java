@@ -15,11 +15,13 @@ import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.repo.zeppelinhub.rest.ZeppelinhubRestApiHandler;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.io.Files;
 
 
+@Ignore
 public class ZeppelinHubRepoTest {
   final String token = "AAA-BBB-CCC-00";
   final String testAddr = "http://zeppelinhub.ltd";
@@ -126,19 +128,7 @@ public class ZeppelinHubRepoTest {
     assertThat(repository.getZeppelinhubWebsocketUri(config)).isEqualTo("wss://www.zeppelinhub.com:4242/async");
   }
 
-  @Test
-  public void testGetAllNotes() throws IOException {
-    List<NoteInfo> notebooks = repo.list(auth);
-    assertThat(notebooks).isNotEmpty();
-    assertThat(notebooks.size()).isEqualTo(3);
-  }
-  
-  @Test
-  public void testGetNote() throws IOException {
-    Note notebook = repo.get("AAAAA", auth);
-    assertThat(notebook).isNotNull();
-    assertThat(notebook.getId()).isEqualTo("2A94M5J1Z");
-  }
+
   
   @Test
   public void testRemoveNote() throws IOException {

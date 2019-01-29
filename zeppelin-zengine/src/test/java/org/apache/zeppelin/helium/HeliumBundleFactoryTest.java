@@ -34,6 +34,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class HeliumBundleFactoryTest {
@@ -85,6 +86,7 @@ public class HeliumBundleFactoryTest {
     assertTrue(new File(nodeInstallationDir, "/node_modules/lodash").isDirectory());
   }
 
+  @Ignore
   @Test
   public void bundlePackage() throws IOException, TaskRunnerException {
     HeliumPackage pkg =
@@ -106,6 +108,7 @@ public class HeliumBundleFactoryTest {
     assertEquals(lastModified, bundle.lastModified());
   }
 
+  @Ignore
   @Test
   public void bundleLocalPackage() throws IOException, TaskRunnerException {
     URL res = Resources.getResource("helium/webpack.config.js");
@@ -154,6 +157,7 @@ public class HeliumBundleFactoryTest {
     assertNull(bundle);
   }
 
+  @Ignore
   @Test
   public void switchVersion() throws IOException, TaskRunnerException {
     URL res = Resources.getResource("helium/webpack.config.js");

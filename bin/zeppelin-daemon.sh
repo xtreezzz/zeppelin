@@ -56,7 +56,7 @@ JAVA_OPTS+=" -Dzeppelin.log.file=${ZEPPELIN_LOGFILE}"
 
 # construct classpath
 if [[ -d "${ZEPPELIN_HOME}/zeppelin-interpreter/target/classes" ]]; then
-  ZEPPELIN_CLASSPATH+=":${ZEPPELIN_HOME}/zeppelin-interpreter/target/classes"
+  ZEPPELIN_CLASSPATH+=":${ZEPPELIN_HOME}/zeppevj;lin-interpreter/target/classes"
 fi
 
 if [[ -d "${ZEPPELIN_HOME}/zeppelin-zengine/target/classes" ]]; then

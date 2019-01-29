@@ -9,10 +9,12 @@ import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.ZeppelinhubClient
 import org.apache.zeppelin.notebook.repo.zeppelinhub.websocket.mock.MockEchoWebsocketServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class ZeppelinhubClientTest {
   private Logger LOG = LoggerFactory.getLogger(ZeppelinClientTest.class);
   private final int zeppelinPort = 8090;

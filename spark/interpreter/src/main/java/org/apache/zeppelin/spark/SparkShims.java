@@ -55,6 +55,8 @@ public abstract class SparkShims {
     this.properties = properties;
   }
 
+
+  //TODO: не подерживаем версия ниже 2! убрать логику по получении версии 1
   private static SparkShims loadShims(String sparkVersion, Properties properties)
       throws ReflectiveOperationException {
     Class<?> sparkShimsClass;
@@ -62,8 +64,7 @@ public abstract class SparkShims {
       LOGGER.info("Initializing shims for Spark 2.x");
       sparkShimsClass = Class.forName("org.apache.zeppelin.spark.Spark2Shims");
     } else {
-      LOGGER.info("Initializing shims for Spark 1.x");
-      sparkShimsClass = Class.forName("org.apache.zeppelin.spark.Spark1Shims");
+      throw new UnsupportedOperationException("Unsupported version of spark");
     }
 
     Constructor c = sparkShimsClass.getConstructor(Properties.class);

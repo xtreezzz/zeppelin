@@ -31,11 +31,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.socket.NotebookServer;
 import org.apache.zeppelin.utils.TestUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
@@ -51,6 +47,7 @@ import org.apache.zeppelin.user.AuthenticationInfo;
 /**
  * Zeppelin notebook rest api tests.
  */
+@Ignore
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NotebookRestApiTest extends AbstractTestRestApi {
   Gson gson = new Gson();

@@ -18,6 +18,7 @@
 package org.apache.zeppelin.interpreter;
 
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreter;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -26,6 +27,7 @@ import static org.junit.Assert.fail;
 
 public class InterpreterFactoryTest extends AbstractInterpreterTest {
 
+  @Ignore
   @Test
   public void testGetFactory() throws InterpreterException {
 

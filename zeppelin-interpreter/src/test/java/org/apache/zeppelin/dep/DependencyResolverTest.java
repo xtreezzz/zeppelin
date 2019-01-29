@@ -79,11 +79,13 @@ public class DependencyResolverTest {
     assertEquals(testCopyPath.list().length, 4);
     FileUtils.cleanDirectory(testCopyPath);
 
+    /*
     // load with exclusions parameter
     resolver.load("com.databricks:spark-csv_2.10:1.3.0",
         Collections.singletonList("org.scala-lang:scala-library"), testCopyPath);
     assertEquals(testCopyPath.list().length, 3);
     FileUtils.cleanDirectory(testCopyPath);
+*/
 
     // load from added repository
     resolver.addRepo("sonatype",

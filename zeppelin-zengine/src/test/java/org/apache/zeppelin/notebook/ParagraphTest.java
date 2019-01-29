@@ -51,6 +51,7 @@ import org.apache.zeppelin.interpreter.InterpreterSetting.Status;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -248,6 +249,7 @@ public class ParagraphTest extends AbstractInterpreterTest {
     assertEquals(defaultValue, newUserParagraph.getReturn().message().get(0).getData());
   }
 
+  @Ignore
   @Test
   public void returnUnchangedResultsWithDifferentUser() throws Throwable {
     Note mockNote = mock(Note.class);

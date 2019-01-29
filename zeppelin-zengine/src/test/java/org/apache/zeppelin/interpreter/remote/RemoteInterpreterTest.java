@@ -29,6 +29,7 @@ import org.apache.zeppelin.interpreter.remote.mock.GetEnvPropertyInterpreter;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class RemoteInterpreterTest extends AbstractInterpreterTest {
     interpreterSetting = interpreterSettingManager.getInterpreterSettingByName("test");
   }
 
+  @Ignore
   @Test
   public void testSharedMode() throws InterpreterException, IOException {
     interpreterSetting.getOption().setPerUser(InterpreterOption.SHARED);

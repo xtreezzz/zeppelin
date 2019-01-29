@@ -45,9 +45,6 @@
         <module>notebookrepo/gcs</module>
         <module>notebookrepo/zeppelin-hub</module>
         <module>notebookrepo/filesystem</module>
-
-        <module>launcher/standard</module>
-        <module>launcher/spark</module>
     </modules>
 
 </project>

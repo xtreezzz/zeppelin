@@ -217,6 +217,7 @@ public class NotebookServer extends WebSocketServlet
 
   @Override
   public void onMessage(NotebookSocket conn, String msg) {
+    LOG.info("Start handle message: " + msg);
     try {
       Message messagereceived = deserializeMessage(msg);
       if (messagereceived.op != OP.PING) {
@@ -427,6 +428,7 @@ public class NotebookServer extends WebSocketServlet
         LOG.error("Fail to send error info", iox);
       }
     }
+    LOG.info("Done handle message: " + msg);
   }
 
   @Override

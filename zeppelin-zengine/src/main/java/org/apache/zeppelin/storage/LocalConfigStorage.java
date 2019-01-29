@@ -108,6 +108,7 @@ public class LocalConfigStorage extends ConfigStorage {
 
   private void atomicWriteToFile(String content, File file) throws IOException {
     File directory = file.getParentFile();
+    directory.mkdirs();
     File tempFile = File.createTempFile(file.getName(), null, directory);
     FileOutputStream out = new FileOutputStream(tempFile);
     try {

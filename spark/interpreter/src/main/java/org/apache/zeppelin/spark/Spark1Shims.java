@@ -21,7 +21,7 @@ package org.apache.zeppelin.spark;
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.SparkContext;
 import org.apache.spark.scheduler.SparkListenerJobStart;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.ui.jobs.JobProgressListener;
 import org.apache.zeppelin.interpreter.InterpreterContext;
@@ -54,8 +54,8 @@ public class Spark1Shims extends SparkShims {
 
   @Override
   public String showDataFrame(Object obj, int maxResult) {
-    if (obj instanceof DataFrame) {
-      DataFrame df = (DataFrame) obj;
+    if (obj instanceof Dataset) {
+      Dataset<Row> df = ((Dataset) obj).toDF();
       String[] columns = df.columns();
       List<Row> rows = df.takeAsList(maxResult + 1);
 

@@ -37,8 +37,10 @@ import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class HeliumApplicationFactoryTest extends AbstractInterpreterTest {
 
   private NotebookRepo notebookRepo;
@@ -58,7 +60,7 @@ public class HeliumApplicationFactoryTest extends AbstractInterpreterTest {
     SearchService search = mock(SearchService.class);
     notebookRepo = mock(NotebookRepo.class);
     NotebookAuthorization notebookAuthorization = NotebookAuthorization.init(conf);
-    /*notebook =
+    notebook =
         new Notebook(
             conf,
             notebookRepo,
@@ -66,7 +68,7 @@ public class HeliumApplicationFactoryTest extends AbstractInterpreterTest {
             interpreterSettingManager,
             search,
             notebookAuthorization,
-            new Credentials(false, null, null));*/
+            new Credentials(false, null, null));
 
     heliumAppFactory = new HeliumApplicationFactory(notebook, null);
 

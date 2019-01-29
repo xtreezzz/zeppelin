@@ -76,6 +76,9 @@ if [[ -d "${ZEPPELIN_HOME}/zeppelin-interpreter/target/classes" ]]; then
   ZEPPELIN_INTP_CLASSPATH+=":${ZEPPELIN_HOME}/zeppelin-interpreter/target/classes"
 fi
 
+# construct classpath
+addJarInDirForIntp "${ZEPPELIN_HOME}/libs"
+
 # add test classes for unittest
 if [[ -d "${ZEPPELIN_HOME}/zeppelin-zengine/target/test-classes" ]]; then
   ZEPPELIN_INTP_CLASSPATH+=":${ZEPPELIN_HOME}/zeppelin-zengine/target/test-classes"
@@ -245,6 +248,8 @@ fi
 if [[ ! -z "$ZEPPELIN_IMPERSONATE_USER" ]] && [[ -n "${suid}" || -z "${SPARK_SUBMIT}" ]]; then
     INTERPRETER_RUN_COMMAND+="'"
 fi
+
+echo $INTERPRETER_RUN_COMMAND
 
 eval $INTERPRETER_RUN_COMMAND &
 pid=$!

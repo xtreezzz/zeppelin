@@ -38,11 +38,9 @@ import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.server.ZeppelinServer;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.utils.TestUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
+@Ignore
 public class RecoveryTest extends AbstractTestRestApi {
   private Gson gson = new Gson();
   private static File recoveryDir = null;

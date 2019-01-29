@@ -143,7 +143,12 @@ public class PluginManager {
       return cachedLaunchers.get(launcherPlugin);
     }
     LOGGER.info("Loading Interpreter Launcher Plugin: " + launcherPlugin);
-    URLClassLoader pluginClassLoader = getPluginClassLoader(pluginsDir, "Launcher", launcherPlugin);
+    ClassLoader pluginClassLoader = getPluginClassLoader(pluginsDir, "Launcher", launcherPlugin);
+    if(pluginClassLoader == null) {
+      // try to use default classloader
+      // TODO: test this
+      pluginClassLoader = ClassLoader.getSystemClassLoader();
+    }
     String pluginClass = "org.apache.zeppelin.interpreter.launcher." + launcherPlugin;
     InterpreterLauncher launcher = null;
     try {
