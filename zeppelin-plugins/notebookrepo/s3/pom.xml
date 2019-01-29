@@ -84,7 +84,7 @@
                                 <goal>copy-dependencies</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${project.basedir}/../../../plugins/NotebookRepo/S3NotebookRepo</outputDirectory>
+                                <outputDirectory>${project.basedir}/../../../libs</outputDirectory>
                                 <overWriteReleases>false</overWriteReleases>
                                 <overWriteSnapshots>false</overWriteSnapshots>
                                 <overWriteIfNewer>true</overWriteIfNewer>

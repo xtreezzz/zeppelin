@@ -383,7 +383,7 @@ public class ZeppelinServer extends ResourceConfig {
       ContextHandlerCollection contexts, ZeppelinConfiguration conf) {
     WebAppContext webApp = new WebAppContext();
     webApp.setContextPath(conf.getServerContextPath());
-    File warPath = new File("/Users/dolb/IdeaProjects/zeppelinTinkoff/zeppelin-web/target/zeppelin-web-0.9.0-SNAPSHOT.war");
+    File warPath = new File("/Users/dolb/IdeaProjects/zeppelinTinkoff/zeppelin-web/dist");
     if (warPath.isDirectory()) {
       // Development mode, read from FS
       // webApp.setDescriptor(warPath+"/WEB-INF/web.xml");
