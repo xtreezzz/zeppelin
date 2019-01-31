@@ -104,6 +104,7 @@ public class ZeppelinConfigurationTest {
     Assert.assertEquals("/usr/lib/zeppelin/conf", conf.getConfDir());
   }
 
+  @Ignore
   @Test
   public void getConfigFSPath() throws ConfigurationException {
     System.setProperty(ConfVars.ZEPPELIN_HOME.getVarName(), "/usr/lib/zeppelin");

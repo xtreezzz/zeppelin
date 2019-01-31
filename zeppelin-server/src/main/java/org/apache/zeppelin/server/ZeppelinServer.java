@@ -383,11 +383,11 @@ public class ZeppelinServer extends ResourceConfig {
       ContextHandlerCollection contexts, ZeppelinConfiguration conf) {
     WebAppContext webApp = new WebAppContext();
     webApp.setContextPath(conf.getServerContextPath());
-    File warPath = new File("/Users/a.koshkin//IdeaProjects/zeppelin/zeppelin-web/dist");
+    File warPath = new File(conf.getString(ConfVars.ZEPPELIN_WAR));
     if (warPath.isDirectory()) {
       // Development mode, read from FS
       // webApp.setDescriptor(warPath+"/WEB-INF/web.xml");
-      webApp.setResourceBase(warPath.getAbsolutePath());
+      webApp.setResourceBase(warPath.getPath());
       webApp.setParentLoaderPriority(true);
     } else {
       // use packaged WAR
@@ -408,6 +408,5 @@ public class ZeppelinServer extends ResourceConfig {
         Boolean.toString(conf.getBoolean(ConfVars.ZEPPELIN_SERVER_DEFAULT_DIR_ALLOWED)));
 
     return webApp;
-    //{zeppelin-web,/,file:///Users/dolb/IdeaProjects/zeppelinTinkoff/zeppelin-web/dist/,AVAILABLE}
   }
 }

@@ -99,10 +99,11 @@
                                 <goal>copy-dependencies</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${project.basedir}/../../../libs</outputDirectory>
+                                <outputDirectory>${project.basedir}/../../../release/lib</outputDirectory>
                                 <overWriteReleases>false</overWriteReleases>
                                 <overWriteSnapshots>false</overWriteSnapshots>
                                 <overWriteIfNewer>true</overWriteIfNewer>
+                                <includeScope>compile</includeScope>
                             </configuration>
                         </execution>
                     </executions>
@@ -119,7 +120,7 @@
                             </goals>
 
                             <configuration>
-                                <outputDirectory>${project.basedir}/../../../plugins/NotebookRepo/VFSNotebookRepo</outputDirectory>
+                                <outputDirectory>${project.basedir}/../../../release/plugins/NotebookRepo/VFSNotebookRepo</outputDirectory>
                                 <resources>
                                     <resource>
                                         <directory>${project.basedir}/target</directory>

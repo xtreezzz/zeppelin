@@ -102,89 +102,9 @@
               <arguments>${web.build.command}</arguments>
             </configuration>
           </execution>
-
-          <execution>
-            <id>npm test</id>
-            <goals>
-              <goal>npm</goal>
-            </goals>
-            <phase>test</phase>
-            <configuration>
-              <skip>${web.e2e.disabled}</skip>
-              <arguments>run karma-test</arguments>
-            </configuration>
-          </execution>
-
-            <execution>
-              <id>npm e2e</id>
-              <goals>
-                <goal>npm</goal>
-              </goals>
-              <phase>integration-test</phase>
-              <configuration>
-                <skip>${web.e2e.disabled}</skip>
-                <arguments>run e2e</arguments>
-              </configuration>
-            </execution>
-
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>start-zeppelin</id>
-            <phase>pre-integration-test</phase>
-            <configuration>
-              <skip>${web.e2e.disabled}</skip>
-              <target unless="skipTests">
-                <exec executable="./zeppelin-daemon.sh" dir="${zeppelin.daemon.package.base}" spawn="false">
-                  <arg value="start" />
-                </exec>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <id>stop-zeppelin</id>
-            <phase>post-integration-test</phase>
-            <configuration>
-              <skip>${web.e2e.disabled}</skip>
-              <target unless="skipTests">
-                <exec executable="./zeppelin-daemon.sh" dir="${zeppelin.daemon.package.base}" spawn="false">
-                  <arg value="stop" />
-                </exec>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!--
-          Disabling test report generation as it forks the lifecycle
-          and results in https://issues.apache.org/jira/browse/ZEPPELIN-69
-
-          There is no better way to do it, as per
-          http://jira.codehaus.org/browse/MCOBERTURA-154
-      -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>cobertura</id>
-            <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -213,6 +133,79 @@
         <artifactId>maven-resources-plugin</artifactId>
         <version>${plugin.resource.version}</version>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resource-zeppelin-vis</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/../release/lib/node_modules/zeppelin-vis</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/app/visualization</directory>
+                  <includes>
+                    <include>*.*</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resource-zeppelin-tabledata</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/../release/lib/node_modules/zeppelin-tabledata</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/app/tabledata</directory>
+                  <includes>
+                    <include>*.*</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resource-zeppelin-spell</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.basedir}/../release/lib/node_modules/zeppelin-spell</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/app/spell</directory>
+                  <includes>
+                    <include>*.*</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -224,20 +217,6 @@
       </activation>
       <properties>
         <web.build.command>run build:dist</web.build.command>
-      </properties>
-    </profile>
-    <profile>
-      <id>web-ci</id>
-      <properties>
-        <web.build.command>run build:ci</web.build.command>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>web-e2e</id>
-      <properties>
-        <web.e2e.disabled>false</web.e2e.disabled>
-        <web.e2e.enabled>true</web.e2e.enabled>
       </properties>
     </profile>
   </profiles>

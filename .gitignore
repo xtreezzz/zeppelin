@@ -18,6 +18,8 @@ spark-1.*-bin-hadoop*
 
 lens/lens-cli-hist.log
 
+release
+
 # Zeppelin server
 zeppelin-server/local-repo
 zeppelin-server/src/main/resources/zeppelin-site.xml

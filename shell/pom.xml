@@ -92,10 +92,11 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.basedir}/../interpreter/shell</outputDirectory>
+              <outputDirectory>${project.basedir}/../release/interpreter/shell</outputDirectory>
               <overWriteReleases>false</overWriteReleases>
               <overWriteSnapshots>false</overWriteSnapshots>
               <overWriteIfNewer>true</overWriteIfNewer>
+              <includeScope>compile</includeScope>
             </configuration>
           </execution>
         </executions>
@@ -111,7 +112,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.basedir}/../interpreter/shell</outputDirectory>
+              <outputDirectory>${project.basedir}/../release/interpreter/shell</outputDirectory>
               <resources>
                 <resource>
                   <directory>${project.basedir}/target</directory>
