@@ -149,9 +149,10 @@ public class ConnectionManager {
 
   public void removeConnectionFromAllNote(NotebookSocket socket) {
     noteSocketMap.forEach((noteId, sockets) -> {
-      LOGGER.debug("Remove connection {} from note: {}", socket, noteId);
-      sockets.remove(socket);
-      checkCollaborativeStatus(noteId, sockets);
+      if (sockets.remove(socket)) {
+        LOGGER.debug("Removed connection {} from note: {}", socket, noteId);
+        checkCollaborativeStatus(noteId, sockets);
+      }
     });
   }
 
@@ -160,7 +161,7 @@ public class ConnectionManager {
       return;
     }
 
-    boolean collaborativeStatusNew = !socketList.isEmpty();
+    boolean collaborativeStatusNew = socketList.size() > 1;
     Message message = new Message(Message.OP.COLLABORATIVE_MODE_STATUS);
     message.put("status", collaborativeStatusNew);
     if (collaborativeStatusNew) {
