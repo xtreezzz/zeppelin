@@ -66,6 +66,7 @@
     <module>hbase</module>
     <module>pig</module>
     <module>jdbc</module>
+    <module>tjdbc</module>
     <module>file</module>
     <module>flink</module>
     <module>ignite</module>
@@ -1001,6 +1002,7 @@
 
               <!-- from SQLLine 1.0.2, see ZEPPELIN-2135 -->
               <exclude>**/src/main/java/org/apache/zeppelin/jdbc/SqlCompleter.java</exclude>
+              <exclude>**/src/main/java/ru/tinkoff/zeppelin/jdbc/SqlCompleter.java</exclude>
 
               <!-- bundled from bootstrap -->
               <exclude>docs/assets/themes/zeppelin/bootstrap/**</exclude>

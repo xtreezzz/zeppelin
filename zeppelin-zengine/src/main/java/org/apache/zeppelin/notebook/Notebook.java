@@ -58,6 +58,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
+import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
@@ -78,8 +79,7 @@ public class Notebook {
   private InterpreterFactory replFactory;
   private InterpreterSettingManager interpreterSettingManager;
   private ZeppelinConfiguration conf;
-  private StdSchedulerFactory quertzSchedFact;
-  org.quartz.Scheduler quartzSched;
+  Scheduler quartzSched;
   private ParagraphJobListener paragraphJobListener;
   private NotebookRepo notebookRepo;
   private SearchService noteSearchService;
@@ -110,8 +110,7 @@ public class Notebook {
     this.noteSearchService = noteSearchService;
     this.notebookAuthorization = notebookAuthorization;
     this.credentials = credentials;
-    quertzSchedFact = new org.quartz.impl.StdSchedulerFactory();
-    quartzSched = quertzSchedFact.getScheduler();
+    quartzSched = new StdSchedulerFactory().getScheduler();
     quartzSched.start();
     CronJob.notebook = this;
 
@@ -706,6 +705,11 @@ public class Notebook {
   public void close() {
     this.notebookRepo.close();
     this.noteSearchService.close();
+    try {
+      this.quartzSched.shutdown(true);
+    } catch (SchedulerException e) {
+      LOGGER.error("Quartz Scheduler shutdown failed", e);
+    }
   }
 
   public void addNotebookEventListener(NoteEventListener listener) {

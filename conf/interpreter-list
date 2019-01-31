@@ -29,6 +29,7 @@ hazelcastjet    org.apache.zeppelin:zeppelin-hazelcastjet:0.9.0         Hazelcas
 hbase           org.apache.zeppelin:zeppelin-hbase:0.9.0                Hbase interpreter
 ignite          org.apache.zeppelin:zeppelin-ignite_2.11:0.9.0          Ignite interpreter built with Scala 2.11
 jdbc            org.apache.zeppelin:zeppelin-jdbc:0.9.0                 Jdbc interpreter
+tjdbc           ru.tinkoff.zeppelin:zeppelin-tjdbc:0.9.0                Tinkoff.ru Jdbc interpreter
 kylin           org.apache.zeppelin:zeppelin-kylin:0.9.0                Kylin interpreter
 java            org.apache.zeppelin:zeppelin-java:0.9.0                 Java interpreter
 lens            org.apache.zeppelin:zeppelin-lens:0.9.0                 Lens interpreter

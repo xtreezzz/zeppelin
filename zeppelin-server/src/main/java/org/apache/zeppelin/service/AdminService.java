@@ -25,33 +25,42 @@ import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.ws.rs.BadRequestException;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.zeppelin.rest.exception.SchedulerConfigRuntimeException;
 import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
+import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
+import org.quartz.SchedulerException;
+import org.quartz.impl.SchedulerRepository;
 
-/** This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}. */
+/**
+ * This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}.
+ */
 public class AdminService {
 
-  public List<org.apache.log4j.Logger> getLoggers() {
+  public List<Logger> getLoggers() {
     Enumeration loggers = LogManager.getCurrentLoggers();
     return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(
-                new Iterator<org.apache.log4j.Logger>() {
-                  @Override
-                  public boolean hasNext() {
-                    return loggers.hasMoreElements();
-                  }
+        Spliterators.spliteratorUnknownSize(
+            new Iterator<Logger>() {
+              @Override
+              public boolean hasNext() {
+                return loggers.hasMoreElements();
+              }
 
-                  @Override
-                  public org.apache.log4j.Logger next() {
-                    return org.apache.log4j.Logger.class.cast(loggers.nextElement());
-                  }
-                },
-                Spliterator.ORDERED),
-            false)
+              @Override
+              public Logger next() {
+                return Logger.class.cast(loggers.nextElement());
+              }
+            },
+            Spliterator.ORDERED),
+        false)
         .collect(Collectors.toList());
   }
 
-  public org.apache.log4j.Logger getLogger(String name) {
+  public Logger getLogger(String name) {
     return LogManager.getLogger(name);
   }
 
@@ -63,16 +72,41 @@ public class AdminService {
           "The class of '" + loggerRequest.getName() + "' doesn't exists");
     }
 
-    org.apache.log4j.Logger logger = LogManager.getLogger(loggerRequest.getName());
+    Logger logger = LogManager.getLogger(loggerRequest.getName());
     if (null == logger) {
       throw new BadRequestException("The name of the logger is wrong");
     }
 
-    org.apache.log4j.Level level = org.apache.log4j.Level.toLevel(loggerRequest.getLevel(), null);
+    Level level = Level.toLevel(loggerRequest.getLevel(), null);
     if (null == level) {
       throw new BadRequestException("The level of the logger is wrong");
     }
 
     logger.setLevel(level);
+  }
+
+  public static List<SchedulerConfigRequest> getSchedulersInfoList() {
+    return SchedulerRepository.getInstance().lookupAll().stream().map(scheduler -> {
+      try {
+        return new SchedulerConfigRequest(scheduler.getSchedulerName(),
+          scheduler.getSchedulerInstanceId(),
+          scheduler.getMetaData().getThreadPoolSize(),
+          scheduler.getMetaData().getThreadPoolClass().getName(),
+          scheduler.getMetaData().getJobStoreClass().getName());
+      } catch (SchedulerException e) {
+        throw new SchedulerConfigRuntimeException(e);
+      }
+    }).collect(Collectors.toList());
+  }
+
+  public static void setSchedulerThreadPoolSize(
+      String schedulerId, Integer size) throws SchedulerException {
+    DynamicThreadPool threadPool =
+        DynamicThreadPool.getInstance(schedulerId);
+    if (threadPool == null) {
+      throw new SchedulerException("Dynamic pool is not configured or scheduler is wrong, "
+          + "check setting for scheduler: " + schedulerId);
+    }
+    threadPool.setThreadCount(size);
   }
 }

@@ -25,7 +25,9 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -81,7 +83,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -871,17 +872,23 @@ public class InterpreterSettingManager implements NoteEventListener {
     }
   }
 
+  public Map<String, String> extractProcessInfo(ManagedInterpreterGroup mig) {
+    HashMap<String, String> info = new HashMap<>();
+    info.put("name", mig.getId());
+    info.put("group", mig.getInterpreterSetting().getGroup());
+    info.put("host", mig.getInterpreterProcess().getHost());
+    info.put("port", String.valueOf(mig.getInterpreterProcess().getPort()));
+    return info;
+  }
+
   @ManagedAttribute
-  public Set<String> getRunningInterpreters() {
-    Set<String> runningInterpreters = Sets.newHashSet();
-    for (Map.Entry<String, InterpreterSetting> entry : interpreterSettings.entrySet()) {
-      for (ManagedInterpreterGroup mig : entry.getValue().getAllInterpreterGroups()) {
-        if (null != mig.getRemoteInterpreterProcess()) {
-          runningInterpreters.add(entry.getKey());
-        }
-      }
-    }
-    return runningInterpreters;
+  public List<Map<String, String>> getRunningInterpretersInfo() {
+    return interpreterSettings.values().stream()
+        .map(InterpreterSetting::getAllInterpreterGroups)
+        .flatMap(Collection::stream)
+        .filter(mig -> mig.getInterpreterProcess() != null)
+        .map(this::extractProcessInfo)
+        .collect(Collectors.toList());
   }
 
   @Override
