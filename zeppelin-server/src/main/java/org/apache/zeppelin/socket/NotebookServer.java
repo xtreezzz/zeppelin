@@ -1256,10 +1256,11 @@ public class NotebookServer extends WebSocketServlet
     String paragraphId = (String) fromMessage.get("id");
     String noteId = connectionManager.getAssociatedNoteId(conn);
     String text = (String) fromMessage.get("paragraph");
+    String selectedText = (String) fromMessage.get("selectedText");
     String title = (String) fromMessage.get("title");
     Map<String, Object> params = (Map<String, Object>) fromMessage.get("params");
     Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
-    getNotebookService().runParagraph(noteId, paragraphId, title, text, params, config,
+    getNotebookService().runParagraph(noteId, paragraphId, title, text, selectedText, params, config,
         false, false, getServiceContext(fromMessage),
         new WebSocketServiceCallback<Paragraph>(conn) {
           @Override

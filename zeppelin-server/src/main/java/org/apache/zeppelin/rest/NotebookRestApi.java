@@ -776,7 +776,7 @@ public class NotebookRestApi extends AbstractRestApi {
       params = request.getParams();
     }
     notebookService.runParagraph(noteId, paragraphId, paragraph.getTitle(),
-            paragraph.getText(), params, new HashMap<>(),
+            paragraph.getText(), null, params, new HashMap<>(),
             false, false, getServiceContext(), new RestServiceCallback<>());
     return new JsonResponse<>(Status.OK).build();
   }
@@ -814,7 +814,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
 
     if (notebookService.runParagraph(noteId, paragraphId, paragraph.getTitle(),
-        paragraph.getText(), params,
+        paragraph.getText(), null, params,
         new HashMap<>(), false, true, getServiceContext(), new RestServiceCallback<>())) {
       note = notebookService.getNote(noteId, getServiceContext(), new RestServiceCallback<>());
       Paragraph p = note.getParagraph(paragraphId);
