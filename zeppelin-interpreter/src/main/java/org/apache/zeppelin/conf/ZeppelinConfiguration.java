@@ -441,6 +441,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getConfigFSDir() + "/interpreter.json";
   }
 
+  public String getFavoriteNotesFilePath() {
+    return getConfigFSDir() + "/favorite-notes.json";
+  }
+
   public String getHeliumConfPath() {
     return getRelativeDir(String.format("%s/helium.json", getConfDir()));
   }

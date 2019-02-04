@@ -265,7 +265,18 @@ limitations under the License.
       </ul>
     </span>
 
-<!-- put the delete action by itself for your protection -->
+    <span class="labelBtn btn-group" style="vertical-align:middle; display:inline-block;">
+      <label type="button"
+              class="btn btn-default btn-xs"
+              ng-class="{'favorite-star-on' : isFavorite(note.id)}"
+              ng-click="switchFavoriteStatus(note.id)"
+              ng-hide="viewOnly"
+              tooltip-placement="bottom" uib-tooltip="{{isFavorite(note.id) ? 'Remove note from favorite' : 'Add note to favorite'}}">
+        <i class="icon-star"></i>
+      </label>
+    </span>
+
+      <!-- put the delete action by itself for your protection -->
       <span class="labelBtn btn-group" style="vertical-align:middle; display:inline-block;">
         <!-- if the note is in the trash, remove note permanently -->
         <button ng-if="isTrash(note)"

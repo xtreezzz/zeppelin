@@ -21,7 +21,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', NotebookCtrl);
 function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
                       $http, websocketMsgSrv, baseUrlSrv, $timeout, saveAsService,
                       ngToast, noteActionService, noteVarShareService, TRASH_FOLDER_ID,
-                      heliumService) {
+                      heliumService, favoriteNotesService) {
   'ngInject';
 
   ngToast.dismiss();
@@ -163,6 +163,8 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
         1000
       );
     }
+
+    favoriteNotesService.addNoteToRecent($routeParams.noteId);
   };
 
   initNotebook();
@@ -217,6 +219,19 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
 
   $scope.isTrash = function(note) {
     return note ? note.name.split('/')[0] === TRASH_FOLDER_ID : false;
+  };
+
+  $scope.switchFavoriteStatus = function(noteId) {
+    let current = favoriteNotesService.noteIsFavorite(noteId);
+    if (current) {
+      favoriteNotesService.removeNoteFromFavorite(noteId);
+    } else {
+      favoriteNotesService.addNoteToFavorite(noteId);
+    }
+  };
+
+  $scope.isFavorite = function(noteId) {
+    return favoriteNotesService.noteIsFavorite(noteId);
   };
 
   // Export notebook

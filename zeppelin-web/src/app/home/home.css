@@ -236,6 +236,16 @@ body .navbar {
   font-size: 14px;
 }
 
+.favorite-star-on {
+  color: #c4ba00;
+  text-shadow: #ffbe00 0 0 3px
+}
+
+.favorite-star {
+  margin-left: 5px;
+  cursor: pointer;
+}
+
 .nav-login-btn,
 .nav-login-btn:hover,
 .nav-login-btn:focus {

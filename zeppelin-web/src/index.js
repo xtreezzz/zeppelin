@@ -72,6 +72,7 @@ import './components/websocket/websocket-message.service.js';
 import './components/websocket/websocket-event.factory.js';
 import './components/note-list/note-list.factory.js';
 import './components/base-url/base-url.service.js';
+import './components/favorite-notes/favorite-notes.service.js';
 import './components/loader/loader.service';
 import './components/login/login.controller.js';
 import './components/note-action/note-action.service.js';
