@@ -92,15 +92,19 @@ function FavoriteNotesService($rootScope, $http, baseUrlSrv) {
       thenAction,
     } = conf;
 
-    return $http.get(`${baseUrlSrv.getRestApiBase()}/favorite_notes/set_note_status` +
-      '?username=' + username +
-      '&note_id=' + noteId +
-      '&note_type=' + noteType +
-      '&note_action=' + noteAction).then((response) => {
-        if (response.data.status === 'OK' && thenAction) {
-          thenAction();
-        }
+    if (loadPromise) {
+      loadPromise.then(() => {
+        $http.get(`${baseUrlSrv.getRestApiBase()}/favorite_notes/set_note_status` +
+          '?username=' + username +
+          '&note_id=' + noteId +
+          '&note_type=' + noteType +
+          '&note_action=' + noteAction).then((response) => {
+            if (response.data.status === 'OK' && thenAction) {
+              thenAction();
+            }
+          });
       });
+    }
   };
 
   this.addNoteToFavorite = function(noteId) {

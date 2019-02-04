@@ -164,6 +164,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       );
     }
 
+    favoriteNotesService.init();
     favoriteNotesService.addNoteToRecent($routeParams.noteId);
   };
 
