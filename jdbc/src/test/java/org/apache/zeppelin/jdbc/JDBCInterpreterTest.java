@@ -677,7 +677,6 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         "select * from test_table WHERE ID = '/*' -- test";
 
     InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
-    System.out.println(interpreterResult);
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
     assertEquals(3, interpreterResult.message().size());
   }

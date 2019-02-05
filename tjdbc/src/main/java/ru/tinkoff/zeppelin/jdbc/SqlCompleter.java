@@ -3,14 +3,13 @@ package ru.tinkoff.zeppelin.jdbc;
 /*
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
-
 import java.util.HashSet;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -229,15 +228,9 @@ public class SqlCompleter {
     try {
       net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
       parseExpression.accept(statementDeParser);
-      completions.add("from");
-      completions.add("where");
-      completions.add("select");
-      completions.add("join");
-      completions.add("left");
-      completions.add("right");
-      completions.add("inner");
-      completions.add("outer");
-      completions.add("on");
+      completions.addAll(
+          Arrays.asList("from", "where", "select", "join", "left", "right", "inner", "outer", "on")
+      );
     } catch (JSQLParserException e) {
       if (e.getCause().toString().contains("Was expecting one of:")) {
         List<String> expected = Arrays.asList(e.getCause().toString()

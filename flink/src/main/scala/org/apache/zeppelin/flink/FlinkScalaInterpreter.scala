@@ -22,7 +22,6 @@ import java.io.BufferedReader
 import java.nio.file.Files
 import java.util.Properties
 
-import org.apache.commons.lang.StringUtils
 import org.apache.flink.api.scala.FlinkShell._
 import org.apache.flink.api.scala.{ExecutionEnvironment, FlinkILoop}
 import org.apache.flink.client.program.ClusterClient
@@ -145,7 +144,7 @@ class FlinkScalaInterpreter(val properties: Properties) {
                            cursor: Int,
                            context: InterpreterContext): java.util.List[InterpreterCompletion] = {
     val completions = scalaCompleter.complete(buf, cursor).candidates
-      .map(e => new InterpreterCompletion(e, e, StringUtils.EMPTY, StringUtils.EMPTY))
+      .map(e => new InterpreterCompletion(e, e, null, null))
     scala.collection.JavaConversions.seqAsJavaList(completions)
   }
 

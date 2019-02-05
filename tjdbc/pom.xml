@@ -39,7 +39,7 @@
     <hadoop.common.version>2.7.2</hadoop.common.version>
     <h2.version>1.4.190</h2.version>
     <commons.dbcp2.version>2.0.1</commons.dbcp2.version>
-    <commons-lang3.version>3.7</commons-lang3.version>
+    <commons.lang.version>2.5</commons.lang.version>
     <jsqlparser.version>1.2</jsqlparser.version>
 
     <!--test library versions-->
@@ -68,9 +68,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${commons-lang3.version}</version>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>${commons.lang.version}</version>
     </dependency>
 
     <dependency>
