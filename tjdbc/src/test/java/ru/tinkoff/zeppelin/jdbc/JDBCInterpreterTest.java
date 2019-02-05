@@ -32,6 +32,7 @@ import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DEFAULT_USER;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.PRECODE_KEY_TEMPLATE;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.STATEMENT_PRECODE_KEY_TEMPLATE;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -409,7 +410,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         interpreterContext);
 
     InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("select", "select",
-        CompletionType.keyword.name());
+        CompletionType.keyword.name(), StringUtils.EMPTY);
 
     assertEquals(1, completionList.size());
     assertEquals(true, completionList.contains(correctCompletionKeyword));

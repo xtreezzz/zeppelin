@@ -83,7 +83,8 @@ struct RemoteApplicationResult {
 struct InterpreterCompletion {
   1: string name,
   2: string value,
-  3: string meta
+  3: string meta,
+  4: string description
 }
 
 

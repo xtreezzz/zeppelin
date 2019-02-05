@@ -4,13 +4,16 @@ package ru.tinkoff.zeppelin.jdbc;
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
 
+import java.util.HashSet;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
+import net.sf.jsqlparser.util.deparser.SelectDeParser;
+import net.sf.jsqlparser.util.deparser.StatementDeParser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -19,11 +22,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import org.apache.zeppelin.completer.CachedCompleter;
@@ -59,12 +60,30 @@ public class SqlCompleter {
    */
   private Map<String, CachedCompleter<StringsCompleter>> columnsCompleters = new HashMap<>();
 
+  /**
+   * Contains description of each database entity. Key - full name of entity.
+   */
+  private static Map<String, String> databaseEntityDescription = new HashMap<>();
+
   private int ttlInSeconds;
 
   private String defaultSchema;
 
   SqlCompleter(int ttlInSeconds) {
     this.ttlInSeconds = ttlInSeconds;
+  }
+
+  private static String extractEntityDescription(ResultSet entityInfo) {
+    String description = StringUtils.EMPTY;
+    try {
+      description  = entityInfo.getString("REMARKS");
+      if (description == null) {
+        description  = StringUtils.EMPTY;
+      }
+    } catch (Exception e) {
+      logger.error("Failed to get info", e);
+    }
+    return description;
   }
 
   /**
@@ -107,9 +126,12 @@ public class SqlCompleter {
         if (schemaName == null) {
           schemaName = "";
         }
+        String schemaDescription = "";
         for (String schemaFilter : schemaFilters) {
-          if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%", ".*?"))) {
+          if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%",
+              ".*?"))) {
             res.add(schemaName);
+            databaseEntityDescription.put(schemaName, schemaDescription);
           }
         }
       }
@@ -135,9 +157,12 @@ public class SqlCompleter {
       try (ResultSet schemas = meta.getCatalogs()) {
         while (schemas.next()) {
           String schemaName = schemas.getString("TABLE_CAT");
+          String schemaDescription = extractEntityDescription(schemas);
           for (String schemaFilter : schemaFilters) {
-            if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%", ".*?"))) {
+            if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%",
+                ".*?"))) {
               res.add(schemaName);
+              databaseEntityDescription.put(schemaName, schemaDescription);
             }
           }
         }
@@ -157,7 +182,9 @@ public class SqlCompleter {
       } else {
         while (tbls.next()) {
           String table = tbls.getString("TABLE_NAME");
-          tables.add(table);
+          String tableDescription = extractEntityDescription(tbls);
+          tables.add(schema + "." + table);
+          databaseEntityDescription.put(schema + "." + table, tableDescription);
         }
       }
     } catch (Exception t) {
@@ -179,79 +206,52 @@ public class SqlCompleter {
     try (ResultSet cols = meta.getColumns(schema, schema, table, "%")) {
       while (cols.next()) {
         String column = cols.getString("COLUMN_NAME");
-        columns.add(column);
+        String columnDescription = extractEntityDescription(cols);
+        columns.add(schema + "." + table + "." + column);
+        databaseEntityDescription.put(schema + "." + table + "." + column, columnDescription);
       }
     } catch (Exception t) {
       logger.error("Failed to retrieve the column name", t);
     }
   }
 
-  private static Set<String> getSqlKeywordsCompletions(DatabaseMetaData meta) throws IOException,
-      SQLException {
-
-    // Add the default SQL completions
-    String keywords =
-        new BufferedReader(new InputStreamReader(
-            SqlCompleter.class.getResourceAsStream("/ansi.sql.keywords"))).readLine();
-
+  private static Set<String> getSqlKeywordsCompletions(String statement) {
     Set<String> completions = new TreeSet<>();
 
-    if (null != meta) {
+    StringBuilder myBuf = new StringBuilder();
+    SelectDeParser selectDeparser = new SelectDeParser();
+    selectDeparser.setBuffer(myBuf);
+    ExpressionDeParser expressionDeParser =
+        new ExpressionDeParser(selectDeparser, new StringBuilder());
+    StatementDeParser statementDeParser =
+        new StatementDeParser(expressionDeParser, selectDeparser, new StringBuilder());
 
-      // Add the driver specific SQL completions
-      String driverSpecificKeywords =
-          "/" + meta.getDriverName().replace(" ", "-").toLowerCase() + "-sql.keywords";
-      logger.info("JDBC DriverName: {}", driverSpecificKeywords);
-      try {
-        if (SqlCompleter.class.getResource(driverSpecificKeywords) != null) {
-          String driverKeywords =
-              new BufferedReader(new InputStreamReader(
-                  SqlCompleter.class.getResourceAsStream(driverSpecificKeywords)))
-                  .readLine();
-          keywords += "," + driverKeywords.toUpperCase();
+    try {
+      net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
+      parseExpression.accept(statementDeParser);
+      completions.add("from");
+      completions.add("where");
+      completions.add("select");
+      completions.add("join");
+      completions.add("left");
+      completions.add("right");
+      completions.add("inner");
+      completions.add("outer");
+      completions.add("on");
+    } catch (JSQLParserException e) {
+      if (e.getCause().toString().contains("Was expecting one of:")) {
+        List<String> expected = Arrays.asList(e.getCause().toString()
+            .substring(e.getCause().toString().indexOf("Was expecting one of:")).split("\n"));
+        expected = expected.subList(1, expected.size());
+        for (String expectedValue : expected) {
+          expectedValue =
+              expectedValue.trim().replace("\"", "").toLowerCase();
+          if (!expectedValue.startsWith("<")) {
+            completions.add(expectedValue);
+          }
         }
-      } catch (Exception e) {
-        logger.debug("fail to get driver specific SQL completions for "
-            + driverSpecificKeywords + " : " + e, e);
       }
-
-      // Add the keywords from the current JDBC connection
-      try {
-        keywords += "," + meta.getSQLKeywords();
-      } catch (Exception e) {
-        logger.debug("fail to get SQL key words from database metadata: " + e, e);
-      }
-      try {
-        keywords += "," + meta.getStringFunctions();
-      } catch (Exception e) {
-        logger.debug("fail to get string function names from database metadata: " + e, e);
-      }
-      try {
-        keywords += "," + meta.getNumericFunctions();
-      } catch (Exception e) {
-        logger.debug("fail to get numeric function names from database metadata: " + e, e);
-      }
-      try {
-        keywords += "," + meta.getSystemFunctions();
-      } catch (Exception e) {
-        logger.debug("fail to get system function names from database metadata: " + e, e);
-      }
-      try {
-        keywords += "," + meta.getTimeDateFunctions();
-      } catch (Exception e) {
-        logger.debug("fail to get time date function names from database metadata: " + e, e);
-      }
-
-      // Set all keywords to lower-case versions
-      keywords = keywords.toLowerCase();
-
     }
-
-    StringTokenizer tok = new StringTokenizer(keywords, ", ");
-    while (tok.hasMoreTokens()) {
-      completions.add(tok.nextToken());
-    }
-
     return completions;
   }
 
@@ -281,6 +281,11 @@ public class SqlCompleter {
 
   void createOrUpdateFromConnection(Connection connection, String schemaFiltersString,
                                     String buffer, int cursor) {
+    // get statement completion
+    Set<String> keywords = getSqlKeywordsCompletions(buffer);
+    initKeywords(keywords);
+    logger.info("Keyword completer initialized with {} keywords", keywords.size());
+
     try (Connection c = connection) {
       if (schemaFiltersString == null) {
         schemaFiltersString = StringUtils.EMPTY;
@@ -294,12 +299,6 @@ public class SqlCompleter {
         //TODO(mebelousov): put defaultSchema in cache
         if (defaultSchema == null) {
           defaultSchema = getDefaultSchema(connection, databaseMetaData);
-        }
-
-        if (keywordCompleter == null || keywordCompleter.getCompleter() == null) {
-          Set<String> keywords = getSqlKeywordsCompletions(databaseMetaData);
-          initKeywords(keywords);
-          logger.info("Keyword completer initialized with " + keywords.size() + " keywords");
         }
 
         if (schemasCompleter == null || schemasCompleter.getCompleter() == null
@@ -351,7 +350,7 @@ public class SqlCompleter {
           }
         }
       }
-    } catch (SQLException | IOException e) {
+    } catch (SQLException e) {
       logger.error("Failed to update the metadata completions" + e.getMessage());
     }
   }
@@ -473,7 +472,9 @@ public class SqlCompleter {
 
       List<CharSequence> keywordsCandidates = new ArrayList<>();
       int keywordsRes = completeKeyword(buffer, cursorPosition, keywordsCandidates);
-      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name());
+      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name()
+          + "-tinkoff");
+      logger.info("Complete for buffer with {}", keywordsCandidates);
 
       logger.debug("Complete for buffer with " + keywordsRes + schemaRes
           + tableRes + allColumnsRes + "candidates");
@@ -497,8 +498,23 @@ public class SqlCompleter {
   private void addCompletions(List<InterpreterCompletion> interpreterCompletions,
                               List<CharSequence> candidates, String meta) {
     for (CharSequence candidate : candidates) {
-      interpreterCompletions.add(new InterpreterCompletion(candidate.toString(),
-          candidate.toString(), meta));
+      String description = candidate.toString();
+      // check candidate meta for description
+      if (meta.equals(CompletionType.column.name())
+          || meta.equals(CompletionType.schema.name())
+          || meta.equals(CompletionType.table.name())) {
+        description = databaseEntityDescription.get(candidate.toString());
+        if (description == null || description.equals("")) {
+          description = candidate.toString();
+        }
+      }
+
+      List<String> path = Arrays.asList(candidate.toString().split("\\."));
+      if (!path.isEmpty()) {
+        candidate = path.get(path.size() - 1);
+      }
+      interpreterCompletions.add(
+          new InterpreterCompletion(candidate.toString(), candidate.toString(), meta, description));
     }
   }
 }

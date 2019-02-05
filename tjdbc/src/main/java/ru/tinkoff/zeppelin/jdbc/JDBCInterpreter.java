@@ -820,11 +820,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
       // AuthenticationInfo could be null if completion called before paragraph execution
       return Collections.emptyList();
     }
+    logger.info("\n[DEBUG]\n\tbuf - {}\n\tcursor - {}\n\tintpContext - {}\n[DEBUG]",
+        buf, cursor, interpreterContext);
 
     List<InterpreterCompletion> candidates = new ArrayList<>();
     String propertyKey = getPropertyKey(interpreterContext);
     String sqlCompleterKey =
-        String.format("%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
+        String.format("%s.%s",
+        interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
     SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
 
     Connection connection = null;
@@ -837,7 +840,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
     sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
     sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
     sqlCompleter.fillCandidates(buf, cursor, candidates);
-
     return candidates;
   }
 

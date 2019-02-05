@@ -276,9 +276,12 @@ public class HDFSFileInterpreter extends FileInterpreter {
     logger.info("Completion request at position\t" + cursor + " in string " + buf);
     final List<InterpreterCompletion> suggestions = new ArrayList<>();
     if (StringUtils.isEmpty(buf)) {
-      suggestions.add(new InterpreterCompletion("ls", "ls", CompletionType.command.name()));
-      suggestions.add(new InterpreterCompletion("cd", "cd", CompletionType.command.name()));
-      suggestions.add(new InterpreterCompletion("pwd", "pwd", CompletionType.command.name()));
+      suggestions.add(new InterpreterCompletion("ls", "ls", CompletionType.command.name(),
+          StringUtils.EMPTY));
+      suggestions.add(new InterpreterCompletion("cd", "cd", CompletionType.command.name(),
+          StringUtils.EMPTY));
+      suggestions.add(new InterpreterCompletion("pwd", "pwd", CompletionType.command.name(),
+          StringUtils.EMPTY));
       return suggestions;
     }
 
@@ -286,15 +289,15 @@ public class HDFSFileInterpreter extends FileInterpreter {
     if (buf.split(" ").length == 1){
       if ("cd".contains(buf)) {
         suggestions.add(new InterpreterCompletion("cd", "cd",
-                CompletionType.command.name()));
+                CompletionType.command.name(), StringUtils.EMPTY));
       }
       if ("ls".contains(buf)) {
         suggestions.add(new InterpreterCompletion("ls", "ls",
-                CompletionType.command.name()));
+                CompletionType.command.name(), StringUtils.EMPTY));
       }
       if ("pwd".contains(buf)) {
         suggestions.add(new InterpreterCompletion("pwd", "pwd",
-                CompletionType.command.name()));
+                CompletionType.command.name(), StringUtils.EMPTY));
       }
 
       return suggestions;
@@ -330,7 +333,7 @@ public class HDFSFileInterpreter extends FileInterpreter {
                 //beforeLastPeriod should be the start of fs.pathSuffix, so take the end of it.
                 String suggestedFinish = fs.pathSuffix.substring(beforeLastPeriod.length());
                 suggestions.add(new InterpreterCompletion(suggestedFinish, suggestedFinish,
-                    CompletionType.path.name()));
+                    CompletionType.path.name(), StringUtils.EMPTY));
               }
             }
             return suggestions;

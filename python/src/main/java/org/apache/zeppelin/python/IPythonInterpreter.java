@@ -387,7 +387,8 @@ public class IPythonInterpreter extends Interpreter implements ExecuteResultHand
       if (lastIndexOfDot != -1) {
         match = match.substring(lastIndexOfDot + 1);
       }
-      completions.add(new InterpreterCompletion(match, match, ""));
+      completions.add(
+          new InterpreterCompletion(match, match, StringUtils.EMPTY, StringUtils.EMPTY));
     }
     return completions;
   }
