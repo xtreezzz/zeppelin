@@ -34,10 +34,9 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
@@ -46,7 +45,6 @@ import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
@@ -323,7 +321,8 @@ public class NotebookServerTest extends AbstractTestRestApi {
             .put("noteId", "noteId")
             .put("paragraphId", "paragraphId"));
 
-    server.getConnectionManager().noteSocketMap.put("noteId", asList(conn, otherConn));
+    server.getConnectionManager().noteSocketMap
+        .put("noteId", new ConcurrentLinkedQueue<>(asList(conn, otherConn)));
 
     // When
     server.angularObjectClientBind(conn, messageReceived);
@@ -371,7 +370,8 @@ public class NotebookServerTest extends AbstractTestRestApi {
             .put("noteId", "noteId")
             .put("paragraphId", "paragraphId"));
 
-    server.getConnectionManager().noteSocketMap.put("noteId", asList(conn, otherConn));
+    server.getConnectionManager().noteSocketMap
+        .put("noteId", new ConcurrentLinkedQueue<>(asList(conn, otherConn)));
 
     // When
     server.angularObjectClientUnbind(conn, messageReceived);
