@@ -14,9 +14,9 @@
  */
 package ru.tinkoff.zeppelin.jdbc;
 
-import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.COMMON_KEY;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.COMPLETER_SCHEMA_FILTERS_KEY;
@@ -45,15 +45,14 @@ import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.URL_KEY;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.USER_KEY;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.WHITESPACE;
 
-import java.util.Collections;
 import java.util.Map.Entry;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDriver;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.lang.mutable.MutableBoolean;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.hadoop.conf.Configuration;
@@ -100,8 +99,8 @@ import ru.tinkoff.zeppelin.jdbc.security.JDBCSecurityImpl;
 
 
 /**
- * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ, GreenplumDB,
- * MariaDB, MySQL, Postgres and Redshift.
+ * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ,
+ * GreenplumDB, MariaDB, MySQL, Postgres and Redshift.
  *
  * <ul>
  * <li>{@code default.url} - JDBC URL to connect to.</li>
@@ -112,8 +111,13 @@ import ru.tinkoff.zeppelin.jdbc.security.JDBCSecurityImpl;
  * </ul>
  *
  * <p>
- * How to use: <br/> {@code %jdbc.sql} <br/> {@code SELECT store_id, count(*) FROM
- * retail_demo.order_lineitems_pxf GROUP BY store_id; }
+ * How to use: <br/>
+ * {@code %jdbc.sql} <br/>
+ * {@code
+ * SELECT store_id, count(*)
+ * FROM retail_demo.order_lineitems_pxf
+ * GROUP BY store_id;
+ * }
  * </p>
  */
 public class JDBCInterpreter extends KerberosInterpreter {
@@ -816,11 +820,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
       InterpreterContext interpreterContext) throws InterpreterException {
-    if (interpreterContext == null || interpreterContext.getAuthenticationInfo() == null) {
-      // AuthenticationInfo could be null if completion called before paragraph execution
-      return Collections.emptyList();
-    }
-
     List<InterpreterCompletion> candidates = new ArrayList<>();
     String propertyKey = getPropertyKey(interpreterContext);
     String sqlCompleterKey =
@@ -829,7 +828,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     Connection connection = null;
     try {
-      connection = getConnection(propertyKey, interpreterContext);
+      if (interpreterContext != null) {
+        connection = getConnection(propertyKey, interpreterContext);
+      }
     } catch (ClassNotFoundException | SQLException | IOException e) {
       logger.warn("SQLCompleter will created without use connection", e);
     }
