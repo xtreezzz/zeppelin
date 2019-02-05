@@ -30,6 +30,7 @@ import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_URL;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_PRECODE;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.PRECODE_KEY_TEMPLATE;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.STATEMENT_PRECODE_KEY_TEMPLATE;
@@ -409,7 +410,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
             interpreterContext);
 
     InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("select", "select",
-            CompletionType.keyword.name());
+            CompletionType.keyword.name(), StringUtils.EMPTY);
 
     assertEquals(1, completionList.size());
     assertEquals(true, completionList.contains(correctCompletionKeyword));
@@ -676,6 +677,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         "select * from test_table WHERE ID = '/*' -- test";
 
     InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
+    System.out.println(interpreterResult);
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
     assertEquals(3, interpreterResult.message().size());
   }

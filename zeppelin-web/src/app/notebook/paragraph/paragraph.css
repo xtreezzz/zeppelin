@@ -354,6 +354,38 @@ table.table-shortcut {
   opacity : 0.6!important;
 }
 
+#completion_card {
+  background: rgba(114, 127, 222, 0.08); /* the same as highlighted code line */
+  position: relative;
+  overflow: hidden;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 12px;
+  line-height: normal;
+  direction: ltr;
+}
+
+/* completion icons */
+.ace_iconable_column:first-child::before {
+  color: #ddba04;
+  content: '\f0db  '; /* font-awesome icon */
+  font-family: FontAwesome;
+  font-size: 12px;
+}
+
+.ace_iconable_table:first-child::before{
+  color: #04dd07;
+  content: '\f0ce  '; /* font-awesome icon */
+  font-family: FontAwesome;
+  font-size: 12px;
+}
+
+.ace_iconable_schema:first-child::before{
+  color: #3304dd;
+  content: '\f1c0  '; /* font-awesome icon */
+  font-family: FontAwesome;
+  font-size: 12px;
+}
+
 .ace_marker-layer .ace_selection {
     z-index: 0 !important;
 }
@@ -361,7 +393,6 @@ table.table-shortcut {
 .ace_marker-layer .ace_selected-word {
     z-index: 0 !important;
 }
-
 .ace-tm {
   background: #FFFFFF;
   color: black;

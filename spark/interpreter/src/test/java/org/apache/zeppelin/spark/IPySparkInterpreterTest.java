@@ -19,6 +19,7 @@ package org.apache.zeppelin.spark;
 
 
 import com.google.common.io.Files;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterException;
@@ -206,15 +207,15 @@ public class IPySparkInterpreterTest extends IPythonInterpreterTest {
 
     completions = interpreter.completion("sc.", 3, createInterpreterContext(mockIntpEventClient));
     assertTrue(completions.size() > 0);
-    completions.contains(new InterpreterCompletion("range", "range", ""));
+    completions.contains(new InterpreterCompletion("range", "range", StringUtils.EMPTY, StringUtils.EMPTY));
 
     completions = interpreter.completion("1+1\nsc.", 7, createInterpreterContext(mockIntpEventClient));
     assertTrue(completions.size() > 0);
-    completions.contains(new InterpreterCompletion("range", "range", ""));
+    completions.contains(new InterpreterCompletion("range", "range", StringUtils.EMPTY, StringUtils.EMPTY));
 
     completions = interpreter.completion("s", 1, createInterpreterContext(mockIntpEventClient));
     assertTrue(completions.size() > 0);
-    completions.contains(new InterpreterCompletion("sc", "sc", ""));
+    completions.contains(new InterpreterCompletion("sc", "sc", StringUtils.EMPTY, StringUtils.EMPTY));
 
     // pyspark streaming
     context = createInterpreterContext(mockIntpEventClient);

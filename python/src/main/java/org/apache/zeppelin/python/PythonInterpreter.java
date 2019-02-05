@@ -509,7 +509,7 @@ public class PythonInterpreter extends Interpreter implements ExecuteResultHandl
 
     List<InterpreterCompletion> results = new LinkedList<>();
     for (String name : completionList) {
-      results.add(new InterpreterCompletion(name, name, StringUtils.EMPTY));
+      results.add(new InterpreterCompletion(name, name, StringUtils.EMPTY, StringUtils.EMPTY));
     }
     return results;
   }

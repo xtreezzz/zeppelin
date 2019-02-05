@@ -263,7 +263,8 @@ public class UniverseCompleter {
       } else {
         value = candidate.toString();
       }
-      interpreterCompletions.add(new InterpreterCompletion(candidate.toString(), value, meta));
+      interpreterCompletions.add(new InterpreterCompletion(candidate.toString(), value, meta,
+          StringUtils.EMPTY));
     }
   }
 
@@ -277,7 +278,7 @@ public class UniverseCompleter {
         value = String.format("%s%s", candidate.getName(), END_NAME);
       }
       interpreterCompletions.add(new InterpreterCompletion(candidate.getName(), value,
-          candidate.getType()));
+          candidate.getType(), StringUtils.EMPTY));
     }
   }
 

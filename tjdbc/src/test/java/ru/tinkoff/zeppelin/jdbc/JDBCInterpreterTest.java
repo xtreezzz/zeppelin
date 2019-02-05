@@ -32,6 +32,7 @@ import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.DEFAULT_USER;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.PRECODE_KEY_TEMPLATE;
 import static ru.tinkoff.zeppelin.jdbc.enums.InterpreterProperties.STATEMENT_PRECODE_KEY_TEMPLATE;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -262,6 +263,8 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
 
     InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
 
+    System.out.println(interpreterResult);
+
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(1).getType());
@@ -290,6 +293,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         "select * from test_table WHERE ID = ';';";
     InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    System.out.println(interpreterResult);
     assertEquals(2, interpreterResult.message().size());
 
     assertEquals(InterpreterResult.Type.TABLE, interpreterResult.message().get(0).getType());
@@ -409,8 +413,9 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
         interpreterContext);
 
     InterpreterCompletion correctCompletionKeyword = new InterpreterCompletion("select", "select",
-        CompletionType.keyword.name());
+        CompletionType.keyword.name() + "-tinkoff", "select");
 
+    System.out.println(completionList);
     assertEquals(1, completionList.size());
     assertEquals(true, completionList.contains(correctCompletionKeyword));
   }
@@ -679,6 +684,7 @@ public class JDBCInterpreterTest extends BasicJDBCTestCaseAdapter {
 
     InterpreterResult interpreterResult = t.interpret(sqlQuery, interpreterContext);
     assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code());
+    System.out.println(interpreterResult);
     assertEquals(3, interpreterResult.message().size());
   }
 }

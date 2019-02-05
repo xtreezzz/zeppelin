@@ -18,6 +18,7 @@
 
 package org.apache.zeppelin.alluxio;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,25 +83,34 @@ public class AlluxioInterpreterTest {
   @Test
   public void testCompletion() {
     List expectedResultOne = Arrays.asList(
-        new InterpreterCompletion("cat", "cat", CompletionType.command.name()),
-        new InterpreterCompletion("chgrp", "chgrp", CompletionType.command.name()),
-        new InterpreterCompletion("chmod", "chmod", CompletionType.command.name()),
-        new InterpreterCompletion("chown", "chown", CompletionType.command.name()),
-        new InterpreterCompletion("copyFromLocal", "copyFromLocal", CompletionType.command.name()),
-        new InterpreterCompletion("copyToLocal", "copyToLocal", CompletionType.command.name()),
-        new InterpreterCompletion("count", "count", CompletionType.command.name()),
-        new InterpreterCompletion("createLineage", "createLineage", CompletionType.command.name()));
+        new InterpreterCompletion("cat", "cat", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("chgrp", "chgrp", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("chmod", "chmod", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("chown", "chown", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("copyFromLocal", "copyFromLocal", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("copyToLocal", "copyToLocal", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("count", "count", CompletionType.command.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("createLineage", "createLineage", CompletionType.command.name(),
+            StringUtils.EMPTY));
     List expectedResultTwo = Arrays.asList(
         new InterpreterCompletion("copyFromLocal", "copyFromLocal",
-              CompletionType.command.name()),
+              CompletionType.command.name(), StringUtils.EMPTY),
         new InterpreterCompletion("copyToLocal", "copyToLocal",
-              CompletionType.command.name()),
-        new InterpreterCompletion("count", "count", CompletionType.command.name()));
+              CompletionType.command.name(), StringUtils.EMPTY),
+        new InterpreterCompletion("count", "count", CompletionType.command.name(),
+            StringUtils.EMPTY));
     List expectedResultThree = Arrays.asList(
         new InterpreterCompletion("copyFromLocal", "copyFromLocal",
-              CompletionType.command.name()),
+              CompletionType.command.name(), StringUtils.EMPTY),
         new InterpreterCompletion("copyToLocal", "copyToLocal",
-              CompletionType.command.name()));
+              CompletionType.command.name(), StringUtils.EMPTY));
     List expectedResultNone = new ArrayList<>();
 
     List<InterpreterCompletion> resultOne = alluxioInterpreter.completion("c", 0, null);

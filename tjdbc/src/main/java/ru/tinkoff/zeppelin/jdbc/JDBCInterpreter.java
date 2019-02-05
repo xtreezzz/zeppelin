@@ -709,7 +709,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
               interpreterResult.add(results);
               if (!isComplete.booleanValue()) {
                 interpreterResult.add(ResultMessages.getExceedsLimitRowsMessage(getMaxResult(),
-                    String.format("%s.%s", COMMON_KEY, MAX_LINE_KEY)));
+                    String.format("%s.%s", COMMON_KEY.getValue(), MAX_LINE_KEY.getValue())));
               }
             }
           } else {

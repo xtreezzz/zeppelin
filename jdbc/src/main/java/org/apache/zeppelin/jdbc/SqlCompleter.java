@@ -501,7 +501,7 @@ public class SqlCompleter {
       List<CharSequence> candidates, String meta) {
     for (CharSequence candidate : candidates) {
       interpreterCompletions.add(new InterpreterCompletion(candidate.toString(),
-          candidate.toString(), meta));
+          candidate.toString(), meta, StringUtils.EMPTY));
     }
   }
 
