@@ -748,7 +748,10 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
     $scope.editor.focus();
     let paragraphText = $scope.editor.getValue();
-    let formattedText = sqlFormatter.format(paragraphText, {maxCharacterPerLine: 128});
+    let regResult = /^(\s*%.+?\s)?([\s\S]*)$/gm.exec(paragraphText);
+    let interpreterRow = regResult[1] ? regResult[1] : '';
+    let script = regResult[2];
+    let formattedText = interpreterRow + sqlFormatter.format(script, {maxCharacterPerLine: 128});
     $scope.editor.setValue(formattedText);
     $scope.paragraph.text = formattedText;
   };
