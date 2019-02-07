@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +31,6 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.NameScope;
 import org.apache.commons.vfs2.Selectors;
@@ -101,23 +101,28 @@ public class VFSNotebookRepo implements NotebookRepo {
 
   private Map<String, NoteInfo> listFolder(FileObject fileObject) throws IOException {
     Map<String, NoteInfo> noteInfos = new HashMap<>();
-    if (fileObject.isFolder()) {
-      for (FileObject child : fileObject.getChildren()) {
-        noteInfos.putAll(listFolder(child));
-      }
-    } else {
-      String noteFileName = fileObject.getName().getPath();
-      if (noteFileName.endsWith(".zpln")) {
-        try {
-          String noteId = getNoteId(noteFileName);
-          String notePath = getNotePath(rootNotebookFolder, noteFileName);
-          noteInfos.put(noteId, new NoteInfo(noteId, notePath));
-        } catch (IOException e) {
-          LOGGER.warn(e.getMessage());
-        }
 
-      } else {
-        LOGGER.debug("Unrecognized note file: " + noteFileName);
+    ArrayDeque<FileObject> queue = new ArrayDeque<>();
+    queue.addLast(fileObject);
+    while (!queue.isEmpty()) {
+      FileObject f = queue.removeFirst();
+      for (FileObject child : f.getChildren()) {
+        if (child.isFolder()) {
+          queue.addLast(child);
+          continue;
+        }
+        String noteFileName = child.getName().getPath();
+        if (noteFileName.endsWith(".zpln")) {
+          try {
+            String noteId = getNoteId(noteFileName);
+            String notePath = getNotePath(rootNotebookFolder, noteFileName);
+            noteInfos.put(getNoteId(child.getName().getPath()), new NoteInfo(noteId, notePath));
+          } catch (IOException e) {
+            LOGGER.warn(e.getMessage());
+          }
+        }  else {
+          LOGGER.debug("Unrecognized note file: {}", noteFileName);
+        }
       }
     }
     return noteInfos;
