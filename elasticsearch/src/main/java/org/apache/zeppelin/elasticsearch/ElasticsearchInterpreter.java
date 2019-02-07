@@ -235,7 +235,8 @@ public class ElasticsearchInterpreter extends Interpreter {
 
     for (final String cmd : COMMANDS) {
       if (cmd.toLowerCase().contains(s)) {
-        suggestions.add(new InterpreterCompletion(cmd, cmd, CompletionType.command.name()));
+        suggestions.add(new InterpreterCompletion(cmd, cmd, CompletionType.command.name(),
+            org.apache.commons.lang.StringUtils.EMPTY));
       }
     }
     return suggestions;

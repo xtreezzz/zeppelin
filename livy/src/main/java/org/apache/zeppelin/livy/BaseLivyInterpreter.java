@@ -261,7 +261,8 @@ public abstract class BaseLivyInterpreter extends Interpreter {
       CompletionResponse resp = CompletionResponse.fromJson(
           callRestAPI("/sessions/" + getSessionInfo().id + "/completion", "POST", req.toJson()));
       for (String candidate : resp.candidates) {
-        candidates.add(new InterpreterCompletion(candidate, candidate, StringUtils.EMPTY));
+        candidates.add(new InterpreterCompletion(candidate, candidate, StringUtils.EMPTY,
+            StringUtils.EMPTY));
       }
     } catch (APINotFoundException e) {
       logger.debug("completion api seems not to be available. (available from livy 0.5)", e);

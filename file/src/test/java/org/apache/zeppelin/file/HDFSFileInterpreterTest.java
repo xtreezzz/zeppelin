@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -122,9 +123,11 @@ public class HDFSFileInterpreterTest extends TestCase {
 
     // auto completion test
     List expectedResultOne = Arrays.asList(
-            new InterpreterCompletion("ls", "ls", CompletionType.command.name()));
+            new InterpreterCompletion("ls", "ls", CompletionType.command.name(),
+                StringUtils.EMPTY));
     List expectedResultTwo = Arrays.asList(
-            new InterpreterCompletion("pwd", "pwd", CompletionType.command.name()));
+            new InterpreterCompletion("pwd", "pwd", CompletionType.command.name(),
+                StringUtils.EMPTY));
     List<InterpreterCompletion> resultOne = t.completion("l", 0, null);
     List<InterpreterCompletion> resultTwo = t.completion("p", 0, null);
 

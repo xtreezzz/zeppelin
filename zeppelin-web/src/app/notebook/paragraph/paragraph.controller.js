@@ -843,7 +843,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         getCompletions: function(editor, session, pos, prefix, callback) {
           let langTools = ace.require('ace/ext/language_tools');
           let defaultKeywords = new Set();
-
           // eslint-disable-next-line handle-callback-err
           let getDefaultKeywords = function(err, completions) {
             if (completions !== undefined) {
@@ -902,6 +901,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                     meta: v.meta,
                     caption: computeCaption(v.name, v.meta),
                     score: computeScore(v.meta),
+                    className: v.meta ? 'iconable_' + v.meta : '',
+                    description: v.description,
                   });
                 }
               }
@@ -909,6 +910,20 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               callback(null, completions);
             }
           });
+        },
+        getDocTooltip: function(item) {
+          if (item.description && item.description !== ''
+          && item.description !== item.caption) {
+            item.docHTML = [
+              '<div id=\"completion_card\" class=\"card\"> <div class=\"card-body\">',
+              '<h5 class=\"card-title\">',
+              item.caption,
+              '</h5>',
+              '<p class=\"card-text\">',
+              item.description,
+              '</p></div></div>',
+            ].join('');
+          }
         },
       };
 
@@ -1083,9 +1098,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
-      if (caption === prev) {
+      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      $scope.editor.setOptions({
+        enableLiveAutocompletion: isTjdbc,
+      });
+      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
       }
+      if (item.meta === 'keyword-tinkoff') {
+        item.meta = 'keyword';
+      }
+
       prev = caption;
       return true;
     });
@@ -1113,9 +1136,13 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           return false;
         }
       }
+      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
       let caption = item.snippet || item.caption || item.value;
-      if (caption === prev) {
+      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
+      }
+      if (item.meta === 'keyword-tinkoff') {
+        item.meta = 'keyword';
       }
       prev = caption;
       return true;

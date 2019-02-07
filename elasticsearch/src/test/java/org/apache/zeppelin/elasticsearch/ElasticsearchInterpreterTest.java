@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
@@ -309,9 +310,11 @@ public class ElasticsearchInterpreterTest {
   @Theory
   public void testCompletion(ElasticsearchInterpreter interpreter) {
     final List<InterpreterCompletion> expectedResultOne = Arrays.asList(
-            new InterpreterCompletion("count", "count", CompletionType.command.name()));
+            new InterpreterCompletion("count", "count", CompletionType.command.name(),
+                StringUtils.EMPTY));
     final List<InterpreterCompletion> expectedResultTwo = Arrays.asList(
-            new InterpreterCompletion("help", "help", CompletionType.command.name()));
+            new InterpreterCompletion("help", "help", CompletionType.command.name(),
+                StringUtils.EMPTY));
 
     final List<InterpreterCompletion> resultOne = interpreter.completion("co", 0, null);
     final List<InterpreterCompletion> resultTwo = interpreter.completion("he", 0, null);

@@ -144,7 +144,7 @@ class FlinkScalaInterpreter(val properties: Properties) {
                            cursor: Int,
                            context: InterpreterContext): java.util.List[InterpreterCompletion] = {
     val completions = scalaCompleter.complete(buf, cursor).candidates
-      .map(e => new InterpreterCompletion(e, e, null))
+      .map(e => new InterpreterCompletion(e, e, null, null))
     scala.collection.JavaConversions.seqAsJavaList(completions)
   }
 

@@ -232,23 +232,23 @@ public class SqlCompleterTest {
     sqlCompleter.completeName(buffer, cursor, candidates, aliases);
     assertEquals(9, candidates.size());
     assertTrue(candidates.contains(new InterpreterCompletion("prod_dds", "prod_dds",
-            CompletionType.schema.name())));
+            CompletionType.schema.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("prod_emart", "prod_emart",
-            CompletionType.schema.name())));
+            CompletionType.schema.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("SUM", "SUM",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("SUBSTRING", "SUBSTRING",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("SUBCLASS_ORIGIN", "SUBCLASS_ORIGIN",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("SELECT", "SELECT",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("ORDER", "ORDER",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("LIMIT", "LIMIT",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("FROM", "FROM",
-            CompletionType.keyword.name())));
+            CompletionType.keyword.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -260,9 +260,9 @@ public class SqlCompleterTest {
     sqlCompleter.completeName(buffer, cursor, candidates, aliases);
     assertEquals(2, candidates.size());
     assertTrue(candidates.contains(new InterpreterCompletion("prod_dds", "prod_dds",
-            CompletionType.schema.name())));
+            CompletionType.schema.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("prod_emart", "prod_emart",
-            CompletionType.schema.name())));
+            CompletionType.schema.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -275,7 +275,7 @@ public class SqlCompleterTest {
     assertEquals(1, candidates.size());
     assertTrue(candidates.contains(
             new InterpreterCompletion("financial_account", "financial_account",
-                    CompletionType.table.name())));
+                    CompletionType.table.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -287,9 +287,9 @@ public class SqlCompleterTest {
     sqlCompleter.completeName(buffer, cursor, candidates, aliases);
     assertEquals(2, candidates.size());
     assertTrue(candidates.contains(new InterpreterCompletion("account_rk", "account_rk",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("account_id", "account_id",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -302,9 +302,9 @@ public class SqlCompleterTest {
     sqlCompleter.completeName(buffer, cursor, candidates, aliases);
     assertEquals(2, candidates.size());
     assertTrue(candidates.contains(new InterpreterCompletion("account_rk", "account_rk",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("account_id", "account_id",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -317,9 +317,9 @@ public class SqlCompleterTest {
     sqlCompleter.completeName(buffer, cursor, candidates, aliases);
     assertEquals(2, candidates.size());
     assertTrue(candidates.contains(new InterpreterCompletion("account_rk", "account_rk",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
     assertTrue(candidates.contains(new InterpreterCompletion("account_id", "account_id",
-            CompletionType.column.name())));
+            CompletionType.column.name(), StringUtils.EMPTY)));
   }
 
   @Test
@@ -327,28 +327,37 @@ public class SqlCompleterTest {
     String buffer = "select * from prod_emart.fi";
     tester.buffer(buffer).from(20).to(23).expect(newHashSet(
             new InterpreterCompletion("prod_emart", "prod_emart",
-                    CompletionType.schema.name()))).test();
+                    CompletionType.schema.name(), StringUtils.EMPTY))).test();
     tester.buffer(buffer).from(25).to(27).expect(newHashSet(
             new InterpreterCompletion("financial_account", "financial_account",
-                    CompletionType.table.name()))).test();
+                    CompletionType.table.name(), StringUtils.EMPTY))).test();
   }
 
   @Test
   public void testEdges() {
     String buffer = "  ORDER  ";
     tester.buffer(buffer).from(3).to(7).expect(newHashSet(
-            new InterpreterCompletion("ORDER", "ORDER", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("ORDER", "ORDER", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
     tester.buffer(buffer).from(0).to(1).expect(newHashSet(
-        new InterpreterCompletion("ORDER", "ORDER", CompletionType.keyword.name()),
+        new InterpreterCompletion("ORDER", "ORDER", CompletionType.keyword.name(),
+            StringUtils.EMPTY),
         new InterpreterCompletion("SUBCLASS_ORIGIN", "SUBCLASS_ORIGIN",
-                CompletionType.keyword.name()),
-        new InterpreterCompletion("SUBSTRING", "SUBSTRING", CompletionType.keyword.name()),
-        new InterpreterCompletion("prod_emart", "prod_emart", CompletionType.schema.name()),
-        new InterpreterCompletion("LIMIT", "LIMIT", CompletionType.keyword.name()),
-        new InterpreterCompletion("SUM", "SUM", CompletionType.keyword.name()),
-        new InterpreterCompletion("prod_dds", "prod_dds", CompletionType.schema.name()),
-        new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name()),
-        new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name())
+                CompletionType.keyword.name(), StringUtils.EMPTY),
+        new InterpreterCompletion("SUBSTRING", "SUBSTRING",
+            CompletionType.keyword.name(), StringUtils.EMPTY),
+        new InterpreterCompletion("prod_emart", "prod_emart", CompletionType.schema.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("LIMIT", "LIMIT", CompletionType.keyword.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("SUM", "SUM", CompletionType.keyword.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("prod_dds", "prod_dds", CompletionType.schema.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name(),
+            StringUtils.EMPTY)
     )).test();
   }
 
@@ -356,20 +365,25 @@ public class SqlCompleterTest {
   public void testMultipleWords() {
     String buffer = "SELE FRO LIM";
     tester.buffer(buffer).from(2).to(4).expect(newHashSet(
-            new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
     tester.buffer(buffer).from(6).to(8).expect(newHashSet(
-            new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
     tester.buffer(buffer).from(10).to(12).expect(newHashSet(
-            new InterpreterCompletion("LIMIT", "LIMIT", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("LIMIT", "LIMIT", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
   }
 
   @Test
   public void testMultiLineBuffer() {
     String buffer = " \n SELE\nFRO";
     tester.buffer(buffer).from(5).to(7).expect(newHashSet(
-            new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("SELECT", "SELECT", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
     tester.buffer(buffer).from(9).to(11).expect(newHashSet(
-            new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name()))).test();
+            new InterpreterCompletion("FROM", "FROM", CompletionType.keyword.name(),
+                StringUtils.EMPTY))).test();
   }
 
   @Test
@@ -377,9 +391,11 @@ public class SqlCompleterTest {
     String buffer = "SU";
     tester.buffer(buffer).from(2).to(2).expect(newHashSet(
         new InterpreterCompletion("SUBCLASS_ORIGIN", "SUBCLASS_ORIGIN",
-                CompletionType.keyword.name()),
-        new InterpreterCompletion("SUM", "SUM", CompletionType.keyword.name()),
-        new InterpreterCompletion("SUBSTRING", "SUBSTRING", CompletionType.keyword.name()))
+                CompletionType.keyword.name(), StringUtils.EMPTY),
+        new InterpreterCompletion("SUM", "SUM", CompletionType.keyword.name(),
+            StringUtils.EMPTY),
+        new InterpreterCompletion("SUBSTRING", "SUBSTRING", CompletionType.keyword.name(),
+            StringUtils.EMPTY))
     ).test();
   }
 

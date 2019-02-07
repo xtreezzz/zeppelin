@@ -18,6 +18,7 @@
 
 package org.apache.zeppelin.alluxio;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +183,8 @@ public class AlluxioInterpreter extends Interpreter {
     List<InterpreterCompletion>  voices = new LinkedList<>();
     for (String command : keywords) {
       if (command.startsWith(lastWord)) {
-        voices.add(new InterpreterCompletion(command, command, CompletionType.command.name()));
+        voices.add(new InterpreterCompletion(command, command, CompletionType.command.name(),
+            StringUtils.EMPTY));
       }
     }
     return voices;
