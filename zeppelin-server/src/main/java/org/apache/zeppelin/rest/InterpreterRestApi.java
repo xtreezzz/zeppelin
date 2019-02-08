@@ -47,9 +47,6 @@ import java.util.Map;
 /**
  * Interpreter Rest API.
  */
-//@Path("/interpreter")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/interpreter")
 public class InterpreterRestApi {
@@ -73,8 +70,6 @@ public class InterpreterRestApi {
   /**
    * List all interpreter settings.
    */
- // @GET
- // @Path("setting")
   @ZeppelinApi
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
@@ -84,8 +79,6 @@ public class InterpreterRestApi {
   /**
    * Get a setting.
    */
-  //@GET
-  //@Path("setting/{settingId}")
   @ZeppelinApi
   @GetMapping(value = "/setting/{settingId}", produces = "application/json")
   public ResponseEntity getSetting(@PathVariable("settingId") final String settingId) {
@@ -108,8 +101,6 @@ public class InterpreterRestApi {
    *
    * @param message NewInterpreterSettingRequest
    */
-  //@POST
-  //@Path("setting")
   @ZeppelinApi
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(final String message) {
@@ -132,8 +123,6 @@ public class InterpreterRestApi {
     }
   }
 
-  //@PUT
-  //@Path("setting/{settingId}")
   @ZeppelinApi
   @PutMapping(value = "/setting/{settingId}", produces = "application/json")
   public ResponseEntity updateSetting(final String message, @PathVariable("settingId") final String settingId) {
@@ -164,8 +153,6 @@ public class InterpreterRestApi {
   /**
    * Remove interpreter setting.
    */
-  //@DELETE
-  //@Path("setting/{settingId}")
   @ZeppelinApi
   @DeleteMapping(value = "/setting/{settingId}", produces = "application/json")
   public ResponseEntity removeSetting(@PathVariable("settingId") final String settingId) throws IOException {
@@ -177,8 +164,6 @@ public class InterpreterRestApi {
   /**
    * Restart interpreter setting.
    */
-  //@PUT
-  //@Path("setting/restart/{settingId}")
   @ZeppelinApi
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
   public ResponseEntity restartSetting(final String message, @PathVariable("settingId") final String settingId) {
@@ -209,8 +194,6 @@ public class InterpreterRestApi {
   /**
    * List all available interpreters by group.
    */
-  //@GET
-  //@ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
     final Map<String, InterpreterSetting> m = interpreterSettingManager.getInterpreterSettingTemplates();
@@ -220,8 +203,6 @@ public class InterpreterRestApi {
   /**
    * List of dependency resolving repositories.
    */
-  //@GET
-  //@Path("repository")
   @ZeppelinApi
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
@@ -234,8 +215,6 @@ public class InterpreterRestApi {
    *
    * @param message Repository
    */
-  //@POST
-  //@Path("repository")
   @ZeppelinApi
   @PostMapping(value = "/repository", produces = "application/json")
   public ResponseEntity addRepository(final String message) {
@@ -257,8 +236,6 @@ public class InterpreterRestApi {
    *
    * @param repoId ID of repository
    */
-  //@DELETE
-  //@Path("repository/{repoId}")
   @ZeppelinApi
   @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
   public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
@@ -276,8 +253,6 @@ public class InterpreterRestApi {
   /**
    * Get available types for property
    */
-  //@GET
-  //@Path("property/types")
   @GetMapping(value = "/property/types", produces = "application/json")
   public ResponseEntity listInterpreterPropertyTypes() {
     return new JsonResponse(HttpStatus.OK, InterpreterPropertyType.getTypes()).build();
@@ -337,8 +312,6 @@ public class InterpreterRestApi {
   /**
    * Get all running interpreters.
    */
-  //@GET
-  //@Path("running")
   @ZeppelinApi
   @GetMapping(value = "/running", produces = "application/json")
   public ResponseEntity listRunningInterpreters() {
@@ -350,8 +323,6 @@ public class InterpreterRestApi {
    *
    * @return JSON with status.OK
    */
-  //@GET
-  //@Path("running/jobs")
   @ZeppelinApi
   @GetMapping(value = "/running/jobs", produces = "application/json")
   public ResponseEntity getRunning() {

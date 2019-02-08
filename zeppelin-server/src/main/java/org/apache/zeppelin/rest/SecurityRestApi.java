@@ -18,7 +18,6 @@ package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.ticket.TicketContainer;
@@ -38,9 +37,6 @@ import java.util.*;
 /**
  * Zeppelin security rest api endpoint.
  */
-//@Path("/security")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/security")
 public class SecurityRestApi {
@@ -62,12 +58,8 @@ public class SecurityRestApi {
    *
    * @return 200 response
    */
-  //@GET
-  //@Path("ticket")
-  //@ZeppelinApi
   @GetMapping(value = "/ticket", produces = "application/json")
   public ResponseEntity ticket() {
-    final ZeppelinConfiguration conf = ZeppelinConfiguration.create();
     final String principal = securityService.getPrincipal();
     final Set<String> roles = securityService.getAssociatedRoles();
     final JsonResponse response;
@@ -96,8 +88,6 @@ public class SecurityRestApi {
    *
    * @return 200 response
    */
-  //@GET
-  //@Path("userlist/{searchText}")
   @GetMapping(value = "/userlist/{searchText}", produces = "application/json")
   public ResponseEntity getUserList(@PathVariable("searchText") final String searchText) {
 
@@ -109,16 +99,14 @@ public class SecurityRestApi {
     final List<String> autoSuggestRoleList = new ArrayList<>();
     Collections.sort(usersList);
     Collections.sort(rolesList);
-    Collections.sort(
-        usersList,
-        (o1, o2) -> {
-          if (o1.matches(searchText + "(.*)") && o2.matches(searchText + "(.*)")) {
-            return 0;
-          } else if (o1.matches(searchText + "(.*)")) {
-            return -1;
-          }
-          return 0;
-        });
+    usersList.sort((o1, o2) -> {
+      if (o1.matches(searchText + "(.*)") && o2.matches(searchText + "(.*)")) {
+        return 0;
+      } else if (o1.matches(searchText + "(.*)")) {
+        return -1;
+      }
+      return 0;
+    });
     int maxLength = 0;
     for (final String user : usersList) {
       if (StringUtils.containsIgnoreCase(user, searchText)) {

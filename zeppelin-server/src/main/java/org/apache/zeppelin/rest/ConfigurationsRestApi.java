@@ -29,15 +29,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
  * Configurations Rest API Endpoint.
  */
-//@Path("/configurations")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/configurations")
 public class ConfigurationsRestApi extends AbstractRestApi {
@@ -52,8 +48,6 @@ public class ConfigurationsRestApi extends AbstractRestApi {
     this.configurationService = configurationService;
   }
 
-  //@GET
-  //@Path("all")
   @ZeppelinApi
   @GetMapping(value = "/all", produces = "application/json")
   public ResponseEntity getAll() {
@@ -65,8 +59,6 @@ public class ConfigurationsRestApi extends AbstractRestApi {
     }
   }
 
-  // @GET
-//  @Path("prefix/{prefix}")
   @ZeppelinApi
   @GetMapping(value = "/prefix/{prefix}", produces = "application/json")
   public ResponseEntity getByPrefix(@PathVariable("prefix") final String prefix) {

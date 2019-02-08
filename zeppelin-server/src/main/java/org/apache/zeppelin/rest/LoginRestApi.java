@@ -51,9 +51,6 @@ import java.util.*;
 /**
  * Created for org.apache.zeppelin.rest.message.
  */
-//@Path("/login")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/login")
 public class LoginRestApi {
@@ -69,16 +66,13 @@ public class LoginRestApi {
     this.securityService = securityService;
   }
 
-  //@GET
   @ZeppelinApi
   @GetMapping(produces = "application/json")
-  public ResponseEntity getLogin(final HttpServletRequest request, @RequestHeader final HttpHeaders headers) {
+  public ResponseEntity getLogin(final HttpServletRequest request) {
     JsonResponse response = null;
     final Map<String, Cookie> cookieMap = Maps.uniqueIndex(Arrays.asList(request.getCookies()), Cookie::getName);
     if (isKnoxSSOEnabled()) {
       final KnoxJwtRealm knoxJwtRealm = getJTWRealm();
-      request.getCookies();
-
       final Cookie cookie = cookieMap.get(knoxJwtRealm.getCookieName());
       if (cookie != null && cookie.getValue() != null) {
         final Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
@@ -216,7 +210,6 @@ public class LoginRestApi {
    *
    * @return 200 response
    */
- // @POST
   @ZeppelinApi
   @PostMapping(produces = "application/json")
   public ResponseEntity postLogin(@RequestParam("userName") final String userName,
@@ -244,8 +237,6 @@ public class LoginRestApi {
     return response.build();
   }
 
-  //@POST
-  //@Path("logout")
   @ZeppelinApi
   @PostMapping(value = "/logout", produces = "application/json")
   public ResponseEntity logout() {

@@ -20,25 +20,22 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.*;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
-import org.apache.zeppelin.rest.message.CronRequest;
-import org.apache.zeppelin.rest.message.NewParagraphRequest;
-import org.apache.zeppelin.rest.message.RunParagraphWithParametersRequest;
+import org.apache.zeppelin.rest.message.*;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.JobManagerService;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.user.AuthenticationInfo;
+import org.apache.zeppelin.websocket.ConnectionManager;
+import org.apache.zeppelin.websocket.Operation;
+import org.apache.zeppelin.websocket.SockMessage;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +51,6 @@ import java.util.*;
 /**
  * Rest api endpoint for the notebook.
  */
-//@Path("/notebook")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/notebook")
 public class NotebookRestApi extends AbstractRestApi {
@@ -69,6 +63,7 @@ public class NotebookRestApi extends AbstractRestApi {
   private final NotebookAuthorization notebookAuthorization;
   private final JobManagerService jobManagerService;
   private final SecurityService securityService;
+  private final ConnectionManager connectionManager;
 
   @Autowired
   public NotebookRestApi(
@@ -77,7 +72,8 @@ public class NotebookRestApi extends AbstractRestApi {
           final NotebookAuthorization notebookAuthorization,
           final ZeppelinConfiguration zConf,
           @Qualifier("NoSecurityService") final SecurityService securityService,
-          final JobManagerService jobManagerService) {
+          final JobManagerService jobManagerService,
+          final ConnectionManager connectionManager) {
     super(securityService);
     this.notebook = notebook;
     this.jobManagerService = jobManagerService;
@@ -85,13 +81,12 @@ public class NotebookRestApi extends AbstractRestApi {
     this.notebookAuthorization = notebookAuthorization;
     this.zConf = zConf;
     this.securityService = securityService;
+    this.connectionManager = connectionManager;
   }
 
   /**
    * Get note authorization information.
    */
-  //@GET
-  //@Path("{noteId}/permissions")
   @ZeppelinApi
   @GetMapping(value = "/{noteId}/permissions", produces = "application/json")
   public ResponseEntity getNotePermissions(@PathVariable("noteId") final String noteId) throws IOException {
@@ -205,11 +200,10 @@ public class NotebookRestApi extends AbstractRestApi {
   /**
    * Set note authorization information.
    */
-  //@PUT
-  //@Path("{noteId}/permissions")
   @ZeppelinApi
   @PutMapping(value = "/{noteId}/permissions", produces = "application/json")
-  public ResponseEntity putNotePermissions(@PathVariable("noteId") final String noteId, final String req)
+  public ResponseEntity putNotePermissions(@PathVariable("noteId") final String noteId,
+                                           final String req)
           throws IOException {
     final String principal = securityService.getPrincipal();
     final Set<String> roles = securityService.getAssociatedRoles();
@@ -277,27 +271,19 @@ public class NotebookRestApi extends AbstractRestApi {
     */
     return new JsonResponse(HttpStatus.OK).build();
   }
-  //TODO(KOT): FIX
-      /*
-  @GET
+
   @ZeppelinApi
   @GetMapping(produces = "application/json")
-  public ResponseEntity getNoteList() throws IOException {
-    List<NoteInfo> notesInfo = notebookService.listNotesInfo(false, getServiceContext(),
-        new RestServiceCallback<List<NoteInfo>>());
+  public ResponseEntity getNoteList() {
+    final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
     return new JsonResponse(HttpStatus.OK, "", notesInfo).build();
   }
 
- // @GET
- // @Path("{noteId}")
   @ZeppelinApi
   @GetMapping(value = "/{noteId}", produces = "application/json")
-  public ResponseEntity getNote(@PathVariable("noteId") String noteId) throws IOException {
-    Note note =
-        notebookService.getNote(noteId, getServiceContext(), new RestServiceCallback());
-    return new JsonResponse(HttpStatus.OK, "", note).build();
+  public ResponseEntity getNote(@PathVariable("noteId") final String noteId) {
+    return new JsonResponse(HttpStatus.OK, "", notebook.getNote(noteId)).build();
   }
- */
 
   /**
    * export note REST API.
@@ -306,8 +292,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return note JSON with status.OK
    * @throws IOException
    */
-  //@GET
-  //@Path("export/{noteId}")
   @ZeppelinApi
   @GetMapping(value = "/export/{noteId}", produces = "application/json")
   public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) throws IOException {
@@ -323,19 +307,12 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with new note ID
    * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@POST
-  //@Path("import")
   @ZeppelinApi
   @PostMapping(value = "/import", produces = "application/json")
-  public ResponseEntity importNote(String noteJson) throws IOException {
-    Note note = notebookService.importNote(null, noteJson, getServiceContext(),
-        new RestServiceCallback());
+  public ResponseEntity importNote(final String noteJson) throws IOException {
+    final Note note = notebook.importNote(null, noteJson, getServiceContext().getAutheInfo());
     return new JsonResponse(HttpStatus.OK, "", note.getId()).build();
   }
-*/
-
 
   /**
    * Create new note REST API.
@@ -344,156 +321,128 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with new note ID
    * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@POST
   @ZeppelinApi
   @PostMapping(produces = "application/json")
-  public ResponseEntity createNote(String message) throws IOException {
-    String user = securityService.getPrincipal();
+  public ResponseEntity createNote(final String message) throws IOException {
+    final String user = securityService.getPrincipal();
     LOG.info("Create new note by JSON {}", message);
-    NewNoteRequest request = NewNoteRequest.fromJson(message);
-    Note note = notebookService.createNote(
+    final NewNoteRequest request = NewNoteRequest.fromJson(message);
+    final Note note = notebook.createNote(
         request.getName(),
         zConf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT),
-        getServiceContext(),
-        new RestServiceCallback<>());
-    AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
+        getServiceContext().getAutheInfo());
+    final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     if (request.getParagraphs() != null) {
-      for (NewParagraphRequest paragraphRequest : request.getParagraphs()) {
-        Paragraph p = note.addNewParagraph(subject);
+      for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
+        final Paragraph p = note.addNewParagraph(subject);
         initParagraph(p, paragraphRequest, user);
       }
     }
     return new JsonResponse(HttpStatus.OK, "", note.getId()).build();
   }
-  */
+
 
   /**
    * Delete note REST API.
    *
    * @param noteId ID of Note
    * @return JSON with status.OK
-   * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@DELETE
-  //@Path("{noteId}")
   @ZeppelinApi
   @DeleteMapping(value = "/{noteId}", produces = "application/json")
-  public ResponseEntity deleteNote(@PathVariable("noteId") String noteId) throws IOException {
+  public ResponseEntity deleteNote(@PathVariable("noteId") final String noteId) throws IOException {
     LOG.info("Delete note {} ", noteId);
-    notebookService.removeNote(noteId,
-            getServiceContext(),
-            new RestServiceCallback<String>() {
-              @Override
-              public void onSuccess(String message, ServiceContext context) {
-                notebookServer.broadcastNoteList(context.getAutheInfo(), context.getUserAndRoles());
-              }
-            });
+    notebook.removeNote(noteId, getServiceContext().getAutheInfo());
+
+    final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
+    connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
-*/
+
 
   /**
    * Clone note REST API.
    *
    * @param noteId ID of Note
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws CloneNotSupportedException
-   * @throws IllegalArgumentException
    */
-  //TODO(KOT): FIX
-      /*
-  //@POST
-  //@Path("{noteId}")
   @ZeppelinApi
   @PostMapping(value = "/{noteId}", produces = "application/json")
-  public ResponseEntity cloneNote(@PathVariable("noteId") String noteId, String message)
+  public ResponseEntity cloneNote(@PathVariable("noteId") final String noteId, final String message)
           throws IOException, IllegalArgumentException {
     LOG.info("clone note by JSON {}", message);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot clone this note");
-    NewNoteRequest request = NewNoteRequest.fromJson(message);
+    final NewNoteRequest request = NewNoteRequest.fromJson(message);
     String newNoteName = null;
     if (request != null) {
       newNoteName = request.getName();
     }
-    AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
-    Note newNote = notebookService.cloneNote(noteId, newNoteName, getServiceContext(),
-            new RestServiceCallback<Note>() {
-              @Override
-              public void onSuccess(Note newNote, ServiceContext context) throws IOException {
-                notebookServer.broadcastNote(newNote);
-                notebookServer.broadcastNoteList(subject, context.getUserAndRoles());
-              }
-            });
+    final Note newNote = notebook.cloneNote(noteId, newNoteName, getServiceContext().getAutheInfo());
+
+    connectionManager.broadcast(newNote.getId(), new SockMessage(Operation.NOTE).put("note", newNote));
+
+    final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
+    connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
+
     return new JsonResponse(HttpStatus.OK, "", newNote.getId()).build();
   }
-*/
 
   /**
    * Rename note REST API
    *
    * @param message - JSON containing new name
    * @return JSON with status.OK
-   * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@PUT
-  //@Path("{noteId}/rename")
   @ZeppelinApi
   @PutMapping(value = "/{noteId}/rename", produces = "application/json")
-  public ResponseEntity renameNote(@PathVariable("noteId") String noteId,
-                             String message) throws IOException {
+  public ResponseEntity renameNote(@PathVariable("noteId") final String noteId,
+                                   final String message) throws IOException {
     LOG.info("rename note by JSON {}", message);
-    RenameNoteRequest request = gson.fromJson(message, RenameNoteRequest.class);
-    String newName = request.getName();
-    if (newName.isEmpty()) {
+    final RenameNoteRequest request = gson.fromJson(message, RenameNoteRequest.class);
+    final String name = request.getName();
+    if (name.isEmpty()) {
       LOG.warn("Trying to rename notebook {} with empty name parameter", noteId);
       throw new BadRequestException("name can not be empty");
     }
-    notebookService.renameNote(noteId, request.getName(), false, getServiceContext(),
-            new RestServiceCallback<Note>() {
-              @Override
-              public void onSuccess(Note note, ServiceContext context) throws IOException {
-                notebookServer.broadcastNote(note);
-                notebookServer.broadcastNoteList(context.getAutheInfo(), context.getUserAndRoles());
-              }
-            });
+    final Note note = notebook.getNote(noteId);
+    String newName = org.apache.commons.lang.StringUtils.EMPTY;
+    if (!note.getParentPath().equals("/")) {
+      newName = note.getParentPath() + "/" + name;
+    } else {
+      if (!name.startsWith("/")) {
+        newName = "/" + name;
+      }
+    }
+    note.setCronSupported(notebook.getConf());
+    notebook.moveNote(note.getId(), newName, getServiceContext().getAutheInfo());
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+
+    final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
+    connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
+
     return new JsonResponse(HttpStatus.OK, "").build();
   }
-  */
 
   /**
    * Insert paragraph REST API.
    *
    * @param message - JSON containing paragraph's information
-   * @return JSON with status.OK
-   * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@POST
-  //@Path("{noteId}/paragraph")
   @ZeppelinApi
   @PostMapping(value = "/{noteId}/paragraph", produces = "application/json")
-  public ResponseEntity insertParagraph(@PathVariable("noteId") String noteId, String message)
+  public ResponseEntity insertParagraph(@PathVariable("noteId") final String noteId, final String message)
           throws IOException {
-    String user = securityService.getPrincipal();
+    final String user = securityService.getPrincipal();
     LOG.info("insert paragraph {} {}", noteId, message);
 
-    Note note = notebook.getNote(noteId);
+    final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot add paragraph to this note");
 
-    NewParagraphRequest request = NewParagraphRequest.fromJson(message);
-    AuthenticationInfo subject = new AuthenticationInfo(user);
-    Paragraph p;
-    Double indexDouble = request.getIndex();
+    final NewParagraphRequest request = NewParagraphRequest.fromJson(message);
+    final AuthenticationInfo subject = new AuthenticationInfo(user);
+    final Paragraph p;
+    final Double indexDouble = request.getIndex();
     if (indexDouble == null) {
       p = note.addNewParagraph(subject);
     } else {
@@ -501,24 +450,21 @@ public class NotebookRestApi extends AbstractRestApi {
     }
     initParagraph(p, request, user);
     notebook.saveNote(note, subject);
-    notebookServer.broadcastNote(note);
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     return new JsonResponse(HttpStatus.OK, "", p.getId()).build();
   }
-  */
+
 
   /**
    * Get paragraph REST API.
    *
    * @param noteId ID of Note
    * @return JSON with information of the paragraph
-   * @throws IOException
    */
-  //@GET
-  //@Path("{noteId}/paragraph/{paragraphId}")
   @ZeppelinApi
   @GetMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
   public ResponseEntity getParagraph(@PathVariable("noteId") final String noteId,
-                               @PathVariable("paragraphId") final String paragraphId) throws IOException {
+                                     @PathVariable("paragraphId") final String paragraphId) {
     LOG.info("get paragraph {} {}", noteId, paragraphId);
 
     final Note note = notebook.getNote(noteId);
@@ -537,39 +483,34 @@ public class NotebookRestApi extends AbstractRestApi {
    *                {"text" : "updated text", "title" : "Updated title" }
    */
   //TODO(KOT): FIX
-      /*
-  //@PUT
-  //@Path("{noteId}/paragraph/{paragraphId}")
   @ZeppelinApi
   @PutMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
-  public ResponseEntity updateParagraph(@PathVariable("noteId") String noteId,
-                                  @PathVariable("paragraphId") String paragraphId,
-                                  String message) throws IOException {
-    String user = securityService.getPrincipal();
+  public ResponseEntity updateParagraph(@PathVariable("noteId") final String noteId,
+                                        @PathVariable("paragraphId") final String paragraphId,
+                                        final String message) throws IOException {
+    final String user = securityService.getPrincipal();
     LOG.info("{} will update paragraph {} {}", user, noteId, paragraphId);
 
-    Note note = notebook.getNote(noteId);
+    final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph");
-    Paragraph p = note.getParagraph(paragraphId);
+    final Paragraph p = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
-    UpdateParagraphRequest updatedParagraph = gson.fromJson(message, UpdateParagraphRequest.class);
+    final UpdateParagraphRequest updatedParagraph = gson.fromJson(message, UpdateParagraphRequest.class);
     p.setText(updatedParagraph.getText());
 
     if (updatedParagraph.getTitle() != null) {
       p.setTitle(updatedParagraph.getTitle());
     }
 
-    AuthenticationInfo subject = new AuthenticationInfo(user);
+    final AuthenticationInfo subject = new AuthenticationInfo(user);
     notebook.saveNote(note, subject);
-    notebookServer.broadcastParagraph(note, p);
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
-  */
 
-  //@PUT
-  //@Path("{noteId}/paragraph/{paragraphId}/config")
+
   @ZeppelinApi
   @PutMapping(value = "/{noteId}/paragraph/{paragraphId}/config", produces = "application/json")
   public ResponseEntity updateParagraphConfig(@PathVariable("noteId") final String noteId,
@@ -593,34 +534,33 @@ public class NotebookRestApi extends AbstractRestApi {
 
   /**
    * Move paragraph REST API.
-   *
-   * @param newIndex - new index to move
-   * @return JSON with status.OK
-   * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@POST
-  //@Path("{noteId}/paragraph/{paragraphId}/move/{newIndex}")
   @ZeppelinApi
   @PostMapping(value = "/{noteId}/paragraph/{paragraphId}/move/{newIndex}", produces = "application/json")
-  public ResponseEntity moveParagraph(@PathVariable("noteId") String noteId,
-                                @PathVariable("paragraphId") String paragraphId,
-                                @PathVariable("newIndex") String newIndex)
+  public ResponseEntity moveParagraph(@PathVariable("noteId") final String noteId,
+                                @PathVariable("paragraphId") final String paragraphId,
+                                @PathVariable("newIndex") final int index)
           throws IOException {
-    LOG.info("move paragraph {} {} {}", noteId, paragraphId, newIndex);
-    notebookService.moveParagraph(noteId, paragraphId, Integer.parseInt(newIndex),
-            getServiceContext(),
-            new RestServiceCallback<Paragraph>() {
-              @Override
-              public void onSuccess(Paragraph result, ServiceContext context) throws IOException {
-                notebookServer.broadcastNote(result.getNote());
-              }
-            });
+    LOG.info("move paragraph {} {} {}", noteId, paragraphId, index);
+
+    final Note note = notebook.getNote(noteId);
+    if (index > 0 && index >= note.getParagraphCount()) {
+      throw new BadRequestException("newIndex " + index + " is out of bounds");
+    }
+
+    note.moveParagraph(paragraphId, index);
+    notebook.saveNote(note, getServiceContext().getAutheInfo());
+
+    final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
+            .put("id", paragraphId)
+            .put("index", index);
+    connectionManager.broadcast(note.getId(), message);
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+
     return new JsonResponse(HttpStatus.OK, "").build();
 
   }
-  */
+
 
   /**
    * Delete paragraph REST API.
@@ -629,26 +569,20 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with status.OK
    * @throws IOException
    */
-  //TODO(KOT): FIX
-      /*
-  //@DELETE
-  //@Path("{noteId}/paragraph/{paragraphId}")
   @ZeppelinApi
   @DeleteMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
-  public ResponseEntity deleteParagraph(@PathVariable("noteId") String noteId,
-                                  @PathVariable("paragraphId") String paragraphId) throws IOException {
+  public ResponseEntity deleteParagraph(@PathVariable("noteId") final String noteId,
+                                  @PathVariable("paragraphId") final String paragraphId) throws IOException {
     LOG.info("delete paragraph {} {}", noteId, paragraphId);
-    notebookService.removeParagraph(noteId, paragraphId, getServiceContext(),
-            new RestServiceCallback<Paragraph>() {
-              @Override
-              public void onSuccess(Paragraph p, ServiceContext context) throws IOException {
-                notebookServer.broadcastNote(p.getNote());
-              }
-            });
+
+    final Note note = notebook.getNote(noteId);
+    note.removeParagraph(getServiceContext().getAutheInfo().getUser(), paragraphId);
+    notebook.saveNote(note, getServiceContext().getAutheInfo());
+
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
-  */
 
   /**
    * Clear result of all paragraphs REST API.
@@ -656,20 +590,18 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param noteId ID of Note
    * @return JSON with status.ok
    */
-  //TODO(KOT): FIX
-      /*
-  //@PUT
-  //@Path("{noteId}/clear")
   @ZeppelinApi
   @PutMapping(value = "/{noteId}/clear", produces = "application/json")
-  public ResponseEntity clearAllParagraphOutput(@PathVariable("noteId") String noteId)
+  public ResponseEntity clearAllParagraphOutput(@PathVariable("noteId") final String noteId)
           throws IOException {
     LOG.info("clear all paragraph output of note {}", noteId);
-    notebookService.clearAllParagraphOutput(noteId, getServiceContext(),
-            new RestServiceCallback<>());
+
+    final Note note = notebook.getNote(noteId);
+    note.clearAllParagraphOutput();
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+
     return new JsonResponse(HttpStatus.OK, "").build();
   }
-  */
 
   /**
    * Run note jobs REST API.
@@ -679,12 +611,10 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@POST
-  //@Path("job/{noteId}")
   @ZeppelinApi
   @PostMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity runNoteJobs(@PathVariable("noteId") final String noteId,
-                              @RequestParam("waitToFinish") final Boolean waitToFinish)
+                                    @RequestParam("waitToFinish") final Boolean waitToFinish)
           throws IOException, IllegalArgumentException {
     final boolean blocking = waitToFinish == null || waitToFinish;
     LOG.info("run note jobs {} waitToFinish: {}", noteId, blocking);
@@ -712,12 +642,9 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  // @DELETE
-  // @Path("job/{noteId}")
   @ZeppelinApi
   @DeleteMapping(value = "/job/{noteId}", produces = "application/json")
-  public ResponseEntity stopNoteJobs(@PathVariable("noteId") final String noteId)
-          throws IOException, IllegalArgumentException {
+  public ResponseEntity stopNoteJobs(@PathVariable("noteId") final String noteId) throws IllegalArgumentException {
     LOG.info("stop note jobs {} ", noteId);
     final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
@@ -739,8 +666,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@GET
-  //@Path("job/{noteId}")
   @ZeppelinApi
   @GetMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity getNoteJobStatus(@PathVariable("noteId") final String noteId)
@@ -762,13 +687,11 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@GET
-  //@Path("job/{noteId}/{paragraphId}")
   @ZeppelinApi
   @GetMapping(value = "/job/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity getNoteParagraphJobStatus(@PathVariable("noteId") final String noteId,
-                                            @PathVariable("paragraphId") final String paragraphId)
-          throws IOException, IllegalArgumentException {
+                                                  @PathVariable("paragraphId") final String paragraphId)
+          throws IllegalArgumentException {
     LOG.info("get note paragraph job status.");
     final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
@@ -904,12 +827,10 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@POST
-  //@Path("cron/{noteId}")
   @ZeppelinApi
-  @PostMapping(value = "/ron/{noteId}", produces = "application/json")
+  @PostMapping(value = "/cron/{noteId}", produces = "application/json")
   public ResponseEntity registerCronJob(@PathVariable("noteId") final String noteId, final String message)
-          throws IOException, IllegalArgumentException {
+          throws IllegalArgumentException {
     LOG.info("Register cron job note={} request cron msg={}", noteId, message);
 
     final CronRequest request = CronRequest.fromJson(message);
@@ -938,8 +859,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with status.OK
    * @throws IllegalArgumentException
    */
-  //@GET
-  //@Path("cron/check_valid")
   @ZeppelinApi
   @PostMapping(value = "/cron/check_valid", produces = "application/json")
   public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
@@ -958,8 +877,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@DELETE
-  //@Path("cron/{noteId}")
   @ZeppelinApi
   @DeleteMapping(value = "/cron/{noteId}", produces = "application/json")
   public ResponseEntity removeCronJob(@PathVariable("noteId") final String noteId)
@@ -989,8 +906,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //@GET
-  //@Path("cron/{noteId}")
   @ZeppelinApi
   @GetMapping(value = "/cron/{noteId}", produces = "application/json")
   public ResponseEntity getCronJob(@PathVariable("noteId") final String noteId)
@@ -1016,21 +931,16 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IllegalArgumentException
    */
   //TODO(KOT): FIX
-      /*
-  //@GET
-  //@Path("jobmanager/")
   @ZeppelinApi
   @GetMapping(value = "/jobmanager/", produces = "application/json")
   public ResponseEntity getJobListforNote() throws IOException, IllegalArgumentException {
     LOG.info("Get note jobs for job manager");
-    List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService
-            .getNoteJobInfoByUnixTime(0, getServiceContext(), new RestServiceCallback<>());
-    Map<String, Object> response = new HashMap<>();
+    final List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(0);
+    final Map<String, Object> response = new HashMap<>();
     response.put("lastResponseUnixTime", System.currentTimeMillis());
     response.put("jobs", noteJobs);
     return new JsonResponse(HttpStatus.OK, response).build();
   }
-  */
 
   /**
    * Get updated note jobs for job manager
@@ -1041,30 +951,21 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  //TODO(KOT): FIX
-      /*
-  // @GET
-  // @Path("jobmanager/{lastUpdateUnixtime}/")
   @ZeppelinApi
   @GetMapping(value = "/jobmanager/{lastUpdateUnixtime}/", produces = "application/json")
   public ResponseEntity getUpdatedJobListforNote(@PathVariable("lastUpdateUnixtime") long lastUpdateUnixTime)
           throws IOException, IllegalArgumentException {
     LOG.info("Get updated note jobs lastUpdateTime {}", lastUpdateUnixTime);
-    List<JobManagerService.NoteJobInfo> noteJobs =
-            jobManagerService.getNoteJobInfoByUnixTime(lastUpdateUnixTime, getServiceContext(),
-                    new RestServiceCallback<>());
+    List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(lastUpdateUnixTime);
     Map<String, Object> response = new HashMap<>();
     response.put("lastResponseUnixTime", System.currentTimeMillis());
     response.put("jobs", noteJobs);
     return new JsonResponse(HttpStatus.OK, response).build();
   }
-  */
 
   /**
    * Search for a Notes with permissions.
    */
-  //@GET
-  //@Path("search")
   @ZeppelinApi
   @GetMapping(value = "/search", produces = "application/json")
   public ResponseEntity search(@RequestParam("q") final String queryTerm) {
@@ -1088,22 +989,6 @@ public class NotebookRestApi extends AbstractRestApi {
     }
     LOG.info("{} notes found", notesFound.size());
     return new JsonResponse(HttpStatus.OK, notesFound).build();
-  }
-
-
-  private void handleParagraphParams(final String message, final Note note, final Paragraph paragraph)
-          throws IOException {
-    // handle params if presented
-    if (!StringUtils.isEmpty(message)) {
-      final RunParagraphWithParametersRequest request =
-              RunParagraphWithParametersRequest.fromJson(message);
-      final Map<String, Object> paramsForUpdating = request.getParams();
-      if (paramsForUpdating != null) {
-        paragraph.settings.getParams().putAll(paramsForUpdating);
-        final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
-        notebook.saveNote(note, subject);
-      }
-    }
   }
 
   private void initParagraph(final Paragraph p, final NewParagraphRequest request, final String user) {

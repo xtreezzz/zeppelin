@@ -20,28 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import org.apache.shiro.SecurityUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -50,37 +28,57 @@ import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Path("/favorite_notes")
-@Produces("application/json")
-@Singleton
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@RestController
+@RequestMapping("/api/favorite_notes")
 public class FavoriteNotesRestApi {
   private static final Logger LOGGER = LoggerFactory.getLogger(FavoriteNotesRestApi.class);
 
   private static final Integer RECENT_NOTEBOOK_COUNT = 7;
   private static final Integer SAVE_ON_DISK_INTERVAL = 5; // minutes
-  private static volatile Boolean saveTaskCreate = false;
 
-  private static File dataFile;
-  private static Notebook notebook;
-  private static Map<String, Map<String, Set<String>>> usersNotes;
-  private static ScheduledExecutorService saveExecServ = Executors.newSingleThreadScheduledExecutor();
+  private final Notebook notebook;
+  private final ZeppelinConfiguration configuration;
+  private final ScheduledExecutorService saveExecServ;
 
-  @Inject
-  public FavoriteNotesRestApi(Notebook notebook) {
-    String filePath = ZeppelinConfiguration.create().getFavoriteNotesFilePath();
+  private File dataFile;
+  private Map<String, Map<String, Set<String>>> usersNotes;
+
+  @Autowired
+  public FavoriteNotesRestApi(Notebook notebook, ZeppelinConfiguration configuration) {
+    this.notebook = notebook;
+    this.configuration = configuration;
+    this.saveExecServ = Executors.newSingleThreadScheduledExecutor();
+  }
+
+  @PostConstruct
+  public void init() {
+    String filePath = configuration.getFavoriteNotesFilePath();
     dataFile = new File(filePath);
     usersNotes = loadNotesList();
-    FavoriteNotesRestApi.notebook = notebook;
     clearIncorrectNotesIds();
 
-    synchronized (saveTaskCreate) {
-      if (!saveTaskCreate) {
-        Runtime.getRuntime().addShutdownHook(new Thread(this::saveNotesList));
-        saveExecServ.scheduleWithFixedDelay(this::saveNotesList, SAVE_ON_DISK_INTERVAL, SAVE_ON_DISK_INTERVAL, TimeUnit.MINUTES);
-        saveTaskCreate = true;
-      }
-    }
+    Runtime.getRuntime().addShutdownHook(new Thread(this::saveNotesList));
+    saveExecServ.scheduleWithFixedDelay(this::saveNotesList, SAVE_ON_DISK_INTERVAL, SAVE_ON_DISK_INTERVAL, TimeUnit.MINUTES);
   }
 
   private synchronized ConcurrentHashMap<String, Map<String, Set<String>>> loadNotesList() {
@@ -122,10 +120,9 @@ public class FavoriteNotesRestApi {
     }
   }
 
-  @GET
-  @Path("get_notes_ids")
   @ZeppelinApi
-  public Response getNotesIds(@QueryParam("username") String username) {
+  @GetMapping(value = "get_notes_ids", produces = "application/json")
+  public ResponseEntity getNotesIds(@RequestParam("username") String username) {
     try {
       HashMap<String, Set> idsMap = new HashMap<>(2);
       Set<String> favoriteSet = Collections.emptySet();
@@ -140,31 +137,30 @@ public class FavoriteNotesRestApi {
       }
       idsMap.put("favorite", favoriteSet);
       idsMap.put("recent", recentSet);
-      return new JsonResponse<>(Response.Status.OK, "", idsMap).build();
+      return new JsonResponse(HttpStatus.OK, "", idsMap).build();
     } catch (NullPointerException ignore) {
-      return new JsonResponse<>(Response.Status.OK, "", Collections.emptyList()).build();
+      return new JsonResponse(HttpStatus.OK, "", Collections.emptyList()).build();
     }
   }
 
-  @GET
-  @Path("set_note_status")
   @ZeppelinApi
-  public Response setNoteStatus(@QueryParam("username") String username,
-                                @QueryParam("note_id") String noteId,
-                                @QueryParam("note_type") String noteType,
-                                @QueryParam("note_action") String noteAction) {
+  @GetMapping(value = "/set_note_status", produces = "application/json")
+  public ResponseEntity setNoteStatus(@RequestParam("username") String username,
+                                      @RequestParam("note_id") String noteId,
+                                      @RequestParam("note_type") String noteType,
+                                      @RequestParam("note_action") String noteAction) {
 
     if (username == null || username.isEmpty() || !SecurityUtils.getSubject().getPrincipal().equals(username)) {
-      return new JsonResponse<>(Response.Status.BAD_REQUEST, "username no correct", null).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST, "username no correct").build();
     }
     if (noteId == null || noteId.isEmpty()) {
-      return new JsonResponse<>(Response.Status.BAD_REQUEST, "note_id no correct", null).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST, "note_id no correct").build();
     }
     if (noteType == null || noteType.isEmpty() || !(noteType.equals("favorite") || noteType.equals("recent"))) {
-      return new JsonResponse<>(Response.Status.BAD_REQUEST, "note_type no correct", null).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST, "note_type no correct").build();
     }
     if (noteAction == null || noteAction.isEmpty() || !(noteAction.equals("add") || noteAction.equals("remove"))) {
-      return new JsonResponse<>(Response.Status.BAD_REQUEST, "note_action no correct", null).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST, "note_action no correct").build();
     }
 
     Map<String, Set<String>> notesMap = usersNotes.computeIfAbsent(username, k -> new HashMap<>());
@@ -190,6 +186,6 @@ public class FavoriteNotesRestApi {
       }).start();
     }
 
-    return new JsonResponse<>(Response.Status.OK, "is_" + noteType, null).build();
+    return new JsonResponse(HttpStatus.OK, "is_" + noteType).build();
   }
 }

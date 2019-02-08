@@ -37,9 +37,6 @@ import java.io.IOException;
 import java.util.Map;
 
 /** Credential Rest API. */
-//@Path("/credential")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/credential")
 public class CredentialRestApi {
@@ -56,17 +53,10 @@ public class CredentialRestApi {
 
   /**
    * Put User Credentials REST API.
-   *
-   * @param message - JSON with entity, username, password.
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
    */
-  //@PUT
   @PutMapping(produces = "application/json")
   public ResponseEntity putCredentials(final String message) throws IOException, IllegalArgumentException {
-    final Map<String, String> messageMap =
-        gson.fromJson(message, new TypeToken<Map<String, String>>() {}.getType());
+    final Map<String, String> messageMap = gson.fromJson(message, new TypeToken<Map<String, String>>() {}.getType());
     final String entity = messageMap.get("entity");
     final String username = messageMap.get("username");
     final String password = messageMap.get("password");
@@ -87,11 +77,7 @@ public class CredentialRestApi {
 
   /**
    * Get User Credentials list REST API.
-   *
-   * @return JSON with status.OK
-   * @throws IllegalArgumentException
    */
-  //@GET
   @GetMapping(produces = "application/json")
   public ResponseEntity getCredentials() throws IllegalArgumentException {
     final String user = securityService.getPrincipal();
@@ -102,12 +88,7 @@ public class CredentialRestApi {
 
   /**
    * Remove User Credentials REST API.
-   *
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
    */
-  //@DELETE
   @DeleteMapping(produces = "application/json")
   public ResponseEntity removeCredentials() throws IOException, IllegalArgumentException {
     final String user = securityService.getPrincipal();
@@ -121,14 +102,7 @@ public class CredentialRestApi {
 
   /**
    * Remove Entity of User Credential entity REST API.
-   *
-   * @param
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
    */
- // @DELETE
- // @Path("{entity}")
   @DeleteMapping(value = "/{entity}", produces = "application/json")
   public ResponseEntity removeCredentialEntity(@PathVariable("entity") final String entity)
       throws IOException, IllegalArgumentException {

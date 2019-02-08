@@ -121,6 +121,7 @@ public class Notebook {
     this.noteSearchService = noteSearchService;
     this.notebookAuthorization = notebookAuthorization;
     this.credentials = credentials;
+    this.replFactory = replFactory;
     quertzSchedFact = new org.quartz.impl.StdSchedulerFactory();
     quartzSched = quertzSchedFact.getScheduler();
     quartzSched.start();
@@ -147,8 +148,7 @@ public class Notebook {
    */
   public Note createNote(String notePath,
                          AuthenticationInfo subject) throws IOException {
-    return createNote(notePath, interpreterSettingManager.getDefaultInterpreterSetting().getName(),
-        subject);
+    return createNote(notePath, interpreterSettingManager.getDefaultInterpreterSetting().getName(), subject);
   }
 
   /**
@@ -607,7 +607,7 @@ public class Notebook {
           cronExecutingUser,
           StringUtils.isEmpty(cronExecutingRoles) ? null : cronExecutingRoles,
           null);
-      note.runAll(authenticationInfo, true);
+      note.runAllParagraphs(authenticationInfo, true);
     }
   }
 

@@ -43,9 +43,6 @@ import java.util.Map;
 /**
  * Helium Rest Api.
  */
-//@Path("/helium")
-//@Produces("application/json")
-//@Singleton
 @RestController
 @RequestMapping("/api/helium")
 public class HeliumRestApi {
@@ -64,8 +61,6 @@ public class HeliumRestApi {
   /**
    * Get all packages info.
    */
-  //@GET
-  //@Path("package")
   @GetMapping(value = "/package", produces = "application/json")
   public ResponseEntity getAllPackageInfo() {
     try {
@@ -79,8 +74,6 @@ public class HeliumRestApi {
   /**
    * Get all enabled packages info.
    */
-  //@GET
-  //@Path("enabledPackage")
   @GetMapping(value = "/enabledPackage", produces = "application/json")
   public ResponseEntity getAllEnabledPackageInfo() {
     try {
@@ -94,8 +87,6 @@ public class HeliumRestApi {
   /**
    * Get single package info.
    */
-  //@GET
-  //@Path("package/{packageName}")
   @GetMapping(value = "/package/{packageName}", produces = "application/json")
   public ResponseEntity getSinglePackageInfo(@PathVariable("packageName") final String packageName) {
     if (StringUtils.isEmpty(packageName)) {
@@ -111,8 +102,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@GET
-  //@Path("suggest/{noteId}/{paragraphId}")
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
@@ -135,8 +124,6 @@ public class HeliumRestApi {
 
   }
 
-  //@POST
-  //@Path("load/{noteId}/{paragraphId}")
   @PostMapping(value = "/load/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity load(@PathVariable("noteId") final String noteId,
                              @PathVariable("paragraphId") final String paragraphId, final String heliumPackage) {
@@ -160,9 +147,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@GET
-  //@Path("bundle/load/{packageName}")
-  //@Produces("text/javascript")
   @GetMapping(value = "/bundle/load/{packageName}", produces = "text/javascript")
   public ResponseEntity bundleLoad(@RequestParam("refresh") final String refresh,
                              @PathVariable("packageName") final String packageName) {
@@ -206,8 +190,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@POST
-  //@Path("enable/{packageName}")
   @PostMapping(value = "/enable/{packageName}", produces = "application/json")
   public ResponseEntity enablePackage(@PathVariable("packageName") final String packageName, final String artifact) {
     try {
@@ -222,8 +204,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@POST
-  //@Path("disable/{packageName}")
   @PostMapping(value = "/disable/{packageName}", produces = "application/json")
   public ResponseEntity disablePackage(@PathVariable("packageName") final String packageName) {
     try {
@@ -238,8 +218,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@GET
-  //@Path("spell/config/{packageName}")
   @GetMapping(value = "/spell/config/{packageName}", produces = "application/json")
   public ResponseEntity getSpellConfigUsingMagic(@PathVariable("packageName") final String packageName) {
     if (StringUtils.isEmpty(packageName)) {
@@ -262,8 +240,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@GET
-  //@Path("config")
   @GetMapping(value = "/config", produces = "application/json")
   public ResponseEntity getAllPackageConfigs() {
     try {
@@ -275,8 +251,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@GET
-  //@Path("config/{packageName}/{artifact}")
   @GetMapping(value = "/config/{packageName}/{artifact}", produces = "application/json")
   public ResponseEntity getPackageConfig(@PathVariable("packageName") final String packageName,
                                    @PathVariable("artifact") final String artifact) {
@@ -302,8 +276,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@POST
-  //@Path("config/{packageName}/{artifact}")
   @PostMapping(value = "/config/{packageName}/{artifact}", produces = "application/json")
   public ResponseEntity updatePackageConfig(@PathVariable("packageName") final String packageName,
                                             @PathVariable("artifact") final String artifact, final String rawConfig) {
@@ -314,23 +286,18 @@ public class HeliumRestApi {
     }
 
     try {
-      final Map<String, Object> packageConfig = gson.fromJson(
-              rawConfig, new TypeToken<Map<String, Object>>() {
-              }.getType());
+      final Map<String, Object> packageConfig
+              = gson.fromJson(rawConfig, new TypeToken<Map<String, Object>>() {}.getType());
       helium.updatePackageConfig(artifact, packageConfig);
       return new JsonResponse(HttpStatus.OK, packageConfig).build();
     } catch (final JsonParseException e) {
       logger.error(e.getMessage(), e);
-      return new JsonResponse(HttpStatus.BAD_REQUEST,
-              e.getMessage()).build();
+      return new JsonResponse(HttpStatus.BAD_REQUEST, e.getMessage()).build();
     } catch (final IOException | RuntimeException e) {
-      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-              e.getMessage()).build();
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
   }
 
-  //@GET
-  //@Path("order/visualization")
   @GetMapping(value = "/order/visualization", produces = "application/json")
   public ResponseEntity getVisualizationPackageOrder() {
     try {
@@ -342,8 +309,6 @@ public class HeliumRestApi {
     }
   }
 
-  //@POST
-  //@Path("order/visualization")
   @PostMapping(value = "/order/visualization", produces = "application/json")
   public ResponseEntity setVisualizationPackageOrder(final String orderedPackageNameList) {
     final List<String> orderedList = gson.fromJson(

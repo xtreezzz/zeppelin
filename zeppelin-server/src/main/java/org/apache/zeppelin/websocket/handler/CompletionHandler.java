@@ -60,7 +60,7 @@ public class CompletionHandler extends AbstractHandler {
 
     final List<InterpreterCompletion> completions = Lists.newArrayList();
     try {
-      completions.addAll(note.completion(p.getId(), buffer, cursor));
+      completions.addAll(note.completion(p.getId(), buffer, cursor, serviceContext.getAutheInfo()));
     } catch (final RuntimeException e) {
       // SKIP
     }

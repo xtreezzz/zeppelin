@@ -17,7 +17,10 @@
 
 package org.apache.zeppelin.rest;
 
+import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.rest.message.LoggerRequest;
 import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.AdminService;
@@ -33,8 +36,6 @@ import java.util.List;
 /**
  * This rest apis support some of feature related admin. e.g. changin log level.
  */
-//@Path("/admin")
-//@Singleton
 @RestController
 @RequestMapping("/api/admin")
 public class AdminRestApi {
@@ -52,37 +53,31 @@ public class AdminRestApi {
    *
    * @param name FQCN
    * @return List of current loggers' name and level with json format. It returns all of loggers'
-   *     name and level without name. With name, it returns only specific logger's name and level.
+   * name and level without name. With name, it returns only specific logger's name and level.
    */
-  //TODO(KOT): FIX THIS
-  /*
- // @GET
   @ZeppelinApi
   @GetMapping(produces = "application/json")
-  public List<org.apache.log4j.Logger> getLoggerSetting(@QueryParam("name") String name) {
+  public List<org.apache.log4j.Logger> getLoggerSetting(@RequestParam("name") final String name) {
     logger.debug("name: {}", name);
     return null == name || name.isEmpty()
-        ? adminService.getLoggers()
-        : Lists.newArrayList(adminService.getLogger(name));
+            ? adminService.getLoggers()
+            : Lists.newArrayList(adminService.getLogger(name));
   }
-*/
+
   /**
    * It change logger's level.
    *
    * @param loggerRequest logger's name and level with json format
    * @return The changed logger's name and level.
    */
-  //@POST
-//TODO(KOT): FIX THIS
-  /*
   @ZeppelinApi
   @PostMapping(produces = "application/json")
-  public List<org.apache.log4j.Logger> setLoggerLevel(LoggerRequest loggerRequest) {
+  public List<org.apache.log4j.Logger> setLoggerLevel(final LoggerRequest loggerRequest) {
     if (null == loggerRequest
-        || StringUtils.isEmpty(loggerRequest.getName())
-        || StringUtils.isEmpty(loggerRequest.getLevel())) {
+            || StringUtils.isEmpty(loggerRequest.getName())
+            || StringUtils.isEmpty(loggerRequest.getLevel())) {
       logger.trace("loggerRequest: {}", loggerRequest);
-      throw new BadRequestException("Wrong request body");
+      throw new IllegalArgumentException("Wrong request body");
     }
     logger.debug("loggerRequest: {}", loggerRequest);
 
@@ -90,7 +85,7 @@ public class AdminRestApi {
 
     return Lists.newArrayList(adminService.getLogger(loggerRequest.getName()));
   }
-  */
+
 
   /**
    * Change quartz thread pool size REST API.
@@ -98,11 +93,9 @@ public class AdminRestApi {
    * @param message - JSON with poolSize value.
    * @return JSON with status.OK
    */
-  // @POST
-  // @Path("cron/pool/{id}")
   @ZeppelinApi
   @PostMapping(value = "cron/pool/{id}", produces = "application/json")
-  public ResponseEntity changeScheduler(@PathVariable("id") String schedulerId, String message) {
+  public ResponseEntity changeScheduler(@PathVariable("id") final String schedulerId, final String message) {
     logger.info("Change cron pool size with msg={}", message);
     final SchedulerConfigRequest request = SchedulerConfigRequest.fromJson(message);
     if (request.getPoolSize() != null) {
@@ -116,8 +109,6 @@ public class AdminRestApi {
    *
    * @return JSON with status.OK
    */
-  //@GET
-  //@Path("cron/pool")
   @GetMapping(value = "cron/pool", produces = "application/json")
   @ZeppelinApi
   public ResponseEntity getQuartzSchedulerPoolInfo() {

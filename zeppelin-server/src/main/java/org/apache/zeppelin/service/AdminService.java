@@ -40,8 +40,8 @@ import org.quartz.impl.SchedulerRepository;
 @Component
 public class AdminService {
 
-  /*public List<org.apache.log4j.Logger> getLoggers() {
-    Enumeration loggers = LogManager.getCurrentLoggers();
+  public List<org.apache.log4j.Logger> getLoggers() {
+    final Enumeration loggers = LogManager.getCurrentLoggers();
     return StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(
                 new Iterator<org.apache.log4j.Logger>() {
@@ -52,7 +52,7 @@ public class AdminService {
 
                   @Override
                   public org.apache.log4j.Logger next() {
-                    return org.apache.log4j.Logger.class.cast(loggers.nextElement());
+                    return (org.apache.log4j.Logger) loggers.nextElement();
                   }
                 },
                 Spliterator.ORDERED),
@@ -60,31 +60,31 @@ public class AdminService {
         .collect(Collectors.toList());
   }
 
-  public org.apache.log4j.Logger getLogger(String name) {
+  public org.apache.log4j.Logger getLogger(final String name) {
     return LogManager.getLogger(name);
   }
 
-  public void setLoggerLevel(LoggerRequest loggerRequest) throws BadRequestException {
+  public void setLoggerLevel(final LoggerRequest loggerRequest) {
     try {
       Class.forName(loggerRequest.getName());
-    } catch (Throwable ignore) {
-      throw new BadRequestException(
+    } catch (final Throwable ignore) {
+      throw new IllegalArgumentException(
           "The class of '" + loggerRequest.getName() + "' doesn't exists");
     }
 
-    org.apache.log4j.Logger logger = LogManager.getLogger(loggerRequest.getName());
+    final org.apache.log4j.Logger logger = LogManager.getLogger(loggerRequest.getName());
     if (null == logger) {
-      throw new BadRequestException("The name of the logger is wrong");
+      throw new IllegalArgumentException("The name of the logger is wrong");
     }
 
-    org.apache.log4j.Level level = org.apache.log4j.Level.toLevel(loggerRequest.getLevel(), null);
+    final org.apache.log4j.Level level = org.apache.log4j.Level.toLevel(loggerRequest.getLevel(), null);
     if (null == level) {
-      throw new BadRequestException("The level of the logger is wrong");
+      throw new IllegalArgumentException("The level of the logger is wrong");
     }
 
     logger.setLevel(level);
   }
-  */
+
 
   public List<SchedulerConfigRequest> getSchedulersInfoList() {
     return SchedulerRepository.getInstance().lookupAll().stream().map(scheduler -> {

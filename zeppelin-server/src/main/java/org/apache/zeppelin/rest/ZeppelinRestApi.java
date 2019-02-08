@@ -16,14 +16,14 @@
  */
 package org.apache.zeppelin.rest;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.util.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,18 +66,11 @@ public class ZeppelinRestApi {
   /**
    * Set the log level for root logger.
    *
-   * @param request
    * @param logLevel new log level for Rootlogger
-   * @return
    */
-//TODO(KOT): FIX THIS
-  /*
-  //@PUT
-  //@Path("log/level/{logLevel}")
   @PutMapping(value = "/log/level/{logLevel}", produces = "application/json")
-  public ResponseEntity changeRootLogLevel(@Context HttpServletRequest request,
-      @PathVariable("logLevel") String logLevel) {
-    Level level = Level.toLevel(logLevel);
+  public ResponseEntity changeRootLogLevel(@PathVariable("logLevel") final String logLevel) {
+    final Level level = Level.toLevel(logLevel);
     if (logLevel.toLowerCase().equalsIgnoreCase(level.toString().toLowerCase())) {
       Logger.getRootLogger().setLevel(level);
       return new JsonResponse(HttpStatus.OK).build();
@@ -87,5 +80,4 @@ public class ZeppelinRestApi {
               + "INFO, TRACE, WARN").build();
     }
   }
-  */
 }
