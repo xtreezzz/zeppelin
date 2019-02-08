@@ -21,7 +21,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl', NotebookCtrl);
 function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
                       $http, websocketMsgSrv, baseUrlSrv, $timeout, saveAsService,
                       ngToast, noteActionService, noteVarShareService, TRASH_FOLDER_ID,
-                      heliumService) {
+                      heliumService, favoriteNotesService) {
   'ngInject';
 
   ngToast.dismiss();
@@ -41,16 +41,6 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   $scope.looknfeelOption = ['default', 'simple', 'report'];
   $scope.noteFormTitle = null;
   $scope.selectedParagraphsIds = new Set();
-  $scope.cronOption = [
-    {name: 'None', value: undefined},
-    {name: '1m', value: '0 0/1 * * * ?'},
-    {name: '5m', value: '0 0/5 * * * ?'},
-    {name: '1h', value: '0 0 0/1 * * ?'},
-    {name: '3h', value: '0 0 0/3 * * ?'},
-    {name: '6h', value: '0 0 0/6 * * ?'},
-    {name: '12h', value: '0 0 0/12 * * ?'},
-    {name: '1d', value: '0 0 0 * * ?'},
-  ];
 
   $scope.formatRevisionDate = function(date) {
     return moment.unix(date).format('MMMM Do YYYY, h:mm a');
@@ -126,19 +116,6 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     });
   };
 
-  $scope.getCronOptionNameFromValue = function(value) {
-    if (!value) {
-      return '';
-    }
-
-    for (let o in $scope.cronOption) {
-      if ($scope.cronOption[o].value === value) {
-        return $scope.cronOption[o].name;
-      }
-    }
-    return value;
-  };
-
   $scope.blockAnonUsers = function() {
     let zeppelinVersion = $rootScope.zeppelinVersion;
     let url = 'https://zeppelin.apache.org/docs/' + zeppelinVersion + '/security/notebook_authorization.html';
@@ -186,6 +163,9 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
         1000
       );
     }
+
+    favoriteNotesService.init();
+    favoriteNotesService.addNoteToRecent($routeParams.noteId);
   };
 
   initNotebook();
@@ -240,6 +220,19 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
 
   $scope.isTrash = function(note) {
     return note ? note.name.split('/')[0] === TRASH_FOLDER_ID : false;
+  };
+
+  $scope.switchFavoriteStatus = function(noteId) {
+    let current = favoriteNotesService.noteIsFavorite(noteId);
+    if (current) {
+      favoriteNotesService.removeNoteFromFavorite(noteId);
+    } else {
+      favoriteNotesService.addNoteToFavorite(noteId);
+    }
+  };
+
+  $scope.isFavorite = function(noteId) {
+    return favoriteNotesService.noteIsFavorite(noteId);
   };
 
   // Export notebook
@@ -390,6 +383,19 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
             };
           });
           websocketMsgSrv.runAllParagraphs(noteId, paragraphs);
+        }
+      },
+    });
+  };
+
+  $scope.stopNoteExecution = function(noteId) {
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: 'Stop running note?',
+      callback: function(result) {
+        if (result) {
+          websocketMsgSrv.stopNoteExecution(noteId);
         }
       },
     });
@@ -1315,6 +1321,31 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     }
     $scope.isOwner = true;
     return true;
+  };
+
+  $scope.userHasWritePermission = function() {
+    let owners = $scope.permissions.owners;
+    let writers = $scope.permissions.writers;
+
+    if (owners.length === 0 || writers.length === 0) {
+      return true;
+    }
+
+    let userName = $rootScope.ticket.principal;
+    let userRoles = $rootScope.ticket.roles;
+
+    userRoles = userRoles.substr(1, userRoles.length - 2).replace(/"/g, '').split(',');
+    let userNameAndRoles = [];
+    userNameAndRoles.push(userName);
+    if (userRoles !== null) {
+      userNameAndRoles = userRoles.concat(userNameAndRoles);
+    }
+
+    if (owners.concat(writers).some((name) => userNameAndRoles.includes(name))) {
+      return true;
+    }
+
+    return false;
   };
 
   $scope.toggleNotePersonalizedMode = function() {

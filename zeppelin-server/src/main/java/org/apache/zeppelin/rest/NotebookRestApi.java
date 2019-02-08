@@ -695,7 +695,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot run job for this note");
 
     try {
-      note.runAll(subject, blocking);
+      note.runAllParagraphs(subject, blocking);
     } catch (final Exception ex) {
       LOG.error("Exception from run", ex);
       return new JsonResponse(HttpStatus.PRECONDITION_FAILED,
@@ -813,7 +813,7 @@ public class NotebookRestApi extends AbstractRestApi {
       params = request.getParams();
     }
     notebookService.runParagraph(noteId, paragraphId, paragraph.getTitle(),
-            paragraph.getText(), params, new HashMap<>(),
+            paragraph.getText(), null, params, new HashMap<>(),
             false, false, getServiceContext(), new RestServiceCallback<>());
     return new JsonResponse(HttpStatus.OK).build();
   }
@@ -930,6 +930,24 @@ public class NotebookRestApi extends AbstractRestApi {
     notebook.refreshCron(note.getId());
 
     return new JsonResponse(HttpStatus.OK).build();
+  }
+
+  /**
+   * Check valid cron expression REST API.
+   *
+   * @return JSON with status.OK
+   * @throws IllegalArgumentException
+   */
+  //@GET
+  //@Path("cron/check_valid")
+  @ZeppelinApi
+  @PostMapping(value = "/cron/check_valid", produces = "application/json")
+  public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
+          throws IllegalArgumentException {
+    if (!CronExpression.isValidExpression(expression)) {
+      return new JsonResponse(HttpStatus.OK, "invalid").build();
+    }
+    return new JsonResponse(HttpStatus.OK, "valid").build();
   }
 
   /**

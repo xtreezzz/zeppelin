@@ -18,8 +18,14 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.socket.Message;
+import org.apache.zeppelin.rest.exception.NoteNotFoundException;
+import org.apache.zeppelin.service.ServiceCallback;
+import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +42,23 @@ public class RunnerHandler extends AbstractHandler {
     super(notebookAuthorization, notebook, connectionManager);
   }
 
+  public void stopNoteExecution(final WebSocketSession conn,
+                                final SockMessage fromMessage) {
+    final ServiceContext serviceContext = getServiceContext(fromMessage);
 
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
 
+    // prevent the run of new paragraphs
+    note.abortExecution();
+
+    // abort running paragraphs
+    for (final Paragraph paragraph : note.getParagraphs()) {
+      if (paragraph.isRunning()) {
+        paragraph.abort();
+        break;
+      }
+    }
+  }
 
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
     /*

@@ -20,6 +20,10 @@ package org.apache.zeppelin.notebook;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -56,6 +60,7 @@ import java.util.Map;
  */
 public class Note implements JsonSerializable {
   private static final Logger logger = LoggerFactory.getLogger(Note.class);
+  private static final Executor noteExecutor = Executors.newCachedThreadPool();
   private static Gson gson = new GsonBuilder()
       .setPrettyPrinting()
       .setDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
@@ -86,6 +91,7 @@ public class Note implements JsonSerializable {
 
   /********************************** transient fields ******************************************/
   private transient boolean loaded = false;
+  private transient final AtomicBoolean executionAborted = new AtomicBoolean();
   private transient String path;
   private transient InterpreterFactory interpreterFactory;
   private transient InterpreterSettingManager interpreterSettingManager;
@@ -307,14 +313,14 @@ public class Note implements JsonSerializable {
     Map<String, Input> form = srcParagraph.settings.getForms();
 
     logger.debug("srcParagraph user: " + srcParagraph.getUser());
-    
+
     newParagraph.setAuthenticationInfo(subject);
     newParagraph.setConfig(config);
     newParagraph.settings.setParams(param);
     newParagraph.settings.setForms(form);
     newParagraph.setText(srcParagraph.getText());
     newParagraph.setTitle(srcParagraph.getTitle());
-    
+
     logger.debug("newParagraph user: " + newParagraph.getUser());
 
     try {
@@ -604,21 +610,48 @@ public class Note implements JsonSerializable {
     }
   }
 
-  public void runAll(AuthenticationInfo authenticationInfo, boolean blocking) {
-    setRunning(true);
-    try {
-      for (Paragraph p : getParagraphs()) {
-        if (!p.isEnabled()) {
-          continue;
-        }
-        p.setAuthenticationInfo(authenticationInfo);
-        if (!run(p.getId(), blocking)) {
-          logger.warn("Skip running the remain notes because paragraph {} fails", p.getId());
-          break;
-        }
+  public void runAllParagraphs(AuthenticationInfo authenticationInfo, boolean blockingParagraph) {
+    runParagraphs(authenticationInfo, true, blockingParagraph, getParagraphs());
+  }
+
+  public void runParagraphs(AuthenticationInfo authenticationInfo,
+      boolean blocking,
+      boolean blockingParagraph,
+      List<Paragraph> paragraphs) {
+    synchronized (this) {
+      if (isRunning()) {
+        logger.warn("Can't run note because it already is running");
+        return;
       }
-    } finally {
-      setRunning(false);
+      setRunning(true);
+    }
+
+    CountDownLatch cdlLock = new CountDownLatch(1);
+
+    noteExecutor.execute(() -> {
+      try {
+        for (Paragraph p : paragraphs) {
+          if (!p.isEnabled()) {
+            continue;
+          }
+          p.setAuthenticationInfo(authenticationInfo);
+          if (this.executionAborted.get() || !run(p.getId(), blockingParagraph)) {
+            logger.warn("Skip running the remain notes because {} ", this.executionAborted.get() ?
+                "note executions is aborted" : "paragraph " + p.getId() + " fails");
+            break;
+          }
+        }
+      } finally {
+        setRunning(false);
+        cdlLock.countDown();
+      }
+    });
+
+    if (blocking) {
+      try {
+        cdlLock.await();
+      } catch (InterruptedException ignore) {
+      }
     }
   }
 
@@ -653,14 +686,25 @@ public class Note implements JsonSerializable {
     return false;
   }
 
+  public boolean isExecutionAborted() {
+    return this.executionAborted.get();
+  }
+
+  public void abortExecution() {
+    this.executionAborted.set(true);
+  }
+
   public boolean isTrash() {
     return this.path.startsWith("/" + NoteManager.TRASH_FOLDER);
   }
 
-  public List<InterpreterCompletion> completion(String paragraphId, String buffer, int cursor) {
+  public List<InterpreterCompletion> completion(String paragraphId,
+                                                String buffer,
+                                                int cursor,
+                                                AuthenticationInfo authInfo) {
     Paragraph p = getParagraph(paragraphId);
     p.setListener(this.paragraphJobListener);
-
+    p.setAuthenticationInfo(authInfo);
     return p.completion(buffer, cursor);
   }
 
@@ -677,7 +721,7 @@ public class Note implements JsonSerializable {
     if (settings == null || settings.size() == 0) {
       return;
     }
-    
+
     for (InterpreterSetting setting : settings) {
       InterpreterGroup intpGroup = setting.getInterpreterGroup(user, id);
       if (intpGroup != null) {
@@ -776,8 +820,9 @@ public class Note implements JsonSerializable {
     this.info = info;
   }
 
-  public void setRunning(boolean runStatus) {
+  public synchronized void setRunning(boolean runStatus) {
     Map<String, Object> infoMap = getInfo();
+    this.executionAborted.set(false);
     boolean oldStatus = (boolean) infoMap.getOrDefault("isRunning", false);
     if (oldStatus != runStatus) {
       infoMap.put("isRunning", runStatus);
@@ -787,7 +832,7 @@ public class Note implements JsonSerializable {
     }
   }
 
-  public boolean isRunning() {
+  public synchronized boolean isRunning() {
     return (boolean) getInfo().getOrDefault("isRunning", false);
   }
 

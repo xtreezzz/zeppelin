@@ -60,6 +60,7 @@
     <module>angular</module>
     <module>shell</module>
     <module>jdbc</module>
+    <module>tjdbc</module>
     <module>ignite</module>
     <module>kylin</module>
     <module>python</module>

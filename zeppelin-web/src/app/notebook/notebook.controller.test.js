@@ -26,6 +26,7 @@ describe('Controller: NotebookCtrl', function() {
 
   beforeEach(inject(function($controller, $rootScope) {
     scope = $rootScope.$new();
+    $rootScope.ticket = {};
     $controller('NotebookCtrl', {
       $scope: scope,
       websocketMsgSrv: websocketMsgSrvMock,
@@ -37,7 +38,7 @@ describe('Controller: NotebookCtrl', function() {
     scope.note = noteMock;
   });
 
-  let functions = ['getCronOptionNameFromValue', 'removeNote', 'runAllParagraphs', 'saveNote', 'toggleAllEditor',
+  let functions = ['removeNote', 'runAllParagraphs', 'saveNote', 'toggleAllEditor',
     'showAllEditor', 'hideAllEditor', 'toggleAllTable', 'hideAllTable', 'showAllTable', 'isNoteRunning',
     'killSaveTimer', 'startSaveTimer', 'setLookAndFeel', 'setCronScheduler', 'setConfig', 'updateNoteName',
     'openSetting', 'closeSetting', 'saveSetting', 'toggleSetting'];
@@ -60,26 +61,6 @@ describe('Controller: NotebookCtrl', function() {
   it('should set "showSetting" to false when closeSetting() is called', function() {
     scope.closeSetting();
     expect(scope.showSetting).toEqual(false);
-  });
-
-  it('should return the correct value for getCronOptionNameFromValue()', function() {
-    let none = scope.getCronOptionNameFromValue();
-    let oneMin = scope.getCronOptionNameFromValue('0 0/1 * * * ?');
-    let fiveMin = scope.getCronOptionNameFromValue('0 0/5 * * * ?');
-    let oneHour = scope.getCronOptionNameFromValue('0 0 0/1 * * ?');
-    let threeHours = scope.getCronOptionNameFromValue('0 0 0/3 * * ?');
-    let sixHours = scope.getCronOptionNameFromValue('0 0 0/6 * * ?');
-    let twelveHours = scope.getCronOptionNameFromValue('0 0 0/12 * * ?');
-    let oneDay = scope.getCronOptionNameFromValue('0 0 0 * * ?');
-
-    expect(none).toEqual('');
-    expect(oneMin).toEqual('1m');
-    expect(fiveMin).toEqual('5m');
-    expect(oneHour).toEqual('1h');
-    expect(threeHours).toEqual('3h');
-    expect(sixHours).toEqual('6h');
-    expect(twelveHours).toEqual('12h');
-    expect(oneDay).toEqual('1d');
   });
 
   it('should have "isNoteDirty" as null by default', function() {

@@ -25,7 +25,9 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -85,7 +87,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -609,36 +610,36 @@ public class InterpreterSettingManager implements NoteEventListener {
    */
   private void copyDependenciesFromLocalPath(final InterpreterSetting setting) {
     setting.setStatus(InterpreterSetting.Status.DOWNLOADING_DEPENDENCIES);
-      final Thread t = new Thread() {
-        public void run() {
-          try {
-            List<Dependency> deps = setting.getDependencies();
-            if (deps != null) {
-              for (Dependency d : deps) {
-                File destDir = new File(
-                    conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO));
+    final Thread t = new Thread() {
+      public void run() {
+        try {
+          List<Dependency> deps = setting.getDependencies();
+          if (deps != null) {
+            for (Dependency d : deps) {
+              File destDir = new File(
+                  conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO));
 
-                int numSplits = d.getGroupArtifactVersion().split(":").length;
-                if (!(numSplits >= 3 && numSplits <= 6)) {
-                  dependencyResolver.copyLocalDependency(d.getGroupArtifactVersion(),
-                      new File(destDir, setting.getId()));
-                }
+              int numSplits = d.getGroupArtifactVersion().split(":").length;
+              if (!(numSplits >= 3 && numSplits <= 6)) {
+                dependencyResolver.copyLocalDependency(d.getGroupArtifactVersion(),
+                    new File(destDir, setting.getId()));
               }
             }
-            setting.setStatus(InterpreterSetting.Status.READY);
-          } catch (Exception e) {
-            LOGGER.error(String.format("Error while copying deps for interpreter group : %s," +
-                    " go to interpreter setting page click on edit and save it again to make " +
-                    "this interpreter work properly.",
-                setting.getGroup()), e);
-            setting.setErrorReason(e.getLocalizedMessage());
-            setting.setStatus(InterpreterSetting.Status.ERROR);
-          } finally {
-
           }
+          setting.setStatus(InterpreterSetting.Status.READY);
+        } catch (Exception e) {
+          LOGGER.error(String.format("Error while copying deps for interpreter group : %s," +
+                  " go to interpreter setting page click on edit and save it again to make " +
+                  "this interpreter work properly.",
+              setting.getGroup()), e);
+          setting.setErrorReason(e.getLocalizedMessage());
+          setting.setStatus(InterpreterSetting.Status.ERROR);
+        } finally {
+
         }
-      };
-      t.start();
+      }
+    };
+    t.start();
   }
 
   /**
@@ -771,7 +772,9 @@ public class InterpreterSettingManager implements NoteEventListener {
   }
 
   public void restart(String id) throws InterpreterException {
-    interpreterSettings.get(id).close();
+    InterpreterSetting setting = interpreterSettings.get(id);
+    copyDependenciesFromLocalPath(setting);
+    setting.close();
   }
 
   public InterpreterSetting get(String id) {
@@ -867,17 +870,23 @@ public class InterpreterSettingManager implements NoteEventListener {
     }
   }
 
+  public Map<String, String> extractProcessInfo(ManagedInterpreterGroup mig) {
+    HashMap<String, String> info = new HashMap<>();
+    info.put("name", mig.getId());
+    info.put("group", mig.getInterpreterSetting().getGroup());
+    info.put("host", mig.getInterpreterProcess().getHost());
+    info.put("port", String.valueOf(mig.getInterpreterProcess().getPort()));
+    return info;
+  }
+
   @ManagedAttribute
-  public Set<String> getRunningInterpreters() {
-    Set<String> runningInterpreters = Sets.newHashSet();
-    for (Map.Entry<String, InterpreterSetting> entry : interpreterSettings.entrySet()) {
-      for (ManagedInterpreterGroup mig : entry.getValue().getAllInterpreterGroups()) {
-        if (null != mig.getRemoteInterpreterProcess()) {
-          runningInterpreters.add(entry.getKey());
-        }
-      }
-    }
-    return runningInterpreters;
+  public List<Map<String, String>> getRunningInterpretersInfo() {
+    return interpreterSettings.values().stream()
+        .map(InterpreterSetting::getAllInterpreterGroups)
+        .flatMap(Collection::stream)
+        .filter(mig -> mig.getInterpreterProcess() != null)
+        .map(this::extractProcessInfo)
+        .collect(Collectors.toList());
   }
 
   @Override

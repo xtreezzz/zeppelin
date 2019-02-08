@@ -4,8 +4,8 @@ package org.apache.zeppelin.jdbc;
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -501,7 +501,7 @@ public class SqlCompleter {
       List<CharSequence> candidates, String meta) {
     for (CharSequence candidate : candidates) {
       interpreterCompletions.add(new InterpreterCompletion(candidate.toString(),
-          candidate.toString(), meta));
+          candidate.toString(), meta, StringUtils.EMPTY));
     }
   }
 

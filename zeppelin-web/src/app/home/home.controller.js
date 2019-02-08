@@ -15,12 +15,14 @@
 angular.module('zeppelinWebApp').controller('HomeCtrl', HomeCtrl);
 
 function HomeCtrl($scope, noteListFactory, websocketMsgSrv, $rootScope, arrayOrderingSrv,
-                  ngToast, noteActionService, TRASH_FOLDER_ID) {
+                  ngToast, noteActionService, TRASH_FOLDER_ID, favoriteNotesService) {
   'ngInject';
 
   ngToast.dismiss();
   let vm = this;
   vm.notes = noteListFactory;
+  vm.favoriteNotes = [];
+  vm.recentNotes = [];
   vm.websocketMsgSrv = websocketMsgSrv;
   vm.arrayOrderingSrv = arrayOrderingSrv;
   vm.noteActionService = noteActionService;
@@ -84,7 +86,30 @@ function HomeCtrl($scope, noteListFactory, websocketMsgSrv, $rootScope, arrayOrd
       vm.staticHome = true;
       vm.notebookHome = false;
     }
+
+    favoriteNotesService.init();
+
+    favoriteNotesService.filterFavoriteNotes(vm.notes.flatList, (notes) => {
+      vm.favoriteNotes = notes;
+    });
+
+    favoriteNotesService.filterRecentNotes(vm.notes.flatList, (notes) => {
+      vm.recentNotes = notes;
+    });
   });
+
+  $scope.isFavoriteNote = function(noteId) {
+    return favoriteNotesService.noteIsFavorite(noteId);
+  };
+
+  $scope.changeNoteFavoriteStatus = function(noteId) {
+    let current = favoriteNotesService.noteIsFavorite(noteId);
+    if (current) {
+      favoriteNotesService.removeNoteFromFavorite(noteId);
+    } else {
+      favoriteNotesService.addNoteToFavorite(noteId);
+    }
+  };
 
   $scope.loadMoreNotes = function() {
     vm.numberOfNotesDisplayed += 10;

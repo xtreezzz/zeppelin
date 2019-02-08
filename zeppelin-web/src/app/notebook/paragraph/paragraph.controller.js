@@ -14,6 +14,7 @@
 
 import {SpellResult} from '../../spell';
 import {isParagraphRunning, ParagraphStatus} from './paragraph.status';
+import sqlFormatter from 'svl-tin-sql-formatter';
 
 import moment from 'moment';
 import DiffMatchPatch from 'diff-match-patch';
@@ -401,8 +402,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.runParagraphUsingBackendInterpreter = function(paragraphText) {
+    let selectedText = $scope.editor.getSelectedText();
     websocketMsgSrv.runParagraph($scope.paragraph.id, $scope.paragraph.title,
-      paragraphText, $scope.paragraph.config, $scope.paragraph.settings.params);
+      paragraphText, $scope.paragraph.config, $scope.paragraph.settings.params, selectedText);
   };
 
   $scope.bindBeforeUnload = function() {
@@ -740,6 +742,20 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     commitParagraph(paragraph);
   };
 
+  $scope.beautifySqlCode = function() {
+    if ($scope.paragraph.config.editorSetting.language !== 'sql') {
+      return;
+    }
+    $scope.editor.focus();
+    let paragraphText = $scope.editor.getValue();
+    let regResult = /^(\s*%.+?\s)?([\s\S]*)$/gm.exec(paragraphText);
+    let interpreterRow = regResult[1] ? regResult[1] : '';
+    let script = regResult[2];
+    let formattedText = interpreterRow + sqlFormatter.format(script, {maxCharacterPerLine: 128});
+    $scope.editor.setValue(formattedText);
+    $scope.paragraph.text = formattedText;
+  };
+
   $scope.aceChanged = function(_, editor) {
     let session = editor.getSession();
     let dirtyText = session.getValue();
@@ -759,6 +775,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.sendPatch = function() {
+    if (!$scope.userHasWritePermission()) {
+      return;
+    }
     $scope.originalText = $scope.originalText ? $scope.originalText : '';
     let patch = $scope.diffMatchPatch.patch_make($scope.originalText, $scope.dirtyText).toString();
     $scope.originalText = $scope.dirtyText;
@@ -824,7 +843,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         getCompletions: function(editor, session, pos, prefix, callback) {
           let langTools = ace.require('ace/ext/language_tools');
           let defaultKeywords = new Set();
-
           // eslint-disable-next-line handle-callback-err
           let getDefaultKeywords = function(err, completions) {
             if (completions !== undefined) {
@@ -858,6 +876,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               }
               return value;
             };
+            let computeScore = function(meta) {
+              if (meta === 'column') {
+                return 900;
+              } else if (meta === 'table') {
+                return 700;
+              } else if (meta === 'schema') {
+                return 500;
+              } else {
+                return 300;
+              }
+            };
             if (data.completions) {
               let completions = [];
               for (let c in data.completions) {
@@ -871,7 +900,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                     value: v.value,
                     meta: v.meta,
                     caption: computeCaption(v.name, v.meta),
-                    score: 300,
+                    score: computeScore(v.meta),
+                    className: v.meta ? 'iconable_' + v.meta : '',
+                    description: v.description,
                   });
                 }
               }
@@ -879,6 +910,20 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               callback(null, completions);
             }
           });
+        },
+        getDocTooltip: function(item) {
+          if (item.description && item.description !== ''
+          && item.description !== item.caption) {
+            item.docHTML = [
+              '<div id=\"completion_card\" class=\"card\"> <div class=\"card-body\">',
+              '<h5 class=\"card-title\">',
+              item.caption,
+              '</h5>',
+              '<p class=\"card-text\">',
+              item.description,
+              '</p></div></div>',
+            ].join('');
+          }
         },
       };
 
@@ -1053,9 +1098,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
-      if (caption === prev) {
+      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      $scope.editor.setOptions({
+        enableLiveAutocompletion: isTjdbc,
+      });
+      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
       }
+      if (item.meta === 'keyword-tinkoff') {
+        item.meta = 'keyword';
+      }
+
       prev = caption;
       return true;
     });
@@ -1083,9 +1136,13 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           return false;
         }
       }
+      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
       let caption = item.snippet || item.caption || item.value;
-      if (caption === prev) {
+      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
+      }
+      if (item.meta === 'keyword-tinkoff') {
+        item.meta = 'keyword';
       }
       prev = caption;
       return true;
@@ -1126,6 +1183,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.$on('editorSetting', function(event, data) {
           if (paragraph.id === data.paragraphId) {
             deferred.resolve(data);
+            $scope.editor.setReadOnly(!$scope.userHasWritePermission());
           }
         }
       ), 1000);
@@ -1528,7 +1586,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.paragraph.settings = newPara.settings;
     $scope.paragraph.runtimeInfos = newPara.runtimeInfos;
     if ($scope.editor) {
-      let isReadOnly = $scope.isRunning(newPara) || $scope.isNoteRunning;
+      let isReadOnly = $scope.isRunning(newPara) || $scope.isNoteRunning || !$scope.userHasWritePermission();
       $scope.editor.setReadOnly(isReadOnly);
     }
 
@@ -1731,6 +1789,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.clearParagraphOutput($scope.paragraph);
       } else if (keyEvent.ctrlKey && keyEvent.altKey && keyCode === 87) { // Ctrl + Alt + w
         $scope.goToSingleParagraph();
+      } else if (keyEvent.ctrlKey && keyCode === 66) { // Ctrl + b
+        $scope.beautifySqlCode();
       } else if (keyEvent.ctrlKey && keyEvent.altKey && keyCode === 70) { // Ctrl + f
         $scope.$emit('toggleSearchBox');
       } else {

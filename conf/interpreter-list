@@ -21,6 +21,7 @@
 angular         org.apache.zeppelin:zeppelin-angular:0.9.0              HTML and AngularJS view rendering
 jdbc            org.apache.zeppelin:zeppelin-jdbc:0.9.0                 Jdbc interpreter
 md              org.apache.zeppelin:zeppelin-markdown:0.9.0             Markdown support
+tjdbc           ru.tinkoff.zeppelin:zeppelin-tjdbc:0.9.0                Tinkoff.ru Jdbc interpreter
 
 #  вторая очередь
 ignite          org.apache.zeppelin:zeppelin-ignite_2.11:0.9.0          Ignite interpreter built with Scala 2.11

@@ -40,6 +40,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -329,6 +330,35 @@ public class InterpreterRestApi {
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, t.getMessage()).build();
     }
 
-    return new JsonResponse(HttpStatus.OK).build();
-  } */
+    return new JsonResponse<>(Status.OK).build();
+  }
+  */
+
+  /**
+   * Get all running interpreters.
+   */
+  //@GET
+  //@Path("running")
+  @ZeppelinApi
+  @GetMapping(value = "/running", produces = "application/json")
+  public ResponseEntity listRunningInterpreters() {
+    return new JsonResponse(HttpStatus.OK, "", interpreterSettingManager.getRunningInterpretersInfo()).build();
+  }
+
+  /**
+   * Get info about the running paragraphs grouped by their interpreters.
+   *
+   * @return JSON with status.OK
+   */
+  //@GET
+  //@Path("running/jobs")
+  @ZeppelinApi
+  @GetMapping(value = "/running/jobs", produces = "application/json")
+  public ResponseEntity getRunning() {
+    final Map<String, Object> response = new HashMap<>();
+    response.put("lastResponseUnixTime", System.currentTimeMillis());
+    response.put("runningInterpreters", interpreterService.getRunningInterpretersParagraphInfo());
+
+    return new JsonResponse(HttpStatus.OK, "", response).build();
+  }
 }

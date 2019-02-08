@@ -17,22 +17,22 @@
 
 package org.apache.zeppelin.rest;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
+import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** This rest apis support some of feature related admin. e.g. changin log level. */
+/**
+ * This rest apis support some of feature related admin. e.g. changin log level.
+ */
 //@Path("/admin")
 //@Singleton
 @RestController
@@ -91,4 +91,41 @@ public class AdminRestApi {
     return Lists.newArrayList(adminService.getLogger(loggerRequest.getName()));
   }
   */
+
+  /**
+   * Change quartz thread pool size REST API.
+   *
+   * @param message - JSON with poolSize value.
+   * @return JSON with status.OK
+   */
+  // @POST
+  // @Path("cron/pool/{id}")
+  @ZeppelinApi
+  @PostMapping(value = "cron/pool/{id}", produces = "application/json")
+  public ResponseEntity changeScheduler(@PathVariable("id") String schedulerId, String message) {
+    logger.info("Change cron pool size with msg={}", message);
+    final SchedulerConfigRequest request = SchedulerConfigRequest.fromJson(message);
+    if (request.getPoolSize() != null) {
+      adminService.setSchedulerThreadPoolSize(schedulerId, request.getPoolSize());
+    }
+    return new JsonResponse(HttpStatus.OK).build();
+  }
+
+  /**
+   * Get scheduler settings REST API.
+   *
+   * @return JSON with status.OK
+   */
+  //@GET
+  //@Path("cron/pool")
+  @GetMapping(value = "cron/pool", produces = "application/json")
+  @ZeppelinApi
+  public ResponseEntity getQuartzSchedulerPoolInfo() {
+    final List<SchedulerConfigRequest> settings = adminService.getSchedulersInfoList();
+    if (settings == null) {
+      return new JsonResponse(HttpStatus.NOT_FOUND).build();
+    } else {
+      return new JsonResponse(HttpStatus.OK, "", settings).build();
+    }
+  }
 }

@@ -177,16 +177,19 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           paragraphService.updateParagraph(session, messagereceived);
           break;
         case RUN_PARAGRAPH:
-          //runnerHandler.runParagraph(session, messagereceived);
+          runnerHandler.runParagraph(session, messagereceived);
           break;
         case PARAGRAPH_EXECUTED_BY_SPELL:
           spellHandler.broadcastSpellExecution(session, messagereceived);
           break;
         case RUN_ALL_PARAGRAPHS:
-          //runnerHandler.runAllParagraphs(session, messagereceived);
+          runnerHandler.runAllParagraphs(session, messagereceived);
+          break;
+        case STOP_NOTE_EXECUTION:
+          runnerHandler.stopNoteExecution(session, messagereceived);
           break;
         case CANCEL_PARAGRAPH:
-          //paragraphService.cancelParagraph(session, messagereceived);
+          runnerHandler.cancelParagraph(session, messagereceived);
           break;
         case MOVE_PARAGRAPH:
           paragraphService.moveParagraph(session, messagereceived);

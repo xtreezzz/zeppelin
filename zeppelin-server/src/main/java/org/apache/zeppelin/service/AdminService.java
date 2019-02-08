@@ -24,11 +24,19 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import org.apache.log4j.LogManager;
 import org.apache.zeppelin.rest.message.LoggerRequest;
+import org.quartz.SchedulerConfigException;
 import org.springframework.stereotype.Component;
+import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
+import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
+import org.quartz.SchedulerException;
+import org.quartz.impl.SchedulerRepository;
 
-/** This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}. */
+/**
+ * This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}.
+ */
 @Component
 public class AdminService {
 
@@ -77,4 +85,33 @@ public class AdminService {
     logger.setLevel(level);
   }
   */
+
+  public List<SchedulerConfigRequest> getSchedulersInfoList() {
+    return SchedulerRepository.getInstance().lookupAll().stream().map(scheduler -> {
+      try {
+        return new SchedulerConfigRequest(
+                scheduler.getSchedulerName(),
+                scheduler.getSchedulerInstanceId(),
+                scheduler.getMetaData().getThreadPoolSize(),
+                scheduler.getMetaData().getThreadPoolClass().getName(),
+                scheduler.getMetaData().getJobStoreClass().getName()
+        );
+      } catch (SchedulerException e) {
+        throw new IllegalStateException(e);
+      }
+    }).collect(Collectors.toList());
+  }
+
+  public void setSchedulerThreadPoolSize(final String schedulerId, final Integer size) {
+    try {
+      final DynamicThreadPool threadPool = DynamicThreadPool.getInstance(schedulerId);
+      if (threadPool == null) {
+        throw new IllegalArgumentException("Dynamic pool is not configured or scheduler is wrong, "
+                + "check setting for scheduler: " + schedulerId);
+      }
+      threadPool.setThreadCount(size);
+    } catch (final SchedulerConfigException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }

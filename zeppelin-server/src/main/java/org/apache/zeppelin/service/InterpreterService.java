@@ -25,16 +25,26 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.inject.Inject;
+import java.util.stream.Collectors;
+
 import jline.internal.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.dep.DependencyResolver;
+import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
+import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
+import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryException;
@@ -48,7 +58,7 @@ import org.springframework.stereotype.Component;
 public class InterpreterService {
 
   private static final String ZEPPELIN_ARTIFACT_PREFIX = "zeppelin-";
-  private static final Logger logger = LoggerFactory.getLogger(InterpreterService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InterpreterService.class);
   private static final ExecutorService executorService =
       Executors.newSingleThreadExecutor(
           new ThreadFactoryBuilder()
@@ -57,12 +67,15 @@ public class InterpreterService {
 
   private final ZeppelinConfiguration conf;
   private final InterpreterSettingManager interpreterSettingManager;
+  private final Notebook notebook;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
-                            final InterpreterSettingManager interpreterSettingManager) {
+                            final InterpreterSettingManager interpreterSettingManager,
+                            final Notebook notebook) {
     this.conf = conf;
     this.interpreterSettingManager = interpreterSettingManager;
+    this.notebook = notebook;
   }
 
   public void installInterpreter(
@@ -130,14 +143,14 @@ public class InterpreterService {
           final Path interpreterDir,
           final ServiceCallback<String> serviceCallback) {
     try {
-      logger.info("Start to download a dependency: {}", request.getName());
+      LOG.info("Start to download a dependency: {}", request.getName());
       if (null != serviceCallback) {
         serviceCallback.onStart("Starting to download " + request.getName() + " interpreter", null);
       }
 
       dependencyResolver.load(request.getArtifact(), interpreterDir.toFile());
       interpreterSettingManager.refreshInterpreterTemplates();
-      logger.info(
+      LOG.info(
           "Finish downloading a dependency {} into {}",
           request.getName(),
           interpreterDir.toString());
@@ -145,11 +158,11 @@ public class InterpreterService {
         serviceCallback.onSuccess(request.getName() + " downloaded", null);
       }
     } catch (final RepositoryException | IOException e) {
-      logger.error("Error while downloading dependencies", e);
+      LOG.error("Error while downloading dependencies", e);
       try {
         FileUtils.deleteDirectory(interpreterDir.toFile());
       } catch (final IOException e1) {
-        logger.error(
+        LOG.error(
             "Error while removing directory. You should handle it manually: {}",
             interpreterDir.toString(),
             e1);
@@ -160,9 +173,43 @@ public class InterpreterService {
               new Exception("Error while downloading " + request.getName() + " as " +
                   e.getMessage()), null);
         } catch (final IOException e1) {
-          logger.error("ServiceCallback failure", e1);
+          LOG.error("ServiceCallback failure", e1);
         }
       }
+    }
+  }
+
+  /**
+   * Extract info about running interpreters with additional paragraph info.
+   */
+  public List<Map<String, String>> getRunningInterpretersParagraphInfo() {
+    return notebook.getAllNotes().stream()
+            .map(Note::getParagraphs)
+            .flatMap(Collection::stream)
+            .filter(Paragraph::isRunning)
+            .map(this::extractParagraphInfo)
+            .collect(Collectors.toList());
+  }
+
+  /**
+   * Extract paragraph's interpreter info with paragraph data.
+   */
+  private Map<String, String> extractParagraphInfo(final Paragraph paragraph) {
+    try {
+      final ManagedInterpreterGroup process = (ManagedInterpreterGroup) paragraph
+              .getBindedInterpreter().getInterpreterGroup();
+      // add all info about binded interpreter
+      final Map<String, String> info = notebook.getInterpreterSettingManager().extractProcessInfo(process);
+      // add paragraph info
+      info.put("interpreterText", paragraph.getIntpText());
+      info.put("noteName", paragraph.getNote().getName());
+      info.put("noteId", paragraph.getNote().getId());
+      info.put("id", paragraph.getId());
+      info.put("user", paragraph.getUser());
+      return info;
+    } catch (InterpreterNotFoundException e) {
+      LOG.error("Failed to get binded interpreter for paragraph {}", paragraph, e);
+      return new HashMap<>();
     }
   }
 }
