@@ -17,13 +17,13 @@
 package org.apache.zeppelin.rest;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
-import org.apache.zeppelin.notebook.repo.NotebookRepoWithSettings;
+import org.apache.zeppelin.notebook.repo.ZeppelinRepository;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
@@ -53,17 +53,17 @@ import java.util.List;
 public class NotebookRepoRestApi extends AbstractRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRepoRestApi.class);
 
-  private final NotebookRepoSync noteRepos;
+  private final ZeppelinRepository zeppelinRepository;
   private final ConnectionManager connectionManager;
   private final Notebook notebook;
 
   @Autowired
-  public NotebookRepoRestApi(final NotebookRepoSync noteRepos,
+  public NotebookRepoRestApi(final ZeppelinRepository zeppelinRepository,
                              @Qualifier("NoSecurityService") final SecurityService securityService,
                              final ConnectionManager connectionManager,
                              final Notebook notebook) {
     super(securityService);
-    this.noteRepos = noteRepos;
+    this.zeppelinRepository = zeppelinRepository;
     this.connectionManager = connectionManager;
     this.notebook = notebook;
   }
@@ -76,8 +76,9 @@ public class NotebookRepoRestApi extends AbstractRestApi {
   public ResponseEntity listRepoSettings() {
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     LOG.info("Getting list of NoteRepo with Settings for user {}", subject.getUser());
-    final List<NotebookRepoWithSettings> settings = noteRepos.getNotebookRepos(subject);
-    return new JsonResponse(HttpStatus.OK, "", settings).build();
+    //final List<NotebookRepoWithSettings> settings = zeppelinRepository.get().getNotebookRepos(subject);
+    //return new JsonResponse(HttpStatus.OK, "", settings).build();
+    return new JsonResponse(HttpStatus.OK, "", Lists.newArrayList()).build();
   }
 
   /**
@@ -121,13 +122,14 @@ public class NotebookRepoRestApi extends AbstractRestApi {
               ImmutableMap.of("error", "Invalid payload")).build();
     }
     LOG.info("User {} is going to change repo setting", subject.getUser());
-    final NotebookRepoWithSettings updatedSettings =
-            noteRepos.updateNotebookRepo(newSettings.name, newSettings.settings, subject);
-    if (!updatedSettings.isEmpty()) {
-      LOG.info("Broadcasting note list to user {}", subject.getUser());
-      final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
-      connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
-    }
-    return new JsonResponse(HttpStatus.OK, "", updatedSettings).build();
+    //final NotebookRepoWithSettings updatedSettings =
+     //       zeppelinRepository.get().updateNotebookRepo(newSettings.name, newSettings.settings, subject);
+    //if (!updatedSettings.isEmpty()) {
+    //  LOG.info("Broadcasting note list to user {}", subject.getUser());
+    //  final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
+    //  connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
+   // }
+    //return new JsonResponse(HttpStatus.OK, "", updatedSettings).build();
+    return new JsonResponse(HttpStatus.OK, "", Lists.newArrayList()).build();
   }
 }

@@ -69,6 +69,16 @@
     <module>zeppelin-jupyter</module>
     <module>zeppelin-plugins</module>
     <module>zeppelin-distribution</module>
+
+    <module>zeppelin-repositories/azure</module>
+    <module>zeppelin-repositories/filesystem</module>
+    <module>zeppelin-repositories/gcs</module>
+    <module>zeppelin-repositories/git</module>
+    <module>zeppelin-repositories/github</module>
+    <module>zeppelin-repositories/inmemory-repository</module>
+    <module>zeppelin-repositories/s3</module>
+    <module>zeppelin-repositories/vfs</module>
+    <module>zeppelin-repositories/zeppelin-repository</module>
   </modules>
 
   <properties>

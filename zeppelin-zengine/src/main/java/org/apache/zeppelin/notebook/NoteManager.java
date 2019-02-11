@@ -19,8 +19,7 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.notebook.repo.NotebookRepo;
-import org.apache.zeppelin.scheduler.Job;
+import org.apache.zeppelin.notebook.repo.ZeppelinRepository;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,19 +53,19 @@ public class NoteManager {
   private Folder root;
   private Folder trash;
 
-  private NotebookRepo notebookRepo;
+  private ZeppelinRepository zeppelinRepository;
   private Map<String, String> notesInfo;
 
-  public NoteManager(NotebookRepo notebookRepo) throws IOException {
-    this.notebookRepo = notebookRepo;
-    this.root = new Folder("/", notebookRepo);
+  public NoteManager(ZeppelinRepository zeppelinRepository) throws IOException {
+    this.zeppelinRepository = zeppelinRepository;
+    this.root = new Folder("/", zeppelinRepository);
     this.trash = this.root.getOrCreateFolder(TRASH_FOLDER);
     init();
   }
 
   // build the tree structure of notes
   private void init() throws IOException {
-    this.notesInfo = notebookRepo.list(AuthenticationInfo.ANONYMOUS)
+    this.notesInfo = zeppelinRepository.get().list(AuthenticationInfo.ANONYMOUS)
             .values()
             .stream()
             .collect(Collectors.toMap(NoteInfo::getId, NoteInfo::getPath));
@@ -103,7 +102,7 @@ public class NoteManager {
    * @throws IOException
    */
   public void reloadNotes() throws IOException {
-    this.root = new Folder("/", notebookRepo);
+    this.root = new Folder("/", zeppelinRepository);
     this.trash = this.root.getOrCreateFolder(TRASH_FOLDER);
     init();
   }
@@ -167,7 +166,7 @@ public class NoteManager {
    */
   public void saveNote(Note note, AuthenticationInfo subject) throws IOException {
     addOrUpdateNoteNode(note);
-    this.notebookRepo.save(note, subject);
+    this.zeppelinRepository.get().save(note, subject);
     note.setLoaded(true);
   }
 
@@ -192,7 +191,7 @@ public class NoteManager {
     String notePath = this.notesInfo.remove(noteId);
     Folder folder = getOrCreateFolder(getFolderName(notePath));
     folder.removeNote(getNoteName(notePath));
-    this.notebookRepo.remove(noteId, notePath, subject);
+    this.zeppelinRepository.get().remove(noteId, notePath, subject);
   }
 
   public void moveNote(String noteId,
@@ -215,7 +214,7 @@ public class NoteManager {
     this.notesInfo.put(noteId, newNotePath);
 
     // update notebookrepo
-    this.notebookRepo.move(noteId, notePath, newNotePath, subject);
+    this.zeppelinRepository.get().move(noteId, notePath, newNotePath, subject);
   }
 
 
@@ -224,7 +223,7 @@ public class NoteManager {
                          AuthenticationInfo subject) throws IOException {
 
     // update notebookrepo
-    this.notebookRepo.move(folderPath, newFolderPath, subject);
+    this.zeppelinRepository.get().move(folderPath, newFolderPath, subject);
 
     // update filesystem tree
     Folder folder = getFolder(folderPath);
@@ -249,7 +248,7 @@ public class NoteManager {
   public List<Note> removeFolder(String folderPath, AuthenticationInfo subject) throws IOException {
 
     // update notebookrepo
-    this.notebookRepo.remove(folderPath, subject);
+    this.zeppelinRepository.get().remove(folderPath, subject);
 
     // update filesystem tree
     Folder folder = getFolder(folderPath);
@@ -340,20 +339,20 @@ public class NoteManager {
 
     private String name;
     private Folder parent;
-    private NotebookRepo notebookRepo;
+    private ZeppelinRepository zeppelinRepository;
 
     // noteName -> NoteNode
     private Map<String, NoteNode> notes = new HashMap<>();
     // folderName -> Folder
     private Map<String, Folder> subFolders = new HashMap<>();
 
-    public Folder(String name, NotebookRepo notebookRepo) {
+    public Folder(String name, ZeppelinRepository zeppelinRepository) {
       this.name = name;
-      this.notebookRepo = notebookRepo;
+      this.zeppelinRepository = zeppelinRepository;
     }
 
-    public Folder(String name, Folder parent, NotebookRepo notebookRepo) {
-      this(name, notebookRepo);
+    public Folder(String name, Folder parent, ZeppelinRepository zeppelinRepository) {
+      this(name, zeppelinRepository);
       this.parent = parent;
     }
 
@@ -362,7 +361,7 @@ public class NoteManager {
         return this;
       }
       if (!subFolders.containsKey(folderName)) {
-        subFolders.put(folderName, new Folder(folderName, this, notebookRepo));
+        subFolders.put(folderName, new Folder(folderName, this, zeppelinRepository));
       }
       return subFolders.get(folderName);
     }
@@ -396,7 +395,7 @@ public class NoteManager {
     }
 
     public void addNote(String noteName, Note note) {
-      notes.put(noteName, new NoteNode(note, this, notebookRepo));
+      notes.put(noteName, new NoteNode(note, this, zeppelinRepository));
     }
 
     /**
@@ -491,12 +490,12 @@ public class NoteManager {
 
     private Folder parent;
     private Note note;
-    private NotebookRepo notebookRepo;
+    private ZeppelinRepository zeppelinRepository;
 
-    public NoteNode(Note note, Folder parent, NotebookRepo notebookRepo) {
+    public NoteNode(Note note, Folder parent, ZeppelinRepository zeppelinRepository) {
       this.note = note;
       this.parent = parent;
-      this.notebookRepo = notebookRepo;
+      this.zeppelinRepository = zeppelinRepository;
     }
 
     /**
@@ -508,7 +507,7 @@ public class NoteManager {
      */
     public synchronized Note getNote() throws IOException {
       if (!note.isLoaded()) {
-        note = notebookRepo.get(note.getId(), note.getPath(), AuthenticationInfo.ANONYMOUS);
+        note = zeppelinRepository.get().get(note.getId(), note.getPath(), AuthenticationInfo.ANONYMOUS);
         if (parent.toString().equals("/")) {
           note.setPath("/" + note.getName());
         } else {

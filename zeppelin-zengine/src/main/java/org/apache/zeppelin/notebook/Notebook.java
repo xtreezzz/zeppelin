@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
@@ -44,10 +44,8 @@ import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
-import org.apache.zeppelin.notebook.repo.NotebookRepo;
-import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
-import org.apache.zeppelin.notebook.repo.NotebookRepoWithVersionControl;
-import org.apache.zeppelin.notebook.repo.NotebookRepoWithVersionControl.Revision;
+import org.apache.zeppelin.notebook.repo.ZeppelinRepository;
+import org.apache.zeppelin.notebook.repo.api.Revision;
 import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
@@ -84,7 +82,7 @@ public class Notebook {
   private ZeppelinConfiguration conf;
   private StdSchedulerFactory quertzSchedFact;
   org.quartz.Scheduler quartzSched;
-  private NotebookRepo notebookRepo;
+  private ZeppelinRepository zeppelinRepository;
   private SearchService noteSearchService;
   private NotebookAuthorization notebookAuthorization;
   private Credentials credentials;
@@ -106,17 +104,18 @@ public class Notebook {
   @Autowired
   public Notebook(
       ZeppelinConfiguration conf,
-      NotebookRepo notebookRepo,
+      ZeppelinRepository zeppelinRepository,
       InterpreterFactory replFactory,
       InterpreterSettingManager interpreterSettingManager,
       SearchService noteSearchService,
       NotebookAuthorization notebookAuthorization,
-      Credentials credentials)
+      Credentials credentials,
+      NoteManager noteManager)
       throws IOException, SchedulerException {
 
-    this.noteManager = new NoteManager(notebookRepo);
+    this.noteManager = noteManager;
     this.conf = conf;
-    this.notebookRepo = notebookRepo;
+    this.zeppelinRepository = zeppelinRepository;
     this.interpreterSettingManager = interpreterSettingManager;
     this.noteSearchService = noteSearchService;
     this.notebookAuthorization = notebookAuthorization;
@@ -309,8 +308,8 @@ public class Notebook {
 
   public Revision checkpointNote(String noteId, String noteName, String checkpointMessage,
       AuthenticationInfo subject) throws IOException {
-    if (((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo()) {
-      return ((NotebookRepoWithVersionControl) notebookRepo)
+    if (zeppelinRepository.isRevisionSupported()) {
+      return zeppelinRepository.getAsVCS()
           .checkpoint(noteId, noteName, checkpointMessage, subject);
     } else {
       return null;
@@ -320,8 +319,8 @@ public class Notebook {
   public List<Revision> listRevisionHistory(String noteId,
                                             String noteName,
                                             AuthenticationInfo subject) throws IOException {
-    if (((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo()) {
-      return ((NotebookRepoWithVersionControl) notebookRepo).revisionHistory(noteId, noteName, subject);
+    if (zeppelinRepository.isRevisionSupported()) {
+      return zeppelinRepository.getAsVCS().revisionHistory(noteId, noteName, subject);
     } else {
       return null;
     }
@@ -329,8 +328,8 @@ public class Notebook {
 
   public Note setNoteRevision(String noteId, String noteName, String revisionId, AuthenticationInfo subject)
       throws IOException {
-    if (((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo()) {
-      return ((NotebookRepoWithVersionControl) notebookRepo)
+    if (zeppelinRepository.isRevisionSupported()) {
+      return zeppelinRepository.getAsVCS()
           .setNoteRevision(noteId, noteName, revisionId, subject);
     } else {
       return null;
@@ -340,8 +339,8 @@ public class Notebook {
   public Note getNoteByRevision(String noteId, String noteName,
                                 String revisionId, AuthenticationInfo subject)
       throws IOException {
-    if (((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo()) {
-      return ((NotebookRepoWithVersionControl) notebookRepo).get(noteId, noteName,
+    if (zeppelinRepository.isRevisionSupported()) {
+      return zeppelinRepository.getAsVCS().get(noteId, noteName,
           revisionId, subject);
     } else {
       return null;
@@ -432,13 +431,6 @@ public class Notebook {
    */
   public void reloadAllNotes(AuthenticationInfo subject) throws IOException {
     this.noteManager.reloadNotes();
-
-    if (notebookRepo instanceof NotebookRepoSync) {
-      NotebookRepoSync mainRepo = (NotebookRepoSync) notebookRepo;
-      if (mainRepo.getRepoCount() > 1) {
-        mainRepo.sync(subject);
-      }
-    }
   }
 
   private class SnapshotAngularObject {
@@ -686,7 +678,7 @@ public class Notebook {
   }
 
   public void close() {
-    this.notebookRepo.close();
+    this.zeppelinRepository.get().close();
     this.noteSearchService.close();
   }
 
@@ -713,12 +705,6 @@ public class Notebook {
   }
 
   public Boolean isRevisionSupported() {
-    if (notebookRepo instanceof NotebookRepoSync) {
-      return ((NotebookRepoSync) notebookRepo).isRevisionSupportedInDefaultRepo();
-    } else if (notebookRepo instanceof NotebookRepoWithVersionControl) {
-      return true;
-    } else {
-      return false;
-    }
+    return zeppelinRepository.isRevisionSupported();
   }
 }
