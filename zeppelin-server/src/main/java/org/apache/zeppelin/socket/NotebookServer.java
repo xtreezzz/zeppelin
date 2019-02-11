@@ -1333,9 +1333,8 @@ public class NotebookServer extends WebSocketServlet
           @Override
           public void onSuccess(Note note, ServiceContext context) throws IOException {
             super.onSuccess(note, context);
-            Note reloadedNote = getNotebook().loadNoteFromRepo(noteId, context.getAutheInfo());
+            getNotebook().saveNote(note, context.getAutheInfo());
             conn.send(serializeMessage(new Message(OP.SET_NOTE_REVISION).put("status", true)));
-            broadcastNote(reloadedNote);
           }
         });
   }

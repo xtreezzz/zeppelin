@@ -284,7 +284,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       message: 'Commit note to current repository?',
       callback: function(result) {
         if (result) {
-          websocketMsgSrv.checkpointNote($routeParams.noteId, $routeParams.name, commitMessage);
+          websocketMsgSrv.checkpointNote($routeParams.noteId, commitMessage);
         }
       },
     });
@@ -299,7 +299,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       message: 'Set notebook head to current revision?',
       callback: function(result) {
         if (result) {
-          websocketMsgSrv.setNoteRevision($routeParams.noteId, $routeParams.name, $routeParams.revisionId);
+          websocketMsgSrv.setNoteRevision($routeParams.noteId, $routeParams.revisionId);
         }
       },
     });
@@ -1324,6 +1324,9 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   };
 
   $scope.userHasWritePermission = function() {
+    if (!$scope.permissions) {
+      return true;
+    }
     let owners = $scope.permissions.owners;
     let writers = $scope.permissions.writers;
 
