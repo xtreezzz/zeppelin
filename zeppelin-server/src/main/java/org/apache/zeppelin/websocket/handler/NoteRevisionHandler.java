@@ -20,7 +20,7 @@ package org.apache.zeppelin.websocket.handler;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
-import org.apache.zeppelin.notebook.repo.NotebookRepoWithVersionControl;
+import org.apache.zeppelin.repo.api.Revision;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -52,10 +52,10 @@ public class NoteRevisionHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final String commitSockMessage = fromMessage.safeGetType("commitSockMessage", LOG);
 
-    final NotebookRepoWithVersionControl.Revision revision
+    final Revision revision
             = notebook.checkpointNote(note.getId(), note.getName(), commitSockMessage, serviceContext.getAutheInfo());
 
-    if (NotebookRepoWithVersionControl.Revision.isEmpty(revision)) {
+    if (Revision.isEmpty(revision)) {
       throw new IOException("Couldn't checkpoint note revision: possibly storage doesn't support versioning. "
               + "Please check the logs for more details.");
     }
@@ -68,7 +68,7 @@ public class NoteRevisionHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
 
-    final List<NotebookRepoWithVersionControl.Revision> revisions =
+    final List<Revision> revisions =
             notebook.listRevisionHistory(note.getId(), note.getPath(), serviceContext.getAutheInfo());
     final SockMessage message = new SockMessage(Operation.LIST_REVISION_HISTORY)
             .put("revisionList", revisions);

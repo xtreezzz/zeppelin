@@ -19,7 +19,7 @@ package org.apache.zeppelin.notebook.repo;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.storage.FileSystemStorage;
+import org.apache.zeppelin.notebook.FileSystemStorage;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
