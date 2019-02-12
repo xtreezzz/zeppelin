@@ -21,8 +21,8 @@ package org.apache.zeppelin.notebook.repo;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.repo.api.NotebookRepo;
-import org.apache.zeppelin.notebook.repo.api.NotebookRepoSettingsInfo;
+import org.apache.zeppelin.repo.api.NotebookRepo;
+import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
 import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.io.IOException;

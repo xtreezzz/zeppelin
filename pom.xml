@@ -67,7 +67,6 @@
     <module>zeppelin-web</module>
     <module>zeppelin-server</module>
     <module>zeppelin-jupyter</module>
-    <module>zeppelin-plugins</module>
     <module>zeppelin-distribution</module>
 
     <module>zeppelin-repositories/azure</module>
@@ -78,7 +77,6 @@
     <module>zeppelin-repositories/inmemory-repository</module>
     <module>zeppelin-repositories/s3</module>
     <module>zeppelin-repositories/vfs</module>
-    <module>zeppelin-repositories/zeppelin-repository</module>
   </modules>
 
   <properties>
