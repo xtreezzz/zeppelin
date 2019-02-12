@@ -123,6 +123,21 @@
       <artifactId>notebookrepo-vfs</artifactId>
       <version>0.9.0-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>notebookrepo-azure</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>notebookrepo-filesystem</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>inmemory-repository</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>

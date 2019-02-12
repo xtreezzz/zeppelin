@@ -55,7 +55,7 @@ public class ZeppelinRepository {
   @PostConstruct
   public void initRepository() {
     LOG.info("Start loading repository implementations");
-    final File repoFolder = new File("/repositories/");
+    final File repoFolder = new File("repositories/");
 
     final File[] directories = repoFolder.listFiles(File::isDirectory);
     if (directories == null || directories.length == 0) {
