@@ -18,6 +18,7 @@
 package org.apache.zeppelin.notebook.repo;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.Revision;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.eclipse.jgit.api.Git;
@@ -48,7 +49,7 @@ import java.net.URISyntaxException;
  * You should be able to use this integration with all remote git repositories that accept
  * username + password authentication, not just GitHub.
  */
-public class GitHubNotebookRepo extends GitNotebookRepo {
+public class GitHubNotebookRepo extends GitNotebookRepo implements NotebookRepoWithVersionControl {
   private static final Logger LOG = LoggerFactory.getLogger(GitHubNotebookRepo.class);
   private ZeppelinConfiguration zeppelinConfiguration;
   private Git git;

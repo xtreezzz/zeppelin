@@ -24,6 +24,8 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +34,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class ZeppelinRepository {
@@ -55,7 +59,7 @@ public class ZeppelinRepository {
   @PostConstruct
   public void initRepository() {
     LOG.info("Start loading repository implementations");
-    final File repoFolder = new File("repositories/");
+    final File repoFolder = new File("plugins/NotebookRepo");
 
     final File[] directories = repoFolder.listFiles(File::isDirectory);
     if (directories == null || directories.length == 0) {
@@ -87,11 +91,22 @@ public class ZeppelinRepository {
 
     final Map<ClassLoader, Set<Class<? extends NotebookRepo>>> repositoryLoadResults = Maps.newHashMap();
     for (final ClassLoader classLoader : repoClassLoaders) {
-      final Reflections reflections = new Reflections(classLoader);
+      final Reflections reflections = new Reflections(
+              new ConfigurationBuilder().setUrls(
+                      ClasspathHelper.forClassLoader(classLoader)
+              ).addClassLoader(classLoader)
+      );
+      //final Reflections reflections = new Reflections(classLoader);
       final Set<Class<? extends NotebookRepo>> repoClasses = reflections.getSubTypesOf(NotebookRepo.class);
 
-      LOG.info("Found repositories implementations: {}", repoClasses);
-      repositoryLoadResults.put(classLoader, repoClasses);
+      final Set<Class<? extends NotebookRepo>> filtered = repoClasses
+              .stream()
+              .filter(c -> !Modifier.isAbstract(getClass().getModifiers()) && !c.isInterface())
+              .collect(Collectors.toSet());
+
+
+      LOG.info("Found repositories implementations: {}", filtered);
+      repositoryLoadResults.put(classLoader, filtered);
     }
 
     LOG.info("Found repositories implementations: {}", repositoryLoadResults);
