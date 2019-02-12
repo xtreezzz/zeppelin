@@ -226,6 +226,9 @@ public class SqlCompleter {
         new StatementDeParser(expressionDeParser, selectDeparser, new StringBuilder());
 
     try {
+      List<String> statements = Arrays.asList(statement.split(";"));
+      statement = statements.get(statements.size() - 1);
+
       net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
       parseExpression.accept(statementDeParser);
       completions.addAll(

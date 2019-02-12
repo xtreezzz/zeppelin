@@ -959,16 +959,16 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
 
       // autocomplete on '.'
-      /*
-       $scope.editor.commands.on("afterExec", function(e, t) {
-       if (e.command.name == "insertstring" && e.args == "." ) {
-       var all = e.editor.completers;
-       //e.editor.completers = [remoteCompleter];
-       e.editor.execCommand("startAutocomplete");
-       //e.editor.completers = all;
-       }
-       });
-       */
+      $scope.editor.commands.on('afterExec', function(e, t) {
+        if (e.command.name === 'insertstring' && (e.args === '.' || e.args === ' ')
+        && getInterpreterName($scope.paragraph.text) === 'tjdbc') {
+          // var all = e.editor.completers;
+          // e.editor.completers = [remoteCompleter];
+          e.editor.execCommand('startAutocomplete');
+          // e.editor.completers = all;
+        }
+      });
+
 
       // remove binding
       $scope.editor.commands.removeCommand('showSettingsMenu');
