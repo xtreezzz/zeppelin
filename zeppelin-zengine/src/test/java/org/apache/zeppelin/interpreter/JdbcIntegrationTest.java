@@ -16,65 +16,65 @@
  */
 
 package org.apache.zeppelin.interpreter;
-
-import com.google.common.collect.Lists;
-import java.util.Arrays;
-import org.apache.zeppelin.dep.Dependency;
-import org.apache.zeppelin.user.AuthenticationInfo;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-public class JdbcIntegrationTest {
-
-  private static MiniZeppelin zeppelin;
-  private static InterpreterFactory interpreterFactory;
-  private static InterpreterSettingManager interpreterSettingManager;
-
-
-  @BeforeClass
-  public static void setUp() throws IOException {
-    zeppelin = new MiniZeppelin();
-    zeppelin.start();
-    interpreterFactory = zeppelin.getInterpreterFactory();
-    interpreterSettingManager = zeppelin.getInterpreterSettingManager();
-  }
-
-  @AfterClass
-  public static void tearDown() throws IOException {
-    if (zeppelin != null) {
-      zeppelin.stop();
-    }
-  }
-
-  @Test
-  public void testMySql() throws InterpreterException {
-    for (String interpreter : Arrays.asList("jdbc", "tjdbc")) {
-      InterpreterSetting interpreterSetting = interpreterSettingManager
-          .getInterpreterSettingByName(interpreter);
-      interpreterSetting.setProperty("default.driver", "com.mysql.jdbc.Driver");
-      interpreterSetting.setProperty("default.url", "jdbc:mysql://localhost:3306/");
-      interpreterSetting.setProperty("default.user", "root");
-      Dependency dependency = new Dependency("mysql:mysql-connector-java:5.1.46");
-      interpreterSetting.setDependencies(Lists.newArrayList(dependency));
-      interpreterSettingManager.restart(interpreter);
-      interpreterSetting.waitForReady(60 * 1000);
-      Interpreter jdbcInterpreter = interpreterFactory.getInterpreter(
-          "user1", "note1", interpreter, "test");
-      assertNotNull("JdbcInterpreter is null", jdbcInterpreter);
-
-      InterpreterContext context = new InterpreterContext.Builder()
-          .setNoteId("note1")
-          .setParagraphId("paragraph_1")
-          .setAuthenticationInfo(AuthenticationInfo.ANONYMOUS)
-          .build();
-      InterpreterResult interpreterResult = jdbcInterpreter.interpret("show databases;", context);
-      assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code);
-    }
-  }
-}
+//
+//import com.google.common.collect.Lists;
+//import java.util.Arrays;
+//import org.apache.zeppelin.dep.Dependency;
+//import org.apache.zeppelin.user.AuthenticationInfo;
+//import org.junit.AfterClass;
+//import org.junit.BeforeClass;
+//import org.junit.Test;
+//
+//import java.io.IOException;
+//
+//import static org.junit.Assert.assertEquals;
+//import static org.junit.Assert.assertNotNull;
+//
+//public class JdbcIntegrationTest {
+//
+//  private static MiniZeppelin zeppelin;
+//  private static InterpreterFactory interpreterFactory;
+//  private static InterpreterSettingManager interpreterSettingManager;
+//
+//
+//  @BeforeClass
+//  public static void setUp() throws IOException {
+//    zeppelin = new MiniZeppelin();
+//    zeppelin.start();
+//    interpreterFactory = zeppelin.getInterpreterFactory();
+//    interpreterSettingManager = zeppelin.getInterpreterSettingManager();
+//  }
+//
+//  @AfterClass
+//  public static void tearDown() throws IOException {
+//    if (zeppelin != null) {
+//      zeppelin.stop();
+//    }
+//  }
+//
+//  @Test
+//  public void testMySql() throws InterpreterException {
+//    for (String interpreter : Arrays.asList("jdbc", "tjdbc")) {
+//      InterpreterSetting interpreterSetting = interpreterSettingManager
+//          .getInterpreterSettingByName(interpreter);
+//      interpreterSetting.setProperty("default.driver", "com.mysql.jdbc.Driver");
+//      interpreterSetting.setProperty("default.url", "jdbc:mysql://localhost:3306/");
+//      interpreterSetting.setProperty("default.user", "root");
+//      Dependency dependency = new Dependency("mysql:mysql-connector-java:5.1.46");
+//      interpreterSetting.setDependencies(Lists.newArrayList(dependency));
+//      interpreterSettingManager.restart(interpreter);
+//      interpreterSetting.waitForReady(60 * 1000);
+//      Interpreter jdbcInterpreter = interpreterFactory.getInterpreter(
+//          "user1", "note1", interpreter, "test");
+//      assertNotNull("JdbcInterpreter is null", jdbcInterpreter);
+//
+//      InterpreterContext context = new InterpreterContext.Builder()
+//          .setNoteId("note1")
+//          .setParagraphId("paragraph_1")
+//          .setAuthenticationInfo(AuthenticationInfo.ANONYMOUS)
+//          .build();
+//      InterpreterResult interpreterResult = jdbcInterpreter.interpret("show databases;", context);
+//      assertEquals(InterpreterResult.Code.SUCCESS, interpreterResult.code);
+//    }
+//  }
+//}
