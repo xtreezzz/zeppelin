@@ -38,24 +38,23 @@ public class NoteManagerTest {
     assertEquals(note3, this.noteManager.getNote(note3.getId()));
 
     // move note
-    this.noteManager.moveNote(note1.getId(), "/dev/project_1/my_note1",
-        AuthenticationInfo.ANONYMOUS);
+    this.noteManager.moveNote(note1.getId(), "/dev/project_1/my_note1");
     assertEquals(3, this.noteManager.getNotesInfo().size());
     assertEquals("/dev/project_1/my_note1", this.noteManager.getNote(note1.getId()).getPath());
 
     // move folder
-    this.noteManager.moveFolder("/dev", "/staging", AuthenticationInfo.ANONYMOUS);
+    this.noteManager.moveFolder("/dev", "/staging");
     Map<String, String> notesInfo = this.noteManager.getNotesInfo();
     assertEquals(3, notesInfo.size());
     assertEquals("/staging/project_1/my_note1", notesInfo.get(note1.getId()));
     assertEquals("/staging/project_2/my_note2", notesInfo.get(note2.getId()));
     assertEquals("/staging/project_3/my_note3", notesInfo.get(note3.getId()));
 
-    this.noteManager.removeNote(note1.getId(), AuthenticationInfo.ANONYMOUS);
+    this.noteManager.removeNote(note1.getId());
     assertEquals(2, this.noteManager.getNotesInfo().size());
 
     // remove folder
-    this.noteManager.removeFolder("/staging", AuthenticationInfo.ANONYMOUS);
+    this.noteManager.removeFolder("/staging");
     notesInfo = this.noteManager.getNotesInfo();
     assertEquals(0, notesInfo.size());
   }

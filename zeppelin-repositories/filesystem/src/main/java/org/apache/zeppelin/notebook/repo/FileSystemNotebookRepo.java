@@ -24,7 +24,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,7 @@ public class FileSystemNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public Map<String, NoteInfo> list() throws IOException {
     List<Path> notePaths = fs.listAll(notebookDir);
     Map<String, NoteInfo> noteInfos = new HashMap<>();
     for (Path path : notePaths) {
@@ -73,14 +72,14 @@ public class FileSystemNotebookRepo implements NotebookRepo {
 
 
   @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String notePath) throws IOException {
     String content = this.fs.readFile(
         new Path(notebookDir, buildNoteFileName(noteId, notePath)));
     return Note.fromJson(content);
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note) throws IOException {
     this.fs.writeFile(note.toJson(),
         new Path(notebookDir, buildNoteFileName(note.getId(), note.getPath())),
         true);
@@ -89,22 +88,21 @@ public class FileSystemNotebookRepo implements NotebookRepo {
   @Override
   public void move(String noteId,
                    String notePath,
-                   String newNotePath,
-                   AuthenticationInfo subject) throws IOException {
+                   String newNotePath) throws IOException {
     Path src = new Path(notebookDir, buildNoteFileName(noteId, notePath));
     Path dest = new Path(notebookDir, buildNoteFileName(noteId, newNotePath));
     this.fs.move(src, dest);
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath, AuthenticationInfo subject)
+  public void move(String folderPath, String newFolderPath)
       throws IOException {
     this.fs.move(new Path(notebookDir, folderPath.substring(1)),
         new Path(notebookDir, newFolderPath.substring(1)));
   }
 
   @Override
-  public void remove(String noteId, String notePath, AuthenticationInfo subject)
+  public void remove(String noteId, String notePath)
       throws IOException {
     if (!this.fs.delete(new Path(notebookDir.toString(), buildNoteFileName(noteId, notePath)))) {
       LOGGER.warn("Fail to move note, noteId: " + notePath + ", notePath: " + notePath);
@@ -112,7 +110,7 @@ public class FileSystemNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String folderPath, AuthenticationInfo subject) throws IOException {
+  public void remove(String folderPath) throws IOException {
     if (!this.fs.delete(new Path(notebookDir, folderPath.substring(1)))) {
       LOGGER.warn("Fail to remove folder: " + folderPath);
     }
@@ -124,13 +122,13 @@ public class FileSystemNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject) {
+  public List<NotebookRepoSettingsInfo> getSettings() {
     LOGGER.warn("getSettings is not implemented for HdfsNotebookRepo");
     return null;
   }
 
   @Override
-  public void updateSettings(Map<String, String> settings, AuthenticationInfo subject) {
+  public void updateSettings(Map<String, String> settings) {
     LOGGER.warn("updateSettings is not implemented for HdfsNotebookRepo");
   }
 

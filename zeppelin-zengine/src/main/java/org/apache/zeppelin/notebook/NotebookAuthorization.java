@@ -29,7 +29,6 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.storage.ConfigStorage;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
@@ -38,60 +37,48 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * Contains authorization information for notes
  */
 @Component
-public class NotebookAuthorization implements NoteEventListener {
+public class NotebookAuthorization {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
-  private static NotebookAuthorization instance = null;
   /*
    * { "note1": { "owners": ["u1"], "readers": ["u1", "u2"], "runners": ["u2"],
    * "writers": ["u1"] },  "note2": ... } }
    */
-  private static Map<String, Map<String, Set<String>>> authInfo = new HashMap<>();
+  private final Map<String, Map<String, Set<String>>> authInfo = new HashMap<>();
   /*
    * contains roles for each user
    */
-  private static Map<String, Set<String>> userRoles = new HashMap<>();
-  private static ZeppelinConfiguration conf;
+  private final  Map<String, Set<String>> userRoles = new HashMap<>();
 
-  private static ConfigStorage configStorage;
+  @Autowired
+  private ZeppelinConfiguration conf;
 
-  private NotebookAuthorization() {}
+  @Autowired
+  private ConfigStorage configStorage;
 
-  public static NotebookAuthorization init(ZeppelinConfiguration config) {
-    if (instance == null) {
-      instance = new NotebookAuthorization();
-      conf = config;
-      try {
-        configStorage = ConfigStorage.getInstance(config);
-        loadFromFile();
-      } catch (IOException e) {
-        LOG.error("Error loading NotebookAuthorization", e);
-      }
+  @Autowired
+  public NotebookAuthorization() {
+    try {
+      loadFromFile();
+    } catch (IOException e) {
+      LOG.error("Error loading NotebookAuthorization", e);
     }
-    return instance;
   }
 
-  public static NotebookAuthorization getInstance() {
-    if (instance == null) {
-      LOG.warn("Notebook authorization module was called without initialization,"
-          + " initializing with default configuration");
-      init(ZeppelinConfiguration.create());
-    }
-    return instance;
-  }
-
-  private static void loadFromFile() throws IOException {
+  private void loadFromFile() throws IOException {
     NotebookAuthorizationInfoSaving info = configStorage.loadNotebookAuthorization();
     if (info != null) {
-      authInfo = info.authInfo;
+      authInfo.clear();
+      authInfo.putAll(info.authInfo);
     }
   }
-  
+
   public void setRoles(String user, Set<String> roles) {
     if (StringUtils.isBlank(user)) {
       LOG.warn("Setting roles for empty user");
@@ -381,63 +368,28 @@ public class NotebookAuthorization implements NoteEventListener {
     }).toList();
   }
   
-  public void setNewNotePermissions(String noteId, AuthenticationInfo subject) {
-    if (!AuthenticationInfo.isAnonymous(subject)) {
+  public void setNewNotePermissions(String noteId, String user) {
+    if (!AuthenticationInfo.ANONYMOUS.getUser().equalsIgnoreCase(user)) {
       if (isPublic()) {
         // add current user to owners - can be public
         Set<String> owners = getOwners(noteId);
-        owners.add(subject.getUser());
+        owners.add(user);
         setOwners(noteId, owners);
       } else {
         // add current user to owners, readers, runners, writers - private note
         Set<String> entities = getOwners(noteId);
-        entities.add(subject.getUser());
+        entities.add(user);
         setOwners(noteId, entities);
         entities = getReaders(noteId);
-        entities.add(subject.getUser());
+        entities.add(user);
         setReaders(noteId, entities);
         entities = getRunners(noteId);
-        entities.add(subject.getUser());
+        entities.add(user);
         setRunners(noteId, entities);
         entities = getWriters(noteId);
-        entities.add(subject.getUser());
+        entities.add(user);
         setWriters(noteId, entities);
       }
     }
-  }
-
-  @Override
-  public void onNoteCreate(Note note, AuthenticationInfo subject) {
-    setNewNotePermissions(note.getId(), subject);
-  }
-
-  @Override
-  public void onNoteRemove(Note note, AuthenticationInfo subject) {
-    removeNote(note.getId());
-  }
-
-  @Override
-  public void onNoteUpdate(Note note, AuthenticationInfo subject) {
-
-  }
-
-  @Override
-  public void onParagraphRemove(Paragraph p) {
-
-  }
-
-  @Override
-  public void onParagraphCreate(Paragraph p) {
-
-  }
-
-  @Override
-  public void onParagraphUpdate(Paragraph p) throws IOException {
-
-  }
-
-  @Override
-  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
-
   }
 }

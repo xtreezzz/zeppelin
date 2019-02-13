@@ -20,7 +20,6 @@ package org.apache.zeppelin.notebook;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.repo.ZeppelinRepository;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -65,7 +64,7 @@ public class NoteManager {
 
   // build the tree structure of notes
   private void init() throws IOException {
-    this.notesInfo = zeppelinRepository.get().list(AuthenticationInfo.ANONYMOUS)
+    this.notesInfo = zeppelinRepository.get().list()
             .values()
             .stream()
             .collect(Collectors.toMap(NoteInfo::getId, NoteInfo::getPath));
@@ -161,42 +160,29 @@ public class NoteManager {
    * Save note to NoteManager, it won't check duplicates, this is used when updating note.
    *
    * @param note
-   * @param subject
-   * @throws IOException
-   */
-  public void saveNote(Note note, AuthenticationInfo subject) throws IOException {
-    addOrUpdateNoteNode(note);
-    this.zeppelinRepository.get().save(note, subject);
-    note.setLoaded(true);
-  }
-
-  /**
-   * Add or update Note
-   *
-   * @param note
    * @throws IOException
    */
   public void saveNote(Note note) throws IOException {
-    saveNote(note, AuthenticationInfo.ANONYMOUS);
+    addOrUpdateNoteNode(note);
+    this.zeppelinRepository.get().save(note);
+    note.setLoaded(true);
   }
 
   /**
    * Remove note from NotebookRepo and NoteManager
    *
    * @param noteId
-   * @param subject
    * @throws IOException
    */
-  public void removeNote(String noteId, AuthenticationInfo subject) throws IOException {
+  public void removeNote(String noteId) throws IOException {
     String notePath = this.notesInfo.remove(noteId);
     Folder folder = getOrCreateFolder(getFolderName(notePath));
     folder.removeNote(getNoteName(notePath));
-    this.zeppelinRepository.get().remove(noteId, notePath, subject);
+    this.zeppelinRepository.get().remove(noteId, notePath);
   }
 
   public void moveNote(String noteId,
-                       String newNotePath,
-                       AuthenticationInfo subject) throws IOException {
+                       String newNotePath) throws IOException {
     String notePath = this.notesInfo.get(noteId);
     if (noteId == null) {
       throw new IOException("No metadata found for this note: " + noteId);
@@ -214,20 +200,19 @@ public class NoteManager {
     this.notesInfo.put(noteId, newNotePath);
 
     // update notebookrepo
-    this.zeppelinRepository.get().move(noteId, notePath, newNotePath, subject);
+    this.zeppelinRepository.get().move(noteId, notePath, newNotePath);
   }
 
 
   public void moveFolder(String folderPath,
-                         String newFolderPath,
-                         AuthenticationInfo subject) throws IOException {
+                         String newFolderPath) throws IOException {
 
     // update notebookrepo
-    this.zeppelinRepository.get().move(folderPath, newFolderPath, subject);
+    this.zeppelinRepository.get().move(folderPath, newFolderPath);
 
     // update filesystem tree
     Folder folder = getFolder(folderPath);
-    folder.getParent().removeFolder(folder.getName(), subject);
+    folder.getParent().removeFolder(folder.getName());
     Folder newFolder = getOrCreateFolder(newFolderPath);
     newFolder.getParent().addFolder(newFolder.getName(), folder);
 
@@ -241,18 +226,17 @@ public class NoteManager {
    * Remove the folder from the tree and returns the affected NoteInfo under this folder.
    *
    * @param folderPath
-   * @param subject
    * @return
    * @throws IOException
    */
-  public List<Note> removeFolder(String folderPath, AuthenticationInfo subject) throws IOException {
+  public List<Note> removeFolder(String folderPath) throws IOException {
 
     // update notebookrepo
-    this.zeppelinRepository.get().remove(folderPath, subject);
+    this.zeppelinRepository.get().remove(folderPath);
 
     // update filesystem tree
     Folder folder = getFolder(folderPath);
-    List<Note> notes = folder.getParent().removeFolder(folder.getName(), subject);
+    List<Note> notes = folder.getParent().removeFolder(folder.getName());
 
     // update notesInfo
     for (Note note : notes) {
@@ -429,8 +413,7 @@ public class NoteManager {
       this.notes.remove(noteName);
     }
 
-    public List<Note> removeFolder(String folderName,
-                                   AuthenticationInfo subject) throws IOException {
+    public List<Note> removeFolder(String folderName) throws IOException {
       Folder folder = this.subFolders.remove(folderName);
       return folder.getRawNotesRecursively();
     }
@@ -507,7 +490,7 @@ public class NoteManager {
      */
     public synchronized Note getNote() throws IOException {
       if (!note.isLoaded()) {
-        note = zeppelinRepository.get().get(note.getId(), note.getPath(), AuthenticationInfo.ANONYMOUS);
+        note = zeppelinRepository.get().get(note.getId(), note.getPath());
         if (parent.toString().equals("/")) {
           note.setPath("/" + note.getName());
         } else {

@@ -18,7 +18,6 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -56,18 +55,18 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
   }
 
   @Override
-  public void onNoteCreate(Note note, AuthenticationInfo subject) {
-    eventsQueue.add(new NoteCreateEvent(note, subject));
+  public void onNoteCreate(Note note) {
+    eventsQueue.add(new NoteCreateEvent(note));
   }
 
   @Override
-  public void onNoteRemove(Note note, AuthenticationInfo subject) {
-    eventsQueue.add(new NoteRemoveEvent(note, subject));
+  public void onNoteRemove(Note note) {
+    eventsQueue.add(new NoteRemoveEvent(note));
   }
 
   @Override
-  public void onNoteUpdate(Note note, AuthenticationInfo subject) {
-    eventsQueue.add(new NoteUpdateEvent(note, subject));
+  public void onNoteUpdate(Note note) {
+    eventsQueue.add(new NoteUpdateEvent(note));
   }
 
   @Override
@@ -137,11 +136,9 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
 
   public static class NoteCreateEvent implements NoteEvent {
     private Note note;
-    private AuthenticationInfo subject;
 
-    public NoteCreateEvent(Note note, AuthenticationInfo subject) {
+    public NoteCreateEvent(Note note) {
       this.note = note;
-      this.subject = subject;
     }
 
     public Note getNote() {
@@ -151,11 +148,9 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
 
   public static class NoteUpdateEvent implements NoteEvent {
     private Note note;
-    private AuthenticationInfo subject;
 
-    public NoteUpdateEvent(Note note, AuthenticationInfo subject) {
+    public NoteUpdateEvent(Note note) {
       this.note = note;
-      this.subject = subject;
     }
 
     public Note getNote() {
@@ -166,11 +161,9 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
 
   public static class NoteRemoveEvent implements NoteEvent {
     private Note note;
-    private AuthenticationInfo subject;
 
-    public NoteRemoveEvent(Note note, AuthenticationInfo subject) {
+    public NoteRemoveEvent(Note note) {
       this.note = note;
-      this.subject = subject;
     }
 
     public Note getNote() {

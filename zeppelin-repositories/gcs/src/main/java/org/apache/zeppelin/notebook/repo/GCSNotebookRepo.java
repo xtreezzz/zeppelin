@@ -48,7 +48,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,7 +137,7 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public Map<String, NoteInfo> list() throws IOException {
     try {
       Map<String, NoteInfo> infos = new HashMap<>();
       Iterable<Blob> blobsUnderDir;
@@ -173,7 +172,7 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String notePath) throws IOException {
     BlobId blobId = makeBlobId(noteId, notePath);
     byte[] contents;
     try {
@@ -191,7 +190,7 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note) throws IOException {
     BlobInfo info = BlobInfo.newBuilder(makeBlobId(note.getId(), note.getPath()))
         .setContentType("application/json")
         .build();
@@ -203,17 +202,17 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String noteId, String notePath, String newNotePath, AuthenticationInfo subject) {
+  public void move(String noteId, String notePath, String newNotePath) {
 
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath, AuthenticationInfo subject) {
+  public void move(String folderPath, String newFolderPath) {
 
   }
 
   @Override
-  public void remove(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, String notePath) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(noteId));
     BlobId blobId = makeBlobId(noteId, notePath);
     try {
@@ -227,7 +226,7 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String folderPath, AuthenticationInfo subject) {
+  public void remove(String folderPath) {
 
   }
 
@@ -237,13 +236,13 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject) {
+  public List<NotebookRepoSettingsInfo> getSettings() {
     LOGGER.warn("getSettings is not implemented for GCSNotebookRepo");
     return Collections.emptyList();
   }
 
   @Override
-  public void updateSettings(Map<String, String> settings, AuthenticationInfo subject) {
+  public void updateSettings(Map<String, String> settings) {
     LOGGER.warn("updateSettings is not implemented for GCSNotebookRepo");
   }
 }

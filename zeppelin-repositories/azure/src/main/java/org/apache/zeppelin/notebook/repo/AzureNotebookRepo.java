@@ -39,7 +39,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +82,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public Map<String, NoteInfo> list() throws IOException {
     return list(rootDir);
   }
 
@@ -104,7 +103,7 @@ public class AzureNotebookRepo implements NotebookRepo {
             LOGGER.warn(e.getMessage());
           }
         } else {
-          LOGGER.debug("Skip invalid note file: " + file.getUri().getPath());
+          LOGGER.debug("Skip invalid note file: {}", file.getUri().getPath());
         }
       }
     }
@@ -112,7 +111,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String notePath) throws IOException {
     InputStream ins = null;
     try {
       CloudFile noteFile = rootDir.getFileReference(buildNoteFileName(noteId, notePath));
@@ -130,7 +129,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note) throws IOException {
     try {
       CloudFile noteFile = rootDir.getFileReference(buildNoteFileName(note));
       noteFile.getParent().createIfNotExists();
@@ -144,17 +143,17 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String noteId, String notePath, String newNotePath, AuthenticationInfo subject) {
+  public void move(String noteId, String notePath, String newNotePath) {
 
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath, AuthenticationInfo subject) {
+  public void move(String folderPath, String newFolderPath) {
 
   }
 
   @Override
-  public void remove(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public void remove(String noteId, String notePath) throws IOException {
     try {
       CloudFile noteFile = rootDir.getFileReference(buildNoteFileName(noteId, notePath));
       noteFile.delete();
@@ -167,7 +166,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String folderPath, AuthenticationInfo subject) {
+  public void remove(String folderPath) {
 
   }
 
@@ -176,13 +175,13 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject) {
+  public List<NotebookRepoSettingsInfo> getSettings() {
     LOGGER.warn("Method not implemented");
     return Collections.emptyList();
   }
 
   @Override
-  public void updateSettings(Map<String, String> settings, AuthenticationInfo subject) {
+  public void updateSettings(Map<String, String> settings) {
     LOGGER.warn("Method not implemented");
   }
 

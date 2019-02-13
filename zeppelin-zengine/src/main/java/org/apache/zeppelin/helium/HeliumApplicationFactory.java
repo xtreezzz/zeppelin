@@ -411,16 +411,17 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   }
 
   @Override
-  public void onNoteRemove(Note note, AuthenticationInfo subject) throws IOException {
-  }
-
-  @Override
-  public void onNoteCreate(Note note, AuthenticationInfo subject) throws IOException {
+  public void onNoteRemove(Note note) throws IOException {
 
   }
 
   @Override
-  public void onNoteUpdate(Note note, AuthenticationInfo subject) throws IOException {
+  public void onNoteCreate(Note note) throws IOException {
+
+  }
+
+  @Override
+  public void onNoteUpdate(Note note) throws IOException {
 
   }
 

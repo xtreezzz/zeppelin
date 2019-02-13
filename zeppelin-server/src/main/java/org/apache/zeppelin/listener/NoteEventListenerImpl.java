@@ -22,7 +22,6 @@ import org.apache.zeppelin.notebook.NoteEventListener;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.JobManagerService;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +55,7 @@ public class NoteEventListenerImpl implements NoteEventListener {
   }
 
   @Override
-  public void onNoteRemove(final Note note, final AuthenticationInfo subject) {
+  public void onNoteRemove(final Note note) {
     List<JobManagerService.NoteJobInfo> notesJobInfo;
 
     notesJobInfo = jobManagerService.getNoteJobInfoByUnixTime(System.currentTimeMillis() - 5000);
@@ -78,13 +77,13 @@ public class NoteEventListenerImpl implements NoteEventListener {
   }
 
   @Override
-  public void onNoteCreate(final Note note, final AuthenticationInfo subject) {
+  public void onNoteCreate(final Note note) {
     final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(note.getId());
     broadcastSuccessResponse(notesJobInfo);
   }
 
   @Override
-  public void onNoteUpdate(final Note note, final AuthenticationInfo subject) {
+  public void onNoteUpdate(final Note note) {
 
   }
 

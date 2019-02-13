@@ -24,7 +24,6 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.Revision;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -89,9 +88,8 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
   @Override
   public void move(String noteId,
                    String notePath,
-                   String newNotePath,
-                   AuthenticationInfo subject) throws IOException {
-    super.move(noteId, notePath, newNotePath, subject);
+                   String newNotePath) throws IOException {
+    super.move(noteId, notePath, newNotePath);
     String noteFileName = buildNoteFileName(noteId, notePath);
     String newNoteFileName = buildNoteFileName(noteId, newNotePath);
     git.rm().addFilepattern(noteFileName);
@@ -105,9 +103,8 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath,
-                   AuthenticationInfo subject) throws IOException {
-    super.move(folderPath, newFolderPath, subject);
+  public void move(String folderPath, String newFolderPath) throws IOException {
+    super.move(folderPath, newFolderPath);
     git.rm().addFilepattern(folderPath.substring(1));
     git.add().addFilepattern(newFolderPath.substring(1));
     try {
@@ -125,10 +122,8 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
    * @see org.apache.zeppelin.notebook.repo.VFSNotebookRepo#checkpoint(String, String)
    */
   @Override
-  public Revision checkpoint(String noteId,
-                             String notePath,
-                             String commitMessage,
-                             AuthenticationInfo subject) throws IOException {
+  public Revision checkpoint(String noteId, String notePath,
+                             String commitMessage) throws IOException {
     String noteFileName = buildNoteFileName(noteId, notePath);
     Revision revision = Revision.EMPTY;
     try {
@@ -156,10 +151,7 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
    * 4. apply stash on top and remove it
    */
   @Override
-  public synchronized Note get(String noteId,
-                               String notePath,
-                               String revId,
-                               AuthenticationInfo subject) throws IOException {
+  public synchronized Note get(String noteId, String notePath, String revId) throws IOException {
     Note note = null;
     RevCommit stash = null;
     String noteFileName = buildNoteFileName(noteId, notePath);
@@ -176,7 +168,7 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
       // checkout to target revision
       git.checkout().setStartPoint(revId).addPath(noteFileName).call();
       // get the note
-      note = super.get(noteId, notePath, subject);
+      note = super.get(noteId, notePath);
       // checkout back to head
       git.checkout().setStartPoint(head.getName()).addPath(noteFileName).call();
       if (modified && stash != null) {
@@ -194,9 +186,7 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId,
-                                        String notePath,
-                                        AuthenticationInfo subject) throws IOException {
+  public List<Revision> revisionHistory(String noteId, String notePath) throws IOException {
     List<Revision> history = Lists.newArrayList();
     String noteFileName = buildNoteFileName(noteId, notePath);
     LOGGER.debug("Listing history for {}:", noteFileName);
@@ -216,12 +206,10 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
   }
 
   @Override
-  public Note setNoteRevision(String noteId, String noteName, String revId,
-                              AuthenticationInfo subject)
-      throws IOException {
-    Note revisionNote = get(noteId, noteName, revId, subject);
+  public Note setNoteRevision(String noteId, String noteName, String revId) throws IOException {
+    Note revisionNote = get(noteId, noteName, revId);
     if (revisionNote != null) {
-      save(revisionNote, subject);
+      save(revisionNote);
     }
     return revisionNote;
   }

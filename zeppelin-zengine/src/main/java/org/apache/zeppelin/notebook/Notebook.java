@@ -141,7 +141,6 @@ public class Notebook {
    * defaultInterpreterGroup (zeppelin.interpreter.group.default) is used
    *
    * @param notePath
-   * @param subject
    * @return
    * @throws IOException
    */
@@ -155,7 +154,6 @@ public class Notebook {
    *
    * @param notePath
    * @param defaultInterpreterGroup
-   * @param subject
    * @return
    * @throws IOException
    */
@@ -165,8 +163,9 @@ public class Notebook {
     Note note =
         new Note(notePath, defaultInterpreterGroup, replFactory, interpreterSettingManager,
             paragraphJobListener, credentials, noteEventListeners);
-    saveNote(note, subject);
-    fireNoteCreateEvent(note, subject);
+    saveNote(note);
+    notebookAuthorization.setNewNotePermissions(note.getId(), subject.getUser());
+    fireNoteCreateEvent(note);
     return note;
   }
 
@@ -232,8 +231,10 @@ public class Notebook {
   public void removeNote(String noteId, AuthenticationInfo subject) throws IOException {
     LOGGER.info("Remove note " + noteId);
     Note note = getNote(noteId);
-    noteManager.removeNote(noteId, subject);
-    fireNoteRemoveEvent(note, subject);
+    noteManager.removeNote(noteId);
+    notebookAuthorization.removeNote(noteId);
+    interpreterSettingManager.removeNote(note, subject);
+    fireNoteRemoveEvent(note);
   }
 
   public Note getNote(String id) {
@@ -257,9 +258,9 @@ public class Notebook {
     }
   }
 
-  public void saveNote(Note note, AuthenticationInfo subject) throws IOException {
-    noteManager.saveNote(note, subject);
-    fireNoteUpdateEvent(note, subject);
+  public void saveNote(Note note) throws IOException {
+    noteManager.saveNote(note);
+    fireNoteUpdateEvent(note);
   }
 
   public boolean containsNote(String notePath) {
@@ -270,78 +271,73 @@ public class Notebook {
     return noteManager.containsFolder(folderPath);
   }
 
-  public void moveNote(String noteId, String newNotePath, AuthenticationInfo subject) throws IOException {
+  public void moveNote(String noteId, String newNotePath) throws IOException {
     LOGGER.info("Move note " + noteId + " to " + newNotePath);
-    noteManager.moveNote(noteId, newNotePath, subject);
+    noteManager.moveNote(noteId, newNotePath);
   }
 
-  public void moveFolder(String folderPath, String newFolderPath, AuthenticationInfo subject) throws IOException {
+  public void moveFolder(String folderPath, String newFolderPath) throws IOException {
     LOGGER.info("Move folder from " + folderPath + " to " + newFolderPath);
-    noteManager.moveFolder(folderPath, newFolderPath, subject);
+    noteManager.moveFolder(folderPath, newFolderPath);
   }
 
-  public void removeFolder(String folderPath, AuthenticationInfo subject) throws IOException {
+  public void removeFolder(String folderPath) throws IOException {
     LOGGER.info("Remove folder " + folderPath);
     // TODO(zjffdu) NotebookRepo.remove is called twice here
-    List<Note> notes = noteManager.removeFolder(folderPath, subject);
+    List<Note> notes = noteManager.removeFolder(folderPath);
     for (Note note : notes) {
-      fireNoteRemoveEvent(note, subject);
+      fireNoteRemoveEvent(note);
     }
   }
 
-  public void emptyTrash(AuthenticationInfo subject) throws IOException {
+  public void emptyTrash() throws IOException {
     LOGGER.info("Empty Trash");
-    removeFolder("/" + NoteManager.TRASH_FOLDER, subject);
+    removeFolder("/" + NoteManager.TRASH_FOLDER);
   }
 
-  public void restoreAll(AuthenticationInfo subject) throws IOException {
+  public void restoreAll() throws IOException {
     NoteManager.Folder trash = noteManager.getTrashFolder();
     // restore notes under trash folder
     for (NoteManager.NoteNode noteNode : trash.getNotes().values()) {
-      moveNote(noteNode.getNoteId(), noteNode.getNotePath().replace("/~Trash", ""), subject);
+      moveNote(noteNode.getNoteId(), noteNode.getNotePath().replace("/~Trash", ""));
     }
     // restore folders under trash folder
     for (NoteManager.Folder folder : trash.getFolders().values()) {
-      moveFolder(folder.getPath(), folder.getPath().replace("/~Trash", ""), subject);
+      moveFolder(folder.getPath(), folder.getPath().replace("/~Trash", ""));
     }
   }
 
-  public Revision checkpointNote(String noteId, String noteName, String checkpointMessage,
-      AuthenticationInfo subject) throws IOException {
+  public Revision checkpointNote(String noteId, String noteName,
+      String checkpointMessage) throws IOException {
     if (zeppelinRepository.isRevisionSupported()) {
-      return zeppelinRepository.getAsVCS()
-          .checkpoint(noteId, noteName, checkpointMessage, subject);
+      return zeppelinRepository.getAsVCS().checkpoint(noteId, noteName, checkpointMessage);
     } else {
       return null;
     }
   }
 
   public List<Revision> listRevisionHistory(String noteId,
-                                            String noteName,
-                                            AuthenticationInfo subject) throws IOException {
+                                            String noteName) throws IOException {
     if (zeppelinRepository.isRevisionSupported()) {
-      return zeppelinRepository.getAsVCS().revisionHistory(noteId, noteName, subject);
+      return zeppelinRepository.getAsVCS().revisionHistory(noteId, noteName);
     } else {
       return null;
     }
   }
 
-  public Note setNoteRevision(String noteId, String noteName, String revisionId, AuthenticationInfo subject)
+  public Note setNoteRevision(String noteId, String noteName, String revisionId)
       throws IOException {
     if (zeppelinRepository.isRevisionSupported()) {
-      return zeppelinRepository.getAsVCS()
-          .setNoteRevision(noteId, noteName, revisionId, subject);
+      return zeppelinRepository.getAsVCS().setNoteRevision(noteId, noteName, revisionId);
     } else {
       return null;
     }
   }
 
-  public Note getNoteByRevision(String noteId, String noteName,
-                                String revisionId, AuthenticationInfo subject)
+  public Note getNoteByRevision(String noteId, String noteName, String revisionId)
       throws IOException {
     if (zeppelinRepository.isRevisionSupported()) {
-      return zeppelinRepository.getAsVCS().get(noteId, noteName,
-          revisionId, subject);
+      return zeppelinRepository.getAsVCS().get(noteId, noteName, revisionId);
     } else {
       return null;
     }
@@ -429,7 +425,7 @@ public class Notebook {
    *
    * @throws IOException
    */
-  public void reloadAllNotes(AuthenticationInfo subject) throws IOException {
+  public void reloadAllNotes() throws IOException {
     this.noteManager.reloadNotes();
   }
 
@@ -686,21 +682,21 @@ public class Notebook {
     noteEventListeners.add(listener);
   }
 
-  private void fireNoteCreateEvent(Note note, AuthenticationInfo subject) throws IOException {
+  private void fireNoteCreateEvent(Note note) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
-      listener.onNoteCreate(note, subject);
+      listener.onNoteCreate(note);
     }
   }
 
-  private void fireNoteUpdateEvent(Note note, AuthenticationInfo subject) throws IOException {
+  private void fireNoteUpdateEvent(Note note) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
-      listener.onNoteUpdate(note, subject);
+      listener.onNoteUpdate(note);
     }
   }
 
-  private void fireNoteRemoveEvent(Note note, AuthenticationInfo subject) throws IOException {
+  private void fireNoteRemoveEvent(Note note) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
-      listener.onNoteRemove(note, subject);
+      listener.onNoteRemove(note);
     }
   }
 

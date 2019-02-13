@@ -19,7 +19,6 @@ package org.apache.zeppelin.repo.api;
 
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,8 +40,7 @@ public interface NotebookRepoWithVersionControl extends NotebookRepo {
   @ZeppelinApi
   Revision checkpoint(String noteId,
                       String noteName,
-                      String checkpointMsg,
-                      AuthenticationInfo subject) throws IOException;
+                      String checkpointMsg) throws IOException;
 
   /**
    * Get particular revision of the Notebook.
@@ -54,21 +52,17 @@ public interface NotebookRepoWithVersionControl extends NotebookRepo {
    * @throws IOException
    */
   @ZeppelinApi
-  Note get(String noteId, String noteName, String revId, AuthenticationInfo subject)
-          throws IOException;
+  Note get(String noteId, String noteName, String revId) throws IOException;
 
   /**
    * List of revisions of the given Notebook.
    *
    * @param noteId   id of the note
    * @param noteName name of the note
-   * @param subject
    * @return list of revisions
    */
   @ZeppelinApi
-  List<Revision> revisionHistory(String noteId,
-                                 String noteName,
-                                 AuthenticationInfo subject) throws IOException;
+  List<Revision> revisionHistory(String noteId, String noteName) throws IOException;
 
   /**
    * Set note to particular revision.
@@ -82,8 +76,6 @@ public interface NotebookRepoWithVersionControl extends NotebookRepo {
   @ZeppelinApi
   Note setNoteRevision(String noteId,
                        String noteName,
-                       String revId,
-                       AuthenticationInfo subject) throws IOException;
-
+                       String revId) throws IOException;
 
 }

@@ -41,7 +41,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +93,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public Map<String, NoteInfo> list() throws IOException {
     // Must to create rootNotebookFileObject each time when call method list, otherwise we can not
     // get the updated data under this folder.
     this.rootNotebookFileObject = fsManager.resolveFile(this.rootNotebookFolder);
@@ -131,7 +130,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String notePath) throws IOException {
     FileObject noteFile = rootNotebookFileObject.resolveFile(buildNoteFileName(noteId, notePath),
         NameScope.DESCENDENT);
     String json = IOUtils.toString(noteFile.getContent().getInputStream(),
@@ -143,7 +142,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public synchronized void save(Note note, AuthenticationInfo subject) throws IOException {
+  public synchronized void save(Note note) throws IOException {
     LOGGER.info("Saving note " + note.getId() + " to " + buildNoteFileName(note));
     // write to tmp file first, then rename it to the {note_name}_{note_id}.zpln
     FileObject noteJson = rootNotebookFileObject.resolveFile(
@@ -162,8 +161,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String noteId, String notePath, String newNotePath,
-                   AuthenticationInfo subject) throws IOException {
+  public void move(String noteId, String notePath, String newNotePath) throws IOException {
     LOGGER.info("Move note " + noteId + " from " + notePath + " to " + newNotePath);
     FileObject fileObject = rootNotebookFileObject.resolveFile(
         buildNoteFileName(noteId, notePath), NameScope.DESCENDENT);
@@ -175,8 +173,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath,
-                   AuthenticationInfo subject) throws IOException{
+  public void move(String folderPath, String newFolderPath) throws IOException{
     LOGGER.info("Move folder from " + folderPath + " to " + newFolderPath);
     FileObject fileObject = rootNotebookFileObject.resolveFile(
         folderPath.substring(1), NameScope.DESCENDENT);
@@ -188,7 +185,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String noteId, String notePath, AuthenticationInfo subject)
+  public void remove(String noteId, String notePath)
       throws IOException {
     LOGGER.info("Remove note: " + noteId + " +, notePath: " + notePath);
     FileObject noteFile = rootNotebookFileObject.resolveFile(
@@ -197,7 +194,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String folderPath, AuthenticationInfo subject) throws IOException {
+  public void remove(String folderPath) throws IOException {
     LOGGER.info("Remove folder: " + folderPath);
     FileObject folderObject = rootNotebookFileObject.resolveFile(
         folderPath.substring(1), NameScope.DESCENDENT);
@@ -210,7 +207,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject) {
+  public List<NotebookRepoSettingsInfo> getSettings() {
     NotebookRepoSettingsInfo repoSetting = NotebookRepoSettingsInfo.newInstance();
     List<NotebookRepoSettingsInfo> settings = new ArrayList<>();
     repoSetting.name = "Notebook Path";
@@ -223,7 +220,7 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void updateSettings(Map<String, String> settings, AuthenticationInfo subject) {
+  public void updateSettings(Map<String, String> settings) {
     if (settings == null || settings.isEmpty()) {
       LOGGER.error("Cannot update {} with empty settings", this.getClass().getName());
       return;
@@ -237,8 +234,8 @@ public class VFSNotebookRepo implements NotebookRepo {
       LOGGER.error("Notebook path is invalid");
       return;
     }
-    LOGGER.warn("{} will change notebook dir from {} to {}",
-        subject.getUser(), this.rootNotebookFolder, newNotebookDirectotyPath);
+    LOGGER.warn("will change notebook dir from {} to {}", this.rootNotebookFolder,
+        newNotebookDirectotyPath);
     try {
       setNotebookDirectory(newNotebookDirectotyPath);
     } catch (IOException e) {

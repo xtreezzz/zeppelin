@@ -17,7 +17,6 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.io.IOException;
 
@@ -25,9 +24,9 @@ import java.io.IOException;
  * Notebook event
  */
 public interface NoteEventListener {
-  void onNoteRemove(Note note, AuthenticationInfo subject) throws IOException;
-  void onNoteCreate(Note note, AuthenticationInfo subject) throws IOException;
-  void onNoteUpdate(Note note, AuthenticationInfo subject) throws IOException;
+  void onNoteRemove(Note note) throws IOException;
+  void onNoteCreate(Note note) throws IOException;
+  void onNoteUpdate(Note note) throws IOException;
 
   void onParagraphRemove(Paragraph p) throws IOException;
   void onParagraphCreate(Paragraph p) throws IOException;

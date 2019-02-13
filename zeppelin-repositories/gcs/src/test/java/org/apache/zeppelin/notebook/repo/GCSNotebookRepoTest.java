@@ -40,7 +40,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -51,8 +50,6 @@ import org.junit.runners.Parameterized.Parameters;
 @Ignore
 @RunWith(Parameterized.class)
 public class GCSNotebookRepoTest {
-  private static final AuthenticationInfo AUTH_INFO = AuthenticationInfo.ANONYMOUS;
-
   private GCSNotebookRepo notebookRepo;
   private Storage storage;
 
@@ -105,7 +102,7 @@ public class GCSNotebookRepoTest {
 
   @Test
   public void testList_nonexistent() throws Exception {
-    assertThat(notebookRepo.list(AUTH_INFO)).isEmpty();
+    assertThat(notebookRepo.list()).isEmpty();
   }
 
   @Test
@@ -117,7 +114,7 @@ public class GCSNotebookRepoTest {
     createAt(runningNote, "cannot-be-dir/note.json/foo");
     createAt(runningNote, "cannot/be/nested/note.json");
 
-    Map<String, NoteInfo> infos = notebookRepo.list(AUTH_INFO);
+    Map<String, NoteInfo> infos = notebookRepo.list();
     List<String> noteIds = new ArrayList<>();
     for (NoteInfo info : infos.values()) {
       noteIds.add(info.getId());
@@ -129,7 +126,7 @@ public class GCSNotebookRepoTest {
   @Test
   public void testGet_nonexistent() throws Exception {
     try {
-      notebookRepo.get("id", "", AUTH_INFO);
+      notebookRepo.get("id", "");
       fail();
     } catch (IOException e) {}
   }
@@ -139,7 +136,7 @@ public class GCSNotebookRepoTest {
     create(runningNote);
 
     // Status of saved running note is removed in get()
-    Note got = notebookRepo.get(runningNote.getId(), runningNote.getPath(),  AUTH_INFO);
+    Note got = notebookRepo.get(runningNote.getId(), runningNote.getPath());
     assertThat(got.getLastParagraph().getStatus()).isEqualTo(Status.ABORT);
 
     // But otherwise equal
@@ -151,14 +148,14 @@ public class GCSNotebookRepoTest {
   public void testGet_malformed() throws Exception {
     createMalformed("id", "/name");
     try {
-      notebookRepo.get("id", "/name", AUTH_INFO);
+      notebookRepo.get("id", "/name");
       fail();
     } catch (IOException e) {}
   }
 
   @Test
   public void testSave_create() throws Exception {
-    notebookRepo.save(runningNote, AUTH_INFO);
+    notebookRepo.save(runningNote);
     // Output is saved
     assertThat(storage.readAllBytes(makeBlobId(runningNote.getId(), runningNote.getPath())))
         .isEqualTo(runningNote.toJson().getBytes("UTF-8"));
@@ -166,10 +163,10 @@ public class GCSNotebookRepoTest {
 
   @Test
   public void testSave_update() throws Exception {
-    notebookRepo.save(runningNote, AUTH_INFO);
+    notebookRepo.save(runningNote);
     // Change name of runningNote
     runningNote.setPath("/new-name");
-    notebookRepo.save(runningNote, AUTH_INFO);
+    notebookRepo.save(runningNote);
     assertThat(storage.readAllBytes(makeBlobId(runningNote.getId(), runningNote.getPath())))
         .isEqualTo(runningNote.toJson().getBytes("UTF-8"));
   }
@@ -177,7 +174,7 @@ public class GCSNotebookRepoTest {
   @Test
   public void testRemove_nonexistent() throws Exception {
     try {
-      notebookRepo.remove("id", "/name", AUTH_INFO);
+      notebookRepo.remove("id", "/name");
       fail();
     } catch (IOException e) {}
   }
@@ -185,7 +182,7 @@ public class GCSNotebookRepoTest {
   @Test
   public void testRemove() throws Exception {
     create(runningNote);
-    notebookRepo.remove(runningNote.getId(), runningNote.getPath(), AUTH_INFO);
+    notebookRepo.remove(runningNote.getId(), runningNote.getPath());
     assertThat(storage.get(makeBlobId(runningNote.getId(), runningNote.getPath()))).isNull();
   }
 

@@ -21,7 +21,6 @@ import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,34 +37,31 @@ public interface NotebookRepo {
    * Lists notebook information about all notebooks in storage. This method should only read
    * the metadata of note, rather than reading all notes which usually takes long time.
    *
-   * @param subject contains user information.
    * @return
    * @throws IOException
    */
   @ZeppelinApi
-  Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException;
+  Map<String, NoteInfo> list() throws IOException;
 
   /**
    * Get the notebook with the given id and given notePath.
    *
    * @param noteId   is note id.
    * @param notePath is note path
-   * @param subject  contains user information.
    * @return
    * @throws IOException
    */
   @ZeppelinApi
-  Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException;
+  Note get(String noteId, String notePath) throws IOException;
 
   /**
    * Save given note in storage
    *
    * @param note    is the note itself.
-   * @param subject contains user information.
    * @throws IOException
    */
   @ZeppelinApi
-  void save(Note note, AuthenticationInfo subject) throws IOException;
+  void save(Note note) throws IOException;
 
   /**
    *
@@ -77,40 +73,35 @@ public interface NotebookRepo {
    * @throws IOException
    */
   @ZeppelinApi
-  void move(String noteId, String notePath, String newNotePath,
-            AuthenticationInfo subject) throws IOException;
+  void move(String noteId, String notePath, String newNotePath) throws IOException;
 
   /**
    * Move folder to another path
    *
    * @param folderPath
    * @param newFolderPath
-   * @param subject
    * @throws IOException
    */
-  void move(String folderPath, String newFolderPath,
-            AuthenticationInfo subject) throws IOException;
+  void move(String folderPath, String newFolderPath) throws IOException;
 
   /**
    * Remove note with given id and notePath
    *
    * @param noteId   is note id.
    * @param notePath is note path
-   * @param subject  contains user information.
    * @throws IOException
    */
   @ZeppelinApi
-  void remove(String noteId, String notePath, AuthenticationInfo subject) throws IOException;
+  void remove(String noteId, String notePath) throws IOException;
 
   /**
    * Remove folder
    *
    * @param folderPath
-   * @param subject
    * @throws IOException
    */
   @ZeppelinApi
-  void remove(String folderPath, AuthenticationInfo subject) throws IOException;
+  void remove(String folderPath) throws IOException;
 
   /**
    * Release any underlying resources
@@ -122,20 +113,18 @@ public interface NotebookRepo {
   /**
    * Get NotebookRepo settings got the given user.
    *
-   * @param subject
    * @return
    */
   @ZeppelinApi
-  List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject);
+  List<NotebookRepoSettingsInfo> getSettings();
 
   /**
    * update notebook repo settings.
    *
    * @param settings
-   * @param subject
    */
   @ZeppelinApi
-  void updateSettings(Map<String, String> settings, AuthenticationInfo subject);
+  void updateSettings(Map<String, String> settings);
 
   default String buildNoteFileName(String noteId, String notePath) throws IOException {
     if (!notePath.startsWith("/")) {

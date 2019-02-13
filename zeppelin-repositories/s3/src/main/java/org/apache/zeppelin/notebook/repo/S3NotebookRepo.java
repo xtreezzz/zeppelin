@@ -37,7 +37,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,7 +175,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Map<String, NoteInfo> list(AuthenticationInfo subject) throws IOException {
+  public Map<String, NoteInfo> list() throws IOException {
     Map<String, NoteInfo> notesInfo = new HashMap<>();
     try {
       ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
@@ -208,7 +207,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+  public Note get(String noteId, String notePath) throws IOException {
     S3Object s3object;
     try {
       s3object = s3client.getObject(new GetObjectRequest(bucketName,
@@ -224,7 +223,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void save(Note note, AuthenticationInfo subject) throws IOException {
+  public void save(Note note) throws IOException {
     String json = note.toJson();
     String key = rootFolder + "/" + buildNoteFileName(note);
     File file = File.createTempFile("note", "zpln");
@@ -250,8 +249,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String noteId, String notePath, String newNotePath,
-                   AuthenticationInfo subject) throws IOException {
+  public void move(String noteId, String notePath, String newNotePath) throws IOException {
     String key = rootFolder + "/" + buildNoteFileName(noteId, notePath);
     String newKey = rootFolder + "/" + buildNoteFileName(noteId, newNotePath);
     s3client.copyObject(bucketName, key, bucketName, newKey);
@@ -259,12 +257,12 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void move(String folderPath, String newFolderPath, AuthenticationInfo subject) {
+  public void move(String folderPath, String newFolderPath) {
 
   }
 
   @Override
-  public void remove(String noteId, String notePath, AuthenticationInfo subject)
+  public void remove(String noteId, String notePath)
       throws IOException {
     String key = rootFolder + "/" + buildNoteFileName(noteId, notePath);
     final ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
@@ -284,7 +282,7 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public void remove(String folderPath, AuthenticationInfo subject) {
+  public void remove(String folderPath) {
 
   }
 
@@ -294,13 +292,13 @@ public class S3NotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings(AuthenticationInfo subject) {
+  public List<NotebookRepoSettingsInfo> getSettings() {
     LOGGER.warn("Method not implemented");
     return Collections.emptyList();
   }
 
   @Override
-  public void updateSettings(Map<String, String> settings, AuthenticationInfo subject) {
+  public void updateSettings(Map<String, String> settings) {
     LOGGER.warn("Method not implemented");
   }
 

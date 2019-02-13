@@ -95,7 +95,7 @@ import java.util.Map;
  * TODO(zjffdu) We could move it into another separated component.
  */
 @Component
-public class InterpreterSettingManager implements NoteEventListener {
+public class InterpreterSettingManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterSettingManager.class);
   private static final Map<String, Object> DEFAULT_EDITOR = ImmutableMap.of(
@@ -889,8 +889,7 @@ public class InterpreterSettingManager implements NoteEventListener {
         .collect(Collectors.toList());
   }
 
-  @Override
-  public void onNoteRemove(Note note, AuthenticationInfo subject) throws IOException {
+  public void removeNote(Note note, AuthenticationInfo subject) throws IOException {
     // remove from all interpreter instance's angular object registry
     for (InterpreterSetting settings : interpreterSettings.values()) {
       InterpreterGroup interpreterGroup = settings.getInterpreterGroup(subject.getUser(), note.getId());
@@ -932,35 +931,5 @@ public class InterpreterSettingManager implements NoteEventListener {
     }
 
     removeResourcesBelongsToNote(note.getId());
-  }
-
-  @Override
-  public void onNoteCreate(Note note, AuthenticationInfo subject) throws IOException {
-
-  }
-
-  @Override
-  public void onNoteUpdate(Note note, AuthenticationInfo subject) throws IOException {
-
-  }
-
-  @Override
-  public void onParagraphRemove(Paragraph p) throws IOException {
-
-  }
-
-  @Override
-  public void onParagraphCreate(Paragraph p) throws IOException {
-
-  }
-
-  @Override
-  public void onParagraphUpdate(Paragraph p) throws IOException {
-
-  }
-
-  @Override
-  public void onParagraphStatusChange(Paragraph p, Job.Status status) throws IOException {
-
   }
 }
