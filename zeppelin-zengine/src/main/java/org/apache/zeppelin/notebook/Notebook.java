@@ -164,7 +164,11 @@ public class Notebook {
         new Note(notePath, defaultInterpreterGroup, replFactory, interpreterSettingManager,
             paragraphJobListener, credentials, noteEventListeners);
     saveNote(note);
-    notebookAuthorization.setNewNotePermissions(note.getId(), subject.getUser());
+
+    if (!AuthenticationInfo.ANONYMOUS.getUser().equalsIgnoreCase(subject.getUser())) {
+      notebookAuthorization.setNewNotePermissions(note.getId(), subject.getUser());
+    }
+
     fireNoteCreateEvent(note);
     return note;
   }
