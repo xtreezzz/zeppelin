@@ -35,12 +35,17 @@ import java.util.*;
 @Component
 public class NotebookAuthorization {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
+
   /*
    * { "note1": { "owners": ["u1"], "readers": ["u1", "u2"], "runners": ["u2"],
    * "writers": ["u1"] },  "note2": ... } }
    */
   private final Map<String, Map<String, Set<String>>> authInfo = new HashMap<>();
 
+  /*
+   * contains roles for each user
+   */
+  private final  Map<String, Set<String>> userRoles = new HashMap<>();
   private ConfigStorage configStorage;
   private final ZeppelinConfiguration conf;
 
@@ -62,6 +67,15 @@ public class NotebookAuthorization {
       authInfo.clear();
       authInfo.putAll(info.authInfo);
     }
+  }
+
+  public void setRoles(String user, Set<String> roles) {
+    if (StringUtils.isBlank(user)) {
+      LOG.warn("Setting roles for empty user");
+      return;
+    }
+    roles = validateUser(roles);
+    userRoles.put(user, roles);
   }
 
   private void saveToFile() {
