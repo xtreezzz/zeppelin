@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.notebook.repo.api;
+package org.apache.zeppelin.notebook.repo.api.dto.display;
 
 
 import java.io.Serializable;
 
 /**
- * Immutable Note Data Transfer Object for {@link AngularObject}
- *
- * @see org.apache.zeppelin.dto.notebook.ParagraphDTO
+ * Immutable Data Transfer Object for AngularObject.
  */
 public final class AngularObjectDTO<T> implements Serializable {
   private final String name;

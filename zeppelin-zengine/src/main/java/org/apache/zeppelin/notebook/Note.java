@@ -142,6 +142,10 @@ public class Note implements JsonSerializable {
     this.loaded = loaded;
   }
 
+  public void setAngularObjects(Map<String, List<AngularObject>> angularObjects) {
+    this.angularObjects = angularObjects;
+  }
+
   public boolean isPersonalizedMode() {
     Object v = getConfig().get("personalizedMode");
     return null != v && "true".equals(v);
@@ -275,7 +279,7 @@ public class Note implements JsonSerializable {
     this.credentials = credentials;
   }
 
-  Map<String, List<AngularObject>> getAngularObjects() {
+  public Map<String, List<AngularObject>> getAngularObjects() {
     return angularObjects;
   }
 

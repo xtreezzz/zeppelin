@@ -93,6 +93,10 @@ public class Input<T> implements Serializable {
     this.hidden = hidden;
   }
 
+  public void setDefaultValue(T value) {
+    this.defaultValue = value;
+  }
+
   public String getArgument() {
     return argument;
   }

@@ -67,7 +67,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   public GUI settings = new GUI();
   private InterpreterResult results;
   // Application states in this paragraph
-  private final List<ApplicationState> apps = new LinkedList<>();
+  private List<ApplicationState> apps = new LinkedList<>();
 
   /************** Transient fields which are not serializabled  into note json **************/
   private transient String intpText;
@@ -159,6 +159,14 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     this.text = newText;
     this.dateUpdated = new Date();
     parseText();
+  }
+
+  public void setDateUpdated(Date dateUpdated) {
+    this.dateUpdated = dateUpdated;
+  }
+
+  public void setApps(List<ApplicationState> apps) {
+    this.apps = apps;
   }
 
   public void setSelectedText(String text) {
