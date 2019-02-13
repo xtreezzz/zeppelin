@@ -74,7 +74,7 @@ public class ParagraphHandler extends AbstractHandler {
     p.setTitle(title);
     p.setText(text);
 
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
@@ -98,7 +98,7 @@ public class ParagraphHandler extends AbstractHandler {
     paragraphText = (String) dmp.patchApply(patches, paragraphText)[0];
 
     p.setText(paragraphText);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
 
     final SockMessage message = new SockMessage(Operation.PATCH_PARAGRAPH)
             .put("patch", patchText)
@@ -113,7 +113,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     note.removeParagraph(serviceContext.getAutheInfo().getUser(), p.getId());
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_REMOVED)
             .put("id", p.getId());
@@ -142,7 +142,7 @@ public class ParagraphHandler extends AbstractHandler {
     }
 
     note.moveParagraph(p.getId(), index);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", p.getId())
@@ -165,7 +165,7 @@ public class ParagraphHandler extends AbstractHandler {
 
     final Paragraph newPara = note.insertNewParagraph(index, serviceContext.getAutheInfo());
     newPara.setConfig(config);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));
     return newPara.getId();
   }

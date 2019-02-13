@@ -58,12 +58,14 @@ public class LoginRestApi {
   private static final Gson gson = new Gson();
   private final ZeppelinConfiguration zConf;
   private final SecurityService securityService;
+  private final NotebookAuthorization notebookAuthorization;
 
   @Autowired
   public LoginRestApi(final Notebook notebook,
                       @Qualifier("NoSecurityService") final SecurityService securityService) {
     this.zConf = notebook.getConf();
     this.securityService = securityService;
+    this.notebookAuthorization = notebook.getNotebookAuthorization();
   }
 
   @ZeppelinApi
@@ -191,7 +193,7 @@ public class LoginRestApi {
       // if no exception, that's it, we're done!
 
       // set roles for user in NotebookAuthorization module
-      NotebookAuthorization.getInstance().setRoles(principal, roles);
+      notebookAuthorization.setRoles(principal, roles);
     } catch (final AuthenticationException uae) {
       // username wasn't in the system, show them an error message?
       // password didn't match, try again?

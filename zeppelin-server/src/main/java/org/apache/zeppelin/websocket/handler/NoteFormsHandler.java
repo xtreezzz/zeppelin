@@ -56,7 +56,7 @@ public class NoteFormsHandler extends AbstractHandler {
 
     //TODO(KOT): wrong field
     note.setNoteParams(noteParams);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
     broadcastNoteForms(note);
   }
 
@@ -69,7 +69,7 @@ public class NoteFormsHandler extends AbstractHandler {
 
     note.getNoteForms().remove(formName);
     note.getNoteParams().remove(formName);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
 
     broadcastNoteForms(note);
   }

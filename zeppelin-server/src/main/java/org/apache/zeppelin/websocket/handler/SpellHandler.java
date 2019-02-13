@@ -94,9 +94,9 @@ public class SpellHandler extends AbstractHandler {
     }
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
-}
+  }
 
 
   private void addNewParagraphIfLastParagraphIsExecuted(final Note note, final Paragraph p) {

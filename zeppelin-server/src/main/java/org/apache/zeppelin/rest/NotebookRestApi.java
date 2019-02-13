@@ -262,8 +262,7 @@ public class NotebookRestApi extends AbstractRestApi {
     LOG.debug("After set permissions {} {} {} {}", notebookAuthorization.getOwners(noteId),
             notebookAuthorization.getReaders(noteId), notebookAuthorization.getRunners(noteId),
             notebookAuthorization.getWriters(noteId));
-    final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
-    notebook.saveNote(note, subject);
+    notebook.saveNote(note);
     //TODO(KOT): FIX
       /*
     notebookServer.broadcastNote(note);
@@ -414,7 +413,7 @@ public class NotebookRestApi extends AbstractRestApi {
       }
     }
     note.setCronSupported(notebook.getConf());
-    notebook.moveNote(note.getId(), newName, getServiceContext().getAutheInfo());
+    notebook.moveNote(note.getId(), newName);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
     final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
@@ -449,7 +448,7 @@ public class NotebookRestApi extends AbstractRestApi {
       p = note.insertNewParagraph(indexDouble.intValue(), subject);
     }
     initParagraph(p, request, user);
-    notebook.saveNote(note, subject);
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     return new JsonResponse(HttpStatus.OK, "", p.getId()).build();
   }
@@ -504,8 +503,7 @@ public class NotebookRestApi extends AbstractRestApi {
       p.setTitle(updatedParagraph.getTitle());
     }
 
-    final AuthenticationInfo subject = new AuthenticationInfo(user);
-    notebook.saveNote(note, subject);
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -527,8 +525,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final Map<String, Object> newConfig = gson.fromJson(message, HashMap.class);
     configureParagraph(p, newConfig, user);
-    final AuthenticationInfo subject = new AuthenticationInfo(user);
-    notebook.saveNote(note, subject);
+    notebook.saveNote(note);
     return new JsonResponse(HttpStatus.OK, "", p).build();
   }
 
@@ -549,7 +546,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
 
     note.moveParagraph(paragraphId, index);
-    notebook.saveNote(note, getServiceContext().getAutheInfo());
+    notebook.saveNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", paragraphId)
@@ -577,7 +574,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final Note note = notebook.getNote(noteId);
     note.removeParagraph(getServiceContext().getAutheInfo().getUser(), paragraphId);
-    notebook.saveNote(note, getServiceContext().getAutheInfo());
+    notebook.saveNote(note);
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 

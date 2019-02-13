@@ -112,7 +112,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
       }
 
       try {
-        notebook.saveNote(p.getNote(), p.getAuthenticationInfo());
+        notebook.saveNote(p.getNote());
       } catch (final IOException e) {
         LOG.error(e.toString(), e);
       }

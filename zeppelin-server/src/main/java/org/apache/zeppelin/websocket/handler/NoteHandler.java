@@ -70,7 +70,7 @@ public class NoteHandler extends AbstractHandler {
 
   public void broadcastReloadedNoteList(final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void getHomeNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -123,7 +123,7 @@ public class NoteHandler extends AbstractHandler {
       notebook.refreshCron(note.getId());
     }
 
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
 
     final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
             .put("name", name)
@@ -131,7 +131,7 @@ public class NoteHandler extends AbstractHandler {
             .put("info", note.getInfo());
     connectionManager.broadcast(note.getId(), message);
 
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
 
@@ -152,9 +152,9 @@ public class NoteHandler extends AbstractHandler {
       }
     }
     note.setCronSupported(notebook.getConf());
-    notebook.moveNote(note.getId(), newName, serviceContext.getAutheInfo());
+    notebook.moveNote(note.getId(), newName);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void deleteNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -163,7 +163,7 @@ public class NoteHandler extends AbstractHandler {
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
     notebook.removeNote(note.getId(), serviceContext.getAutheInfo());
     connectionManager.removeNoteSubscribers(note.getId());
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
 
@@ -183,7 +183,7 @@ public class NoteHandler extends AbstractHandler {
 
       // it's an empty note. so add one paragraph
       note.addNewParagraph(serviceContext.getAutheInfo());
-      notebook.saveNote(note, serviceContext.getAutheInfo());
+      notebook.saveNote(note);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
       publishNote(note, conn, serviceContext);
@@ -222,7 +222,7 @@ public class NoteHandler extends AbstractHandler {
     final Note note = notebook.importNote(noteJson, resultNoteName, serviceContext.getAutheInfo());
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void moveNoteToTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -235,9 +235,9 @@ public class NoteHandler extends AbstractHandler {
       final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
       destNotePath = destNotePath + " " + formatter.format(LocalDateTime.now());
     }
-    notebook.moveNote(note.getId(), destNotePath, serviceContext.getAutheInfo());
+    notebook.moveNote(note.getId(), destNotePath);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void restoreNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -251,9 +251,9 @@ public class NoteHandler extends AbstractHandler {
 
     try {
       final String destNotePath = note.getPath().replace("/" + NoteManager.TRASH_FOLDER, "");
-      notebook.moveNote(note.getId(), destNotePath, serviceContext.getAutheInfo());
+      notebook.moveNote(note.getId(), destNotePath);
       connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-      broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+      broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to restore note: " + note.getId(), e);
     }
@@ -269,8 +269,8 @@ public class NoteHandler extends AbstractHandler {
     }
     try {
       final String destFolderPath = folderPath.replace("/" + NoteManager.TRASH_FOLDER, "");
-      notebook.moveFolder(folderPath, destFolderPath, serviceContext.getAutheInfo());
-      broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+      notebook.moveFolder(folderPath, destFolderPath);
+      broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to restore folder: " + folderPath, e);
     }
@@ -284,8 +284,8 @@ public class NoteHandler extends AbstractHandler {
     //TODO(zjffdu) folder permission check
 
     try {
-      notebook.moveFolder(oldFolderId, newFolderId, serviceContext.getAutheInfo());
-      broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+      notebook.moveFolder(oldFolderId, newFolderId);
+      broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to rename folder: " + oldFolderId, e);
     }
@@ -304,8 +304,8 @@ public class NoteHandler extends AbstractHandler {
       destFolderPath = destFolderPath + " " + formatter.format(LocalDateTime.now());
     }
 
-    notebook.moveFolder("/" + folderPath, destFolderPath, serviceContext.getAutheInfo());
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    notebook.moveFolder("/" + folderPath, destFolderPath);
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void removeFolder(final SockMessage fromMessage) throws IOException {
@@ -313,22 +313,20 @@ public class NoteHandler extends AbstractHandler {
 
     final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
     try {
-      notebook.removeFolder(folderPath, serviceContext.getAutheInfo());
+      notebook.removeFolder(folderPath);
       final List<NoteInfo> notesInfo = notebook.getNotesInfo(serviceContext.getUserAndRoles());
       for (final NoteInfo noteInfo : notesInfo) {
         connectionManager.removeNoteSubscribers(noteInfo.getId());
       }
-      broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+      broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to remove folder: " + folderPath, e);
     }
   }
 
   public void emptyTrash(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
     try {
-      notebook.emptyTrash(serviceContext.getAutheInfo());
+      notebook.emptyTrash();
     } catch (final IOException e) {
       throw new IOException("Fail to clear trash folder", e);
     }
@@ -338,8 +336,8 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     try {
-      notebook.restoreAll(serviceContext.getAutheInfo());
-      broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+      notebook.restoreAll();
+      broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to restore all", e);
     }
@@ -352,7 +350,7 @@ public class NoteHandler extends AbstractHandler {
     final boolean isPersonalized = fromMessage.getType("personalized", LOG).equals("true");
 
     note.setPersonalizedMode(isPersonalized);
-    notebook.saveNote(note, serviceContext.getAutheInfo());
+    notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 
@@ -364,7 +362,7 @@ public class NoteHandler extends AbstractHandler {
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 
-  private void broadcastNoteList(final AuthenticationInfo subject, final Set<String> userAndRoles) {
+  private void broadcastNoteList(final Set<String> userAndRoles) {
     final List<NoteInfo> notesInfo = notebook.getNotesInfo(userAndRoles);
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
   }
@@ -404,6 +402,6 @@ public class NoteHandler extends AbstractHandler {
                            final WebSocketSession conn,
                            final ServiceContext serviceContext) throws IOException {
     conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
-    broadcastNoteList(serviceContext.getAutheInfo(), serviceContext.getUserAndRoles());
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 }
