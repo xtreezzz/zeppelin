@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.Revision;
 import org.eclipse.jgit.api.Git;

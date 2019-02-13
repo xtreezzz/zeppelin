@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dto.display;
+package org.apache.zeppelin.notebook.repo.api;
 
-import com.google.gson.Gson;
+
 import java.io.Serializable;
-import org.apache.zeppelin.display.AngularObject;
 
 /**
  * Immutable Note Data Transfer Object for {@link AngularObject}
@@ -27,8 +26,6 @@ import org.apache.zeppelin.display.AngularObject;
  * @see org.apache.zeppelin.dto.notebook.ParagraphDTO
  */
 public final class AngularObjectDTO<T> implements Serializable {
-  private static final Gson gson = new Gson();
-
   private final String name;
   private final T object;
   private final String noteId;   // noteId belonging to. null for global scope
@@ -45,28 +42,6 @@ public final class AngularObjectDTO<T> implements Serializable {
     this.noteId = noteId;
     this.paragraphId = paragraphId;
     object = o;
-  }
-
-  // JSON conversion
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static AngularObjectDTO fromJson(String json) {
-    return gson.fromJson(json, AngularObjectDTO.class);
-  }
-
-  // AngularObject conversion
-  public AngularObject toAngularObject() {
-    return convertFromDtoToAngularObject(this);
-  }
-
-  public static AngularObjectDTO convertFromObjectToDTO(AngularObject source) {
-    return fromJson(source.toJson());
-  }
-
-  public static AngularObject convertFromDtoToAngularObject(AngularObjectDTO source) {
-    return AngularObject.fromJson(source.toJson());
   }
 
   // Getters

@@ -46,7 +46,7 @@
 
         <dependency>
             <groupId>org.apache.zeppelin</groupId>
-            <artifactId>zeppelin-zengine</artifactId>
+            <artifactId>zeppelin-repository-api</artifactId>
             <version>0.9.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>

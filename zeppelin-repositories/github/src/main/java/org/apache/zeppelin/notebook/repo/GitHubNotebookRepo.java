@@ -18,6 +18,8 @@
 package org.apache.zeppelin.notebook.repo;
 
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.repo.api.NotebookRepoWithVersionControl;
+import org.apache.zeppelin.notebook.repo.api.Revision;
 import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.Revision;
 import org.eclipse.jgit.api.Git;

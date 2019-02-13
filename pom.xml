@@ -69,6 +69,8 @@
     <module>zeppelin-jupyter</module>
     <module>zeppelin-distribution</module>
 
+    <module>zeppelin-repositories/zeppelin-repository-api</module>
+    <module>zeppelin-repositories/zeppelin-repository</module>
     <module>zeppelin-repositories/azure</module>
     <module>zeppelin-repositories/filesystem</module>
     <module>zeppelin-repositories/gcs</module>

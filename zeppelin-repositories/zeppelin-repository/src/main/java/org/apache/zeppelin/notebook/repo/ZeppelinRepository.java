@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.repo;
+package org.apache.zeppelin.notebook.repo;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.repo.api.NotebookRepo;
+import org.apache.zeppelin.notebook.repo.api.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.repo.api.NotebookRepo;
 import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
 import org.reflections.Reflections;

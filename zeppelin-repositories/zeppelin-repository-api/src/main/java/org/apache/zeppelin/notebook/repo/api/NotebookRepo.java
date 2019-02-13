@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.repo.api;
+package org.apache.zeppelin.notebook.repo.api;
 
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -41,7 +41,7 @@ public interface NotebookRepo {
    * @throws IOException
    */
   @ZeppelinApi
-  Map<String, NoteInfo> list() throws IOException;
+  Map<String, NoteInfoDTO> list() throws IOException;
 
   /**
    * Get the notebook with the given id and given notePath.
@@ -61,7 +61,7 @@ public interface NotebookRepo {
    * @throws IOException
    */
   @ZeppelinApi
-  void save(Note note) throws IOException;
+  void save(NoteDTO note) throws IOException;
 
   /**
    *
