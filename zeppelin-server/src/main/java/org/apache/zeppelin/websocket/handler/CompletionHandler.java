@@ -18,12 +18,14 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -34,18 +36,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class CompletionHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(CompletionHandler.class);
+  private InterpreterFactory interpreterFactory;
 
   @Autowired
   public CompletionHandler(final NotebookAuthorization notebookAuthorization,
                            final Notebook notebook,
-                           final ConnectionManager connectionManager) {
+                           final ConnectionManager connectionManager,
+                           final InterpreterFactory interpreterFactory) {
     super(notebookAuthorization, notebook, connectionManager);
+    this.interpreterFactory = interpreterFactory;
   }
 
 
@@ -58,10 +64,25 @@ public class CompletionHandler extends AbstractHandler {
     final String buffer = fromMessage.safeGetType("buf", LOG);
     final Integer cursor = fromMessage.safeGetType("cursor", LOG);
 
+
     final List<InterpreterCompletion> completions = Lists.newArrayList();
     try {
-      completions.addAll(note.completion(p.getId(), buffer, cursor, serviceContext.getAutheInfo()));
-    } catch (final RuntimeException e) {
+      final Interpreter interpreter =
+              interpreterFactory.getInterpreter(
+                      serviceContext.getAutheInfo().getUser(),
+                      note.getId(),
+                      p.getIntpText(),
+                      note.getDefaultInterpreterGroup()
+              );
+
+      p.setAuthenticationInfo(serviceContext.getAutheInfo());
+      p.setText(buffer);
+
+      final int resultCursor = calculateCursorPosition(p.getScriptText(), buffer, cursor);
+      InterpreterContext interpreterContext = p.getInterpreterContext(null);
+
+      completions.addAll(interpreter.completion(p.getScriptText(), resultCursor, interpreterContext));
+    } catch (final InterpreterException e) {
       // SKIP
     }
 
@@ -70,4 +91,17 @@ public class CompletionHandler extends AbstractHandler {
             .put("completions", completions);
     conn.sendMessage(message.toSend());
   }
+
+  public int calculateCursorPosition(String scriptText, String buffer, int cursor) {
+    if (scriptText.isEmpty()) {
+      return 0;
+    }
+    int countCharactersBeforeScript = buffer.indexOf(scriptText);
+    if (countCharactersBeforeScript > 0) {
+      cursor -= countCharactersBeforeScript;
+    }
+
+    return cursor;
+  }
+
 }

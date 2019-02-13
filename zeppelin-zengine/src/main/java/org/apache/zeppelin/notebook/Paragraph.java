@@ -17,20 +17,9 @@
 
 package org.apache.zeppelin.notebook;
 
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.display.AngularObject;
@@ -38,36 +27,24 @@ import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.GUI;
 import org.apache.zeppelin.display.Input;
 import org.apache.zeppelin.helium.HeliumPackage;
-import org.apache.zeppelin.interpreter.Interpreter;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.Interpreter.FormType;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterFactory;
-import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
-import org.apache.zeppelin.interpreter.InterpreterOption;
-import org.apache.zeppelin.interpreter.InterpreterOutput;
-import org.apache.zeppelin.interpreter.InterpreterOutputListener;
-import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.InterpreterResultMessage;
-import org.apache.zeppelin.interpreter.InterpreterResultMessageOutput;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.scheduler.JobWithProgressPoller;
-import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
 import org.apache.zeppelin.user.UserCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Paragraph is a representation of an execution unit.
@@ -291,36 +268,6 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     this.interpreter = interpreter;
   }
 
-  public List<InterpreterCompletion> completion(String buffer, int cursor) {
-    setText(buffer);
-    try {
-      this.interpreter = getBindedInterpreter();
-    } catch (InterpreterNotFoundException e) {
-      LOGGER.debug("Unable to get completion because there's no interpreter bind to it", e);
-      return new ArrayList<>();
-    }
-    cursor = calculateCursorPosition(buffer, cursor);
-    InterpreterContext interpreterContext = getInterpreterContext(null);
-
-    try {
-      return this.interpreter.completion(this.scriptText, cursor, interpreterContext);
-    } catch (InterpreterException e) {
-      LOGGER.warn("Fail to get completion", e);
-      return new ArrayList<>();
-    }
-  }
-
-  public int calculateCursorPosition(String buffer, int cursor) {
-    if (this.scriptText.isEmpty()) {
-      return 0;
-    }
-    int countCharactersBeforeScript = buffer.indexOf(this.scriptText);
-    if (countCharactersBeforeScript > 0) {
-      cursor -= countCharactersBeforeScript;
-    }
-
-    return cursor;
-  }
 
   @Override
   public InterpreterResult getReturn() {
@@ -536,7 +483,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     }));
   }
 
-  private InterpreterContext getInterpreterContext(InterpreterOutput output) {
+  public InterpreterContext getInterpreterContext(InterpreterOutput output) {
     AngularObjectRegistry registry = null;
     ResourcePool resourcePool = null;
 
