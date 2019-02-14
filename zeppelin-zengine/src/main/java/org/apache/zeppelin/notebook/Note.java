@@ -599,13 +599,10 @@ public class Note implements JsonSerializable {
   private void setParagraphMagic(Paragraph p, int index) {
     if (paragraphs.size() > 0) {
       String replName;
-      if (index == 0) {
-        replName = paragraphs.get(0).getIntpText();
-      } else {
-        replName = paragraphs.get(index - 1).getIntpText();
-      }
+      Paragraph paragraph = index == 0 ? paragraphs.get(0) : paragraphs.get(index - 1);
+      replName = paragraph.getIntpText();
       if (p.isValidInterpreter(replName) && StringUtils.isNotEmpty(replName)) {
-        p.setText("%" + replName + "\n");
+        p.setText("%" + replName + paragraph.getLocalPropertiesAsMagic() + "\n");
       }
     }
   }

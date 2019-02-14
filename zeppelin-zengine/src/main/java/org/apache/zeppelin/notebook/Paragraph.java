@@ -278,6 +278,25 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     return localProperties;
   }
 
+  public String getLocalPropertiesAsMagic() {
+    StringBuilder sb = new StringBuilder();
+    localProperties.forEach((key, value) -> {
+      if (sb.length() != 0) {
+        sb.append(", ");
+      }
+
+      if (key.equals(value)) {
+        sb.append(key);
+      } else {
+        sb.append(key).append(" = ").append(value);
+      }
+    });
+    if (sb.length() != 0) {
+      sb.insert(0,'(').append(')');
+    }
+    return sb.toString();
+  }
+
   public boolean isEnabled() {
     Boolean enabled = (Boolean) config.get("enabled");
     return enabled == null || enabled.booleanValue();
