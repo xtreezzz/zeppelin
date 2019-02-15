@@ -916,6 +916,12 @@ public class NotebookService {
     if (notebook.containsNote(destNotePath)) {
       destNotePath = destNotePath + " " + TRASH_CONFLICT_TIMESTAMP_FORMATTER.print(new DateTime());
     }
+
+    // delete cron
+    note.getConfig().remove("cron");
+    notebook.refreshCron(noteId);
+    notebook.saveNote(note, context.getAutheInfo());
+
     notebook.moveNote(noteId, destNotePath, context.getAutheInfo());
     callback.onSuccess(note, context);
   }
