@@ -87,7 +87,7 @@ public class NoteManager {
     for (String notePath : notesInfo.values()) {
       try {
         notes.add(getNoteNode(notePath).getNote());
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOGGER.warn("Fail to load note: " + notePath, e);
       }
     }
