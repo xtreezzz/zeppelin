@@ -133,6 +133,7 @@
     },
     "editor": {
       "language": "sql",
+      "enableLiveAutocompletion": true,
       "editOnDblClick": false,
       "completionSupport": false,
       "completionKey": "TAB"

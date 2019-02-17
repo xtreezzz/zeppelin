@@ -3,6 +3,7 @@ package ru.tinkoff.zeppelin.jdbc;
 /*
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
+import java.util.Collections;
 import java.util.HashSet;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -52,6 +53,11 @@ public class SqlCompleter {
    * Contain different completer with table list for every schema name.
    */
   private Map<String, CachedCompleter<StringsCompleter>> tablesCompleters = new HashMap<>();
+
+  /**
+   * Contain different completer with table list for every schema name.
+   */
+  private Map<String, CachedCompleter<StringsCompleter>> viewsCompleters = new HashMap<>();
 
   /**
    * Contains different completer with column list for every table name.
@@ -172,9 +178,28 @@ public class SqlCompleter {
     return res;
   }
 
+  private static void fillViewsNames(String schema, DatabaseMetaData meta, Set<String> views) {
+    try (ResultSet tbls = meta.getTables(schema, schema, "%",
+        new String[]{"VIEW"})) {
+      if (!tbls.isBeforeFirst()) {
+        logger.debug("There is no views for schema {}", schema);
+      } else {
+        while (tbls.next()) {
+          logger.info("\n[DEBUG]\n {}", tbls);
+          String table = tbls.getString("TABLE_NAME");
+          String tableDescription = extractEntityDescription(tbls);
+          views.add(schema + "." + table);
+          databaseEntityDescription.put(schema + "." + table, tableDescription);
+        }
+      }
+    } catch (Exception t) {
+      logger.error("Failed to retrieve the table name", t);
+    }
+  }
+
   private static void fillTableNames(String schema, DatabaseMetaData meta, Set<String> tables) {
     try (ResultSet tbls = meta.getTables(schema, schema, "%",
-        new String[]{"TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL TEMPORARY",
+        new String[]{"TABLE", "ALIAS", "SYNONYM", "GLOBAL TEMPORARY",
             "LOCAL TEMPORARY"})) {
       if (!tbls.isBeforeFirst()) {
         logger.debug("There is no tables for schema {}", schema);
@@ -252,15 +277,22 @@ public class SqlCompleter {
   }
 
   private SqlStatement getStatementParameters(String buffer, int cursor) {
-    Collection<String> schemas = schemasCompleter.getCompleter().getStrings();
-    Collection<String> keywords = keywordCompleter.getCompleter().getStrings();
+    Collection<String> schemas = Collections.emptyList();
+    if (schemasCompleter != null) {
+      schemas = schemasCompleter.getCompleter().getStrings();
+    }
+    Collection<String> keywords = Collections.emptyList();
+    if (keywordCompleter != null) {
+      keywords = keywordCompleter.getCompleter().getStrings();
+    }
 
     Collection<String> tablesInDefaultSchema = new TreeSet<>();
     if (tablesCompleters.containsKey(defaultSchema)) {
-      tablesInDefaultSchema = tablesCompleters.get(defaultSchema)
-          .getCompleter().getStrings();
+      tablesInDefaultSchema = tablesCompleters.get(defaultSchema).getCompleter().getStrings();
     }
-
+    if (viewsCompleters.containsKey(defaultSchema)) {
+      tablesInDefaultSchema.addAll(viewsCompleters.get(defaultSchema).getCompleter().getStrings());
+    }
 
 
     return new SqlStatement(buffer, cursor, defaultSchema, schemas,
@@ -319,6 +351,15 @@ public class SqlCompleter {
           initTables(defaultSchema, tables);
         }
 
+        CachedCompleter<StringsCompleter> viewsCompleterInDefaultSchema = viewsCompleters
+            .get(defaultSchema);
+
+        if (viewsCompleterInDefaultSchema == null || viewsCompleterInDefaultSchema.isExpired()) {
+          Set<String> views = new HashSet<>();
+          fillViewsNames(defaultSchema, databaseMetaData, views);
+          initViews(defaultSchema, views);
+        }
+
         SqlStatement sqlStatement = getStatementParameters(buffer, cursor);
 
         if (sqlStatement.needLoadTables()) {
@@ -330,6 +371,14 @@ public class SqlCompleter {
             initTables(schema, tables);
             logger.info("Tables completer for schema " + schema + " initialized with "
                 + tables.size() + " tables");
+          }
+          CachedCompleter viewsCompleter = viewsCompleters.get(schema);
+          if (viewsCompleter == null || viewsCompleter.isExpired()) {
+            Set<String> views = new HashSet<>();
+            fillViewsNames(schema, databaseMetaData, views);
+            initViews(schema, views);
+            logger.info("Views completer for schema " + schema + " initialized with "
+                + views.size() + " views");
           }
         }
 
@@ -371,6 +420,13 @@ public class SqlCompleter {
     }
   }
 
+  void initViews(String schema, Set<String> views) {
+    if (views != null && !views.isEmpty()) {
+      viewsCompleters.put(schema, new CachedCompleter(
+          new StringsCompleter(new TreeSet<>(views)), ttlInSeconds));
+    }
+  }
+
   void initColumns(String schemaTable, Set<String> columns) {
     if (columns != null && !columns.isEmpty()) {
       columnsCompleters.put(schemaTable,
@@ -408,6 +464,21 @@ public class SqlCompleter {
       return -1;
     } else {
       return tablesCompleters.get(schema).getCompleter().complete(buffer, cursor, candidates);
+    }
+  }
+
+  /**
+   * Complete buffer in case it is a view name.
+   *
+   * @return -1 in case of no candidates found, 0 otherwise
+   */
+  private int completeView(String schema, String buffer, int cursor,
+      List<CharSequence> candidates) {
+    // Wrong schema
+    if (schema == null || !viewsCompleters.containsKey(schema)) {
+      return -1;
+    } else {
+      return viewsCompleters.get(schema).getCompleter().complete(buffer, cursor, candidates);
     }
   }
 
@@ -462,6 +533,11 @@ public class SqlCompleter {
           tableInDefaultSchemaCandidates);
       addCompletions(candidates, tableInDefaultSchemaCandidates, CompletionType.table.name());
 
+      List<CharSequence> viewInDefaultSchemaCandidates = new ArrayList<>();
+      int viewRes = completeView(defaultSchema, buffer, cursorPosition,
+          viewInDefaultSchemaCandidates);
+      addCompletions(candidates, viewInDefaultSchemaCandidates, CompletionType.view.name());
+
       List<CharSequence> schemaCandidates = new ArrayList<>();
       int schemaRes = completeSchema(buffer, cursorPosition, schemaCandidates);
       addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
@@ -473,7 +549,7 @@ public class SqlCompleter {
       logger.info("Complete for buffer with {}", keywordsCandidates);
 
       logger.debug("Complete for buffer with " + keywordsRes + schemaRes
-          + tableRes + allColumnsRes + "candidates");
+          + tableRes + allColumnsRes + viewRes + "candidates");
     } else {
       String table = sqlStatement.getTable();
       String column = sqlStatement.getColumn();
@@ -482,6 +558,11 @@ public class SqlCompleter {
         int tableRes = completeTable(schema, table, cursorPosition, tableCandidates);
         addCompletions(candidates, tableCandidates, CompletionType.table.name());
         logger.debug("Complete for tables with " + tableRes + "candidates");
+
+        List<CharSequence> viewCandidates = new ArrayList<>();
+        int viewRes = completeView(schema, table, cursorPosition, viewCandidates);
+        addCompletions(candidates, viewCandidates, CompletionType.view.name());
+        logger.debug("Complete for views with " + viewRes + "candidates");
       } else { // process schema.table and alias case
         List<CharSequence> columnCandidates = new ArrayList<>();
         int columnRes = completeColumn(schema, table, column, cursorPosition, columnCandidates);

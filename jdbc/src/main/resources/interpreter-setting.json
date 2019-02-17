@@ -133,6 +133,7 @@
     },
     "editor": {
       "language": "sql",
+      "enableLiveAutocompletion": false,
       "editOnDblClick": false,
       "completionSupport": true
     }

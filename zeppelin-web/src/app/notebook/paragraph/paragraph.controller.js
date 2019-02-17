@@ -879,6 +879,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
             let computeScore = function(meta) {
               if (meta === 'column') {
                 return 900;
+              } else if (meta === 'view') {
+                return 800;
               } else if (meta === 'table') {
                 return 700;
               } else if (meta === 'schema') {
@@ -961,7 +963,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       // autocomplete on '.'
       $scope.editor.commands.on('afterExec', function(e, t) {
         if (e.command.name === 'insertstring' && (e.args === '.' || e.args === ' ')
-        && getInterpreterName($scope.paragraph.text) === 'tjdbc') {
+        && isTjdbcConfigured()) {
           // var all = e.editor.completers;
           // e.editor.completers = [remoteCompleter];
           e.editor.execCommand('startAutocomplete');
@@ -1098,7 +1100,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
-      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      let isTjdbc = isTjdbcConfigured();
       $scope.editor.setOptions({
         enableLiveAutocompletion: isTjdbc,
       });
@@ -1136,7 +1138,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           return false;
         }
       }
-      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      let isTjdbc = isTjdbcConfigured();
       let caption = item.snippet || item.caption || item.value;
       if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
@@ -1519,6 +1521,14 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       }
     }
   });
+
+  /**
+   * @return {boolean} true if current interpreter is tjdbc
+   */
+  function isTjdbcConfigured() {
+    return $scope.paragraph.config.editorSetting.enableLiveAutocompletion
+      && $scope.paragraph.config.editorSetting.language === 'sql';
+  }
 
   /**
    * @returns {boolean} true if updated is needed

@@ -842,16 +842,18 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
     Connection connection = null;
     try {
-      if (interpreterContext != null) {
-        connection = getConnection(propertyKey, interpreterContext);
-      }
+      connection = getConnection(propertyKey, interpreterContext);
     } catch (ClassNotFoundException | SQLException | IOException e) {
       logger.warn("SQLCompleter will created without use connection", e);
     }
 
-    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
-    sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
-    sqlCompleter.fillCandidates(buf, cursor, candidates);
+    try {
+      sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
+      sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
+      sqlCompleter.fillCandidates(buf, cursor, candidates);
+    } catch (Exception e) {
+      logger.error("Completion failed", e);
+    }
 
     return candidates;
   }

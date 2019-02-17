@@ -20,6 +20,7 @@ package org.apache.zeppelin.completer;
 public enum CompletionType {
   schema,
   table,
+  view,
   column,
   setting,
   command,
