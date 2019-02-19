@@ -17,17 +17,29 @@
 
 package org.apache.zeppelin.notebook;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.storage.ConfigStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Contains authorization information for notes
@@ -35,6 +47,7 @@ import java.util.*;
 @Component
 public class NotebookAuthorization {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookAuthorization.class);
+  private static final String FILENAME = "/notebook-authorization.json";
 
   /*
    * { "note1": { "owners": ["u1"], "readers": ["u1", "u2"], "runners": ["u2"],
@@ -46,15 +59,12 @@ public class NotebookAuthorization {
    * contains roles for each user
    */
   private final  Map<String, Set<String>> userRoles = new HashMap<>();
-  private ConfigStorage configStorage;
   private final ZeppelinConfiguration conf;
 
   @Autowired
   public NotebookAuthorization(final ZeppelinConfiguration zeppelinConfiguration) {
     this.conf = zeppelinConfiguration;
-
     try {
-      configStorage = ConfigStorage.getInstance(conf);
       loadFromFile();
     } catch (final IOException e) {
       LOG.error("Error loading NotebookAuthorization", e);
@@ -62,7 +72,9 @@ public class NotebookAuthorization {
   }
 
   private void loadFromFile() throws IOException {
-    final NotebookAuthorizationInfoSaving info = configStorage.loadNotebookAuthorization();
+    File file = new File(conf.getConfigFSDir() + FILENAME);
+    String json = IOUtils.toString(new FileInputStream(file), "UTF-16");
+    final NotebookAuthorizationInfoSaving info = NotebookAuthorizationInfoSaving.fromJson(json);
     if (info != null) {
       authInfo.clear();
       authInfo.putAll(info.authInfo);
@@ -78,14 +90,30 @@ public class NotebookAuthorization {
     userRoles.put(user, roles);
   }
 
+  @SuppressWarnings("Duplicates")
   private void saveToFile() {
     synchronized (authInfo) {
       final NotebookAuthorizationInfoSaving info = new NotebookAuthorizationInfoSaving();
       info.authInfo = authInfo;
+      File tempFile = null;
       try {
-        configStorage.save(info);
-      } catch (final IOException e) {
+        File file = new File(conf.getConfigFSDir() + FILENAME);
+        File directory = file.getParentFile();
+        directory.mkdirs();
+        tempFile = File.createTempFile(file.getName(), null, directory);
+        FileOutputStream out = new FileOutputStream(tempFile);
+        IOUtils.write(info.toJson(), out, "UTF-16");
+        out.close();
+        FileSystem defaultFileSystem = FileSystems.getDefault();
+        Path tempFilePath = defaultFileSystem.getPath(tempFile.getCanonicalPath());
+        Path destinationFilePath = defaultFileSystem.getPath(file.getCanonicalPath());
+        Files.move(tempFilePath, destinationFilePath, StandardCopyOption.ATOMIC_MOVE);
+      } catch (IOException e) {
         LOG.error("Error saving notebook authorization file", e);
+      } finally {
+        if (tempFile != null) {
+          tempFile.delete();
+        }
       }
     }
   }
