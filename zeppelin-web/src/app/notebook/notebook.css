@@ -448,7 +448,7 @@
 /*Bootstrap uib-tooltip: max-width = 200px
   because of this the string can come out */
 .tooltip-inner {
-  max-width: 200px !important;
+  max-width: none !important;
 }
 
 .select-mode-background {
