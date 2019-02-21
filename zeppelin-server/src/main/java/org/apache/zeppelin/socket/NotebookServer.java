@@ -259,7 +259,7 @@ public class NotebookServer extends WebSocketServlet
       if (Message.isDisabledForRunningNotes(messagereceived.op)) {
         Note note = getNotebook().getNote((String) messagereceived.get("noteId"));
         if (note != null && note.isRunning()) {
-          throw new Exception("Note is now running sequentially. Can not be performed: " +
+          LOG.warn("Note is now running sequentially. Can not be performed: " +
                   messagereceived.op);
         }
       }
