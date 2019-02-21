@@ -130,7 +130,8 @@ public abstract class Job<T> {
     this.status = status;
   }
 
-  public void setStatus(Status status) {
+  //TODO(SAN) 'synchronized' fix problem with running paragraph. Need to understand more.
+  public synchronized void setStatus(Status status) {
     if (this.status == status) {
       return;
     }
