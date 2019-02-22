@@ -117,6 +117,12 @@ public class Notebook {
     this.noteEventListeners.add(this.noteSearchService);
     this.noteEventListeners.add(this.notebookAuthorization);
     this.noteEventListeners.add(this.interpreterSettingManager);
+
+    LOGGER.info("Refresh cron in all notes");
+    // notes initialized during creating NoteManager, but cron wasn't configured for each note.
+    for (Note note : noteManager.getAllNotes()) {
+      refreshCron(note.getId());
+    }
   }
 
   @Inject
@@ -439,6 +445,7 @@ public class Notebook {
       }
     }
 
+    refreshCron(id);
     return note;
   }
 
@@ -456,6 +463,10 @@ public class Notebook {
       if (mainRepo.getRepoCount() > 1) {
         mainRepo.sync(subject);
       }
+    }
+    LOGGER.info("Reload notes");
+    for (Note note : noteManager.getAllNotes()) {
+      refreshCron(note.getId());
     }
   }
 
