@@ -24,12 +24,37 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -47,46 +72,22 @@ import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteEventListener;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
-import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.util.ReflectionUtils;
-import org.apache.zeppelin.storage.ConfigStorage;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
-import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.Proxy;
 import org.sonatype.aether.repository.RemoteRepository;
-import org.sonatype.aether.repository.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -101,6 +102,7 @@ public class InterpreterSettingManager {
   private static final Map<String, Object> DEFAULT_EDITOR = ImmutableMap.of(
       "language", (Object) "text",
       "editOnDblClick", false);
+  private static final String FILENAME = "/interpreter.json";
 
   private final ZeppelinConfiguration conf;
   private final Path interpreterDirPath;
@@ -128,7 +130,6 @@ public class InterpreterSettingManager {
   private DependencyResolver dependencyResolver;
   private LifecycleManager lifecycleManager;
   private RecoveryStorage recoveryStorage;
-  private ConfigStorage configStorage;
 
   @Lazy
   @Autowired
@@ -140,17 +141,14 @@ public class InterpreterSettingManager {
 
   @Autowired
   public InterpreterSettingManager(ZeppelinConfiguration zeppelinConfiguration,
-                                   @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener appEventListener)
+      @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener appEventListener)
       throws IOException {
-    this(zeppelinConfiguration, new InterpreterOption(),
-        appEventListener,
-        ConfigStorage.getInstance(zeppelinConfiguration));
+    this(zeppelinConfiguration, new InterpreterOption(), appEventListener);
   }
 
   public InterpreterSettingManager(ZeppelinConfiguration conf,
       InterpreterOption defaultOption,
-      ApplicationEventListener appEventListener,
-      ConfigStorage configStorage)
+      ApplicationEventListener appEventListener)
       throws IOException {
     this.conf = conf;
     this.defaultOption = defaultOption;
@@ -176,7 +174,6 @@ public class InterpreterSettingManager {
             new Object[] {conf});
     LOGGER.info("Using LifecycleManager: " + this.lifecycleManager.getClass().getName());
 
-    this.configStorage = configStorage;
     this.interpreterEventServer = new RemoteInterpreterEventServer(conf, this);
     this.interpreterEventServer.start();
     init();
@@ -216,8 +213,22 @@ public class InterpreterSettingManager {
    * Load interpreter setting from interpreter.json
    */
   private void loadFromFile() throws IOException {
-    InterpreterInfoSaving infoSaving =
-        configStorage.loadInterpreterSettings();
+    File file = new File(conf.getConfigFSDir() + FILENAME);
+    InterpreterInfoSaving infoSaving = null;
+    try {
+      String json = IOUtils.toString(new FileInputStream(file), "UTF-16");
+      LOGGER.info("Load Interpreter Setting from file: " + file);
+      JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+      infoSaving = InterpreterInfoSaving.fromJson(json);
+      for (InterpreterSetting interpreterSetting : infoSaving.interpreterSettings.values()) {
+        interpreterSetting.convertPermissionsFromUsersToOwners(
+            jsonObject.getAsJsonObject("interpreterSettings")
+                .getAsJsonObject(interpreterSetting.getId()));
+      }
+    } catch (IOException e) {
+      LOGGER.warn("Interpreter Setting file {} is not existed", file);
+    }
+
     if (infoSaving == null) {
       // it is fresh zeppelin instance if there's no interpreter.json, just create interpreter
       // setting from interpreterSettingTemplates
@@ -297,12 +308,31 @@ public class InterpreterSettingManager {
     }
   }
 
+  @SuppressWarnings("Duplicates")
   public void saveToFile() throws IOException {
     InterpreterInfoSaving info = new InterpreterInfoSaving();
     info.interpreterSettings = Maps.newHashMap(interpreterSettings);
     info.interpreterRepositories = interpreterRepositories;
-    //TODO(KOT) FIX THIS
-    //configStorage.save(info);
+    File tempFile = null;
+    try {
+      File file = new File(conf.getConfigFSDir() + FILENAME);
+      File directory = file.getParentFile();
+      directory.mkdirs();
+      tempFile = File.createTempFile(file.getName(), null, directory);
+      FileOutputStream out = new FileOutputStream(tempFile);
+      IOUtils.write(info.toJson(), out, "UTF-16");
+      out.close();
+      FileSystem defaultFileSystem = FileSystems.getDefault();
+      Path tempFilePath = defaultFileSystem.getPath(tempFile.getCanonicalPath());
+      Path destinationFilePath = defaultFileSystem.getPath(file.getCanonicalPath());
+      Files.move(tempFilePath, destinationFilePath, StandardCopyOption.ATOMIC_MOVE);
+    } catch (IOException e) {
+      LOGGER.error("Error saving notebook authorization file", e);
+    } finally {
+      if (tempFile != null) {
+        tempFile.delete();
+      }
+    }
   }
 
   private void init() throws IOException {
