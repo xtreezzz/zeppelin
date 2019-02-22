@@ -27,11 +27,13 @@ function ArrayOrderingService(TRASH_FOLDER_ID) {
   };
 
   this.getNoteName = function(note) {
-    if (note.name === undefined || note.name.trim() === '') {
-      return 'Note ' + note.id;
-    } else {
+    if (note.name !== undefined && note.name.trim() !== '') {
       return note.name;
     }
+    if (note.path !== undefined && note.path.trim() !== '') {
+      return note.path.substring(note.path.lastIndexOf('/') + 1);
+    }
+    return 'Note ' + note.id;
   };
 
   this.noteComparator = function(v1, v2) {
