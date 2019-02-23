@@ -21,11 +21,10 @@ import com.google.common.collect.Lists;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -36,7 +35,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -46,11 +44,11 @@ public class CompletionHandler extends AbstractHandler {
   private InterpreterFactory interpreterFactory;
 
   @Autowired
-  public CompletionHandler(final NotebookAuthorization notebookAuthorization,
+  public CompletionHandler(final NotePermissionsService notePermissionsService,
                            final Notebook notebook,
                            final ConnectionManager connectionManager,
                            final InterpreterFactory interpreterFactory) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
     this.interpreterFactory = interpreterFactory;
   }
 

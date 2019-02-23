@@ -47,14 +47,14 @@ public abstract class AbstractHandler {
           .setPrettyPrinting()
           .registerTypeAdapterFactory(Input.TypeAdapterFactory).create();
 
-  private final NotebookAuthorization notebookAuthorization;
+  private final NotePermissionsService notePermissionsService;
   protected final Notebook notebook;
   protected final ConnectionManager connectionManager;
 
-  public AbstractHandler(final NotebookAuthorization notebookAuthorization,
+  public AbstractHandler(final NotePermissionsService notePermissionsService,
                          final Notebook notebook,
                          final ConnectionManager connectionManager) {
-    this.notebookAuthorization = notebookAuthorization;
+    this.notePermissionsService = notePermissionsService;
     this.notebook = notebook;
     this.connectionManager = connectionManager;
   }
@@ -114,28 +114,28 @@ public abstract class AbstractHandler {
   protected void checkPermission(final String noteId,
                                  final Permission permission,
                                  final ServiceContext context) {
-    if (permission == Permission.ANY) {
+    Note target = notebook.getNote(noteId);
+    if (permission == Permission.ANY || target == null) {
       return;
     }
-
     boolean isAllowed = false;
     Set<String> allowed = null;
     switch (permission) {
       case READER:
-        isAllowed = notebookAuthorization.isReader(noteId, context.getUserAndRoles());
-        allowed = notebookAuthorization.getReaders(noteId);
+        isAllowed = notePermissionsService.isReader(noteId, context.getUserAndRoles());
+        allowed = target.getReaders();
         break;
       case WRITER:
-        isAllowed = notebookAuthorization.isWriter(noteId, context.getUserAndRoles());
-        allowed = notebookAuthorization.getWriters(noteId);
+        isAllowed = notePermissionsService.isWriter(noteId, context.getUserAndRoles());
+        allowed = target.getWriters();
         break;
       case RUNNER:
-        isAllowed = notebookAuthorization.isRunner(noteId, context.getUserAndRoles());
-        allowed = notebookAuthorization.getRunners(noteId);
+        isAllowed = notePermissionsService.isRunner(noteId, context.getUserAndRoles());
+        allowed = target.getRunners();
         break;
       case OWNER:
-        isAllowed = notebookAuthorization.isOwner(noteId, context.getUserAndRoles());
-        allowed = notebookAuthorization.getOwners(noteId);
+        isAllowed = notePermissionsService.isOwner(noteId, context.getUserAndRoles());
+        allowed = target.getOwners();
         break;
     }
     if (!isAllowed) {

@@ -23,8 +23,8 @@ import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -43,10 +43,10 @@ public class AngularObjectsHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AngularObjectsHandler.class);
 
-  public AngularObjectsHandler(final NotebookAuthorization notebookAuthorization,
+  public AngularObjectsHandler(final NotePermissionsService notePermissionsService,
                                final Notebook notebook,
                                final ConnectionManager connectionManager) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
   }
 
   /**

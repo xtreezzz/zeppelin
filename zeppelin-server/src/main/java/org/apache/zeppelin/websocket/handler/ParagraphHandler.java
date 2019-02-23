@@ -21,8 +21,8 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
@@ -49,10 +49,10 @@ public class ParagraphHandler extends AbstractHandler {
   private final Boolean collaborativeModeEnable;
 
   @Autowired
-  public ParagraphHandler(final NotebookAuthorization notebookAuthorization,
+  public ParagraphHandler(final NotePermissionsService notePermissionsService,
                           final Notebook notebook,
                           final ConnectionManager connectionManager) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
     this.collaborativeModeEnable = ZeppelinConfiguration
             .create()
             .isZeppelinNotebookCollaborativeModeEnable();

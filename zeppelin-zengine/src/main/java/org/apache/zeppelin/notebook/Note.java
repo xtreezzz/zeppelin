@@ -76,6 +76,11 @@ public class Note implements JsonSerializable {
    */
   private Map<String, Object> info = new HashMap<>();
 
+  /********************************** user permissions info *************************************/
+  private final Set<String> owners = new HashSet<>();
+  private final Set<String> readers = new HashSet<>();
+  private final Set<String> runners = new HashSet<>();
+  private final Set<String> writers = new HashSet<>();
 
   /********************************** transient fields ******************************************/
   private transient boolean loaded = false;
@@ -128,6 +133,22 @@ public class Note implements JsonSerializable {
   private String getName(String path) {
     int pos = path.lastIndexOf("/");
     return path.substring(pos + 1);
+  }
+
+  public Set<String> getOwners() {
+    return owners;
+  }
+
+  public Set<String> getReaders() {
+    return readers;
+  }
+
+  public Set<String> getRunners() {
+    return runners;
+  }
+
+  public Set<String> getWriters() {
+    return writers;
   }
 
   private void generateId() {

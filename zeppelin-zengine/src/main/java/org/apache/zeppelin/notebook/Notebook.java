@@ -84,7 +84,7 @@ public class Notebook {
   org.quartz.Scheduler quartzSched;
   private ZeppelinRepository zeppelinRepository;
   private SearchService noteSearchService;
-  private NotebookAuthorization notebookAuthorization;
+  private NotePermissionsService notePermissionsService;
   private Credentials credentials;
 
 
@@ -108,7 +108,7 @@ public class Notebook {
       InterpreterFactory replFactory,
       InterpreterSettingManager interpreterSettingManager,
       SearchService noteSearchService,
-      NotebookAuthorization notebookAuthorization,
+      NotePermissionsService notePermissionsService,
       Credentials credentials,
       NoteManager noteManager)
       throws IOException, SchedulerException {
@@ -118,7 +118,7 @@ public class Notebook {
     this.zeppelinRepository = zeppelinRepository;
     this.interpreterSettingManager = interpreterSettingManager;
     this.noteSearchService = noteSearchService;
-    this.notebookAuthorization = notebookAuthorization;
+    this.notePermissionsService = notePermissionsService;
     this.credentials = credentials;
     this.replFactory = replFactory;
     quertzSchedFact = new org.quartz.impl.StdSchedulerFactory();
@@ -166,7 +166,7 @@ public class Notebook {
     saveNote(note);
 
     if (!AuthenticationInfo.ANONYMOUS.getUser().equalsIgnoreCase(subject.getUser())) {
-      notebookAuthorization.setNewNotePermissions(note.getId(), subject.getUser());
+      notePermissionsService.addNewUser(note.getId(), subject.getUser());
     }
 
     fireNoteCreateEvent(note);
@@ -236,7 +236,6 @@ public class Notebook {
     LOGGER.info("Remove note " + noteId);
     Note note = getNote(noteId);
     noteManager.removeNote(noteId);
-    notebookAuthorization.removeNote(noteId);
     interpreterSettingManager.removeNote(note, subject);
     fireNoteRemoveEvent(note);
   }
@@ -476,7 +475,7 @@ public class Notebook {
       entities.addAll(userAndRoles);
     }
     return getAllNotes().stream()
-        .filter(note -> notebookAuthorization.isReader(note.getId(), entities))
+        .filter(note -> notePermissionsService.isReader(note.getId(), entities))
         .collect(Collectors.toList());
   }
 
@@ -491,7 +490,7 @@ public class Notebook {
 
     synchronized (noteManager.getNotesInfo()) {
       List<NoteInfo> notesInfo = noteManager.getNotesInfo().entrySet().stream().filter(entry ->
-          notebookAuthorization.isReader(entry.getKey(), entities) &&
+          notePermissionsService.isReader(entry.getKey(), entities) &&
               ((!hideHomeScreenNotebookFromList) ||
                   ((hideHomeScreenNotebookFromList) && !entry.getKey().equals(homescreenNoteId))))
           .map(entry -> new NoteInfo(entry.getKey(), entry.getValue()))
@@ -669,8 +668,8 @@ public class Notebook {
     return interpreterSettingManager;
   }
 
-  public NotebookAuthorization getNotebookAuthorization() {
-    return notebookAuthorization;
+  public NotePermissionsService getNotePermissionsService() {
+    return notePermissionsService;
   }
 
   public ZeppelinConfiguration getConf() {

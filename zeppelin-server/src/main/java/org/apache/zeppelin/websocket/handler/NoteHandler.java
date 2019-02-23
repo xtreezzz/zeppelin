@@ -50,12 +50,12 @@ public class NoteHandler extends AbstractHandler {
   private final ZeppelinConfiguration zeppelinConfiguration;
 
   @Autowired
-  public NoteHandler(final NotebookAuthorization notebookAuthorization,
+  public NoteHandler(final NotePermissionsService notePermissionsService,
                      final Notebook notebook,
                      final ConnectionManager connectionManager,
                      final AngularObjectsHandler angularObjectsService,
                      final ZeppelinConfiguration zeppelinConfiguration) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
     this.angularObjectsService = angularObjectsService;
     this.zeppelinConfiguration = zeppelinConfiguration;
   }

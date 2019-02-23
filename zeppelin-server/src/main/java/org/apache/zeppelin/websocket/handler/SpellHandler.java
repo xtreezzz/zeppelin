@@ -20,8 +20,8 @@ package org.apache.zeppelin.websocket.handler;
 import com.google.common.base.Strings;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.ServiceContext;
@@ -46,10 +46,10 @@ public class SpellHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SpellHandler.class);
 
   @Autowired
-  public SpellHandler(final NotebookAuthorization notebookAuthorization,
+  public SpellHandler(final NotePermissionsService notePermissionsService,
                       final Notebook notebook,
                       final ConnectionManager connectionManager) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
   }
 
   //TODO(KOT): check "noteId"

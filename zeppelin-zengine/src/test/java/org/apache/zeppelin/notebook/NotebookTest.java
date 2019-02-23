@@ -385,11 +385,11 @@ package org.apache.zeppelin.notebook;
 //    AuthenticationInfo subject = new AuthenticationInfo("user1");
 //    Note note = notebook.createNote("note1", subject);
 //
-//    assertNotNull(notebook.getNotebookAuthorization().getOwners(note.getId()));
-//    assertEquals(1, notebook.getNotebookAuthorization().getOwners(note.getId()).size());
+//    assertNotNull(notebook.getNotePermissionsService().getOwners(note.getId()));
+//    assertEquals(1, notebook.getNotePermissionsService().getOwners(note.getId()).size());
 //    Set<String> owners = new HashSet<>();
 //    owners.add("user1");
-//    assertEquals(owners, notebook.getNotebookAuthorization().getOwners(note.getId()));
+//    assertEquals(owners, notebook.getNotePermissionsService().getOwners(note.getId()));
 //    notebook.removeNote(note.getId(), anonymous);
 //  }
 //
@@ -824,11 +824,11 @@ package org.apache.zeppelin.notebook;
 //    // Verify import note with subject
 //    AuthenticationInfo subject = new AuthenticationInfo("user1");
 //    Note importedNote2 = notebook.importNote(exportedNoteJson, "Title2", subject);
-//    assertNotNull(notebook.getNotebookAuthorization().getOwners(importedNote2.getId()));
-//    assertEquals(1, notebook.getNotebookAuthorization().getOwners(importedNote2.getId()).size());
+//    assertNotNull(notebook.getNotePermissionsService().getOwners(importedNote2.getId()));
+//    assertEquals(1, notebook.getNotePermissionsService().getOwners(importedNote2.getId()).size());
 //    Set<String> owners = new HashSet<>();
 //    owners.add("user1");
-//    assertEquals(owners, notebook.getNotebookAuthorization().getOwners(importedNote2.getId()));
+//    assertEquals(owners, notebook.getNotePermissionsService().getOwners(importedNote2.getId()));
 //    notebook.removeNote(note.getId(), anonymous);
 //    notebook.removeNote(importedNote.getId(), anonymous);
 //    notebook.removeNote(importedNote2.getId(), anonymous);
@@ -855,11 +855,11 @@ package org.apache.zeppelin.notebook;
 //    // Verify clone note with subject
 //    AuthenticationInfo subject = new AuthenticationInfo("user1");
 //    Note cloneNote2 = notebook.cloneNote(note.getId(), "clone note2", subject);
-//    assertNotNull(notebook.getNotebookAuthorization().getOwners(cloneNote2.getId()));
-//    assertEquals(1, notebook.getNotebookAuthorization().getOwners(cloneNote2.getId()).size());
+//    assertNotNull(notebook.getNotePermissionsService().getOwners(cloneNote2.getId()));
+//    assertEquals(1, notebook.getNotePermissionsService().getOwners(cloneNote2.getId()).size());
 //    Set<String> owners = new HashSet<>();
 //    owners.add("user1");
-//    assertEquals(owners, notebook.getNotebookAuthorization().getOwners(cloneNote2.getId()));
+//    assertEquals(owners, notebook.getNotePermissionsService().getOwners(cloneNote2.getId()));
 //    notebook.removeNote(note.getId(), anonymous);
 //    notebook.removeNote(cloneNote.getId(), anonymous);
 //    notebook.removeNote(cloneNote2.getId(), anonymous);
@@ -985,7 +985,7 @@ package org.apache.zeppelin.notebook;
 //  public void testPermissions() throws IOException {
 //    // create a note and a paragraph
 //    Note note = notebook.createNote("note1", anonymous);
-//    NotebookAuthorization notebookAuthorization = notebook.getNotebookAuthorization();
+//    NotebookAuthorization notebookAuthorization = notebook.getNotePermissionsService();
 //    // empty owners, readers or writers means note is public
 //    assertEquals(notebookAuthorization.isOwner(note.getId(),
 //        new HashSet<>(Arrays.asList("user2"))), true);
@@ -1269,17 +1269,17 @@ package org.apache.zeppelin.notebook;
 //    Note note2 = notebook.createNote("note2", anonymous);
 //    assertEquals(2, notebook.getAllNotes(Sets.newHashSet("anonymous")).size());
 //
-//    notebook.getNotebookAuthorization().setOwners(note1.getId(), Sets.newHashSet("user1"));
-//    notebook.getNotebookAuthorization().setWriters(note1.getId(), Sets.newHashSet("user1"));
-//    notebook.getNotebookAuthorization().setRunners(note1.getId(), Sets.newHashSet("user1"));
-//    notebook.getNotebookAuthorization().setReaders(note1.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setOwners(note1.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setWriters(note1.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setRunners(note1.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setReaders(note1.getId(), Sets.newHashSet("user1"));
 //    assertEquals(1, notebook.getAllNotes(Sets.newHashSet("anonymous")).size());
 //    assertEquals(2, notebook.getAllNotes(Sets.newHashSet("user1")).size());
 //
-//    notebook.getNotebookAuthorization().setOwners(note2.getId(), Sets.newHashSet("user2"));
-//    notebook.getNotebookAuthorization().setWriters(note2.getId(), Sets.newHashSet("user2"));
-//    notebook.getNotebookAuthorization().setReaders(note2.getId(), Sets.newHashSet("user2"));
-//    notebook.getNotebookAuthorization().setRunners(note2.getId(), Sets.newHashSet("user2"));
+//    notebook.getNotePermissionsService().setOwners(note2.getId(), Sets.newHashSet("user2"));
+//    notebook.getNotePermissionsService().setWriters(note2.getId(), Sets.newHashSet("user2"));
+//    notebook.getNotePermissionsService().setReaders(note2.getId(), Sets.newHashSet("user2"));
+//    notebook.getNotePermissionsService().setRunners(note2.getId(), Sets.newHashSet("user2"));
 //    assertEquals(0, notebook.getAllNotes(Sets.newHashSet("anonymous")).size());
 //    assertEquals(1, notebook.getAllNotes(Sets.newHashSet("user1")).size());
 //    assertEquals(1, notebook.getAllNotes(Sets.newHashSet("user2")).size());
@@ -1306,20 +1306,20 @@ package org.apache.zeppelin.notebook;
 //    assertEquals(notes1.size(), 1);
 //    assertEquals(notes2.size(), 1);
 //
-//    notebook.getNotebookAuthorization().setReaders(note.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setReaders(note.getId(), Sets.newHashSet("user1"));
 //    //note is public since writers empty
 //    notes1 = notebook.getAllNotes(user1);
 //    notes2 = notebook.getAllNotes(user2);
 //    assertEquals(notes1.size(), 1);
 //    assertEquals(notes2.size(), 1);
 //
-//    notebook.getNotebookAuthorization().setRunners(note.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setRunners(note.getId(), Sets.newHashSet("user1"));
 //    notes1 = notebook.getAllNotes(user1);
 //    notes2 = notebook.getAllNotes(user2);
 //    assertEquals(notes1.size(), 1);
 //    assertEquals(notes2.size(), 1);
 //
-//    notebook.getNotebookAuthorization().setWriters(note.getId(), Sets.newHashSet("user1"));
+//    notebook.getNotePermissionsService().setWriters(note.getId(), Sets.newHashSet("user1"));
 //    notes1 = notebook.getAllNotes(user1);
 //    notes2 = notebook.getAllNotes(user2);
 //    assertEquals(notes1.size(), 1);

@@ -18,8 +18,8 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.repo.api.Revision;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -40,10 +40,10 @@ public class NoteRevisionHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteRevisionHandler.class);
 
   @Autowired
-  public NoteRevisionHandler(final NotebookAuthorization notebookAuthorization,
+  public NoteRevisionHandler(final NotePermissionsService notePermissionsService,
                              final Notebook notebook,
                              final ConnectionManager connectionManager) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
   }
 
   public void checkpointNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {

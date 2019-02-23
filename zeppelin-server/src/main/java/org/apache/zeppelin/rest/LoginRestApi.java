@@ -25,8 +25,8 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.realm.jwt.JWTAuthenticationToken;
 import org.apache.zeppelin.realm.jwt.KnoxJwtRealm;
 import org.apache.zeppelin.realm.kerberos.KerberosRealm;
@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -58,14 +57,14 @@ public class LoginRestApi {
   private static final Gson gson = new Gson();
   private final ZeppelinConfiguration zConf;
   private final SecurityService securityService;
-  private final NotebookAuthorization notebookAuthorization;
+  private final NotePermissionsService notePermissionsService;
 
   @Autowired
   public LoginRestApi(final Notebook notebook,
                       @Qualifier("NoSecurityService") final SecurityService securityService) {
     this.zConf = notebook.getConf();
     this.securityService = securityService;
-    this.notebookAuthorization = notebook.getNotebookAuthorization();
+    this.notePermissionsService = notebook.getNotePermissionsService();
   }
 
   @ZeppelinApi
@@ -192,8 +191,7 @@ public class LoginRestApi {
       response = new JsonResponse(HttpStatus.OK, "", data);
       // if no exception, that's it, we're done!
 
-      // set roles for user in NotebookAuthorization module
-      notebookAuthorization.setRoles(principal, roles);
+      notePermissionsService.setUserRoles(principal, roles);
     } catch (final AuthenticationException uae) {
       // username wasn't in the system, show them an error message?
       // password didn't match, try again?

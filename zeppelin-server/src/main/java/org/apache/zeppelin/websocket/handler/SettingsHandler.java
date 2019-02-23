@@ -21,8 +21,8 @@ import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.service.ServiceContext;
@@ -47,11 +47,11 @@ public class SettingsHandler extends AbstractHandler {
   private final ConfigurationService configurationService;
 
   @Autowired
-  public SettingsHandler(final NotebookAuthorization notebookAuthorization,
+  public SettingsHandler(final NotePermissionsService notePermissionsService,
                          final Notebook notebook,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService) {
-    super(notebookAuthorization, notebook, connectionManager);
+    super(notePermissionsService, notebook, connectionManager);
     this.configurationService = configurationService;
   }
 

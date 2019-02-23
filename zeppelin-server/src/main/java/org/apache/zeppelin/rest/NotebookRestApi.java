@@ -60,7 +60,7 @@ public class NotebookRestApi extends AbstractRestApi {
   private final ZeppelinConfiguration zConf;
   private final Notebook notebook;
   private final SearchService noteSearchService;
-  private final NotebookAuthorization notebookAuthorization;
+  private final NotePermissionsService notePermissionsService;
   private final JobManagerService jobManagerService;
   private final SecurityService securityService;
   private final ConnectionManager connectionManager;
@@ -69,7 +69,7 @@ public class NotebookRestApi extends AbstractRestApi {
   public NotebookRestApi(
           final Notebook notebook,
           final SearchService search,
-          final NotebookAuthorization notebookAuthorization,
+          final NotePermissionsService notePermissionsService,
           final ZeppelinConfiguration zConf,
           @Qualifier("NoSecurityService") final SecurityService securityService,
           final JobManagerService jobManagerService,
@@ -78,7 +78,7 @@ public class NotebookRestApi extends AbstractRestApi {
     this.notebook = notebook;
     this.jobManagerService = jobManagerService;
     this.noteSearchService = search;
-    this.notebookAuthorization = notebookAuthorization;
+    this.notePermissionsService = notePermissionsService;
     this.zConf = zConf;
     this.securityService = securityService;
     this.connectionManager = connectionManager;
@@ -94,10 +94,13 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfUserCanRead(noteId,
             "Insufficient privileges you cannot get the list of permissions for this note");
     final HashMap<String, Set<String>> permissionsMap = new HashMap<>();
-    permissionsMap.put("owners", notebookAuthorization.getOwners(noteId));
-    permissionsMap.put("readers", notebookAuthorization.getReaders(noteId));
-    permissionsMap.put("writers", notebookAuthorization.getWriters(noteId));
-    permissionsMap.put("runners", notebookAuthorization.getRunners(noteId));
+    Note target = notebook.getNote(noteId);
+    if (target != null) {
+      permissionsMap.put("owners", target.getOwners());
+      permissionsMap.put("readers", target.getReaders());
+      permissionsMap.put("writers", target.getWriters());
+      permissionsMap.put("runners", target.getRunners());
+    }
     return new JsonResponse(HttpStatus.OK, "", permissionsMap).build();
   }
 
@@ -137,7 +140,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(securityService.getPrincipal());
     userAndRoles.addAll(securityService.getAssociatedRoles());
-    if (!notebookAuthorization.isOwner(userAndRoles, noteId)) {
+    if (!notePermissionsService.isOwner(userAndRoles, noteId)) {
       throw new ForbiddenException(errorMsg);
     }
   }
@@ -149,7 +152,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(securityService.getPrincipal());
     userAndRoles.addAll(securityService.getAssociatedRoles());
-    if (!notebookAuthorization.hasWriteAuthorization(userAndRoles, noteId)) {
+    if (!notePermissionsService.hasWriteAuthorization(userAndRoles, noteId)) {
       throw new ForbiddenException(errorMsg);
     }
   }
@@ -161,7 +164,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(securityService.getPrincipal());
     userAndRoles.addAll(securityService.getAssociatedRoles());
-    if (!notebookAuthorization.hasReadAuthorization(userAndRoles, noteId)) {
+    if (!notePermissionsService.hasReadAuthorization(userAndRoles, noteId)) {
       throw new ForbiddenException(errorMsg);
     }
   }
@@ -173,7 +176,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Set<String> userAndRoles = Sets.newHashSet();
     userAndRoles.add(securityService.getPrincipal());
     userAndRoles.addAll(securityService.getAssociatedRoles());
-    if (!notebookAuthorization.hasRunAuthorization(userAndRoles, noteId)) {
+    if (!notePermissionsService.hasRunAuthorization(userAndRoles, noteId)) {
       throw new ForbiddenException(errorMsg);
     }
   }
@@ -212,13 +215,14 @@ public class NotebookRestApi extends AbstractRestApi {
     userAndRoles.addAll(roles);
 
     checkIfUserIsAnon(getBlockNotAuthenticatedUserErrorMsg());
-    checkIfUserIsOwner(noteId,
-            ownerPermissionError(userAndRoles, notebookAuthorization.getOwners(noteId)));
 
     final HashMap<String, HashSet<String>> permMap =
             gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
             }.getType());
     final Note note = notebook.getNote(noteId);
+
+    checkIfUserIsOwner(noteId,
+        ownerPermissionError(userAndRoles, note.getOwners()));
 
     LOG.info("Set permissions {} {} {} {} {} {}", noteId, principal, permMap.get("owners"),
             permMap.get("readers"), permMap.get("runners"), permMap.get("writers"));
@@ -255,13 +259,12 @@ public class NotebookRestApi extends AbstractRestApi {
       }
     }
 
-    notebookAuthorization.setReaders(noteId, readers);
-    notebookAuthorization.setRunners(noteId, runners);
-    notebookAuthorization.setWriters(noteId, writers);
-    notebookAuthorization.setOwners(noteId, owners);
-    LOG.debug("After set permissions {} {} {} {}", notebookAuthorization.getOwners(noteId),
-            notebookAuthorization.getReaders(noteId), notebookAuthorization.getRunners(noteId),
-            notebookAuthorization.getWriters(noteId));
+    notePermissionsService.setReaders(noteId, readers);
+    notePermissionsService.setRunners(noteId, runners);
+    notePermissionsService.setWriters(noteId, writers);
+    notePermissionsService.setOwners(noteId, owners);
+    LOG.debug("After set permissions {} {} {} {}", note.getOwners(), note.getReaders(),
+        note.getRunners(), note.getWriters());
     notebook.saveNote(note);
     //TODO(KOT): FIX
       /*
@@ -976,10 +979,10 @@ public class NotebookRestApi extends AbstractRestApi {
     for (int i = 0; i < notesFound.size(); i++) {
       final String[] ids = notesFound.get(i).get("id").split("/", 2);
       final String noteId = ids[0];
-      if (!notebookAuthorization.isOwner(noteId, userAndRoles) &&
-              !notebookAuthorization.isReader(noteId, userAndRoles) &&
-              !notebookAuthorization.isWriter(noteId, userAndRoles) &&
-              !notebookAuthorization.isRunner(noteId, userAndRoles)) {
+      if (!notePermissionsService.isOwner(noteId, userAndRoles) &&
+              !notePermissionsService.isReader(noteId, userAndRoles) &&
+              !notePermissionsService.isWriter(noteId, userAndRoles) &&
+              !notePermissionsService.isRunner(noteId, userAndRoles)) {
         notesFound.remove(i);
         i--;
       }
