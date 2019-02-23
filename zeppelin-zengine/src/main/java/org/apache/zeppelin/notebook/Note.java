@@ -64,17 +64,11 @@ public class Note implements JsonSerializable {
   private Map<String, Object> noteParams = new LinkedHashMap<>();
   private Map<String, Input> noteForms = new LinkedHashMap<>();
   private Map<String, List<AngularObject>> angularObjects = new HashMap<>();
-  /*
-   * note configurations.
-   * - looknfeel - cron
-   */
-  private Map<String, Object> config = new HashMap<>();
 
-  /*
-   * note information.
-   * - cron : cron expression validity.
-   */
-  private Map<String, Object> info = new HashMap<>();
+  private boolean isPersonalizedModeEnabled = false;
+  private boolean isRunning = false;
+
+  private CronJobConfiguration config = CronJobConfiguration.Builder.isCronEnabled(false).build();
 
   /********************************** user permissions info *************************************/
   private final Set<String> owners = new HashSet<>();
@@ -164,18 +158,11 @@ public class Note implements JsonSerializable {
   }
 
   public boolean isPersonalizedMode() {
-    Object v = getConfig().get("personalizedMode");
-    return null != v && "true".equals(v);
+    return isPersonalizedModeEnabled;
   }
 
   public void setPersonalizedMode(Boolean value) {
-    String valueString = StringUtils.EMPTY;
-    if (value) {
-      valueString = "true";
-    } else {
-      valueString = "false";
-    }
-    config.put("personalizedMode", valueString);
+    isPersonalizedModeEnabled = value;
     clearUserParagraphs(value);
   }
 
@@ -285,7 +272,9 @@ public class Note implements JsonSerializable {
   }
 
   public void setCronSupported(ZeppelinConfiguration config) {
-    getConfig().put("isZeppelinNotebookCronEnable", isCronSupported(config));
+    this.config = CronJobConfiguration.Builder.fromExisting(this.config)
+        .enableCron(isCronSupported(config))
+        .build();
   }
 
   public Credentials getCredentials() {
@@ -798,34 +787,18 @@ public class Note implements JsonSerializable {
     return newNote;
   }
 
-  public Map<String, Object> getConfig() {
-    if (config == null) {
-      config = new HashMap<>();
-    }
+  public CronJobConfiguration getConfig() {
     return config;
   }
 
-  public void setConfig(Map<String, Object> config) {
+  public void setConfig(CronJobConfiguration config) {
     this.config = config;
   }
 
-  public Map<String, Object> getInfo() {
-    if (info == null) {
-      info = new HashMap<>();
-    }
-    return info;
-  }
-
-  public void setInfo(Map<String, Object> info) {
-    this.info = info;
-  }
-
   public synchronized void setRunning(boolean runStatus) {
-    Map<String, Object> infoMap = getInfo();
     this.executionAborted.set(false);
-    boolean oldStatus = (boolean) infoMap.getOrDefault("isRunning", false);
-    if (oldStatus != runStatus) {
-      infoMap.put("isRunning", runStatus);
+    if (isRunning != runStatus) {
+      isRunning = runStatus;
       if (paragraphJobListener != null) {
         paragraphJobListener.noteRunningStatusChange(this.id, runStatus);
       }
@@ -833,7 +806,7 @@ public class Note implements JsonSerializable {
   }
 
   public synchronized boolean isRunning() {
-    return (boolean) getInfo().getOrDefault("isRunning", false);
+    return isRunning;
   }
 
   @Override
@@ -853,7 +826,6 @@ public class Note implements JsonSerializable {
   public static Note fromJson(String json) {
     Note note = gson.fromJson(json, Note.class);
     convertOldInput(note);
-    note.info.remove("isRunning");
     note.postProcessParagraphs();
     return note;
   }
@@ -910,18 +882,16 @@ public class Note implements JsonSerializable {
     if (config != null ? !config.equals(note.config) : note.config != null) {
       return false;
     }
-    return info != null ? info.equals(note.info) : note.info == null;
+    return isRunning == note.isRunning;
 
   }
 
   @Override
   public int hashCode() {
     int result = paragraphs != null ? paragraphs.hashCode() : 0;
-    //    result = 31 * result + (path != null ? path.hashCode() : 0);
     result = 31 * result + (id != null ? id.hashCode() : 0);
     result = 31 * result + (angularObjects != null ? angularObjects.hashCode() : 0);
     result = 31 * result + (config != null ? config.hashCode() : 0);
-    result = 31 * result + (info != null ? info.hashCode() : 0);
     return result;
   }
 

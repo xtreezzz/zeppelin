@@ -142,8 +142,7 @@ public class JobManagerService {
     }
 
     private boolean isCron(final Note note) {
-      return note.getConfig().containsKey("cron") &&
-              !StringUtils.isBlank(note.getConfig().get("cron").toString());
+      return note.getConfig().isCronEnabled;
     }
 
     public NoteJobInfo(final String noteId, final boolean isRemoved) {

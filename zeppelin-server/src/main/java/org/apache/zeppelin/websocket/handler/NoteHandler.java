@@ -106,20 +106,25 @@ public class NoteHandler extends AbstractHandler {
     angularObjectsService.sendAllAngularObjects(note, serviceContext.getAutheInfo().getUser(), conn);
   }
 
+  //TODO(egorklimov) check passing personalized mode flag
   public void updateNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
     final String name = fromMessage.safeGetType("name", LOG);
-    final Map<String, Object> config = fromMessage.safeGetType("config", LOG);
+    final CronJobConfiguration config = fromMessage.safeGetType("config", LOG);
 
-    if (!(Boolean) note.getConfig().get("isZeppelinNotebookCronEnable")) {
-      config.remove("cron");
+    //TODO(egorklimov) fix cron logic
+    if (!note.getConfig().isCronEnabled) {
+      //??????????????????
+      // было - config.remove("cron"), т.е. из конфига выкидывается cronExpression, но вся остальная
+      // инфа остается, wtf, вохможно это сделано чтобы вдруг не включился крон, но сохранился
+      // флаг personalized mode
     }
-    final boolean cronUpdated = isCronUpdated(config, note.getConfig());
+
     note.setName(name);
     note.setConfig(config);
-    if (cronUpdated) {
+    if (!note.getConfig().equals(config)) {
       notebook.refreshCron(note.getId());
     }
 
@@ -128,7 +133,7 @@ public class NoteHandler extends AbstractHandler {
     final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
             .put("name", name)
             .put("config", config)
-            .put("info", note.getInfo());
+            .put("info", note.isRunning());
     connectionManager.broadcast(note.getId(), message);
 
     broadcastNoteList(serviceContext.getUserAndRoles());
@@ -365,17 +370,6 @@ public class NoteHandler extends AbstractHandler {
   private void broadcastNoteList(final Set<String> userAndRoles) {
     final List<NoteInfo> notesInfo = notebook.getNotesInfo(userAndRoles);
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
-  }
-
-  //TODO(KOT) check logic
-  private boolean isCronUpdated(final Map<String, Object> configA, final Map<String, Object> configB) {
-    if (configA.get("cron") != null
-            && configB.get("cron") != null
-            && configA.get("cron").equals(configB.get("cron"))) {
-      return true;
-    } else if (configA.get("cron") == null && configB.get("cron") == null) {
-      return false;
-    } else return configA.get("cron") != null || configB.get("cron") != null;
   }
 
   private String normalizeNotePath(String notePath) throws IOException {

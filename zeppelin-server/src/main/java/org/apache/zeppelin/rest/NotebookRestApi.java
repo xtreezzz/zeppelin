@@ -844,10 +844,12 @@ public class NotebookRestApi extends AbstractRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST, "wrong cron expressions.").build();
     }
 
-    final Map<String, Object> config = note.getConfig();
-    config.put("cron", request.getCronString());
-    config.put("releaseresource", request.getReleaseResource());
-    note.setConfig(config);
+    note.setConfig(
+        CronJobConfiguration.Builder.fromExisting(note.getConfig())
+            .cronExpression(request.getCronString())
+            .releaseResource(request.getReleaseResource())
+            .build()
+    );
     notebook.refreshCron(note.getId());
 
     return new JsonResponse(HttpStatus.OK).build();
@@ -889,12 +891,8 @@ public class NotebookRestApi extends AbstractRestApi {
             "Insufficient privileges you cannot remove this cron job from this note");
     checkIfNoteSupportsCron(note);
 
-    final Map<String, Object> config = note.getConfig();
-    config.remove("cron");
-    config.remove("releaseresource");
-    note.setConfig(config);
+    note.setConfig(CronJobConfiguration.Builder.isCronEnabled(false).build());
     notebook.refreshCron(note.getId());
-
     return new JsonResponse(HttpStatus.OK).build();
   }
 
@@ -917,8 +915,8 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get cron information");
     checkIfNoteSupportsCron(note);
     final Map<String, Object> response = new HashMap<>();
-    response.put("cron", note.getConfig().get("cron"));
-    response.put("releaseResource", note.getConfig().get("releaseresource"));
+    response.put("cron", note.getConfig().cronExpression);
+    response.put("releaseResource", note.getConfig().releaseResourceFlag);
 
     return new JsonResponse(HttpStatus.OK, response).build();
   }

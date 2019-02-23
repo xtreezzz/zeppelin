@@ -562,19 +562,8 @@ public class Notebook {
 
       runAll(note);
 
-      boolean releaseResource = false;
-      String cronExecutingUser = null;
-      try {
-        Map<String, Object> config = note.getConfig();
-        if (config != null) {
-          if (config.containsKey("releaseresource")) {
-            releaseResource = (boolean) config.get("releaseresource");
-          }
-          cronExecutingUser = (String) config.get("cronExecutingUser");
-        }
-      } catch (ClassCastException e) {
-        LOGGER.error(e.getMessage(), e);
-      }
+      boolean releaseResource = note.getConfig().releaseResourceFlag;
+      String cronExecutingUser = note.getConfig().cronExecutingUser;
       if (releaseResource) {
         for (InterpreterSetting setting : notebook.getInterpreterSettingManager()
             .getInterpreterSettings(note.getId())) {
@@ -589,8 +578,8 @@ public class Notebook {
     }
 
     void runAll(Note note) {
-      String cronExecutingUser = (String) note.getConfig().get("cronExecutingUser");
-      String cronExecutingRoles = (String) note.getConfig().get("cronExecutingRoles");
+      String cronExecutingUser = note.getConfig().cronExecutingUser;
+      String cronExecutingRoles = note.getConfig().cronExecutingRoles;
       if (null == cronExecutingUser) {
         cronExecutingUser = "anonymous";
       }
@@ -608,17 +597,13 @@ public class Notebook {
     if (note == null || note.isTrash()) {
       return;
     }
-    Map<String, Object> config = note.getConfig();
-    if (config == null) {
-      return;
-    }
 
     if (!note.isCronSupported(getConf())) {
       LOGGER.warn("execution of the cron job is skipped cron is not enabled from Zeppelin server");
       return;
     }
 
-    String cronExpr = (String) note.getConfig().get("cron");
+    String cronExpr = note.getConfig().cronExpression;
     if (cronExpr == null || cronExpr.trim().length() == 0) {
       return;
     }
@@ -628,18 +613,17 @@ public class Notebook {
         JobBuilder.newJob(CronJob.class).withIdentity(id, "note").usingJobData("noteId", id)
             .build();
 
-    Map<String, Object> info = note.getInfo();
-    info.put("cron", null);
-
+    //TODO(egorklimov) fix cron expression validation logic see
+    // CronJobConfiguration.Builder#cronExpression
+    // До этого в info лежал флаг isRunning и "cron" -> валидность крона
+    // см 58207f7c0a55ecc37b91ae9af53d8e5f3e7ead96
     CronTrigger trigger = null;
     try {
       trigger = TriggerBuilder.newTrigger().withIdentity("trigger_" + id, "note")
           .withSchedule(CronScheduleBuilder.cronSchedule(cronExpr)).forJob(id, "note").build();
     } catch (Exception e) {
       LOGGER.error("Error", e);
-      info.put("cron", e.getMessage());
     }
-
 
     try {
       if (trigger != null) {
@@ -647,7 +631,6 @@ public class Notebook {
       }
     } catch (SchedulerException e) {
       LOGGER.error("Error", e);
-      info.put("cron", "Scheduler Exception");
     }
 
   }
