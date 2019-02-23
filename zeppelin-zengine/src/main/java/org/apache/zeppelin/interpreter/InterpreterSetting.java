@@ -33,7 +33,6 @@ import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLaunchContext;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
-import org.apache.zeppelin.interpreter.lifecycle.NullLifecycleManager;
 import org.apache.zeppelin.interpreter.recovery.NullRecoveryStorage;
 import org.apache.zeppelin.interpreter.recovery.RecoveryStorage;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
@@ -118,7 +117,6 @@ public class InterpreterSetting {
   // launcher in future when we have other launcher implementation. e.g. third party launcher
   // service like livy
   private transient InterpreterLauncher launcher;
-  private transient LifecycleManager lifecycleManager;
   private transient RecoveryStorage recoveryStorage;
   private transient RemoteInterpreterEventServer interpreterEventServer;
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -221,11 +219,6 @@ public class InterpreterSetting {
       return this;
     }
 
-    public Builder setLifecycleManager(LifecycleManager lifecycleManager) {
-      interpreterSetting.lifecycleManager = lifecycleManager;
-      return this;
-    }
-
     public Builder setRecoveryStorage(RecoveryStorage recoveryStorage) {
       interpreterSetting.recoveryStorage = recoveryStorage;
       return this;
@@ -248,9 +241,6 @@ public class InterpreterSetting {
   void postProcessing() {
     this.status = Status.READY;
     this.id = this.name;
-    if (this.lifecycleManager == null) {
-      this.lifecycleManager = new NullLifecycleManager();
-    }
     if (this.recoveryStorage == null) {
       try {
         this.recoveryStorage = new NullRecoveryStorage(conf, interpreterSettingManager);
@@ -333,11 +323,6 @@ public class InterpreterSetting {
     return this;
   }
 
-  public InterpreterSetting setLifecycleManager(LifecycleManager lifecycleManager) {
-    this.lifecycleManager = lifecycleManager;
-    return this;
-  }
-
   public InterpreterSetting setRecoveryStorage(RecoveryStorage recoveryStorage) {
     this.recoveryStorage = recoveryStorage;
     return this;
@@ -351,10 +336,6 @@ public class InterpreterSetting {
 
   public RecoveryStorage getRecoveryStorage() {
     return recoveryStorage;
-  }
-
-  public LifecycleManager getLifecycleManager() {
-    return lifecycleManager;
   }
 
   public String getId() {
@@ -675,7 +656,7 @@ public class InterpreterSetting {
     Properties intpProperties = getJavaProperties();
     for (InterpreterInfo info : interpreterInfos) {
       Interpreter interpreter = new RemoteInterpreter(intpProperties, sessionId,
-          info.getClassName(), user, lifecycleManager);
+          info.getClassName(), user);
       if (info.isDefaultInterpreter()) {
         interpreters.add(0, interpreter);
       } else {

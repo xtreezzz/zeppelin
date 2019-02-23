@@ -63,7 +63,6 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       remoteInterpreterProcess = interpreterSetting.createInterpreterProcess(id, userName,
           properties);
       remoteInterpreterProcess.start(userName);
-      interpreterSetting.getLifecycleManager().onInterpreterProcessStarted(this);
       getInterpreterSetting().getRecoveryStorage()
           .onInterpreterClientStart(remoteInterpreterProcess);
     }

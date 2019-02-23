@@ -128,7 +128,6 @@ public class InterpreterSettingManager {
   private RemoteInterpreterProcessListener remoteInterpreterProcessListener;
   private ApplicationEventListener appEventListener;
   private DependencyResolver dependencyResolver;
-  private LifecycleManager lifecycleManager;
   private RecoveryStorage recoveryStorage;
 
   @Lazy
@@ -167,12 +166,6 @@ public class InterpreterSettingManager {
             new Object[] {conf, this});
     this.recoveryStorage.init();
     LOGGER.info("Using RecoveryStorage: " + this.recoveryStorage.getClass().getName());
-    this.lifecycleManager =
-        ReflectionUtils.createClazzInstance(
-            conf.getLifecycleManagerClass(),
-            new Class[] {ZeppelinConfiguration.class},
-            new Object[] {conf});
-    LOGGER.info("Using LifecycleManager: " + this.lifecycleManager.getClass().getName());
 
     this.interpreterEventServer = new RemoteInterpreterEventServer(conf, this);
     this.interpreterEventServer.start();
@@ -203,7 +196,6 @@ public class InterpreterSettingManager {
         .setRemoteInterpreterProcessListener(remoteInterpreterProcessListener)
         .setAppEventListener(appEventListener)
         .setDependencyResolver(dependencyResolver)
-        .setLifecycleManager(lifecycleManager)
         .setRecoveryStorage(recoveryStorage)
         .setInterpreterEventServer(interpreterEventServer)
         .postProcessing();
