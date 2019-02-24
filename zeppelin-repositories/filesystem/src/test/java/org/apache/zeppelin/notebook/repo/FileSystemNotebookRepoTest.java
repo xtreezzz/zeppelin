@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.CronJobConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.junit.After;
@@ -70,8 +71,7 @@ public class FileSystemNotebookRepoTest {
     Note note = new Note();
     note.setPath("/title_1");
 
-    Map<String, Object> config = new HashMap<>();
-    config.put("config_1", "value_1");
+    CronJobConfiguration config = CronJobConfiguration.Builder.isCronEnabled(false).build();
     note.setConfig(config);
     hdfsNotebookRepo.save(note);
     assertEquals(1, hdfsNotebookRepo.list().size());
@@ -128,8 +128,7 @@ public class FileSystemNotebookRepoTest {
     // create a new note
     Note note = new Note();
     note.setPath("/title_1");
-    Map<String, Object> config = new HashMap<>();
-    config.put("config_1", "value_1");
+    CronJobConfiguration config = CronJobConfiguration.Builder.isCronEnabled(false).build();
     note.setConfig(config);
 
     hdfsNotebookRepo.save(note);
