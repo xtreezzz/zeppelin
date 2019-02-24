@@ -123,15 +123,6 @@ Snippet of code (language of interpreter) that executes after initialization of 
 <img src="{{BASE_PATH}}/assets/themes/zeppelin/img/screenshots/interpreter_precode.png" width="800px">
 
  
-## Interpreter Lifecycle Management
-
-Before 0.8.0, Zeppelin didn't have lifecycle management for interpreters. Users had to shut down interpreters explicitly via the UI. Starting from 0.8.0, Zeppelin provides a new interface
-`LifecycleManager` to control the lifecycle of interpreters. For now, there are two implementations: `NullLifecycleManager` and `TimeoutLifecycleManager`, which is the default. 
-
-`NullLifecycleManager` will do nothing, i.e., the user needs to control the lifecycle of interpreter by themselves as before. `TimeoutLifecycleManager` will shut down interpreters after an interpreter remains idle for a while. By default, the idle threshold is 1 hour.
-Users can change this threshold via the `zeppelin.interpreter.lifecyclemanager.timeout.threshold` setting. `TimeoutLifecycleManager` is the default lifecycle manager, and users can change it via `zeppelin.interpreter.lifecyclemanager.class`.
-
-
 ## Generic ConfInterpreter
 
 Zeppelin's interpreter setting is shared by all users and notes, if you want to have different settings, you have to create a new interpreter, e.g. you can create `spark_jar1` for running Spark with dependency jar1 and `spark_jar2` for running Spark with dependency jar2.
@@ -142,11 +133,3 @@ It can be used to make custom settings for any interpreter. However, `ConfInterp
 So users need to understand the [interpreter mode setting](../usage/interpreter/interpreter_bindings_mode.html) of Zeppelin and be aware of when the interpreter process is launched. E.g., if we set the Spark interpreter setting as isolated per note, then, under this setting, each note will launch one interpreter process. 
 In this scenario, users need to put `ConfInterpreter` as the first paragraph as in the below example. Otherwise, the customized setting cannot be applied (actually it would report ERROR).
 <img src="{{BASE_PATH}}/assets/themes/zeppelin/img/screenshots/conf_interpreter.png" width="700px">
-
-
-## Interpreter Process Recovery
-
-Before 0.8.0, shutting down Zeppelin also meant to shutdown all the running interpreter processes. Usually, an administrator will shutdown the Zeppelin server for maintenance or upgrades, but would not want to shut down the running interpreter processes.
-In such cases, interpreter process recovery is necessary. Starting from 0.8.0, users can enable interpreter process recovery via the setting `zeppelin.recovery.storage.class` as 
-`org.apache.zeppelin.interpreter.recovery.FileSystemRecoveryStorage` or other implementations if available in the future. By default it is `org.apache.zeppelin.interpreter.recovery.NullRecoveryStorage`,
- which means recovery is not enabled. Enabling recovery means shutting down Zeppelin would not terminate interpreter processes, and when Zeppelin is restarted, it would try to reconnect to the existing running interpreter processes. If you want to kill all the interpreter processes after terminating Zeppelin even when recovery is enabled, you can run `bin/stop-interpreter.sh` 

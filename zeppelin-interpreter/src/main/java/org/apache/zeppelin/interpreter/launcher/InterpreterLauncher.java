@@ -17,11 +17,9 @@
 
 package org.apache.zeppelin.interpreter.launcher;
 
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreter.recovery.RecoveryStorage;
-
 import java.io.IOException;
 import java.util.Properties;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
 
 /**
  * Component to Launch interpreter process.
@@ -30,11 +28,9 @@ public abstract class InterpreterLauncher {
 
   protected ZeppelinConfiguration zConf;
   protected Properties properties;
-  protected RecoveryStorage recoveryStorage;
 
-  public InterpreterLauncher(ZeppelinConfiguration zConf, RecoveryStorage recoveryStorage) {
+  public InterpreterLauncher(ZeppelinConfiguration zConf) {
     this.zConf = zConf;
-    this.recoveryStorage = recoveryStorage;
   }
 
   protected int getConnectTimeout() {

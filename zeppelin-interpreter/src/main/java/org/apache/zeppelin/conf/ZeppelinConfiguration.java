@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.ConfigurationNode;
@@ -359,21 +358,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getRelativeDir(getString(ConfVars.ZEPPELIN_PLUGINS_DIR));
   }
 
-  public String getRecoveryDir() {
-    return getRelativeDir(ConfVars.ZEPPELIN_RECOVERY_DIR);
-  }
-
   public String getNotebookStorageClass() {
     return getString(ConfVars.ZEPPELIN_NOTEBOOK_STORAGE);
-  }
-
-  public String getRecoveryStorageClass() {
-    return getString(ConfVars.ZEPPELIN_RECOVERY_STORAGE_CLASS);
-  }
-
-  public boolean isRecoveryEnabled() {
-    return !getString(ConfVars.ZEPPELIN_RECOVERY_STORAGE_CLASS).equals(
-        "org.apache.zeppelin.interpreter.recovery.NullRecoveryStorage");
   }
 
   public String getGCSStorageDir() {
@@ -768,9 +754,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_INTERPRETER_OUTPUT_LIMIT("zeppelin.interpreter.output.limit", 1024 * 100),
     ZEPPELIN_ENCODING("zeppelin.encoding", "UTF-8"),
     ZEPPELIN_NOTEBOOK_DIR("zeppelin.notebook.dir", "notebook"),
-    ZEPPELIN_RECOVERY_DIR("zeppelin.recovery.dir", "recovery"),
-    ZEPPELIN_RECOVERY_STORAGE_CLASS("zeppelin.recovery.storage.class",
-        "org.apache.zeppelin.interpreter.recovery.NullRecoveryStorage"),
     ZEPPELIN_PLUGINS_DIR("zeppelin.plugins.dir", "plugins"),
 
     // use specified notebook (id) as homescreen

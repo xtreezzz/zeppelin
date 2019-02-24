@@ -18,18 +18,17 @@
 
 package org.apache.zeppelin.interpreter;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 /**
  * ManagedInterpreterGroup runs under zeppelin server
@@ -63,8 +62,6 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       remoteInterpreterProcess = interpreterSetting.createInterpreterProcess(id, userName,
           properties);
       remoteInterpreterProcess.start(userName);
-      getInterpreterSetting().getRecoveryStorage()
-          .onInterpreterClientStart(remoteInterpreterProcess);
     }
     return remoteInterpreterProcess;
   }
@@ -103,11 +100,6 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       if (remoteInterpreterProcess != null) {
         LOGGER.info("Kill RemoteInterpreterProcess");
         remoteInterpreterProcess.stop();
-        try {
-          interpreterSetting.getRecoveryStorage().onInterpreterClientStop(remoteInterpreterProcess);
-        } catch (IOException e) {
-          LOGGER.error("Fail to store recovery data", e);
-        }
         remoteInterpreterProcess = null;
       }
     }

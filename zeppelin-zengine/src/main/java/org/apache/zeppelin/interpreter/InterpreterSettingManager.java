@@ -65,7 +65,6 @@ import org.apache.zeppelin.display.AngularObjectRegistry;
 import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.Interpreter.RegisteredInterpreter;
-import org.apache.zeppelin.interpreter.recovery.RecoveryStorage;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
@@ -77,7 +76,6 @@ import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
 import org.apache.zeppelin.user.AuthenticationInfo;
-import org.apache.zeppelin.util.ReflectionUtils;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +126,6 @@ public class InterpreterSettingManager {
   private RemoteInterpreterProcessListener remoteInterpreterProcessListener;
   private ApplicationEventListener appEventListener;
   private DependencyResolver dependencyResolver;
-  private RecoveryStorage recoveryStorage;
 
   @Lazy
   @Autowired
@@ -159,13 +156,6 @@ public class InterpreterSettingManager {
     this.gson = new GsonBuilder().setPrettyPrinting().create();
 
     this.appEventListener = appEventListener;
-    this.recoveryStorage =
-        ReflectionUtils.createClazzInstance(
-            conf.getRecoveryStorageClass(),
-            new Class[] {ZeppelinConfiguration.class, InterpreterSettingManager.class},
-            new Object[] {conf, this});
-    this.recoveryStorage.init();
-    LOGGER.info("Using RecoveryStorage: " + this.recoveryStorage.getClass().getName());
 
     this.interpreterEventServer = new RemoteInterpreterEventServer(conf, this);
     this.interpreterEventServer.start();
@@ -196,7 +186,6 @@ public class InterpreterSettingManager {
         .setRemoteInterpreterProcessListener(remoteInterpreterProcessListener)
         .setAppEventListener(appEventListener)
         .setDependencyResolver(dependencyResolver)
-        .setRecoveryStorage(recoveryStorage)
         .setInterpreterEventServer(interpreterEventServer)
         .postProcessing();
   }

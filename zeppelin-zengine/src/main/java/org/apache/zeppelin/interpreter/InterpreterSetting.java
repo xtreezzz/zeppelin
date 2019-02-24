@@ -17,6 +17,10 @@
 
 package org.apache.zeppelin.interpreter;
 
+import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_MAX_POOL_SIZE;
+import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_OUTPUT_LIMIT;
+import static org.apache.zeppelin.util.IdHashes.generateId;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +28,20 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.DependencyResolver;
@@ -33,8 +51,6 @@ import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLaunchContext;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
-import org.apache.zeppelin.interpreter.recovery.NullRecoveryStorage;
-import org.apache.zeppelin.interpreter.recovery.RecoveryStorage;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
@@ -42,18 +58,6 @@ import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.plugin.PluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
-
-import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_MAX_POOL_SIZE;
-import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_OUTPUT_LIMIT;
-import static org.apache.zeppelin.util.IdHashes.generateId;
 
 /**
  * Represent one InterpreterSetting in the interpreter setting page
@@ -117,7 +121,6 @@ public class InterpreterSetting {
   // launcher in future when we have other launcher implementation. e.g. third party launcher
   // service like livy
   private transient InterpreterLauncher launcher;
-  private transient RecoveryStorage recoveryStorage;
   private transient RemoteInterpreterEventServer interpreterEventServer;
   ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -219,11 +222,6 @@ public class InterpreterSetting {
       return this;
     }
 
-    public Builder setRecoveryStorage(RecoveryStorage recoveryStorage) {
-      interpreterSetting.recoveryStorage = recoveryStorage;
-      return this;
-    }
-
     public InterpreterSetting create() {
       // post processing
       interpreterSetting.postProcessing();
@@ -241,13 +239,6 @@ public class InterpreterSetting {
   void postProcessing() {
     this.status = Status.READY;
     this.id = this.name;
-    if (this.recoveryStorage == null) {
-      try {
-        this.recoveryStorage = new NullRecoveryStorage(conf, interpreterSettingManager);
-      } catch (IOException e) {
-        // ignore this exception as NullRecoveryStorage will do nothing.
-      }
-    }
   }
 
   /**
@@ -272,7 +263,7 @@ public class InterpreterSetting {
 
   private void createLauncher() throws IOException {
     this.launcher = PluginManager.get().loadInterpreterLauncher(
-        getLauncherPlugin(), recoveryStorage);
+        getLauncherPlugin());
   }
 
   public AngularObjectRegistryListener getAngularObjectRegistryListener() {
@@ -323,19 +314,10 @@ public class InterpreterSetting {
     return this;
   }
 
-  public InterpreterSetting setRecoveryStorage(RecoveryStorage recoveryStorage) {
-    this.recoveryStorage = recoveryStorage;
-    return this;
-  }
-
   public InterpreterSetting setInterpreterEventServer(
       RemoteInterpreterEventServer interpreterEventServer) {
     this.interpreterEventServer = interpreterEventServer;
     return this;
-  }
-
-  public RecoveryStorage getRecoveryStorage() {
-    return recoveryStorage;
   }
 
   public String getId() {
@@ -689,7 +671,6 @@ public class InterpreterSetting {
         InterpreterLaunchContext(properties, option, interpreterRunner, userName,
         interpreterGroupId, id, group, name, interpreterEventServer.getPort(), interpreterEventServer.getHost());
     RemoteInterpreterProcess process = (RemoteInterpreterProcess) launcher.launch(launchContext);
-    recoveryStorage.onInterpreterClientStart(process);
     return process;
   }
 

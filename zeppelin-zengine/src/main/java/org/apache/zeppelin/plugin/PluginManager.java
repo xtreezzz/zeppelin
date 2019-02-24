@@ -18,12 +18,6 @@
 package org.apache.zeppelin.plugin;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
-import org.apache.zeppelin.interpreter.recovery.RecoveryStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +27,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for loading Plugins
@@ -56,8 +54,7 @@ public class PluginManager {
 
 
 
-  public synchronized InterpreterLauncher loadInterpreterLauncher(String launcherPlugin,
-                                                                  RecoveryStorage recoveryStorage)
+  public synchronized InterpreterLauncher loadInterpreterLauncher(String launcherPlugin)
       throws IOException {
 
     if (cachedLaunchers.containsKey(launcherPlugin)) {
@@ -74,8 +71,8 @@ public class PluginManager {
     InterpreterLauncher launcher = null;
     try {
       launcher = (InterpreterLauncher) (Class.forName(pluginClass, true, pluginClassLoader))
-          .getConstructor(ZeppelinConfiguration.class, RecoveryStorage.class)
-          .newInstance(zConf, recoveryStorage);
+          .getConstructor(ZeppelinConfiguration.class)
+          .newInstance(zConf);
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
         | NoSuchMethodException | InvocationTargetException e) {
       LOGGER.warn("Fail to instantiate Launcher from plugin classpath:" + launcherPlugin, e);
