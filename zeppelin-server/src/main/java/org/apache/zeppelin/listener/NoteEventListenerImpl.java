@@ -19,7 +19,7 @@ package org.apache.zeppelin.listener;
 
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventListener;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.JobManagerService;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -48,7 +48,7 @@ public class NoteEventListenerImpl implements NoteEventListener {
   }
 
   @Override
-  public void onParagraphRemove(final Paragraph p) {
+  public void onParagraphRemove(final ParagraphJob p) {
     final List<JobManagerService.NoteJobInfo> notesJobInfo
             = jobManagerService.getNoteJobInfoByUnixTime(System.currentTimeMillis() - 5000);
     broadcastSuccessResponse(notesJobInfo);
@@ -66,13 +66,13 @@ public class NoteEventListenerImpl implements NoteEventListener {
   }
 
   @Override
-  public void onParagraphCreate(final Paragraph p) {
+  public void onParagraphCreate(final ParagraphJob p) {
     final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(p.getNote().getId());
     broadcastSuccessResponse(notesJobInfo);
   }
 
   @Override
-  public void onParagraphUpdate(final Paragraph p) {
+  public void onParagraphUpdate(final ParagraphJob p) {
 
   }
 
@@ -88,7 +88,7 @@ public class NoteEventListenerImpl implements NoteEventListener {
   }
 
   @Override
-  public void onParagraphStatusChange(final Paragraph p, final Job.Status status) {
+  public void onParagraphStatusChange(final ParagraphJob p, final Job.Status status) {
     final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(p.getNote().getId());
     broadcastSuccessResponse(notesJobInfo);
   }

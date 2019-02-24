@@ -19,7 +19,7 @@ package org.apache.zeppelin.listener;
 
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -53,7 +53,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
    * This callback is for paragraph that runs on RemoteInterpreterProcess.
    */
   @Override
-  public void onOutputAppend(final Paragraph paragraph, final int idx, final String output) {
+  public void onOutputAppend(final ParagraphJob paragraph, final int idx, final String output) {
     final SockMessage msg = new SockMessage(Operation.PARAGRAPH_APPEND_OUTPUT)
             .put("noteId", paragraph.getNote().getId())
             .put("paragraphId", paragraph.getId())
@@ -65,7 +65,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
    * This callback is for paragraph that runs on RemoteInterpreterProcess.
    */
   @Override
-  public void onOutputUpdate(final Paragraph paragraph, final int idx, final InterpreterResultMessage result) {
+  public void onOutputUpdate(final ParagraphJob paragraph, final int idx, final InterpreterResultMessage result) {
     final SockMessage msg = new SockMessage(Operation.PARAGRAPH_UPDATE_OUTPUT)
             .put("noteId", paragraph.getNote().getId())
             .put("paragraphId", paragraph.getId())
@@ -74,7 +74,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
   }
 
   @Override
-  public void onOutputUpdateAll(final Paragraph paragraph, final List<InterpreterResultMessage> msgs) {
+  public void onOutputUpdateAll(final ParagraphJob paragraph, final List<InterpreterResultMessage> msgs) {
     // TODO
   }
 
@@ -86,7 +86,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
   }
 
   @Override
-  public void onProgressUpdate(final Paragraph p, final int progress) {
+  public void onProgressUpdate(final ParagraphJob p, final int progress) {
     final SockMessage message = new SockMessage(Operation.PROGRESS)
             .put("id", p.getId())
             .put("progress", progress);
@@ -94,7 +94,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
   }
 
   @Override
-  public void onStatusChange(final Paragraph p, final Job.Status before, final Job.Status after) {
+  public void onStatusChange(final ParagraphJob p, final Job.Status before, final Job.Status after) {
     if (after == Job.Status.ERROR) {
       if (p.getException() != null) {
         LOG.error("Error", p.getException());

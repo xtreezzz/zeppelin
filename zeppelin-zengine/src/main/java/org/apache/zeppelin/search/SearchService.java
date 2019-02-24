@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventAsyncListener;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 
 /**
  * Search (both, indexing and query) the notes.
@@ -82,7 +82,7 @@ public abstract class SearchService extends NoteEventAsyncListener {
    * @param p
    * @throws IOException
    */
-  public abstract void deleteIndexDoc(String noteId, Paragraph p);
+  public abstract void deleteIndexDoc(String noteId, ParagraphJob p);
 
   /**
    * Frees the recourses used by index
@@ -121,7 +121,7 @@ public abstract class SearchService extends NoteEventAsyncListener {
 
   @Override
   public void handleParagraphRemoveEvent(ParagraphRemoveEvent paragraphRemoveEvent) {
-    Paragraph p = paragraphRemoveEvent.getParagraph();
+    ParagraphJob p = paragraphRemoveEvent.getParagraph();
     deleteIndexDoc(p.getNote().getId(), p);
   }
 

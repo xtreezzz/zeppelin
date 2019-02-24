@@ -19,7 +19,6 @@ package org.apache.zeppelin.helium;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import javax.inject.Inject;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterException;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
@@ -33,10 +32,9 @@ import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventListener;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.scheduler.ExecutorFactory;
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +66,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   /**
    * Load pkg and run task
    */
-  public String loadAndRun(HeliumPackage pkg, Paragraph paragraph) {
+  public String loadAndRun(HeliumPackage pkg, ParagraphJob paragraph) {
     ApplicationState appState = paragraph.createOrGetApplicationState(pkg);
     onLoad(paragraph.getNote().getId(), paragraph.getId(), appState.getId(),
         appState.getHeliumPackage());
@@ -81,10 +79,10 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    */
   private class LoadApplication implements Runnable {
     private final HeliumPackage pkg;
-    private final Paragraph paragraph;
+    private final ParagraphJob paragraph;
     private final ApplicationState appState;
 
-    public LoadApplication(ApplicationState appState, HeliumPackage pkg, Paragraph paragraph) {
+    public LoadApplication(ApplicationState appState, HeliumPackage pkg, ParagraphJob paragraph) {
       this.appState = appState;
       this.pkg = pkg;
       this.paragraph = paragraph;
@@ -158,7 +156,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param appId
    * @return
    */
-  public ApplicationState get(Paragraph paragraph, String appId) {
+  public ApplicationState get(ParagraphJob paragraph, String appId) {
     return paragraph.getApplicationState(appId);
   }
 
@@ -169,7 +167,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param paragraph
    * @param appId
    */
-  public void unload(Paragraph paragraph, String appId) {
+  public void unload(ParagraphJob paragraph, String appId) {
     executor.execute(new UnloadApplication(paragraph, appId));
   }
 
@@ -177,10 +175,10 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * Unload application task
    */
   private class UnloadApplication implements Runnable {
-    private final Paragraph paragraph;
+    private final ParagraphJob paragraph;
     private final String appId;
 
-    public UnloadApplication(Paragraph paragraph, String appId) {
+    public UnloadApplication(ParagraphJob paragraph, String appId) {
       this.paragraph = paragraph;
       this.appId = appId;
     }
@@ -254,7 +252,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param paragraph
    * @param appId
    */
-  public void run(Paragraph paragraph, String appId) {
+  public void run(ParagraphJob paragraph, String appId) {
     executor.execute(new RunApplication(paragraph, appId));
   }
 
@@ -262,10 +260,10 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * Run application task
    */
   private class RunApplication implements Runnable {
-    private final Paragraph paragraph;
+    private final ParagraphJob paragraph;
     private final String appId;
 
-    public RunApplication(Paragraph paragraph, String appId) {
+    public RunApplication(ParagraphJob paragraph, String appId) {
       this.paragraph = paragraph;
       this.appId = appId;
     }
@@ -380,7 +378,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
     }
   }
 
-  private void appStatusChange(Paragraph paragraph,
+  private void appStatusChange(ParagraphJob paragraph,
                                String appId,
                                ApplicationState.Status status) {
     ApplicationState app = paragraph.getApplicationState(appId);
@@ -399,7 +397,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
       logger.error("Can't get note {}", noteId);
       return null;
     }
-    Paragraph paragraph = note.getParagraph(paragraphId);
+    ParagraphJob paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
       logger.error("Can't get paragraph {}", paragraphId);
       return null;
@@ -426,7 +424,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   }
 
   @Override
-  public void onParagraphRemove(Paragraph paragraph) {
+  public void onParagraphRemove(ParagraphJob paragraph) {
     List<ApplicationState> appStates = paragraph.getAllApplicationStates();
     for (ApplicationState app : appStates) {
       UnloadApplication unloadJob = new UnloadApplication(paragraph, app.getId());
@@ -435,17 +433,17 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   }
 
   @Override
-  public void onParagraphCreate(Paragraph p) {
+  public void onParagraphCreate(ParagraphJob p) {
 
   }
 
   @Override
-  public void onParagraphUpdate(Paragraph p) throws IOException {
+  public void onParagraphUpdate(ParagraphJob p) throws IOException {
 
   }
 
   @Override
-  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
+  public void onParagraphStatusChange(ParagraphJob p, Job.Status status) {
     if (status == Job.Status.FINISHED) {
       // refresh application
       List<ApplicationState> appStates = p.getAllApplicationStates();

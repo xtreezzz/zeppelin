@@ -20,16 +20,14 @@ package org.apache.zeppelin.service;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.scheduler.Job;
-import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Service class for JobManager Page
@@ -74,7 +72,7 @@ public class JobManagerService {
     return notesJobInfo;
   }
 
-  private static long getUnixTimeLastRunParagraph(final Paragraph paragraph) {
+  private static long getUnixTimeLastRunParagraph(final ParagraphJob paragraph) {
     if (paragraph.isTerminated() && paragraph.getDateFinished() != null) {
       return paragraph.getDateFinished().getTime();
     } else if (paragraph.isRunning()) {
@@ -90,7 +88,7 @@ public class JobManagerService {
     private final String name;
     private final Job.Status status;
 
-    public ParagraphJobInfo(final Paragraph p) {
+    public ParagraphJobInfo(final ParagraphJob p) {
       this.id = p.getId();
       if (StringUtils.isBlank(p.getTitle())) {
         this.name = p.getId();
@@ -126,7 +124,7 @@ public class JobManagerService {
 
       // set paragraphs
       this.paragraphs = new ArrayList<>();
-      for (final Paragraph paragraph : note.getParagraphs()) {
+      for (final ParagraphJob paragraph : note.getParagraphs()) {
         // check paragraph's status.
         if (paragraph.getStatus().isRunning()) {
           isNoteRunning = true;

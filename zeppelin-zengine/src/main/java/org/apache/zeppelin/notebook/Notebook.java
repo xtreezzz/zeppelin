@@ -203,8 +203,8 @@ public class Notebook {
       notePath = oldNote.getName();
     }
     Note newNote = createNote(notePath, subject);
-    List<Paragraph> paragraphs = oldNote.getParagraphs();
-    for (Paragraph p : paragraphs) {
+    List<ParagraphJob> paragraphs = oldNote.getParagraphs();
+    for (ParagraphJob p : paragraphs) {
       newNote.addCloneParagraph(p, subject);
     }
     return newNote;
@@ -225,8 +225,8 @@ public class Notebook {
       throw new IOException("Source note: " + sourceNoteId + " not found");
     }
     Note newNote = createNote(newNotePath, subject);
-    List<Paragraph> paragraphs = sourceNote.getParagraphs();
-    for (Paragraph p : paragraphs) {
+    List<ParagraphJob> paragraphs = sourceNote.getParagraphs();
+    for (ParagraphJob p : paragraphs) {
       newNote.addCloneParagraph(p, subject);
     }
     return newNote;
@@ -251,7 +251,7 @@ public class Notebook {
       note.setParagraphJobListener(paragraphJobListener);
       note.setNoteEventListeners(noteEventListeners);
       note.setCredentials(credentials);
-      for (Paragraph p : note.getParagraphs()) {
+      for (ParagraphJob p : note.getParagraphs()) {
         p.setNote(note);
       }
       return note;
@@ -375,7 +375,7 @@ public class Notebook {
 
     // restore angular object --------------
     Date lastUpdatedDate = new Date(0);
-    for (Paragraph p : note.getParagraphs()) {
+    for (ParagraphJob p : note.getParagraphs()) {
       p.setNote(note);
       if (p.getDateFinished() != null && lastUpdatedDate.before(p.getDateFinished())) {
         lastUpdatedDate = p.getDateFinished();
@@ -516,7 +516,7 @@ public class Notebook {
     Note note = getNote(noteId);
     if (note != null) {
       Set<InterpreterSetting> settings = new HashSet<>();
-      for (Paragraph p : note.getParagraphs()) {
+      for (ParagraphJob p : note.getParagraphs()) {
         try {
           Interpreter intp = p.getBindedInterpreter();
           settings.add((

@@ -70,22 +70,22 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
   }
 
   @Override
-  public void onParagraphCreate(Paragraph p) {
+  public void onParagraphCreate(ParagraphJob p) {
     eventsQueue.add(new ParagraphCreateEvent(p));
   }
 
   @Override
-  public void onParagraphRemove(Paragraph p) {
+  public void onParagraphRemove(ParagraphJob p) {
     eventsQueue.add(new ParagraphRemoveEvent(p));
   }
 
   @Override
-  public void onParagraphUpdate(Paragraph p) {
+  public void onParagraphUpdate(ParagraphJob p) {
     eventsQueue.add(new ParagraphUpdateEvent(p));
   }
 
   @Override
-  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
+  public void onParagraphStatusChange(ParagraphJob p, Job.Status status) {
     eventsQueue.add(new ParagraphStatusChangeEvent(p));
   }
 
@@ -172,49 +172,49 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
   }
 
   public static class ParagraphCreateEvent implements NoteEvent {
-    private Paragraph p;
+    private ParagraphJob p;
 
-    public ParagraphCreateEvent(Paragraph p) {
+    public ParagraphCreateEvent(ParagraphJob p) {
       this.p = p;
     }
 
-    public Paragraph getParagraph() {
+    public ParagraphJob getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphUpdateEvent implements NoteEvent {
-    private Paragraph p;
+    private ParagraphJob p;
 
-    public ParagraphUpdateEvent(Paragraph p) {
+    public ParagraphUpdateEvent(ParagraphJob p) {
       this.p = p;
     }
 
-    public Paragraph getParagraph() {
+    public ParagraphJob getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphRemoveEvent implements NoteEvent {
-    private Paragraph p;
+    private ParagraphJob p;
 
-    public ParagraphRemoveEvent(Paragraph p) {
+    public ParagraphRemoveEvent(ParagraphJob p) {
       this.p = p;
     }
 
-    public Paragraph getParagraph() {
+    public ParagraphJob getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphStatusChangeEvent implements NoteEvent {
-    private Paragraph p;
+    private ParagraphJob p;
 
-    public ParagraphStatusChangeEvent(Paragraph p) {
+    public ParagraphStatusChangeEvent(ParagraphJob p) {
       this.p = p;
     }
 
-    public Paragraph getParagraph() {
+    public ParagraphJob getParagraph() {
       return p;
     }
   }
