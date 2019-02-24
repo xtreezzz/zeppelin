@@ -18,7 +18,7 @@ package org.apache.zeppelin.interpreter.install;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.dep.DependencyResolver;
+import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.util.Util;
 import org.sonatype.aether.RepositoryException;
 
@@ -93,7 +93,7 @@ public class InstallInterpreter {
 
       Matcher match = pattern.matcher(line);
       if (match.groupCount() != 3) {
-        System.err.println("Error on line " + lineNo + ", " + line);
+        System.err.println("ErroSparkDependencyContextr on line " + lineNo + ", " + line);
         continue;
       }
 

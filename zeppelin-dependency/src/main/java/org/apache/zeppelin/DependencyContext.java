@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dep;
+package org.apache.zeppelin;
 
 import java.io.File;
 import java.net.MalformedURLException;

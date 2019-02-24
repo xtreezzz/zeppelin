@@ -22,9 +22,9 @@ import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.zeppelin.dep.Booter;
-import org.apache.zeppelin.dep.Dependency;
-import org.apache.zeppelin.dep.Repository;
+import org.apache.zeppelin.Booter;
+import org.apache.zeppelin.Dependency;
+import org.apache.zeppelin.Repository;
 
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
@@ -59,7 +59,7 @@ public class SparkDependencyContext {
   private List<RemoteRepository> additionalRepos = new LinkedList<>();
 
   public SparkDependencyContext(String localRepoPath, String additionalRemoteRepository) {
-    session =  Booter.newRepositorySystemSession(system, localRepoPath);
+    session = Booter.newRepositorySystemSession(system, localRepoPath);
     addRepoFromProperty(additionalRemoteRepository);
   }
 

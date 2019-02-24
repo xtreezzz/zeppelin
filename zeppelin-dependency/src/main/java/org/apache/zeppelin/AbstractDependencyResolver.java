@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dep;
+package org.apache.zeppelin;
 
 import java.net.URL;
 import java.util.Collection;

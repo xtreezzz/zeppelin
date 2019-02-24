@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.SparkContext;
-import org.apache.zeppelin.dep.AbstractDependencyResolver;
+import org.apache.zeppelin.AbstractDependencyResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.artifact.Artifact;

@@ -18,7 +18,7 @@
 package org.apache.zeppelin.helium;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.zeppelin.dep.DependencyResolver;
+import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.interpreter.InterpreterOutput;
 import org.apache.zeppelin.resource.LocalResourcePool;
 import org.junit.After;

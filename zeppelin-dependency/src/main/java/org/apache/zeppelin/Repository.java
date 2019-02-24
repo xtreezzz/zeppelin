@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dep;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
+package org.apache.zeppelin;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import com.google.gson.Gson;
-import org.apache.zeppelin.common.JsonSerializable;
 import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.Proxy;
 
-/**
- *
- *
- */
-public class Repository implements JsonSerializable {
+public class Repository {
   private static final Gson gson = new Gson();
 
   private boolean snapshot = false;

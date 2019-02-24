@@ -16,7 +16,7 @@
  */
 package org.apache.zeppelin.helium;
 
-import org.apache.zeppelin.dep.DependencyResolver;
+import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.resource.DistributedResourcePool;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;

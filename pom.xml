@@ -77,6 +77,8 @@
     <module>zeppelin-repositories/inmemory-repository</module>
     <module>zeppelin-repositories/s3</module>
     <module>zeppelin-repositories/vfs</module>
+
+    <module>zeppelin-dependency</module>
   </modules>
 
   <properties>

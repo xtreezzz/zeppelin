@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dep;
+package org.apache.zeppelin;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

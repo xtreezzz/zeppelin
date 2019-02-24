@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.dep;
+package org.apache.zeppelin;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ public class Booter {
       home = System.getProperty("zeppelin.home");
     }
     if (home == null) {
-      home = "..";
+      home = "src/main";
     }
 
     return Paths.get(home).resolve(localRepoPath).toAbsolutePath().toString();

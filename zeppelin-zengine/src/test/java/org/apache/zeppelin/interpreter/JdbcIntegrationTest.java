@@ -19,7 +19,7 @@ package org.apache.zeppelin.interpreter;
 //
 //import com.google.common.collect.Lists;
 //import java.util.Arrays;
-//import org.apache.zeppelin.dep.Dependency;
+//import org.apache.zeppelin.Dependency;
 //import org.apache.zeppelin.user.AuthenticationInfo;
 //import org.junit.AfterClass;
 //import org.junit.BeforeClass;
