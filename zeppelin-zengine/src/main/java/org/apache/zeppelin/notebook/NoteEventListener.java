@@ -28,8 +28,8 @@ public interface NoteEventListener {
   void onNoteCreate(Note note) throws IOException;
   void onNoteUpdate(Note note) throws IOException;
 
-  void onParagraphRemove(Paragraph p) throws IOException;
-  void onParagraphCreate(Paragraph p) throws IOException;
-  void onParagraphUpdate(Paragraph p) throws IOException;
-  void onParagraphStatusChange(Paragraph p, Job.Status status) throws IOException;
+  void onParagraphRemove(ParagraphJob p) throws IOException;
+  void onParagraphCreate(ParagraphJob p) throws IOException;
+  void onParagraphUpdate(ParagraphJob p) throws IOException;
+  void onParagraphStatusChange(ParagraphJob p, Job.Status status) throws IOException;
 }

@@ -25,7 +25,7 @@ import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -123,7 +123,7 @@ public class AngularObjectsHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.ANY, serviceContext, conn);
-    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
+    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
 
     final String varName = fromMessage.safeGetType("name", LOG);
     final Object varValue = fromMessage.safeGetType("value", LOG);
@@ -141,7 +141,7 @@ public class AngularObjectsHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.ANY, serviceContext, conn);
-    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
+    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
 
     final String varName = fromMessage.safeGetType("name", LOG);
 
@@ -151,7 +151,7 @@ public class AngularObjectsHandler extends AbstractHandler {
   }
 
   private InterpreterGroup findInterpreterGroupForParagraph(final Note note, final String paragraphId) throws Exception {
-    final Paragraph paragraph = note.getParagraph(paragraphId);
+    final ParagraphJob paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
       throw new IllegalArgumentException("Unknown paragraph with id : " + paragraphId);
     }

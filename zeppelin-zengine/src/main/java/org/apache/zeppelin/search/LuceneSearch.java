@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -61,7 +60,7 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -211,7 +210,7 @@ public class LuceneSearch extends SearchService {
   @Override
   public void updateIndexDoc(Note note) throws IOException {
     updateIndexNoteName(note);
-    for (Paragraph p : note.getParagraphs()) {
+    for (ParagraphJob p : note.getParagraphs()) {
       updateIndexParagraph(note, p);
     }
   }
@@ -227,7 +226,7 @@ public class LuceneSearch extends SearchService {
     updateDoc(noteId, noteName, null);
   }
 
-  private void updateIndexParagraph(Note note, Paragraph p) throws IOException {
+  private void updateIndexParagraph(Note note, ParagraphJob p) throws IOException {
     if (p.getText() == null) {
       logger.debug("Skipping empty paragraph");
       return;
@@ -244,7 +243,7 @@ public class LuceneSearch extends SearchService {
    * @param p
    * @throws IOException
    */
-  private void updateDoc(String noteId, String noteName, Paragraph p) throws IOException {
+  private void updateDoc(String noteId, String noteName, ParagraphJob p) throws IOException {
     String id = formatId(noteId, p);
     Document doc = newDocument(id, noteName, p);
     try {
@@ -259,7 +258,7 @@ public class LuceneSearch extends SearchService {
    * If paragraph is not null, id is <noteId>/paragraphs/<paragraphId>, otherwise it's just
    * <noteId>.
    */
-  static String formatId(String noteId, Paragraph p) {
+  static String formatId(String noteId, ParagraphJob p) {
     String id = noteId;
     if (null != p) {
       id = Joiner.on('/').join(id, PARAGRAPH, p.getId());
@@ -267,7 +266,7 @@ public class LuceneSearch extends SearchService {
     return id;
   }
 
-  static String formatDeleteId(String noteId, Paragraph p) {
+  static String formatDeleteId(String noteId, ParagraphJob p) {
     String id = noteId;
     if (null != p) {
       id = Joiner.on('/').join(id, PARAGRAPH, p.getId());
@@ -285,7 +284,7 @@ public class LuceneSearch extends SearchService {
    * @param p paragraph
    * @return
    */
-  private Document newDocument(String id, String noteName, Paragraph p) {
+  private Document newDocument(String id, String noteName, ParagraphJob p) {
     Document doc = new Document();
 
     Field pathField = new StringField(ID_FIELD, id, Field.Store.YES);
@@ -354,7 +353,7 @@ public class LuceneSearch extends SearchService {
    */
   private void addIndexDocAsync(Note note) throws IOException {
     indexNoteName(indexWriter, note.getId(), note.getName());
-    for (Paragraph doc : note.getParagraphs()) {
+    for (ParagraphJob doc : note.getParagraphs()) {
       if (doc.getText() == null) {
         logger.debug("Skipping empty paragraph");
         continue;
@@ -373,14 +372,14 @@ public class LuceneSearch extends SearchService {
 
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search
-   *  #deleteIndexDoc(org.apache.zeppelin.notebook.Note, org.apache.zeppelin.notebook.Paragraph)
+   *  #deleteIndexDoc(org.apache.zeppelin.notebook.Note, org.apache.zeppelin.notebook.ParagraphJob)
    */
   @Override
-  public void deleteIndexDoc(String noteId, Paragraph p) {
+  public void deleteIndexDoc(String noteId, ParagraphJob p) {
     deleteDoc(noteId, p);
   }
 
-  private void deleteDoc(String noteId, Paragraph p) {
+  private void deleteDoc(String noteId, ParagraphJob p) {
     String fullNoteOrJustParagraph = formatDeleteId(noteId, p);
     logger.debug("Deleting note {}, out of: {}", noteId, indexWriter.numDocs());
     try {
@@ -422,7 +421,7 @@ public class LuceneSearch extends SearchService {
   }
 
   /** Indexes a single document: - code of the paragraph (if non-null) - or just a note name */
-  private void indexDoc(IndexWriter w, String noteId, String noteName, Paragraph p)
+  private void indexDoc(IndexWriter w, String noteId, String noteName, ParagraphJob p)
       throws IOException {
     String id = formatId(noteId, p);
     Document doc = newDocument(id, noteName, p);

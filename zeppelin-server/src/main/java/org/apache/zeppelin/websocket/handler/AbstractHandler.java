@@ -91,11 +91,11 @@ public abstract class AbstractHandler {
     return note;
   }
 
-  protected Paragraph safeLoadParagraph(final String paramName,
+  protected ParagraphJob safeLoadParagraph(final String paramName,
                                         final SockMessage fromSockMessage,
                                         final Note note) {
     final String paragraphId = fromSockMessage.safeGetType(paramName, LOG);
-    final Paragraph p = note.getParagraph(paragraphId);
+    final ParagraphJob p = note.getParagraph(paragraphId);
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);
     }

@@ -194,7 +194,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
   }
 
-  private void checkIfParagraphIsNotNull(final Paragraph paragraph) {
+  private void checkIfParagraphIsNotNull(final ParagraphJob paragraph) {
     if (paragraph == null) {
       throw new ParagraphNotFoundException("paragraph not found");
     }
@@ -336,7 +336,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     if (request.getParagraphs() != null) {
       for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
-        final Paragraph p = note.addNewParagraph(subject);
+        final ParagraphJob p = note.addNewParagraph(subject);
         initParagraph(p, paragraphRequest, user);
       }
     }
@@ -443,7 +443,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final NewParagraphRequest request = NewParagraphRequest.fromJson(message);
     final AuthenticationInfo subject = new AuthenticationInfo(user);
-    final Paragraph p;
+    final ParagraphJob p;
     final Double indexDouble = request.getIndex();
     if (indexDouble == null) {
       p = note.addNewParagraph(subject);
@@ -472,7 +472,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get this paragraph");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final ParagraphJob p = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     return new JsonResponse(HttpStatus.OK, "", p).build();
@@ -496,7 +496,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final ParagraphJob p = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     final UpdateParagraphRequest updatedParagraph = gson.fromJson(message, UpdateParagraphRequest.class);
@@ -523,7 +523,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph config");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final ParagraphJob p = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     final Map<String, Object> newConfig = gson.fromJson(message, HashMap.class);
@@ -650,7 +650,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfNoteIsNotNull(note);
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot stop this job for this note");
 
-    for (final Paragraph p : note.getParagraphs()) {
+    for (final ParagraphJob p : note.getParagraphs()) {
       if (!p.isTerminated()) {
         p.abort();
       }
@@ -682,7 +682,7 @@ public class NotebookRestApi extends AbstractRestApi {
    * Get note paragraph job status REST API.
    *
    * @param noteId      ID of Note
-   * @param paragraphId ID of Paragraph
+   * @param paragraphId ID of ParagraphJob
    * @return JSON with status.OK
    * @throws IOException
    * @throws IllegalArgumentException
@@ -697,7 +697,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
-    final Paragraph paragraph = note.getParagraph(paragraphId);
+    final ParagraphJob paragraph = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
     return new JsonResponse(HttpStatus.OK, null, note.generateSingleParagraphInfo(paragraphId)).
@@ -726,7 +726,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
-    Paragraph paragraph = note.getParagraph(paragraphId);
+    ParagraphJob paragraph = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
     Map<String, Object> params = new HashMap<>();
@@ -767,7 +767,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     Note note = notebook.getNote(noteId);
     checkIfNoteIsNotNull(note);
-    Paragraph paragraph = note.getParagraph(paragraphId);
+    ParagraphJob paragraph = note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
     Map<String, Object> params = new HashMap<>();
@@ -781,7 +781,7 @@ public class NotebookRestApi extends AbstractRestApi {
             paragraph.getText(), params,
             new HashMap<>(), false, true, getServiceContext(), new RestServiceCallback<>())) {
       note = notebookService.getNote(noteId, getServiceContext(), new RestServiceCallback<>());
-      Paragraph p = note.getParagraph(paragraphId);
+      ParagraphJob p = note.getParagraph(paragraphId);
       InterpreterResult result = p.getReturn();
       if (result.code() == InterpreterResult.Code.SUCCESS) {
         return new JsonResponse(HttpStatus.OK, result).build();
@@ -798,7 +798,7 @@ public class NotebookRestApi extends AbstractRestApi {
    * Stop(delete) paragraph job REST API.
    *
    * @param noteId      ID of Note
-   * @param paragraphId ID of Paragraph
+   * @param paragraphId ID of ParagraphJob
    * @return JSON with status.OK
    * @throws IOException
    * @throws IllegalArgumentException
@@ -814,7 +814,7 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException, IllegalArgumentException {
     LOG.info("stop paragraph job {} ", noteId);
     notebookService.cancelParagraph(noteId, paragraphId, getServiceContext(),
-            new RestServiceCallback<Paragraph>());
+            new RestServiceCallback<ParagraphJob>());
     return new JsonResponse(HttpStatus.OK).build();
   }
   */
@@ -989,8 +989,8 @@ public class NotebookRestApi extends AbstractRestApi {
     return new JsonResponse(HttpStatus.OK, notesFound).build();
   }
 
-  private void initParagraph(final Paragraph p, final NewParagraphRequest request, final String user) {
-    LOG.info("Init Paragraph for user {}", user);
+  private void initParagraph(final ParagraphJob p, final NewParagraphRequest request, final String user) {
+    LOG.info("Init ParagraphJob for user {}", user);
     checkIfParagraphIsNotNull(p);
     p.setTitle(request.getTitle());
     p.setText(request.getText());
@@ -1000,8 +1000,8 @@ public class NotebookRestApi extends AbstractRestApi {
     }
   }
 
-  private void configureParagraph(final Paragraph p, final Map<String, Object> newConfig, final String user) {
-    LOG.info("Configure Paragraph for user {}", user);
+  private void configureParagraph(final ParagraphJob p, final Map<String, Object> newConfig, final String user) {
+    LOG.info("Configure ParagraphJob for user {}", user);
     if (newConfig == null || newConfig.isEmpty()) {
       LOG.warn("{} is trying to update paragraph {} of note {} with empty config",
               user, p.getId(), p.getNote().getId());

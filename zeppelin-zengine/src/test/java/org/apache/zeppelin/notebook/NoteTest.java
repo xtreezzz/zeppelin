@@ -76,22 +76,22 @@ package org.apache.zeppelin.notebook;
 //    String pText = "%spark sc.version";
 //    Note note = new Note("test", "test", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
 //
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(pText);
 //    p.setAuthenticationInfo(anonymous);
 //    note.run(p.getId());
 //
-//    ArgumentCaptor<Paragraph> pCaptor = ArgumentCaptor.forClass(Paragraph.class);
+//    ArgumentCaptor<ParagraphJob> pCaptor = ArgumentCaptor.forClass(ParagraphJob.class);
 //    verify(scheduler, only()).submit(pCaptor.capture());
 //    verify(interpreterFactory, times(1)).getInterpreter(anyString(), anyString(), eq("spark"), anyString());
 //
-//    assertEquals("Paragraph text", pText, pCaptor.getValue().getText());
+//    assertEquals("ParagraphJob text", pText, pCaptor.getValue().getText());
 //  }
 //
 //  @Test
 //  public void addParagraphWithEmptyReplNameTest() {
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    assertNull(p.getText());
 //  }
 //
@@ -99,9 +99,9 @@ package org.apache.zeppelin.notebook;
 //  public void addParagraphWithLastReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("spark"), anyString())).thenReturn(interpreter);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%spark ");
-//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    assertEquals("%spark\n", p2.getText());
 //  }
@@ -110,9 +110,9 @@ package org.apache.zeppelin.notebook;
 //  public void insertParagraphWithLastReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("spark"), anyString())).thenReturn(interpreter);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%spark ");
-//    Paragraph p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
 //
 //    assertEquals("%spark\n", p2.getText());
 //  }
@@ -121,9 +121,9 @@ package org.apache.zeppelin.notebook;
 //  public void insertParagraphWithInvalidReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("invalid"), anyString())).thenReturn(null);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%invalid ");
-//    Paragraph p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
 //
 //    assertNull(p2.getText());
 //  }
@@ -131,7 +131,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void insertParagraphwithUser() {
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
 //    assertEquals("anonymous", p.getUser());
 //  }
 //
@@ -141,11 +141,11 @@ package org.apache.zeppelin.notebook;
 //    when(interpreter.getScheduler()).thenReturn(scheduler);
 //
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    InterpreterResult result = new InterpreterResult(InterpreterResult.Code.SUCCESS, InterpreterResult.Type.TEXT, "result");
 //    p1.setResult(result);
 //
-//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p2.setReturn(result, new Throwable());
 //
 //    note.clearAllParagraphOutput();
@@ -162,9 +162,9 @@ package org.apache.zeppelin.notebook;
 //    String user2 = "user2";
 //    note.setPersonalizedMode(true);
 //    note.addNewParagraph(new AuthenticationInfo(user1));
-//    Paragraph baseParagraph = note.getParagraphs().get(0);
-//    Paragraph user1Paragraph = baseParagraph.getUserParagraph(user1);
-//    Paragraph user2Paragraph = baseParagraph.getUserParagraph(user2);
+//    ParagraphJob baseParagraph = note.getParagraphs().get(0);
+//    ParagraphJob user1Paragraph = baseParagraph.getUserParagraph(user1);
+//    ParagraphJob user2Paragraph = baseParagraph.getUserParagraph(user2);
 //    assertNotEquals(System.identityHashCode(baseParagraph), System.identityHashCode(user1Paragraph));
 //    assertNotEquals(System.identityHashCode(baseParagraph), System.identityHashCode(user2Paragraph));
 //    assertNotEquals(System.identityHashCode(user1Paragraph), System.identityHashCode(user2Paragraph));
@@ -176,15 +176,15 @@ package org.apache.zeppelin.notebook;
 //    note.getConfig().put("config_1", "value_1");
 //    note.getInfo().put("info_1", "value_1");
 //    String pText = "%spark sc.version";
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(pText);
 //    p.setResult(new InterpreterResult(InterpreterResult.Code.SUCCESS, "1.6.2"));
 //    p.settings.getForms().put("textbox_1", new TextBox("name", "default_name"));
 //    p.settings.getParams().put("textbox_1", "my_name");
 //    note.getAngularObjects().put("ao_1", Lists.newArrayList(new AngularObject("name_1", "value_1", note.getId(), p.getId(), null)));
 //
-//    // test Paragraph Json
-//    Paragraph p2 = Paragraph.fromJson(p.toJson());
+//    // test ParagraphJob Json
+//    ParagraphJob p2 = ParagraphJob.fromJson(p.toJson());
 //    assertEquals(p2.settings, p.settings);
 //    assertEquals(p2, p);
 //

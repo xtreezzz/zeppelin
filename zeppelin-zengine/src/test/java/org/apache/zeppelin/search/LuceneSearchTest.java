@@ -32,7 +32,7 @@ package org.apache.zeppelin.search;
 //import org.apache.zeppelin.notebook.Note;
 //import org.apache.zeppelin.notebook.Notebook;
 //import org.apache.zeppelin.notebook.NotebookAuthorization;
-//import org.apache.zeppelin.notebook.Paragraph;
+//import org.apache.zeppelin.notebook.ParagraphJob;
 //import org.apache.zeppelin.notebook.repo.NotebookRepo;
 //import org.apache.zeppelin.user.AuthenticationInfo;
 //import org.apache.zeppelin.user.Credentials;
@@ -154,7 +154,7 @@ package org.apache.zeppelin.search;
 //    noteSearchService.drainEvents();
 //
 //    // when
-//    Paragraph p2 = note2.getLastParagraph();
+//    ParagraphJob p2 = note2.getLastParagraph();
 //    p2.setText("test indeed");
 //    noteSearchService.updateIndexDoc(note2);
 //
@@ -205,7 +205,7 @@ package org.apache.zeppelin.search;
 //    assertThat(resultForQuery("test").size()).isEqualTo(3);
 //
 //    // when
-//    Paragraph p1 = note1.getLastParagraph();
+//    ParagraphJob p1 = note1.getLastParagraph();
 //    p1.setText("no no no");
 //    notebook.saveNote(note1, AuthenticationInfo.ANONYMOUS);
 //    noteSearchService.drainEvents();
@@ -274,14 +274,14 @@ package org.apache.zeppelin.search;
 //    return note1;
 //  }
 //
-//  private Paragraph addParagraphWithText(Note note, String text) {
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//  private ParagraphJob addParagraphWithText(Note note, String text) {
+//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(text);
 //    return p;
 //  }
 //
-//  private Paragraph addParagraphWithTextAndTitle(Note note, String text, String title) {
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//  private ParagraphJob addParagraphWithTextAndTitle(Note note, String text, String title) {
+//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(text);
 //    p.setTitle(title);
 //    return p;

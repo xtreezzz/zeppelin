@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
@@ -40,7 +39,7 @@ import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.resource.DistributedResourcePool;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
@@ -378,7 +377,7 @@ public class Helium {
     return heliumConf.getPackagePersistedConfig(artifact);
   }
 
-  public HeliumPackageSuggestion suggestApp(Paragraph paragraph) {
+  public HeliumPackageSuggestion suggestApp(ParagraphJob paragraph) {
     HeliumPackageSuggestion suggestion = new HeliumPackageSuggestion();
 
     Interpreter intp = null;

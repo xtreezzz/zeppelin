@@ -21,7 +21,7 @@ import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.ParagraphJob;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -49,7 +49,7 @@ public class RunnerHandler extends AbstractHandler {
     note.abortExecution();
 
     // abort running paragraphs
-    for (final Paragraph paragraph : note.getParagraphs()) {
+    for (final ParagraphJob paragraph : note.getParagraphs()) {
       if (paragraph.isRunning()) {
         paragraph.abort();
         break;
@@ -108,12 +108,12 @@ public class RunnerHandler extends AbstractHandler {
     Map<String, Object> config = (Map<String, Object>) fromSockMessage.get("config");
     notebookService.runParagraph(noteId, paragraphId, title, text, params, config,
             false, false, getServiceContext(fromSockMessage),
-            new NotebookServer.WebSocketServiceCallback<Paragraph>(conn) {
+            new NotebookServer.WebSocketServiceCallback<ParagraphJob>(conn) {
               @Override
-              public void onSuccess(Paragraph p, ServiceContext context) throws IOException {
+              public void onSuccess(ParagraphJob p, ServiceContext context) throws IOException {
                 super.onSuccess(p, context);
                 if (p.getNote().isPersonalizedMode()) {
-                  Paragraph p2 = p.getNote().clearPersonalizedParagraphOutput(paragraphId,
+                  ParagraphJob p2 = p.getNote().clearPersonalizedParagraphOutput(paragraphId,
                           context.getAutheInfo().getUser());
                   unicastParagraph(p.getNote(), p2, context.getAutheInfo().getUser());
                 }
@@ -123,14 +123,14 @@ public class RunnerHandler extends AbstractHandler {
                 if (!(Strings.isNullOrEmpty(p.getText()) ||
                         Strings.isNullOrEmpty(p.getScriptText())) &&
                         isTheLastParagraph) {
-                  Paragraph newPara = p.getNote().addNewParagraph(p.getAuthenticationInfo());
+                  ParagraphJob newPara = p.getNote().addNewParagraph(p.getAuthenticationInfo());
                   //connectionManager.broadcastNewParagraph(p.getNote(), newPara);
                   connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));
                 }
               }
             });
   }
-  public void unicastParagraph(Note note, Paragraph p, String user) {
+  public void unicastParagraph(Note note, ParagraphJob p, String user) {
     if (!note.isPersonalizedMode() || p == null || user == null) {
       return;
     }
@@ -165,7 +165,7 @@ public class RunnerHandler extends AbstractHandler {
       throw new NoteNotFoundException(noteId, conn);
     }
 
-    Paragraph p = note.getParagraph(paragraphId);
+    ParagraphJob p = note.getParagraph(paragraphId);
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);
     }
@@ -209,7 +209,7 @@ public class RunnerHandler extends AbstractHandler {
       throw new NoteNotFoundException(noteId, conn);
     }
 
-    Paragraph p = note.getParagraph(paragraphId);
+    ParagraphJob p = note.getParagraph(paragraphId);
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);
     }
