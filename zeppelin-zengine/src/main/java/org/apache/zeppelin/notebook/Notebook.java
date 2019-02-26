@@ -613,9 +613,8 @@ public class Notebook {
       } catch (ClassCastException e) {
         LOGGER.error(e.getMessage(), e);
       }
-      
-      //Always release interpreter
-      if (true) { // if (releaseResource) : Old variant
+
+      if (releaseResource) {
         for (InterpreterSetting setting : notebook.getInterpreterSettingManager()
             .getInterpreterSettings(note.getId())) {
           try {
