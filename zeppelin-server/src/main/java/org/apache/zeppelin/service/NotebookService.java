@@ -940,6 +940,15 @@ public class NotebookService {
           TRASH_CONFLICT_TIMESTAMP_FORMATTER.print(new DateTime());
     }
 
+    // delete cron
+    for (Note note : notebook.getAllNotes()) {
+      if (note.getPath().startsWith("/" + folderPath)) {
+        note.getConfig().remove("cron");
+        notebook.refreshCron(note.getId());
+        notebook.saveNote(note, context.getAutheInfo());
+      }
+    }
+
     notebook.moveFolder("/" + folderPath, destFolderPath, context.getAutheInfo());
     callback.onSuccess(null, context);
   }
