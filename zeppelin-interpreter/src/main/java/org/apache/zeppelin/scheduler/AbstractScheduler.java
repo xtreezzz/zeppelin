@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.scheduler;
 
+import java.util.concurrent.TimeUnit;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,15 +78,17 @@ public abstract class AbstractScheduler implements Scheduler {
   @Override
   public void run() {
     while (!terminate) {
-      Job runningJob = null;
+      Job runningJob;
       try {
-        runningJob = queue.take();
+        runningJob = queue.poll(1, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         LOGGER.warn("{} is interrupted", getClass().getSimpleName(), e);
         break;
       }
 
-      runJobInScheduler(runningJob);
+      if (runningJob != null) {
+        runJobInScheduler(runningJob);
+      }
     }
   }
 

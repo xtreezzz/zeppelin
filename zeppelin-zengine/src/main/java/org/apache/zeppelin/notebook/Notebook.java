@@ -614,6 +614,9 @@ public class Notebook {
         LOGGER.error(e.getMessage(), e);
       }
 
+      //TODO(SAN): set true to shutdown always interpreter. Bad method.
+      releaseResource = true;
+
       if (releaseResource) {
         for (InterpreterSetting setting : notebook.getInterpreterSettingManager()
             .getInterpreterSettings(note.getId())) {
