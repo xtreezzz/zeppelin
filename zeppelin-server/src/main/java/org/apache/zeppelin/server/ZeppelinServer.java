@@ -240,6 +240,10 @@ public class ZeppelinServer extends ResourceConfig {
     }
     LOG.info("Done, zeppelin server started");
 
+    //TODO(SAN): Delete this log message.
+    LOG.info("ZEPPELIN_INTERPRETER_SCHEDULER_POOL_SIZE = " +
+        conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_SCHEDULER_POOL_SIZE));
+
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
