@@ -95,10 +95,10 @@ public abstract class AbstractScheduler implements Scheduler {
   public abstract void runJobInScheduler(Job job);
 
   @Override
-  public void stop() {
+  public synchronized void stop() {
     terminate = true;
     for (Job job : queue) {
-      job.aborted = true;
+      job.setAbortedStatus(true);
       job.jobAbort();
     }
   }
@@ -109,10 +109,10 @@ public abstract class AbstractScheduler implements Scheduler {
    *
    * @param runningJob
    */
-  protected void runJob(Job runningJob) {
+  protected synchronized void runJob(Job runningJob) {
     if (runningJob.isAborted()) {
       runningJob.setStatus(Job.Status.ABORT);
-      runningJob.aborted = false;
+      runningJob.setAbortedStatus(false);
       return;
     }
 
@@ -144,7 +144,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
     LOGGER.info("Job " + runningJob.getId() + " finished by scheduler " + name);
     // reset aborted flag to allow retry
-    runningJob.aborted = false;
+    runningJob.setAbortedStatus(false);
     jobs.remove(runningJob.getId());
   }
 }

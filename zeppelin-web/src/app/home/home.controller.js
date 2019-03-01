@@ -86,7 +86,10 @@ function HomeCtrl($scope, noteListFactory, websocketMsgSrv, $rootScope, arrayOrd
       vm.staticHome = true;
       vm.notebookHome = false;
     }
+    $scope.initFavoriteNotesService();
+  });
 
+  $scope.initFavoriteNotesService = function() {
     favoriteNotesService.init();
 
     favoriteNotesService.filterFavoriteNotes(vm.notes.flatList, (notes) => {
@@ -96,7 +99,7 @@ function HomeCtrl($scope, noteListFactory, websocketMsgSrv, $rootScope, arrayOrd
     favoriteNotesService.filterRecentNotes(vm.notes.flatList, (notes) => {
       vm.recentNotes = notes;
     });
-  });
+  };
 
   $scope.isFavoriteNote = function(noteId) {
     return favoriteNotesService.noteIsFavorite(noteId);
