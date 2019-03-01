@@ -497,16 +497,14 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   @Override
   protected boolean jobAbort() {
     if (interpreter == null) {
-      LOGGER.info("Get paragraph abort status | RETURN: TRUE");
       return true;
     }
     try {
       interpreter.cancel(getInterpreterContext(null));
     } catch (InterpreterException e) {
-      LOGGER.info("Get paragraph abort status | RETURN: ERROR " + e.getMessage());
       throw new RuntimeException(e);
     }
-    LOGGER.info("Get paragraph abort status | RETURN: TRUE");
+
     return true;
   }
 
