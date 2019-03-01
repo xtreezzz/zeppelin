@@ -841,7 +841,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
         .append("userParagraphMap", userParagraphMap)
         .append("localProperties", localProperties)
         .append("runtimeInfos", runtimeInfos)
-        .append("status", status)
+        .append("status", getStatus())
         .toString();
   }
 }
