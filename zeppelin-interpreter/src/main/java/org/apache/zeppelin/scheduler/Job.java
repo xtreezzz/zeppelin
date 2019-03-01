@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.scheduler;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +79,9 @@ public abstract class Job<T> {
   private Date dateCreated;
   private Date dateStarted;
   private Date dateFinished;
-  protected volatile Status status;
+  private volatile Status status;
 
-  transient boolean aborted = false;
+  private volatile AtomicBoolean aborted = new AtomicBoolean(false);
   private volatile String errorMessage;
   private transient volatile Throwable exception;
   private transient JobListener listener;
@@ -119,7 +120,7 @@ public abstract class Job<T> {
     return ((Job) o).id.equals(id);
   }
 
-  public Status getStatus() {
+  public synchronized Status getStatus() {
     return status;
   }
 
@@ -228,12 +229,16 @@ public abstract class Job<T> {
 
   protected abstract boolean jobAbort();
 
-  public void abort() {
-    aborted = jobAbort();
+  public synchronized void abort() {
+    aborted.set(jobAbort());
   }
 
-  public boolean isAborted() {
-    return aborted;
+  public synchronized boolean isAborted() {
+    return aborted.get();
+  }
+
+  public synchronized void setAbortedStatus(boolean status) {
+    aborted.set(status);
   }
 
   public Date getDateCreated() {
