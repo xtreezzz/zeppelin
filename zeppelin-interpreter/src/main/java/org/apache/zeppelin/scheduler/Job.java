@@ -19,6 +19,7 @@ package org.apache.zeppelin.scheduler;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -269,5 +270,21 @@ public abstract class Job<T> {
 
   public void setErrorMessage(String errorMessage) {
     this.errorMessage = errorMessage;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("jobName", jobName)
+        .append("id", id)
+        .append("dateCreated", dateCreated)
+        .append("dateStarted", dateStarted)
+        .append("dateFinished", dateFinished)
+        .append("status", status)
+        .append("aborted", aborted)
+        .append("errorMessage", errorMessage)
+        .append("exception", exception)
+        .append("listener", listener)
+        .toString();
   }
 }

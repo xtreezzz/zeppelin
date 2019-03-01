@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
@@ -637,6 +638,7 @@ public class NotebookServer extends WebSocketServlet
 
   private void updateNote(NotebookSocket conn,
                           Message fromMessage) throws IOException {
+
     String noteId = (String) fromMessage.get("id");
     String name = (String) fromMessage.get("name");
     Map<String, Object> config = (Map<String, Object>) fromMessage.get("config");
@@ -1941,5 +1943,18 @@ public class NotebookServer extends WebSocketServlet
         conn.send(serializeMessage(new Message(OP.ERROR_INFO).put("info", message)));
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("collaborativeModeEnable", collaborativeModeEnable)
+        .append("connectionManager", connectionManager)
+        .append("executorService", executorService)
+        .append("notebookProvider", notebookProvider)
+        .append("notebookServiceProvider", notebookServiceProvider)
+        .append("configurationServiceProvider", configurationServiceProvider)
+        .append("jobManagerServiceProvider", jobManagerServiceProvider)
+        .toString();
   }
 }

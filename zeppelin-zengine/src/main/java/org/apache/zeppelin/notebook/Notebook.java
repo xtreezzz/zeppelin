@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.display.AngularObject;
@@ -584,17 +585,23 @@ public class Notebook {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+      LOGGER.info("Notebook.CronJob#execute(JobExecutionContext context={}) "
+              + "STARTED\n\tstate = \n{}", context, this);
 
       String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
       if (note.haveRunningOrPendingParagraphs()) {
         LOGGER.warn("execution of the cron job is skipped because there is a running or pending " +
             "paragraph (note id: {})", noteId);
+        LOGGER.info("Notebook.CronJob#execute(JobExecutionContext context={}) "
+            + "FINISHED\n\tstate = \n{}", context, this);
         return;
       }
 
       if (!note.isCronSupported(notebook.getConf())) {
         LOGGER.warn("execution of the cron job is skipped cron is not enabled from Zeppelin server");
+        LOGGER.info("Notebook.CronJob#execute(JobExecutionContext context={}) "
+            + "FINISHED\n\tstate = \n{}", context, this);
         return;
       }
 
@@ -628,9 +635,13 @@ public class Notebook {
           }
         }
       }
+      LOGGER.info("Notebook.CronJob#execute(JobExecutionContext context={}) "
+          + "FINISHED\n\tstate = \n{}", context, this);
     }
 
     void runNote(Note note) {
+      LOGGER.info("Notebook.CronJob#runNote(Note note={}) STARTED\n\tstate = \n{}", note, this);
+
       String cronExecutingUser = (String) note.getConfig().get("cronExecutingUser");
       String cronExecutingRoles = (String) note.getConfig().get("cronExecutingRoles");
       if (null == cronExecutingUser) {
@@ -641,27 +652,34 @@ public class Notebook {
           StringUtils.isEmpty(cronExecutingRoles) ? null : cronExecutingRoles,
           null);
       note.runAllParagraphs(authenticationInfo, true);
+      LOGGER.info("Notebook.CronJob#runNote(Note note={}) FINISHED\n\tstate = \n{}", note, this);
     }
   }
 
   public void refreshCron(String id) {
+    LOGGER.info("Notebook#refreshCron(String id={}) STARTED\n\tstate = \n{}", id, this);
+
     removeCron(id);
     Note note = getNote(id);
     if (note == null || note.isTrash()) {
+      LOGGER.info("Notebook#refreshCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
       return;
     }
     Map<String, Object> config = note.getConfig();
     if (config == null) {
+      LOGGER.info("Notebook#refreshCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
       return;
     }
 
     if (!note.isCronSupported(getConf())) {
       LOGGER.warn("execution of the cron job is skipped cron is not enabled from Zeppelin server");
+      LOGGER.info("Notebook#refreshCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
       return;
     }
 
     String cronExpr = (String) note.getConfig().get("cron");
     if (cronExpr == null || cronExpr.trim().length() == 0) {
+      LOGGER.info("Notebook#refreshCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
       return;
     }
 
@@ -691,15 +709,17 @@ public class Notebook {
       LOGGER.error("Error", e);
       info.put("cron", "Scheduler Exception");
     }
-
+    LOGGER.info("Notebook#refreshCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
   }
 
   public void removeCron(String id) {
+    LOGGER.info("Notebook#removeCron(String id={}) STARTED\n\tstate = \n{}", id, this);
     try {
       quartzSched.deleteJob(new JobKey(id, "note"));
     } catch (SchedulerException e) {
       LOGGER.error("Can't remove quertz " + id, e);
     }
+    LOGGER.info("Notebook#removeCron(String id={}) FINISHED\n\tstate = \n{}", id, this);
   }
 
   public InterpreterFactory getInterpreterFactory() {
@@ -758,5 +778,22 @@ public class Notebook {
     } else {
       return false;
     }
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("noteManager", noteManager)
+        .append("replFactory", replFactory)
+        .append("interpreterSettingManager", interpreterSettingManager)
+        .append("conf", conf)
+        .append("quartzSched", quartzSched)
+        .append("paragraphJobListener", paragraphJobListener)
+        .append("notebookRepo", notebookRepo)
+        .append("noteSearchService", noteSearchService)
+        .append("notebookAuthorization", notebookAuthorization)
+        .append("noteEventListeners", noteEventListeners)
+        .append("credentials", credentials)
+        .toString();
   }
 }

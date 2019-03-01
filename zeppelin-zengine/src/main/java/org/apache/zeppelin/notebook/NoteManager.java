@@ -19,6 +19,7 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.notebook.repo.NotebookRepo;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.user.AuthenticationInfo;
@@ -64,6 +65,8 @@ public class NoteManager {
 
   // build the tree structure of notes
   private void init() throws IOException {
+    LOGGER.info("NoteManager.init() STARTED\n\tstate = \n{}", this);
+
     this.notesInfo = notebookRepo.list(AuthenticationInfo.ANONYMOUS).values().stream()
         .collect(Collectors.toMap(noteInfo -> noteInfo.getId(), notesInfo -> notesInfo.getPath()));
     this.notesInfo.entrySet().stream()
@@ -75,6 +78,7 @@ public class NoteManager {
             LOGGER.warn(e.getMessage());
           }
         });
+    LOGGER.info("NoteManager.init() FINISHED\n\tstate = \n{}", this);
   }
 
   public Map<String, String> getNotesInfo() {
@@ -83,6 +87,8 @@ public class NoteManager {
 
   //TODO(zjffdu) This is inefficient
   public List<Note> getAllNotes() {
+    LOGGER.info("NoteManager.getAllNotes() STARTED\n\tstate = \n{}", this);
+
     List<Note> notes = new ArrayList<>();
     for (String notePath : notesInfo.values()) {
       try {
@@ -91,6 +97,8 @@ public class NoteManager {
         LOGGER.warn("Fail to load note: " + notePath, e);
       }
     }
+
+    LOGGER.info("NoteManager.getAllNotes() FINISHED\n\tstate = \n{}", this);
     return notes;
   }
 
@@ -99,9 +107,13 @@ public class NoteManager {
    * @throws IOException
    */
   public void reloadNotes() throws IOException {
+    LOGGER.info("NoteManager.reloadNotes() STARTED\n\tstate = \n{}", this);
+
     this.root = new Folder("/", notebookRepo);
     this.trash = this.root.getOrCreateFolder(TRASH_FOLDER);
     init();
+
+    LOGGER.info("NoteManager.reloadNotes() FINISHED\n\tstate = \n{}", this);
   }
 
   private void addOrUpdateNoteNode(Note note, boolean checkDuplicates) throws IOException {
@@ -162,9 +174,15 @@ public class NoteManager {
    * @throws IOException
    */
   public void saveNote(Note note, AuthenticationInfo subject) throws IOException {
+    LOGGER.info("NoteManager.saveNote(Note note={}, AuthenticationInfo subject={}) "
+        + "STARTED\n\tstate = \n{}", note, subject, this);
+
     addOrUpdateNoteNode(note);
     this.notebookRepo.save(note, subject);
     note.setLoaded(true);
+
+    LOGGER.info("NoteManager.saveNote(Note note={}, AuthenticationInfo subject={}) "
+        + "FINISHED\n\tstate = \n{}", note, subject, this);
   }
 
   /**
@@ -185,10 +203,16 @@ public class NoteManager {
    * @throws IOException
    */
   public void removeNote(String noteId, AuthenticationInfo subject) throws IOException {
+    LOGGER.info("NoteManager.removeNote(String noteId={}, AuthenticationInfo subject={}) "
+        + "STARTED\n\tstate = \n{}", noteId, subject, this);
+
     String notePath = this.notesInfo.remove(noteId);
     Folder folder = getOrCreateFolder(getFolderName(notePath));
     folder.removeNote(getNoteName(notePath));
     this.notebookRepo.remove(noteId, notePath, subject);
+
+    LOGGER.info("NoteManager.removeNote(String noteId={}, AuthenticationInfo subject={}) "
+        + "FINISHED\n\tstate = \n{}", noteId, subject, this);
   }
 
   public void moveNote(String noteId,
@@ -328,6 +352,16 @@ public class NoteManager {
   private String getNoteName(String notePath) {
     int pos = notePath.lastIndexOf("/");
     return notePath.substring(pos + 1);
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("root", root)
+        .append("trash", trash)
+        .append("notebookRepo", notebookRepo)
+        .append("notesInfo", notesInfo)
+        .toString();
   }
 
   /**

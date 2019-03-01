@@ -17,6 +17,8 @@
 
 package org.apache.zeppelin.helium;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * Info for Helium Spell Package.
  */
@@ -30,5 +32,13 @@ public class SpellPackageInfo {
 
   public String getUsage() {
     return usage;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("magic", magic)
+        .append("usage", usage)
+        .toString();
   }
 }

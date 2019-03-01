@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterException;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
@@ -70,10 +71,17 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * Load pkg and run task
    */
   public String loadAndRun(HeliumPackage pkg, Paragraph paragraph) {
+    logger.info("HeliumApplicationFactory#loadAndRun(HeliumPackage pkg={}, Paragraph paragraph={})"
+            + " STARTED\n\tstate = \n{}",
+        pkg, paragraph, this);
+
     ApplicationState appState = paragraph.createOrGetApplicationState(pkg);
     onLoad(paragraph.getNote().getId(), paragraph.getId(), appState.getId(),
         appState.getHeliumPackage());
     executor.submit(new LoadApplication(appState, pkg, paragraph));
+    logger.info("HeliumApplicationFactory#loadAndRun(HeliumPackage pkg={}, Paragraph paragraph={})"
+            + " FINISHED\n\tstate = \n{}",
+        pkg, paragraph, this);
     return appState.getId();
   }
 
@@ -93,12 +101,16 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
 
     @Override
     public void run() {
+      logger.info("HeliumApplicationFactory.LoadApplication#run() STARTED\n\tstate = \n{}", this);
+
       try {
         // get interpreter process
         Interpreter intp = paragraph.getBindedInterpreter();
         ManagedInterpreterGroup intpGroup = (ManagedInterpreterGroup) intp.getInterpreterGroup();
         RemoteInterpreterProcess intpProcess = intpGroup.getRemoteInterpreterProcess();
         if (intpProcess == null) {
+          logger.info("HeliumApplicationFactory.LoadApplication#run() FINISHED\n\tstate = \n{}",
+              this);
           throw new ApplicationException("Target interpreter process is not running");
         }
 
@@ -108,6 +120,8 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         // run application
         RunApplication runTask = new RunApplication(paragraph, appState.getId());
         runTask.run();
+        logger.info("HeliumApplicationFactory.LoadApplication#run() FINISHED\n\tstate = \n{}",
+            this);
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
 
@@ -115,15 +129,23 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
           appStatusChange(paragraph, appState.getId(), ApplicationState.Status.ERROR);
           appState.setOutput(e.getMessage());
         }
+        logger.info("HeliumApplicationFactory.LoadApplication#run() FINISHED\n\tstate = \n{}",
+            this);
       }
     }
 
     private void load(RemoteInterpreterProcess intpProcess, ApplicationState appState)
         throws Exception {
+      logger.info("HeliumApplicationFactory.LoadApplication#load(RemoteInterpreterProcess "
+          + "intpProcess={}, ApplicationState appState={}) STARTED\n\tstate = \n{}",
+          intpProcess, appState, this);
 
       synchronized (appState) {
         if (appState.getStatus() == ApplicationState.Status.LOADED) {
           // already loaded
+          logger.info("HeliumApplicationFactory.LoadApplication#load(RemoteInterpreterProcess "
+                  + "intpProcess={}, ApplicationState appState={}) FINISHED\n\tstate = \n{}",
+              intpProcess, appState, this);
           return;
         }
 
@@ -146,10 +168,25 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         );
         if (ret.isSuccess()) {
           appStatusChange(paragraph, appState.getId(), ApplicationState.Status.LOADED);
+          logger.info("HeliumApplicationFactory.LoadApplication#load(RemoteInterpreterProcess "
+                  + "intpProcess={}, ApplicationState appState={}) FINISHED\n\tstate = \n{}",
+              intpProcess, appState, this);
         } else {
+          logger.info("HeliumApplicationFactory.LoadApplication#load(RemoteInterpreterProcess "
+                  + "intpProcess={}, ApplicationState appState={}) FINISHED\n\tstate = \n{}",
+              intpProcess, appState, this);
           throw new ApplicationException(ret.getMsg());
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return new ToStringBuilder(this)
+          .append("pkg", pkg)
+          .append("paragraph", paragraph)
+          .append("appState", appState)
+          .toString();
     }
   }
 
@@ -188,16 +225,21 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
 
     @Override
     public void run() {
+      logger.info("HeliumApplicationFactory.UnloadApplication#run() STARTED\n\tstate = \n{}", this);
       ApplicationState appState = null;
       try {
         appState = paragraph.getApplicationState(appId);
 
         if (appState == null) {
           logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
+          logger.info("HeliumApplicationFactory.UnloadApplication#run() FINISHED\n\tstate = \n{}",
+              this);
           return;
         }
         if (appState.getStatus() == ApplicationState.Status.UNLOADED) {
           // not loaded
+          logger.info("HeliumApplicationFactory.UnloadApplication#run() FINISHED\n\tstate = \n{}",
+              this);
           return;
         }
         unload(appState);
@@ -208,6 +250,8 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
           appState.setOutput(e.getMessage());
         }
       }
+      logger.info("HeliumApplicationFactory.UnloadApplication#run() FINISHED\n\tstate = \n{}",
+          this);
     }
 
     private void unload(final ApplicationState appsToUnload) throws ApplicationException {
@@ -246,6 +290,14 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         }
       }
     }
+
+    @Override
+    public String toString() {
+      return new ToStringBuilder(this)
+          .append("paragraph", paragraph)
+          .append("appId", appId)
+          .toString();
+    }
   }
 
   /**
@@ -256,7 +308,13 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param appId
    */
   public void run(Paragraph paragraph, String appId) {
+    logger.info("HeliumApplicationFactory#run(Paragraph paragraph={}, String appId={}) "
+            + "STARTED\n\tstate = \n{}", paragraph, appId, this);
+
     executor.execute(new RunApplication(paragraph, appId));
+
+    logger.info("HeliumApplicationFactory#run(Paragraph paragraph={}, String appId={}) "
+        + "FINISHED\n\tstate = \n{}", paragraph, appId, this);
   }
 
   /**
@@ -273,12 +331,16 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
 
     @Override
     public void run() {
+      logger.info("HeliumApplicationFactory.RunApplication#run() STARTED\n\tstate = \n{}", this);
+
       ApplicationState appState = null;
       try {
         appState = paragraph.getApplicationState(appId);
 
         if (appState == null) {
           logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
+          logger.info("HeliumApplicationFactory.RunApplication#run() FINISHED\n\tstate = \n{}",
+              this);
           return;
         }
 
@@ -290,11 +352,16 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
           appState.setOutput(e.getMessage());
         }
       }
+      logger.info("HeliumApplicationFactory.RunApplication#run() FINISHED\n\tstate = \n{}", this);
     }
 
     private void run(final ApplicationState app) throws ApplicationException {
+      logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+          + "STARTED\n\tstate = \n{}", app, this);
       synchronized (app) {
         if (app.getStatus() != ApplicationState.Status.LOADED) {
+          logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+              + "FINISHED\n\tstate = \n{}", app, this);
           throw new ApplicationException(
               "Can't run application status " + app.getStatus());
         }
@@ -303,12 +370,16 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         try {
           intp = paragraph.getBindedInterpreter();
         } catch (InterpreterException e) {
+          logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+              + "FINISHED\n\tstate = \n{}", app, this);
           throw new ApplicationException("No interpreter found", e);
         }
 
         RemoteInterpreterProcess intpProcess =
             ((ManagedInterpreterGroup) intp.getInterpreterGroup()).getRemoteInterpreterProcess();
         if (intpProcess == null) {
+          logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+              + "FINISHED\n\tstate = \n{}", app, this);
           throw new ApplicationException("Target interpreter process is not running");
         }
         RemoteApplicationResult ret = intpProcess.callRemoteFunction(
@@ -323,9 +394,21 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         if (ret.isSuccess()) {
           // success
         } else {
+          logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+              + "FINISHED\n\tstate = \n{}", app, this);
           throw new ApplicationException(ret.getMsg());
         }
       }
+      logger.info("HeliumApplicationFactory#run(final ApplicationState app={}) "
+          + "FINISHED\n\tstate = \n{}", app, this);
+    }
+
+    @Override
+    public String toString() {
+      return new ToStringBuilder(this)
+          .append("paragraph", paragraph)
+          .append("appId", appId)
+          .toString();
     }
   }
 
@@ -333,6 +416,9 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   public void onOutputAppend(
       String noteId, String paragraphId, int index, String appId, String output) {
     ApplicationState appToUpdate = getAppState(noteId, paragraphId, appId);
+    logger.info("HeliumApplicationFactory#onOutputAppend(String noteId={}, String paragraphId={},"
+        + " int index={}, String appId={}, String output={}) STARTED\n\tstate = \n{}",
+        noteId, paragraphId, index, appId, output, this);
 
     if (appToUpdate != null) {
       appToUpdate.appendOutput(output);
@@ -343,6 +429,9 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
     if (applicationEventListener != null) {
       applicationEventListener.onOutputAppend(noteId, paragraphId, index, appId, output);
     }
+    logger.info("HeliumApplicationFactory#onOutputAppend(String noteId={}, String paragraphId={},"
+            + " int index={}, String appId={}, String output={}) FINISHED\n\tstate = \n{}",
+        noteId, paragraphId, index, appId, output, this);
   }
 
   @Override
@@ -454,5 +543,14 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         loadAndRun(app.getHeliumPackage(), p);
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("executor", executor)
+        .append("notebook", notebook)
+        .append("applicationEventListener", applicationEventListener)
+        .toString();
   }
 }

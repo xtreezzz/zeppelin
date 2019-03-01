@@ -18,6 +18,7 @@
 package org.apache.zeppelin.display;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.display.ui.CheckBox;
 import org.apache.zeppelin.display.ui.OptionInput;
 import org.apache.zeppelin.display.ui.OptionInput.ParamOption;
@@ -543,5 +544,16 @@ public class Input<T> implements Serializable {
     } else {
       return false;
     }
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("name", name)
+        .append("displayName", displayName)
+        .append("defaultValue", defaultValue)
+        .append("hidden", hidden)
+        .append("argument", argument)
+        .toString();
   }
 }

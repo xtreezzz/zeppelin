@@ -20,6 +20,7 @@ package org.apache.zeppelin.interpreter;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Information of interpreters in this interpreter setting.
@@ -78,5 +79,15 @@ public class InterpreterInfo {
     boolean sameIsDefaultInterpreter = defaultInterpreter == other.isDefaultInterpreter();
 
     return sameName && sameClassName && sameIsDefaultInterpreter;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("name", name)
+        .append("className", className)
+        .append("defaultInterpreter", defaultInterpreter)
+        .append("editor", editor)
+        .toString();
   }
 }

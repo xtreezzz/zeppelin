@@ -18,6 +18,7 @@
 
 package org.apache.zeppelin.interpreter;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Scheduler;
@@ -58,6 +59,8 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
   public synchronized RemoteInterpreterProcess getOrCreateInterpreterProcess(String userName,
                                                                              Properties properties)
       throws IOException {
+    LOGGER.info("RemoteInterpreterProcess getOrCreateInterpreterProcess(String userName={}, "
+        + "Properties properties={}) STARTED\n\tstate = \n{}", userName, properties, this);
     if (remoteInterpreterProcess == null) {
       LOGGER.info("Create InterpreterProcess for InterpreterGroup: " + getId());
       remoteInterpreterProcess = interpreterSetting.createInterpreterProcess(id, userName,
@@ -67,6 +70,8 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       getInterpreterSetting().getRecoveryStorage()
           .onInterpreterClientStart(remoteInterpreterProcess);
     }
+    LOGGER.info("RemoteInterpreterProcess getOrCreateInterpreterProcess "
+        + "FINISHED\n\tstate = \n{}", this);
     return remoteInterpreterProcess;
   }
 
@@ -83,10 +88,13 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
    * Close all interpreter instances in this group
    */
   public void close() {
-    LOGGER.info("Close InterpreterGroup: " + id);
+    LOGGER.info("RemoteInterpreterProcess#close() STARTED\n\tstate = \n{}", this);
+
+    LOGGER.info("Close InterpreterGroup: {}", id);
     for (String sessionId : sessions.keySet()) {
       close(sessionId);
     }
+    LOGGER.info("RemoteInterpreterProcess#close() FINISHED\n\tstate = \n{}", this);
   }
 
   /**
@@ -94,8 +102,11 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
    * @param sessionId
    */
   public synchronized void close(String sessionId) {
-    LOGGER.info("Close Session: " + sessionId + " for interpreter setting: " +
-            interpreterSetting.getName());
+    LOGGER.info("RemoteInterpreterProcess#close(String sessionId={}) STARTED\n\tstate = \n{}",
+        sessionId, this);
+
+    LOGGER.info("Close Session: {} for interpreter setting: {}", sessionId,
+        interpreterSetting.getName());
     close(sessions.remove(sessionId));
     //TODO(zjffdu) whether close InterpreterGroup if there's no session left in Zeppelin Server
     if (sessions.isEmpty() && interpreterSetting != null) {
@@ -112,10 +123,18 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
         remoteInterpreterProcess = null;
       }
     }
+
+    LOGGER.info("RemoteInterpreterProcess#close(String sessionId={}) FINISHED\n\tstate = \n{}",
+        sessionId, this);
   }
 
   private void close(Collection<Interpreter> interpreters) {
+    LOGGER.info("RemoteInterpreterProcess#close(Collection<Interpreter> interpreters={}) STARTED"
+            + "\n\tstate = \n{}", interpreters, this);
+
     if (interpreters == null) {
+      LOGGER.info("RemoteInterpreterProcess#close(Collection<Interpreter> interpreters={}) "
+          + "FINISHED\n\tstate = \n{}", interpreters, this);
       return;
     }
     List<Thread> closeThreads = interpreters.stream()
@@ -136,9 +155,14 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
         break;
       }
     }
+    LOGGER.info("RemoteInterpreterProcess#close(Collection<Interpreter> interpreters={}) "
+        + "FINISHED\n\tstate = \n{}", interpreters, this);
   }
 
   private void closeInterpreter(Interpreter interpreter) {
+    LOGGER.info("RemoteInterpreterProcess#close(Interpreter interpreter={}) STARTED"
+        + "\n\tstate = \n{}", interpreter, this);
+
     Scheduler scheduler = interpreter.getScheduler();
 
     for (final Job job : scheduler.getAllJobs()) {
@@ -164,10 +188,18 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
 
     //TODO(zjffdu) move the close of schedule to Interpreter
     SchedulerFactory.singleton().removeScheduler(scheduler.getName());
+
+    LOGGER.info("RemoteInterpreterProcess#close(Interpreter interpreter={}) FINISHED"
+        + "\n\tstate = \n{}", interpreter, this);
   }
 
   public synchronized List<Interpreter> getOrCreateSession(String user, String sessionId) {
+    LOGGER.info("RemoteInterpreterProcess#getOrCreateSession(String user={}, String sessionId={})"
+        + " STARTED\n\tstate = \n{}", user, sessionId, this);
+
     if (sessions.containsKey(sessionId)) {
+      LOGGER.info("RemoteInterpreterProcess#getOrCreateSession(String user={}, "
+          + "String sessionId={}) FINISHED\n\tstate = \n{}", user, sessionId, this);
       return sessions.get(sessionId);
     } else {
       List<Interpreter> interpreters = interpreterSetting.createInterpreters(user, id, sessionId);
@@ -176,8 +208,19 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       }
       LOGGER.info("Create Session: {} in InterpreterGroup: {} for user: {}", sessionId, id, user);
       sessions.put(sessionId, interpreters);
+      LOGGER.info("RemoteInterpreterProcess#getOrCreateSession(String user={}, "
+          + "String sessionId={}) FINISHED\n\tstate = \n{}", user, sessionId, this);
       return interpreters;
     }
   }
 
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("interpreterSetting", interpreterSetting)
+        .append("remoteInterpreterProcess", remoteInterpreterProcess)
+        .append("id", id)
+        .append("sessions", sessions)
+        .toString();
+  }
 }

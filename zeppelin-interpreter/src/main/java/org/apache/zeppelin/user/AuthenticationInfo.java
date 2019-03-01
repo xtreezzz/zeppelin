@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.common.JsonSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,6 +126,16 @@ public class AuthenticationInfo implements JsonSerializable {
   @Override
   public String toJson() {
     return gson.toJson(this);
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("user", user)
+        .append("roles", roles)
+        .append("ticket", ticket)
+        .append("userCredentials", userCredentials)
+        .toString();
   }
 
   public static AuthenticationInfo fromJson(String json) {

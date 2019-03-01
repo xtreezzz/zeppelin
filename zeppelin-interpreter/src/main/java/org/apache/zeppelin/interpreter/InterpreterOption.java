@@ -19,6 +19,7 @@ package org.apache.zeppelin.interpreter;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 
 /**
@@ -163,5 +164,20 @@ public class InterpreterOption {
 
   public void setPerUser(String perUser) {
     this.perUser = perUser;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("remote", remote)
+        .append("host", host)
+        .append("port", port)
+        .append("perNote", perNote)
+        .append("perUser", perUser)
+        .append("isExistingProcess", isExistingProcess)
+        .append("setPermission", setPermission)
+        .append("owners", owners)
+        .append("isUserImpersonate", isUserImpersonate)
+        .toString();
   }
 }

@@ -26,6 +26,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.StringMap;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.dep.Dependency;
 import org.apache.zeppelin.dep.DependencyResolver;
@@ -946,6 +947,36 @@ public class InterpreterSetting {
                 + " seconds");
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("id", id)
+        .append("name", name)
+        .append("group", group)
+        .append("properties", properties)
+        .append("status", status)
+        .append("errorReason", errorReason)
+        .append("interpreterInfos", interpreterInfos)
+        .append("dependencies", dependencies)
+        .append("option", option)
+        .append("interpreterRunner", interpreterRunner)
+        .append("interpreterSettingManager", interpreterSettingManager)
+        .append("interpreterDir", interpreterDir)
+        .append("interpreterGroups", interpreterGroups)
+        .append("interpreterGroupReadLock", interpreterGroupReadLock)
+        .append("interpreterGroupWriteLock", interpreterGroupWriteLock)
+        .append("angularObjectRegistryListener", angularObjectRegistryListener)
+        .append("remoteInterpreterProcessListener", remoteInterpreterProcessListener)
+        .append("appEventListener", appEventListener)
+        .append("dependencyResolver", dependencyResolver)
+        .append("conf", conf)
+        .append("launcher", launcher)
+        .append("lifecycleManager", lifecycleManager)
+        .append("recoveryStorage", recoveryStorage)
+        .append("interpreterEventServer", interpreterEventServer)
+        .toString();
   }
 
   public void waitForReady() throws InterpreterException {

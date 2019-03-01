@@ -16,6 +16,7 @@
  */
 package org.apache.zeppelin.notebook;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.helium.HeliumPackage;
 
 /**
@@ -104,5 +105,15 @@ public class ApplicationState {
 
   public HeliumPackage getHeliumPackage() {
     return pkg;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("status", status)
+        .append("id", id)
+        .append("pkg", pkg)
+        .append("output", output)
+        .toString();
   }
 }

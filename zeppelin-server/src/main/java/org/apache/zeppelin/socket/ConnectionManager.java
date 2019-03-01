@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.GUI;
 import org.apache.zeppelin.display.Input;
@@ -363,5 +364,16 @@ public class ConnectionManager {
     String watcherSecurityKey = session.getRequest().getHeader(WatcherSecurityKey.HTTP_HEADER);
     return !(StringUtils.isBlank(watcherSecurityKey) || !watcherSecurityKey
         .equals(WatcherSecurityKey.getKey()));
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("connectedSockets", connectedSockets)
+        .append("noteSocketMap", noteSocketMap)
+        .append("userSocketMap", userSocketMap)
+        .append("watcherSockets", watcherSockets)
+        .append("collaborativeModeEnable", collaborativeModeEnable)
+        .toString();
   }
 }

@@ -20,6 +20,7 @@ package org.apache.zeppelin.interpreter;
 import com.google.common.base.Preconditions;
 import javax.inject.Inject;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +47,16 @@ public class InterpreterFactory {
                                     String replName,
                                     String defaultInterpreterSetting)
       throws InterpreterNotFoundException {
-
+    LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+        + "String replName={}, String defaultInterpreterSetting={}) STARTED\n\tstate = \n{}",
+        user, noteId, replName, defaultInterpreterSetting, this);
     if (StringUtils.isBlank(replName)) {
       // Get the default interpreter of the defaultInterpreterSetting
       InterpreterSetting defaultSetting =
           interpreterSettingManager.getByName(defaultInterpreterSetting);
+      LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+              + "String replName={}, String defaultInterpreterSetting={}) FINISHED\n\tstate = \n{}",
+          user, noteId, replName, defaultInterpreterSetting, this);
       return defaultSetting.getDefaultInterpreter(user, noteId);
     }
 
@@ -62,10 +68,21 @@ public class InterpreterFactory {
       if (null != setting) {
         Interpreter interpreter = setting.getInterpreter(user, noteId, name);
         if (null != interpreter) {
+          LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+                  + "String replName={}, String defaultInterpreterSetting={}) "
+                  + "FINISHED\n\tstate = \n{}", user, noteId, replName, defaultInterpreterSetting,
+              this);
           return interpreter;
         }
+        LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+                + "String replName={}, String defaultInterpreterSetting={}) "
+                + "FINISHED\n\tstate = \n{}", user, noteId, replName, defaultInterpreterSetting,
+            this);
         throw new InterpreterNotFoundException("No such interpreter: " + replName);
       }
+      LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+              + "String replName={}, String defaultInterpreterSetting={}) FINISHED\n\tstate = \n{}",
+          user, noteId, replName, defaultInterpreterSetting, this);
       throw new InterpreterNotFoundException("No interpreter setting named: " + group);
 
     } else if (replNameSplits.length == 1){
@@ -75,6 +92,10 @@ public class InterpreterFactory {
       if (setting != null) {
         Interpreter interpreter = setting.getInterpreter(user, noteId, replName);
         if (null != interpreter) {
+          LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+                  + "String replName={}, String defaultInterpreterSetting={}) "
+                  + "FINISHED\n\tstate = \n{}", user, noteId, replName, defaultInterpreterSetting,
+              this);
           return interpreter;
         }
       }
@@ -82,10 +103,24 @@ public class InterpreterFactory {
       // then assume interpreter name is omitted
       setting = interpreterSettingManager.getByName(replName);
       if (null != setting) {
+        LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+                + "String replName={}, String defaultInterpreterSetting={}) "
+                + "FINISHED\n\tstate = \n{}", user, noteId, replName, defaultInterpreterSetting,
+            this);
         return setting.getDefaultInterpreter(user, noteId);
       }
     }
 
+    LOGGER.info("InterpreterFactory#getInterpreter(String user={}, String noteId={}, "
+            + "String replName={}, String defaultInterpreterSetting={}) FINISHED\n\tstate = \n{}",
+        user, noteId, replName, defaultInterpreterSetting, this);
     throw new InterpreterNotFoundException("No such interpreter: " + replName);
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("interpreterSettingManager", interpreterSettingManager)
+        .toString();
   }
 }
