@@ -19,6 +19,7 @@ package org.apache.zeppelin.display;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.display.ui.CheckBox;
 import org.apache.zeppelin.display.ui.OptionInput.ParamOption;
 import org.apache.zeppelin.display.ui.Password;
@@ -198,5 +199,13 @@ public class GUI implements Serializable {
     convertedInput.setHidden(oldInput.isHidden());
     convertedInput.setArgument(oldInput.getArgument());
     return convertedInput;
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("params", params)
+        .append("forms", forms)
+        .toString();
   }
 }

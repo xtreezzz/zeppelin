@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.dep.Dependency;
@@ -966,5 +967,27 @@ public class InterpreterSettingManager implements NoteEventListener {
   @Override
   public void onParagraphStatusChange(Paragraph p, Job.Status status) throws IOException {
 
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("conf", conf)
+        .append("interpreterDirPath", interpreterDirPath)
+        .append("interpreterSettingTemplates", interpreterSettingTemplates)
+        .append("interpreterSettings", interpreterSettings)
+        .append("interpreterRepositories", interpreterRepositories)
+        .append("defaultOption", defaultOption)
+        .append("defaultInterpreterGroup", defaultInterpreterGroup)
+        .append("gson", gson)
+        .append("angularObjectRegistryListener", angularObjectRegistryListener)
+        .append("remoteInterpreterProcessListener", remoteInterpreterProcessListener)
+        .append("appEventListener", appEventListener)
+        .append("dependencyResolver", dependencyResolver)
+        .append("lifecycleManager", lifecycleManager)
+        .append("recoveryStorage", recoveryStorage)
+        .append("configStorage", configStorage)
+        .append("interpreterEventServer", interpreterEventServer)
+        .toString();
   }
 }

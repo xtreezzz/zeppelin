@@ -20,6 +20,7 @@ package org.apache.zeppelin.interpreter;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.reflect.FieldUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.annotation.Experimental;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
@@ -401,6 +402,16 @@ public abstract class Interpreter {
     }
   }
 
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("interpreterGroup", interpreterGroup)
+        .append("classloaderUrls", classloaderUrls)
+        .append("properties", properties)
+        .append("userName", userName)
+        .toString();
+  }
+
   /**
    * Type of interpreter.
    */
@@ -485,6 +496,21 @@ public abstract class Interpreter {
 
     public InterpreterRunner getRunner() {
       return runner;
+    }
+
+    @Override
+    public String toString() {
+      return new ToStringBuilder(this)
+          .append("group", group)
+          .append("name", name)
+          .append("className", className)
+          .append("defaultInterpreter", defaultInterpreter)
+          .append("properties", properties)
+          .append("editor", editor)
+          .append("path", path)
+          .append("option", option)
+          .append("runner", runner)
+          .toString();
     }
   }
 

@@ -19,6 +19,7 @@ package org.apache.zeppelin.dep;
 
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  *
@@ -70,6 +71,14 @@ public class Dependency {
     return this;
   }
 
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("groupArtifactVersion", groupArtifactVersion)
+        .append("local", local)
+        .append("exclusions", exclusions)
+        .toString();
+  }
 
   public String getGroupArtifactVersion() {
     return groupArtifactVersion;

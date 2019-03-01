@@ -17,6 +17,7 @@
 package org.apache.zeppelin.interpreter.remote;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.thrift.TException;
 import org.apache.zeppelin.interpreter.launcher.InterpreterClient;
@@ -142,4 +143,12 @@ public abstract class RemoteInterpreterProcess implements InterpreterClient {
    * called by RemoteInterpreterEventServer to notify that RemoteInterpreter Process is started
    */
   public abstract void processStarted(int port, String host);
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("clientPool", clientPool)
+        .append("connectTimeout", connectTimeout)
+        .toString();
+  }
 }

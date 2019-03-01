@@ -17,6 +17,7 @@
 package org.apache.zeppelin.helium;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.annotation.Experimental;
 import org.apache.zeppelin.common.JsonSerializable;
 
@@ -141,5 +142,24 @@ public class HeliumPackage implements JsonSerializable {
 
   public static HeliumPackage fromJson(String json) {
     return gson.fromJson(json, HeliumPackage.class);
+  }
+
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("type", type)
+        .append("name", name)
+        .append("description", description)
+        .append("artifact", artifact)
+        .append("className", className)
+        .append("resources", resources)
+        .append("license", license)
+        .append("icon", icon)
+        .append("published", published)
+        .append("groupId", groupId)
+        .append("artifactId", artifactId)
+        .append("spell", spell)
+        .append("config", config)
+        .toString();
   }
 }

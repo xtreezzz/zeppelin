@@ -20,6 +20,7 @@ package org.apache.zeppelin.notebook;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
@@ -155,10 +157,15 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public Paragraph cloneParagraphForUser(String user) {
+    LOGGER.info("Paragraph#cloneParagraphForUser(String user={}) STARTED\n\tstate = \n{}",
+        user, this);
+
     Paragraph p = new Paragraph(this);
     // reset status to READY when clone Paragraph for personalization.
     p.status = Status.READY;
     addUser(p, user);
+    LOGGER.info("Paragraph#cloneParagraphForUser(String user={}) FINISHED\n\tstate = \n{}",
+        user, this);
     return p;
   }
 
@@ -179,9 +186,13 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public void setText(String newText) {
+    LOGGER.info("Paragraph#setText(String newText={}) STARTED\n\tstate = \n{}", newText, this);
+
     this.text = newText;
     this.dateUpdated = new Date();
     parseText();
+
+    LOGGER.info("Paragraph#setText(String newText={}) FINISHED\n\tstate = \n{}", newText, this);
   }
 
   public void setSelectedText(String text) {
@@ -200,6 +211,8 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public void parseText() {
+    LOGGER.info("Paragraph#parseText() STARTED\n\tstate = \n{}", this);
+
     // parse text to get interpreter component
     if (this.text != null) {
       // clean localProperties, otherwise previous localProperties will be used for the next run
@@ -219,6 +232,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
               continue;
             }
             if (kv.length > 2) {
+              LOGGER.info("Paragraph#parseText() FINISHED WITH EXCEPTION\n\tstate = \n{}", this);
               throw new RuntimeException("Invalid paragraph properties format: " + split);
             }
             if (kv.length == 1) {
@@ -237,6 +251,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
         this.scriptText = this.text.trim();
       }
     }
+    LOGGER.info("Paragraph#parseText() FINISHED\n\tstate = \n{}", this);
   }
 
   public AuthenticationInfo getAuthenticationInfo() {
@@ -312,20 +327,29 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public List<InterpreterCompletion> completion(String buffer, int cursor) {
+    LOGGER.info("Paragraph#completion(String buffer={}, int cursor={}) STARTED\n\tstate = \n{}",
+        buffer, cursor, this);
+
     setText(buffer);
     try {
       this.interpreter = getBindedInterpreter();
     } catch (InterpreterNotFoundException e) {
       LOGGER.debug("Unable to get completion because there's no interpreter bind to it", e);
+      LOGGER.info("Paragraph#completion(String buffer={}, int cursor={}) FINISHED\n\tstate = \n{}",
+          buffer, cursor, this);
       return new ArrayList<>();
     }
     cursor = calculateCursorPosition(buffer, cursor);
     InterpreterContext interpreterContext = getInterpreterContext(null);
 
     try {
+      LOGGER.info("Paragraph#completion(String buffer={}, int cursor={}) FINISHED\n\tstate = \n{}",
+          buffer, cursor, this);
       return this.interpreter.completion(this.scriptText, cursor, interpreterContext);
     } catch (InterpreterException e) {
       LOGGER.warn("Fail to get completion", e);
+      LOGGER.info("Paragraph#completion(String buffer={}, int cursor={}) FINISHED\n\tstate = \n{}",
+          buffer, cursor, this);
       return new ArrayList<>();
     }
   }
@@ -370,9 +394,14 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public boolean execute(boolean blocking) {
+    LOGGER.info("Paragraph#execute(boolean blocking={}) STARTED\n\tstate = \n{}",
+        blocking, this);
+
     if (isBlankParagraph()) {
       LOGGER.info("Skip to run blank paragraph. {}", getId());
       setStatus(Job.Status.FINISHED);
+      LOGGER.info("Paragraph#execute(boolean blocking={}) FINISHED\n\tstate = \n{}",
+          blocking, this);
       return true;
     }
 
@@ -389,11 +418,17 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
+            LOGGER.info("Paragraph#execute(boolean blocking={}) FINISHED\n\tstate = \n{}",
+                blocking, this);
             throw new RuntimeException(e);
           }
         }
+        LOGGER.info("Paragraph#execute(boolean blocking={}) FINISHED\n\tstate = \n{}",
+            blocking, this);
         return getStatus() == Status.FINISHED;
       } else {
+        LOGGER.info("Paragraph#execute(boolean blocking={}) FINISHED\n\tstate = \n{}",
+            blocking, this);
         return true;
       }
     } catch (InterpreterNotFoundException e) {
@@ -401,16 +436,21 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           new InterpreterResult(InterpreterResult.Code.ERROR);
       setReturn(intpResult, e);
       setStatus(Job.Status.ERROR);
+      LOGGER.info("Paragraph#execute(boolean blocking={}) FINISHED\n\tstate = \n{}",
+          blocking, this);
       throw new RuntimeException(e);
     }
   }
 
   @Override
   protected InterpreterResult jobRun() throws Throwable {
+    LOGGER.info("Paragraph#jobRun() STARTED\n\tstate = \n{}", this);
+
     this.runtimeInfos.clear();
     this.interpreter = getBindedInterpreter();
     if (this.interpreter == null) {
       LOGGER.error("Can not find interpreter name " + intpText);
+      LOGGER.info("Paragraph#jobRun() FINISHED\n\tstate = \n{}", this);
       throw new RuntimeException("Can not find interpreter for " + intpText);
     }
     LOGGER.info("Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
@@ -424,6 +464,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       if (subject != null && !interpreterSetting.isUserAuthorized(subject.getUsersAndRoles())) {
         String msg = String.format("%s has no permission for %s", subject.getUser(), intpText);
         LOGGER.error(msg);
+        LOGGER.info("Paragraph#jobRun() FINISHED\n\tstate = \n{}", this);
         return new InterpreterResult(Code.ERROR, msg);
       }
     }
@@ -472,6 +513,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       }
 
       if (Code.KEEP_PREVIOUS_RESULT == ret.code()) {
+        LOGGER.info("Paragraph#jobRun() FINISHED\n\tstate = \n{}", this);
         return getReturn();
       }
 
@@ -487,7 +529,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
 
       LOGGER.info("End of Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
           getId(), intpText, note.getId(), subject.getUser());
-
+      LOGGER.info("Paragraph#jobRun() FINISHED\n\tstate = \n{}", this);
       return res;
     } finally {
       InterpreterContext.remove();
@@ -496,15 +538,20 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
 
   @Override
   protected boolean jobAbort() {
+    LOGGER.info("Paragraph#jobAbort() STARTED\n\tstate = \n{}", this);
+
     if (interpreter == null) {
+      LOGGER.info("Paragraph#jobAbort() FINISHED\n\tstate = \n{}", this);
       return true;
     }
     try {
       interpreter.cancel(getInterpreterContext(null));
     } catch (InterpreterException e) {
+      LOGGER.info("Paragraph#jobAbort() FINISHED\n\tstate = \n{}", this);
       throw new RuntimeException(e);
     }
 
+    LOGGER.info("Paragraph#jobAbort() FINISHED\n\tstate = \n{}", this);
     return true;
   }
 
@@ -646,7 +693,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
 
   public List<ApplicationState> getAllApplicationStates() {
     synchronized (apps) {
-      return new LinkedList<>(apps);
+      return Collections.unmodifiableList(apps);
     }
   }
 
@@ -774,4 +821,27 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     return Note.getGson().fromJson(json, Paragraph.class);
   }
 
+  @Override
+  public String toString() {
+    return new ToStringBuilder(this)
+        .append("title", title)
+        .append("text", text)
+        .append("user", user)
+        .append("dateUpdated", dateUpdated)
+        .append("config", config)
+        .append("settings", settings)
+        .append("results", results)
+        .append("apps", apps)
+        .append("intpText", intpText)
+        .append("scriptText", scriptText)
+        .append("selectedText", selectedText)
+        .append("interpreter", interpreter)
+        .append("note", note)
+        .append("subject", subject)
+        .append("userParagraphMap", userParagraphMap)
+        .append("localProperties", localProperties)
+        .append("runtimeInfos", runtimeInfos)
+        .append("status", status)
+        .toString();
+  }
 }
