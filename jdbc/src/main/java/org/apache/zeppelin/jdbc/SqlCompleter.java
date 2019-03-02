@@ -6,6 +6,9 @@ package org.apache.zeppelin.jdbc;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.zeppelin.jdbc.completer.CachedCompleter;
+import org.apache.zeppelin.jdbc.completer.CompletionType;
+import org.apache.zeppelin.jdbc.completer.StringsCompleter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +33,6 @@ import java.util.regex.Pattern;
 import jline.console.completer.ArgumentCompleter.ArgumentList;
 import jline.console.completer.ArgumentCompleter.WhitespaceArgumentDelimiter;
 
-import org.apache.zeppelin.completer.CachedCompleter;
-import org.apache.zeppelin.completer.CompletionType;
-import org.apache.zeppelin.completer.StringsCompleter;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 
 /**

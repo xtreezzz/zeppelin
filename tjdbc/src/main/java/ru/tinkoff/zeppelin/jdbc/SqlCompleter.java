@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.zeppelin.completer.CachedCompleter;
-import org.apache.zeppelin.completer.CompletionType;
-import org.apache.zeppelin.completer.StringsCompleter;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import ru.tinkoff.zeppelin.jdbc.completer.CachedCompleter;
+import ru.tinkoff.zeppelin.jdbc.completer.CompletionType;
+import ru.tinkoff.zeppelin.jdbc.completer.StringsCompleter;
 
 /**
  * SQL auto complete functionality for the JdbcInterpreter.

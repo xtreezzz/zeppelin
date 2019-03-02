@@ -12,17 +12,12 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.zeppelin.completer;
-
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+package org.apache.zeppelin.jdbc.completer;
 
 import jline.console.completer.Completer;
 import jline.internal.Preconditions;
+
+import java.util.*;
 
 /**
  * Case-insensitive completer for a set of strings.
