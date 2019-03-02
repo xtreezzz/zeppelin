@@ -17,12 +17,13 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.notebook.conf.CronJobConfiguration;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -97,9 +98,8 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
 
-    final Note resultNote = note.isPersonalizedMode()
-            ? note.getUserNote(serviceContext.getAutheInfo().getUser())
-            : note;
+    //TODO(egorklimov): персональный режим временно убран 
+    final Note resultNote = note;
 
     connectionManager.addSubscriberToNode(resultNote.getId(), conn);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
@@ -115,7 +115,7 @@ public class NoteHandler extends AbstractHandler {
     final CronJobConfiguration config = fromMessage.safeGetType("config", LOG);
 
     //TODO(egorklimov) fix cron logic
-    if (!note.getConfig().isCronEnabled) {
+    if (!note.getConfig().isCronEnabled()) {
       //??????????????????
       // было - config.remove("cron"), т.е. из конфига выкидывается cronExpression, но вся остальная
       // инфа остается, wtf, вохможно это сделано чтобы вдруг не включился крон, но сохранился
@@ -349,14 +349,15 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void updatePersonalizedMode(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
-    final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
-    final boolean isPersonalized = fromMessage.getType("personalized", LOG).equals("true");
-
-    note.setPersonalizedMode(isPersonalized);
-    notebook.saveNote(note);
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+    throw new NotImplementedException("Personalized mode removed");
+    //    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    //
+    //    final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
+    //    final boolean isPersonalized = fromMessage.getType("personalized", LOG).equals("true");
+    //
+    //    note.setPersonalizedMode(isPersonalized);
+    //    notebook.saveNote(note);
+    //    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 
   public void clearAllParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {

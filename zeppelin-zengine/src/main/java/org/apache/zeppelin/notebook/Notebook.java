@@ -44,6 +44,7 @@ import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.repo.ZeppelinRepository;
 import org.apache.zeppelin.repo.api.Revision;
 import org.apache.zeppelin.search.SearchService;
@@ -185,7 +186,7 @@ public class Notebook {
     if (note == null) {
       throw new IOException(noteId + " not found");
     }
-    return note.toJson();
+    return Note.getGson().toJson(note);
   }
 
   /**
@@ -203,8 +204,8 @@ public class Notebook {
       notePath = oldNote.getName();
     }
     Note newNote = createNote(notePath, subject);
-    List<ParagraphJob> paragraphs = oldNote.getParagraphs();
-    for (ParagraphJob p : paragraphs) {
+    List<Paragraph> paragraphs = oldNote.getParagraphs();
+    for (Paragraph p : paragraphs) {
       newNote.addCloneParagraph(p, subject);
     }
     return newNote;
@@ -225,8 +226,8 @@ public class Notebook {
       throw new IOException("Source note: " + sourceNoteId + " not found");
     }
     Note newNote = createNote(newNotePath, subject);
-    List<ParagraphJob> paragraphs = sourceNote.getParagraphs();
-    for (ParagraphJob p : paragraphs) {
+    List<Paragraph> paragraphs = sourceNote.getParagraphs();
+    for (Paragraph p : paragraphs) {
       newNote.addCloneParagraph(p, subject);
     }
     return newNote;
@@ -249,11 +250,14 @@ public class Notebook {
       note.setInterpreterFactory(replFactory);
       note.setInterpreterSettingManager(interpreterSettingManager);
       note.setParagraphJobListener(paragraphJobListener);
-      note.setNoteEventListeners(noteEventListeners);
+      note.getNoteEventListeners().clear();
+      note.getNoteEventListeners().addAll(noteEventListeners);
       note.setCredentials(credentials);
-      for (ParagraphJob p : note.getParagraphs()) {
-        p.setNote(note);
-      }
+      //TODO(egorklimov): Ноут был убран из параграфа
+
+      //      for (Paragraph p : note.getParagraphs()) {
+      //        p.setNote(note);
+      //      }
       return note;
     } catch (IOException e) {
       LOGGER.warn("Fail to get note: " + id, e);
@@ -375,11 +379,12 @@ public class Notebook {
 
     // restore angular object --------------
     Date lastUpdatedDate = new Date(0);
-    for (ParagraphJob p : note.getParagraphs()) {
-      p.setNote(note);
-      if (p.getDateFinished() != null && lastUpdatedDate.before(p.getDateFinished())) {
-        lastUpdatedDate = p.getDateFinished();
-      }
+    for (Paragraph p : note.getParagraphs()) {
+      //TODO(egorklimov): из параграфа был убран ноут
+      //      p.setNote(note);
+      //      if (p.getDateFinished() != null && lastUpdatedDate.before(p.getDateFinished())) {
+      //        lastUpdatedDate = p.getDateFinished();
+      //      }
     }
 
     Map<String, List<AngularObject>> savedObjects = note.getAngularObjects();
@@ -398,7 +403,8 @@ public class Notebook {
       }
     }
 
-    note.setNoteEventListeners(this.noteEventListeners);
+    note.getNoteEventListeners().clear();
+    note.getNoteEventListeners().addAll(noteEventListeners);
 
     for (String name : angularObjectSnapshot.keySet()) {
       SnapshotAngularObject snapshot = angularObjectSnapshot.get(name);
@@ -516,14 +522,12 @@ public class Notebook {
     Note note = getNote(noteId);
     if (note != null) {
       Set<InterpreterSetting> settings = new HashSet<>();
-      for (ParagraphJob p : note.getParagraphs()) {
-        try {
-          Interpreter intp = p.getBindedInterpreter();
-          settings.add((
-              (ManagedInterpreterGroup) intp.getInterpreterGroup()).getInterpreterSetting());
-        } catch (InterpreterNotFoundException e) {
-          // ignore this
-        }
+      for (Paragraph p : note.getParagraphs()) {
+        //TODO(egorklimov): Интерпретатор был убран из параграфа
+
+        //          Interpreter intp = p.getBindedInterpreter();
+        //          settings.add((
+        //              (ManagedInterpreterGroup) intp.getInterpreterGroup()).getInterpreterSetting());
       }
       // add the default interpreter group
       InterpreterSetting defaultIntpSetting =
@@ -533,7 +537,7 @@ public class Notebook {
       }
       return new ArrayList<>(settings);
     } else {
-      return new LinkedList<>();
+      return new ArrayList<>();
     }
   }
 
@@ -549,11 +553,13 @@ public class Notebook {
 
       String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
-      if (note.haveRunningOrPendingParagraphs()) {
-        LOGGER.warn("execution of the cron job is skipped because there is a running or pending " +
-            "paragraph (note id: {})", noteId);
-        return;
-      }
+      //TODO(egorklimov): haveRunningOrPendingParagraphs был убран из Note
+
+      //      if (note.haveRunningOrPendingParagraphs()) {
+      //        LOGGER.warn("execution of the cron job is skipped because there is a running or pending " +
+      //            "paragraph (note id: {})", noteId);
+      //        return;
+      //      }
 
       if (!note.isCronSupported(notebook.getConf())) {
         LOGGER.warn("execution of the cron job is skipped cron is not enabled from Zeppelin server");
@@ -562,8 +568,8 @@ public class Notebook {
 
       runAll(note);
 
-      boolean releaseResource = note.getConfig().releaseResourceFlag;
-      String cronExecutingUser = note.getConfig().cronExecutingUser;
+      boolean releaseResource = note.getConfig().isReleaseResourceFlag();
+      String cronExecutingUser = note.getConfig().getCronExecutingUser();
       if (releaseResource) {
         for (InterpreterSetting setting : notebook.getInterpreterSettingManager()
             .getInterpreterSettings(note.getId())) {
@@ -578,8 +584,8 @@ public class Notebook {
     }
 
     void runAll(Note note) {
-      String cronExecutingUser = note.getConfig().cronExecutingUser;
-      String cronExecutingRoles = note.getConfig().cronExecutingRoles;
+      String cronExecutingUser = note.getConfig().getCronExecutingUser();
+      String cronExecutingRoles = note.getConfig().getCronExecutingRoles();
       if (null == cronExecutingUser) {
         cronExecutingUser = "anonymous";
       }
@@ -587,14 +593,15 @@ public class Notebook {
           cronExecutingUser,
           StringUtils.isEmpty(cronExecutingRoles) ? null : cronExecutingRoles,
           null);
-      note.runAllParagraphs(authenticationInfo, true);
+      //TODO(egorklimov): Исполнение было убрано из Note
+      //note.runAllParagraphs(authenticationInfo, true);
     }
   }
 
   public void refreshCron(String id) {
     removeCron(id);
     Note note = getNote(id);
-    if (note == null || note.isTrash()) {
+    if (note == null || note.isTrashed()) {
       return;
     }
 
@@ -603,7 +610,7 @@ public class Notebook {
       return;
     }
 
-    String cronExpr = note.getConfig().cronExpression;
+    String cronExpr = note.getConfig().getCronExpression();
     if (cronExpr == null || cronExpr.trim().length() == 0) {
       return;
     }

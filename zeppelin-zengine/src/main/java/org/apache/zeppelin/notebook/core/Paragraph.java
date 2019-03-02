@@ -18,73 +18,45 @@
 package org.apache.zeppelin.notebook.core;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.display.GUI;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
 
 /**
  * Paragraph is a POJO which represents Note's sub-element.
  */
-public class Paragraph implements Serializable, JsonSerializable {
+public class Paragraph implements Serializable {
+
+  //TODO(egorklimov):
+  //  * Убрал конфиг, так как видимо в нем хранилось только isEnabled - думаю стоит вынести это в джобу
+  //  * Убрал InterpreterResult - надо сделать сервис по загрузке
+  //  * Убрал ApplicationState - надо сделать сервис по загрузке
+  //  * Что делать с id? Нужно согласование с id ParagraphJob и Job
 
   private String title;
   private String text;
   private String user;
   private Date dateUpdated;
 
-  // paragraph configs like isOpen, colWidth, etc
-  private Map<String, Object> config = new HashMap<>();
-
   // form and parameter settings
-  private GUI settings = new GUI();
-  private InterpreterResult results;
+  private GUI settings;
 
-  // Application states in this paragraph
-  private final List<ApplicationState> apps = new ArrayList<>();
-
-
-  public Paragraph(String title, String text, String user, Date dateUpdated,
-      Map<String, Object> config, GUI settings,
-      InterpreterResult results) {
+  public Paragraph(final String title, final String text, final String user, final Date dateUpdated,
+      final GUI settings) {
     this.title = title;
     this.text = text;
     this.user = user;
     this.dateUpdated = dateUpdated;
-    this.config = config;
     this.settings = settings;
-    this.results = results;
-  }
-
-  /**
-   * Constructor for cloning paragraphs
-   * @param other
-   */
-  public Paragraph(Paragraph other) {
-    this.title = other.getTitle();
-    this.text = other.getText();
-    this.user = other.getUser();
-    this.dateUpdated = other.getDateUpdated();
-    this.config = other.getConfig();
-    this.settings = other.getSettings();
-    this.results = other.results;
-    this.apps.addAll(other.getApps());
   }
 
   public String getTitle() {
     return title;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(final String title) {
     this.title = title;
   }
 
@@ -92,7 +64,7 @@ public class Paragraph implements Serializable, JsonSerializable {
     return text;
   }
 
-  public void setText(String text) {
+  public void setText(final String text) {
     this.text = text;
     this.dateUpdated = new Date();
   }
@@ -101,7 +73,7 @@ public class Paragraph implements Serializable, JsonSerializable {
     return user;
   }
 
-  public void setUser(String user) {
+  public void setUser(final String user) {
     this.user = user;
   }
 
@@ -109,42 +81,20 @@ public class Paragraph implements Serializable, JsonSerializable {
     return dateUpdated;
   }
 
-  public void setDateUpdated(Date dateUpdated) {
+  public void setDateUpdated(final Date dateUpdated) {
     this.dateUpdated = dateUpdated;
-  }
-
-  public Map<String, Object> getConfig() {
-    return config;
-  }
-
-  public void setConfig(Map<String, Object> config) {
-    this.config = config;
   }
 
   public GUI getSettings() {
     return settings;
   }
 
-  public void setSettings(GUI settings) {
+  public void setSettings(final GUI settings) {
     this.settings = settings;
   }
 
-  public InterpreterResult getResults() {
-    return results;
-  }
-
-  public void setResults(InterpreterResult results) {
-    this.results = results;
-  }
-
-  public List<ApplicationState> getApps() {
-    synchronized (apps) {
-      return Collections.unmodifiableList(apps);
-    }
-  }
-
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -160,10 +110,7 @@ public class Paragraph implements Serializable, JsonSerializable {
         .append(text, paragraph.text)
         .append(user, paragraph.user)
         .append(dateUpdated, paragraph.dateUpdated)
-        .append(config, paragraph.config)
         .append(settings, paragraph.settings)
-        .append(results, paragraph.results)
-        .append(apps, paragraph.apps)
         .isEquals();
   }
 
@@ -174,37 +121,11 @@ public class Paragraph implements Serializable, JsonSerializable {
         .append(text)
         .append(user)
         .append(dateUpdated)
-        .append(config)
         .append(settings)
-        .append(results)
-        .append(apps)
         .toHashCode();
   }
 
-
-  public void addApplicationState(ApplicationState state) {
-    apps.add(state);
-  }
-
-  public ApplicationState getApplicationState(String appId) {
-    synchronized (apps) {
-      for (ApplicationState as : apps) {
-        if (as.getId().equals(appId)) {
-          return as;
-        }
-      }
-    }
-
-    return null;
-  }
-
-
-  @Override
-  public String toJson() {
-    return Note.getGson().toJson(this);
-  }
-
-  public static Paragraph fromJson(String json) {
+  public static Paragraph fromJson(final String json) {
     return Note.getGson().fromJson(json, Paragraph.class);
   }
 }

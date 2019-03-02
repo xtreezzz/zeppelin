@@ -26,6 +26,7 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -37,6 +38,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.List;
+import org.apache.commons.lang3.NotImplementedException;
 
 @Component
 public class AngularObjectsHandler extends AbstractHandler {
@@ -128,9 +130,11 @@ public class AngularObjectsHandler extends AbstractHandler {
     final String varName = fromMessage.safeGetType("name", LOG);
     final Object varValue = fromMessage.safeGetType("value", LOG);
 
-    final InterpreterGroup group = findInterpreterGroupForParagraph(note, p.getId());
-    final RemoteAngularObjectRegistry registry = (RemoteAngularObjectRegistry) group.getAngularObjectRegistry();
-    pushAngularObjectToRemoteRegistry(note.getId(), p.getId(), varName, varValue, registry, group.getId(), conn);
+    //TODO(egorklimov): Fix paragraph id
+
+    //    final InterpreterGroup group = findInterpreterGroupForParagraph(note, p.getId());
+    //    final RemoteAngularObjectRegistry registry = (RemoteAngularObjectRegistry) group.getAngularObjectRegistry();
+    //    pushAngularObjectToRemoteRegistry(note.getId(), p.getId(), varName, varValue, registry, group.getId(), conn);
   }
 
   /**
@@ -145,17 +149,22 @@ public class AngularObjectsHandler extends AbstractHandler {
 
     final String varName = fromMessage.safeGetType("name", LOG);
 
-    final InterpreterGroup group = findInterpreterGroupForParagraph(note, p.getId());
-    final RemoteAngularObjectRegistry registry = (RemoteAngularObjectRegistry) group.getAngularObjectRegistry();
-    removeAngularFromRemoteRegistry(note.getId(), p.getId(), varName, registry, group.getId(), conn);
+    //TODO(egorklimov): Fix paragraph id
+
+    //    final InterpreterGroup group = findInterpreterGroupForParagraph(note, p.getId());
+    //    final RemoteAngularObjectRegistry registry = (RemoteAngularObjectRegistry) group.getAngularObjectRegistry();
+    //    removeAngularFromRemoteRegistry(note.getId(), p.getId(), varName, registry, group.getId(), conn);
   }
 
   private InterpreterGroup findInterpreterGroupForParagraph(final Note note, final String paragraphId) throws Exception {
-    final ParagraphJob paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
       throw new IllegalArgumentException("Unknown paragraph with id : " + paragraphId);
     }
-    return paragraph.getBindedInterpreter().getInterpreterGroup();
+    //TODO(egorklimov): Интерпретатор был убран из параграфа
+
+    throw new NotImplementedException("Interpreter has been removed from Paragraph");
+    //return paragraph.getBindedInterpreter().getInterpreterGroup();
   }
 
   private void pushAngularObjectToRemoteRegistry(final String noteId,

@@ -20,35 +20,46 @@ package org.apache.zeppelin.notebook;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.common.JsonSerializable;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
 import org.apache.zeppelin.display.AngularObjectRegistry;
+import org.apache.zeppelin.display.GUI;
 import org.apache.zeppelin.display.Input;
-import org.apache.zeppelin.interpreter.*;
+import org.apache.zeppelin.interpreter.InterpreterFactory;
+import org.apache.zeppelin.interpreter.InterpreterGroup;
+import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
+import org.apache.zeppelin.notebook.conf.CronJobConfiguration;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.notebook.utility.IdHashes;
-import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represent the note of Zeppelin. All the note and its paragraph operations are done
  * via this class.
  */
-public class Note implements JsonSerializable {
+//TODO(egorklimov):
+// * Убрал toJson, сериализация в json должна производиться явно
+// * Убрал все что связано с исполнением
+// * Убрал все персонализированный мод
+public class Note implements Serializable {
   private static final Logger logger = LoggerFactory.getLogger(Note.class);
-  private static final Executor noteExecutor = Executors.newCachedThreadPool();
   private static Gson gson = new GsonBuilder()
       .setPrettyPrinting()
       .setDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
@@ -56,53 +67,106 @@ public class Note implements JsonSerializable {
       .registerTypeAdapterFactory(Input.TypeAdapterFactory)
       .create();
 
-  private List<ParagraphJob> paragraphs = new LinkedList<>();
-
   private String name = "";
   private String id;
   private String defaultInterpreterGroup;
 
   /**
+   * form and parameter settings
    * see https://github.com/apache/zeppelin/pull/2641
    */
-  private Map<String, Object> noteParams = new LinkedHashMap<>();
-  private Map<String, Input> noteForms = new LinkedHashMap<>();
+  private final GUI settings;
+
+  private final List<Paragraph> paragraphs;
+
+  /**
+   *
+   * TODO(egorklimov): переложить ZeppelinConfiguration в zeppelin-core
+   * ZeppelinConfiguration - не должен быть компонентом, просто класс с контсруктором
+   * в Zeppelin Server сделать бин и инжектить его в контекст как бин
+   * Везде где ZeppelinConfiguration заводим enum
+   * в get передаем enum (параметр) доставать стринг
+   * Упростить getter'ы чтобы туда передавался enum
+   * zeppelin-core
+   *
+   * Убрать Gson везде
+   * Убрать метод toJson везде
+   * где нужен json new Gson.toJson()
+   * Делаем ЯВНУЮ сериализацию!
+   *
+   * Cron в отдельный сервис
+   * CronJob - расписание шедуллера, id ноута и параграфа и контекст
+   * внутри примитивы и строки
+   * никаких. Нельзя кидать в thread Note и Paragraph, только id
+   *
+   * OLD - в пекло, нужно все выпилить
+   *
+   * Если ноут нужен - загруси его через NoteManager
+   *
+   * runNote, runParagraph - удалить
+   *
+   * ApplicationState и InterpreterResult отпиливать от ноута и параграфа
+   *
+   * Сервисы по загрузке InterpreterResult, personalizedMode
+   *
+   * NotebookService
+   *  #clon
+   *  #move
+   *  #clone убрать
+   *  #Вызов заккоментить и кидать NotImplementedException
+   */
 
   /**
    * see https://issues.apache.org/jira/browse/ZEPPELIN-25
    */
-  private Map<String, List<AngularObject>> angularObjects = new HashMap<>();
+  private final Map<String, List<AngularObject>> angularObjects;
 
-  private boolean isPersonalizedModeEnabled = false;
   private boolean isRunning = false;
 
-  private CronJobConfiguration config = CronJobConfiguration.Builder.isCronEnabled(false).build();
+  // При сериализации и десериадизации может быть проблема
+  // перетащить в конструктор, поставить falce по дефолту
+  private final CronJobConfiguration config;
 
   /********************************** user permissions info *************************************/
-  private final Set<String> owners = new HashSet<>();
-  private final Set<String> readers = new HashSet<>();
-  private final Set<String> runners = new HashSet<>();
-  private final Set<String> writers = new HashSet<>();
+  private final Set<String> owners;
+  private final Set<String> readers;
+  private final Set<String> runners;
+  private final Set<String> writers;
 
   /********************************** transient fields ******************************************/
-  private transient boolean loaded = false;
-  private transient final AtomicBoolean executionAborted = new AtomicBoolean();
+  private transient boolean loaded;
   private transient String path;
   private transient InterpreterFactory interpreterFactory;
   private transient InterpreterSettingManager interpreterSettingManager;
   private transient ParagraphJobListener paragraphJobListener;
-  private transient List<NoteEventListener> noteEventListeners = new ArrayList<>();
+  private final transient List<NoteEventListener> noteEventListeners;
   private transient Credentials credentials;
 
 
   public Note() {
     generateId();
+    loaded = false;
+    settings = new GUI();
+
+    owners = new HashSet<>();
+    readers = new HashSet<>();
+    runners = new HashSet<>();
+    writers = new HashSet<>();
+
+    paragraphs = new ArrayList<>();
+    angularObjects = new HashMap<>();
+    noteEventListeners = new ArrayList<>();
+    config = new CronJobConfiguration();
+
+    setCronSupported(ZeppelinConfiguration.create());
   }
 
-  public Note(String path, String defaultInterpreterGroup, InterpreterFactory factory,
-      InterpreterSettingManager interpreterSettingManager, ParagraphJobListener paragraphJobListener,
-      Credentials credentials, List<NoteEventListener> noteEventListener) {
+  public Note(final String path, final String defaultInterpreterGroup,
+      final InterpreterFactory factory, final InterpreterSettingManager interpreterSettingManager,
+      final ParagraphJobListener paragraphJobListener, final Credentials credentials,
+      final List<NoteEventListener> noteEventListener) {
     setPath(path);
+    this.angularObjects = new HashMap<>();
     this.defaultInterpreterGroup = defaultInterpreterGroup;
     this.interpreterFactory = factory;
     this.interpreterSettingManager = interpreterSettingManager;
@@ -111,12 +175,36 @@ public class Note implements JsonSerializable {
     this.credentials = credentials;
     generateId();
 
+    loaded = false;
+    settings = new GUI();
+
+    owners = new HashSet<>();
+    readers = new HashSet<>();
+    runners = new HashSet<>();
+    writers = new HashSet<>();
+
+    paragraphs = new ArrayList<>();
+    config = new CronJobConfiguration();
+
     setCronSupported(ZeppelinConfiguration.create());
   }
 
   public Note(NoteInfo noteInfo) {
+    this.angularObjects = new HashMap<>();
     this.id = noteInfo.getId();
     setPath(noteInfo.getPath());
+
+    loaded = false;
+    settings = new GUI();
+
+    owners = new HashSet<>();
+    readers = new HashSet<>();
+    runners = new HashSet<>();
+    writers = new HashSet<>();
+
+    paragraphs = new ArrayList<>();
+    noteEventListeners = new ArrayList<>();
+    config = new CronJobConfiguration();
   }
 
   public String getPath() {
@@ -132,7 +220,7 @@ public class Note implements JsonSerializable {
     }
   }
 
-  private String getName(String path) {
+  private String getName(final String path) {
     int pos = path.lastIndexOf("/");
     return path.substring(pos + 1);
   }
@@ -161,25 +249,17 @@ public class Note implements JsonSerializable {
     return loaded;
   }
 
-  public void setLoaded(boolean loaded) {
+  public void setLoaded(final boolean loaded) {
     this.loaded = loaded;
   }
 
-  public boolean isPersonalizedMode() {
-    return isPersonalizedModeEnabled;
-  }
-
-  public void setPersonalizedMode(Boolean value) {
-    isPersonalizedModeEnabled = value;
-    clearUserParagraphs(value);
-  }
-
-  private void clearUserParagraphs(boolean isPersonalized) {
-    if (!isPersonalized) {
-      for (ParagraphJob p : paragraphs) {
-        p.clearUserParagraphs();
-      }
-    }
+  private void clearUserParagraphs(final boolean isPersonalized) {
+    throw new NotImplementedException("Personalized mode should be fixed");
+    //    if (!isPersonalized) {
+    //      for (Paragraph p : paragraphs) {
+    //        p.clearUserParagraphs();
+    //      }
+    //    }
   }
 
   public String getId() {
@@ -187,7 +267,7 @@ public class Note implements JsonSerializable {
   }
 
   @VisibleForTesting
-  public void setId(String id) {
+  public void setId(final String id) {
     this.id = id;
   }
 
@@ -195,7 +275,7 @@ public class Note implements JsonSerializable {
     return name;
   }
 
-  public void setPath(String path) {
+  public void setPath(final String path) {
     if (!path.startsWith("/")) {
       this.path = "/" + path;
     } else {
@@ -212,27 +292,27 @@ public class Note implements JsonSerializable {
     return defaultInterpreterGroup;
   }
 
-  public void setDefaultInterpreterGroup(String defaultInterpreterGroup) {
+  public void setDefaultInterpreterGroup(final String defaultInterpreterGroup) {
     this.defaultInterpreterGroup = defaultInterpreterGroup;
   }
 
   public Map<String, Object> getNoteParams() {
-    return noteParams;
+    return settings.getParams();
   }
 
-  public void setNoteParams(Map<String, Object> noteParams) {
-    this.noteParams = noteParams;
+  public void setNoteParams(final Map<String, Object> noteParams) {
+    settings.setParams(noteParams);
   }
 
   public Map<String, Input> getNoteForms() {
-    return noteForms;
+    return settings.getForms();
   }
 
-  public void setNoteForms(Map<String, Input> noteForms) {
-    this.noteForms = noteForms;
+  public void setNoteForms(final Map<String, Input> noteForms) {
+    settings.setForms(noteForms);
   }
 
-  public void setName(String name) {
+  public void setName(final String name) {
     this.name = name;
     if (this.path == null) {
       if (name.startsWith("/")) {
@@ -250,19 +330,19 @@ public class Note implements JsonSerializable {
     return interpreterFactory;
   }
 
-  public void setInterpreterFactory(InterpreterFactory interpreterFactory) {
+  public void setInterpreterFactory(final InterpreterFactory interpreterFactory) {
     this.interpreterFactory = interpreterFactory;
   }
 
-  void setInterpreterSettingManager(InterpreterSettingManager interpreterSettingManager) {
+  void setInterpreterSettingManager(final InterpreterSettingManager interpreterSettingManager) {
     this.interpreterSettingManager = interpreterSettingManager;
   }
 
-  void setParagraphJobListener(ParagraphJobListener paragraphJobListener) {
+  void setParagraphJobListener(final ParagraphJobListener paragraphJobListener) {
     this.paragraphJobListener = paragraphJobListener;
   }
 
-  public Boolean isCronSupported(ZeppelinConfiguration config) {
+  public Boolean isCronSupported(final ZeppelinConfiguration config) {
     if (config.isZeppelinNotebookCronEnable()) {
       config.getZeppelinNotebookCronFolders();
       if (config.getZeppelinNotebookCronFolders() == null) {
@@ -279,10 +359,8 @@ public class Note implements JsonSerializable {
     return false;
   }
 
-  public void setCronSupported(ZeppelinConfiguration config) {
-    this.config = CronJobConfiguration.Builder.fromExisting(this.config)
-        .enableCron(isCronSupported(config))
-        .build();
+  public void setCronSupported(final ZeppelinConfiguration config) {
+    this.config.setCronEnabled(config.isZeppelinNotebookCronEnable());
   }
 
   public Credentials getCredentials() {
@@ -300,7 +378,7 @@ public class Note implements JsonSerializable {
   /**
    * Create a new paragraph and add it to the end of the note.
    */
-  public ParagraphJob addNewParagraph(AuthenticationInfo authenticationInfo) {
+  public Paragraph addNewParagraph(final AuthenticationInfo authenticationInfo) {
     return insertNewParagraph(paragraphs.size(), authenticationInfo);
   }
 
@@ -309,62 +387,24 @@ public class Note implements JsonSerializable {
    *
    * @param srcParagraph source paragraph
    */
-  void addCloneParagraph(ParagraphJob srcParagraph, AuthenticationInfo subject) {
-
-    // Keep paragraph original ID
-    ParagraphJob newParagraph = new ParagraphJob(srcParagraph.getId(), this, paragraphJobListener);
-
-    Map<String, Object> config = new HashMap<>(srcParagraph.getConfig());
-    Map<String, Object> param = srcParagraph.settings.getParams();
-    Map<String, Input> form = srcParagraph.settings.getForms();
-
-    logger.debug("srcParagraph user: " + srcParagraph.getUser());
-
-    newParagraph.setAuthenticationInfo(subject);
-    newParagraph.setConfig(config);
-    newParagraph.settings.setParams(param);
-    newParagraph.settings.setForms(form);
-    newParagraph.setText(srcParagraph.getText());
-    newParagraph.setTitle(srcParagraph.getTitle());
-
-    logger.debug("newParagraph user: " + newParagraph.getUser());
-
-    try {
-      String resultJson = gson.toJson(srcParagraph.getReturn());
-      InterpreterResult result = InterpreterResult.fromJson(resultJson);
-      newParagraph.setReturn(result, null);
-    } catch (Exception e) {
-      // 'result' part of Note consists of exception, instead of actual interpreter results
-      logger.warn(
-          "ParagraphJob " + srcParagraph.getId() + " has a result with exception. " + e.getMessage());
-    }
-
-    synchronized (paragraphs) {
-      paragraphs.add(newParagraph);
-    }
-
-    try {
-      fireParagraphCreateEvent(newParagraph);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
+  void addCloneParagraph(final Paragraph srcParagraph, final AuthenticationInfo subject) {
+    throw new NotImplementedException("Clone logic should be fixed");
   }
 
-  public void fireParagraphCreateEvent(ParagraphJob p) throws IOException {
+  public void fireParagraphCreateEvent(final Paragraph p) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
       listener.onParagraphCreate(p);
     }
   }
 
-  public void fireParagraphRemoveEvent(ParagraphJob p) throws IOException {
+  public void fireParagraphRemoveEvent(final Paragraph p) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
       listener.onParagraphRemove(p);
     }
   }
 
 
-  public void fireParagraphUpdateEvent(ParagraphJob p) throws IOException {
+  public void fireParagraphUpdateEvent(final Paragraph p) throws IOException {
     for (NoteEventListener listener : noteEventListeners) {
       listener.onParagraphUpdate(p);
     }
@@ -375,26 +415,26 @@ public class Note implements JsonSerializable {
    *
    * @param index index of paragraphs
    */
-  public ParagraphJob insertNewParagraph(int index, AuthenticationInfo authenticationInfo) {
-    ParagraphJob paragraph = new ParagraphJob(this, paragraphJobListener);
-    paragraph.setAuthenticationInfo(authenticationInfo);
-    setParagraphMagic(paragraph, index);
+  public Paragraph insertNewParagraph(final int index, final AuthenticationInfo authenticationInfo) {
+    //TODO(egorklimov): Fix this.
+    Paragraph paragraph = new Paragraph("", "", authenticationInfo.getUser(), new Date(),
+        new GUI());
     insertParagraph(paragraph, index);
     return paragraph;
   }
 
-  public void addParagraph(ParagraphJob paragraph) {
+  public void addParagraph(final Paragraph paragraph) {
     insertParagraph(paragraph, paragraphs.size());
   }
 
-  private void insertParagraph(ParagraphJob paragraph, int index) {
+  private void insertParagraph(final Paragraph paragraph, final int index) {
     synchronized (paragraphs) {
       paragraphs.add(index, paragraph);
     }
     try {
       fireParagraphCreateEvent(paragraph);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error("Failed to insert paragraph", e);
     }
   }
 
@@ -404,76 +444,49 @@ public class Note implements JsonSerializable {
    * @param paragraphId ID of paragraph
    * @return a paragraph that was deleted, or <code>null</code> otherwise
    */
-  public ParagraphJob removeParagraph(String user, String paragraphId) {
+  public Paragraph removeParagraph(final String user, final String paragraphId) {
     removeAllAngularObjectInParagraph(user, paragraphId);
     interpreterSettingManager.removeResourcesBelongsToParagraph(getId(), paragraphId);
     synchronized (paragraphs) {
-      Iterator<ParagraphJob> i = paragraphs.iterator();
-      while (i.hasNext()) {
-        ParagraphJob p = i.next();
-        if (p.getId().equals(paragraphId)) {
-          i.remove();
-          try {
-            fireParagraphRemoveEvent(p);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          return p;
-        }
+      for (Paragraph p : paragraphs) {
+        //TODO(egorklimov): fix Paragraph's id
+
+        //        if (p.getId().equals(paragraphId)) {
+        //          i.remove();
+        //          try {
+        //            fireParagraphRemoveEvent(p);
+        //          } catch (IOException e) {
+        //            logger.error("Failed to remove paragraph", e);
+        //          }
+        //          return p;
+        //        }
       }
     }
     return null;
   }
 
-  public void clearParagraphOutputFields(ParagraphJob p) {
-    p.setReturn(null, null);
-    p.cleanRuntimeInfos();
+  public void clearParagraphOutputFields(final String paragraphId) {
+    throw new NotImplementedException("Should be done by InterpreterResultService");
   }
 
-  public ParagraphJob clearPersonalizedParagraphOutput(String paragraphId, String user) {
-    synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        if (!p.getId().equals(paragraphId)) {
-          continue;
-        }
-
-        p = p.getUserParagraphMap().get(user);
-        clearParagraphOutputFields(p);
-        return p;
-      }
-    }
-    return null;
+  public Paragraph clearPersonalizedParagraphOutput(final String paragraphId, final String user) {
+    throw new NotImplementedException("Personalized mode removed");
   }
-
   /**
    * Clear paragraph output by id.
    *
    * @param paragraphId ID of paragraph
-   * @return ParagraphJob
+   * @return Paragraph
    */
-  public ParagraphJob clearParagraphOutput(String paragraphId) {
-    synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        if (!p.getId().equals(paragraphId)) {
-          continue;
-        }
-
-        clearParagraphOutputFields(p);
-        return p;
-      }
-    }
-    return null;
+  public Paragraph clearParagraphOutput(final String paragraphId) {
+    throw new NotImplementedException("Should be done by InterpreterResultService");
   }
 
   /**
    * Clear all paragraph output of note
    */
   public void clearAllParagraphOutput() {
-    synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        p.setReturn(null, null);
-      }
-    }
+    throw new NotImplementedException("Should be done by InterpreterResultService");
   }
 
   /**
@@ -482,7 +495,7 @@ public class Note implements JsonSerializable {
    * @param paragraphId ID of paragraph
    * @param index       new index
    */
-  public void moveParagraph(String paragraphId, int index) {
+  public void moveParagraph(final String paragraphId, final int index) {
     moveParagraph(paragraphId, index, false);
   }
 
@@ -494,10 +507,11 @@ public class Note implements JsonSerializable {
    * @param throwWhenIndexIsOutOfBound whether throw IndexOutOfBoundException
    *                                   when index is out of bound
    */
-  public void moveParagraph(String paragraphId, int index, boolean throwWhenIndexIsOutOfBound) {
+  public void moveParagraph(final String paragraphId, final int index,
+      final boolean throwWhenIndexIsOutOfBound) {
     synchronized (paragraphs) {
       int oldIndex;
-      ParagraphJob p = null;
+      Paragraph p = null;
 
       if (index < 0 || index >= paragraphs.size()) {
         if (throwWhenIndexIsOutOfBound) {
@@ -509,13 +523,15 @@ public class Note implements JsonSerializable {
       }
 
       for (int i = 0; i < paragraphs.size(); i++) {
-        if (paragraphs.get(i).getId().equals(paragraphId)) {
-          oldIndex = i;
-          if (oldIndex == index) {
-            return;
-          }
-          p = paragraphs.remove(i);
-        }
+        //TODO(egorklimov): fix Paragraph's id
+
+        //        if (paragraphs.get(i).getId().equals(paragraphId)) {
+        //          oldIndex = i;
+        //          if (oldIndex == index) {
+        //            return;
+        //          }
+        //          p = paragraphs.remove(i);
+        //        }
       }
 
       if (p != null) {
@@ -524,16 +540,20 @@ public class Note implements JsonSerializable {
     }
   }
 
-  public boolean isLastParagraph(String paragraphId) {
+  public boolean isLastParagraph(final String paragraphId) {
     if (!paragraphs.isEmpty()) {
       synchronized (paragraphs) {
-        if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
-          return true;
-        }
+        //TODO(egorklimov): fix Paragraph's id
+
+        //        if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
+        //          return true;
+        //        }
       }
       return false;
     }
-    /** because empty list, cannot remove nothing right? */
+    //TODO(egorklimov): check logic:
+
+    /* because empty list, cannot remove nothing right? */
     return true;
   }
 
@@ -541,185 +561,96 @@ public class Note implements JsonSerializable {
     return paragraphs.size();
   }
 
-  public ParagraphJob getParagraph(String paragraphId) {
+  public Paragraph getParagraph(final String paragraphId) {
     synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        if (p.getId().equals(paragraphId)) {
-          return p;
-        }
+      for (Paragraph p : paragraphs) {
+        //TODO(egorklimov): fix Paragraph's id
+
+        //        if (p.getId().equals(paragraphId)) {
+        //          return p;
+        //        }
       }
     }
     return null;
   }
 
-  public ParagraphJob getParagraph(int index) {
+  public Paragraph getParagraph(final int index) {
     return paragraphs.get(index);
   }
 
-  public ParagraphJob getLastParagraph() {
+  public Paragraph getLastParagraph() {
     synchronized (paragraphs) {
       return paragraphs.get(paragraphs.size() - 1);
     }
   }
 
   public List<Map<String, String>> generateParagraphsInfo() {
-    List<Map<String, String>> paragraphsInfo = new LinkedList<>();
+    List<Map<String, String>> paragraphsInfo = new ArrayList<>();
     synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        Map<String, String> info = populateParagraphInfo(p);
-        paragraphsInfo.add(info);
+      for (Paragraph p : paragraphs) {
+        //TODO(egorklimov): Fix Paragraph id
+        //Map<String, String> info = populateParagraphInfo(p.getId());
+        //paragraphsInfo.add(info);
       }
     }
     return paragraphsInfo;
   }
 
-  public Map<String, String> generateSingleParagraphInfo(String paragraphId) {
-    synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        if (p.getId().equals(paragraphId)) {
-          return populateParagraphInfo(p);
-        }
-      }
-      return new HashMap<>();
-    }
+  public Map<String, String> generateSingleParagraphInfo(final String paragraphId) {
+    // TODO(egorklimov): необходимо либо получить ParagraphJob и получить информацию о выполнении,
+    // либо выдать информацию о параграфе
+    throw new NotImplementedException("Which paragraph info is needed?");
+    //    synchronized (paragraphs) {
+    //      for (Paragraph p : paragraphs) {
+    //        if (p.getId().equals(paragraphId)) {
+    //          return populateParagraphInfo(p);
+    //        }
+    //      }
+    //      return new HashMap<>();
+    //    }
   }
 
-  private Map<String, String> populateParagraphInfo(ParagraphJob p) {
-    Map<String, String> info = new HashMap<>();
-    info.put("id", p.getId());
-    info.put("status", p.getStatus().toString());
-    if (p.getDateStarted() != null) {
-      info.put("started", p.getDateStarted().toString());
-    }
-    if (p.getDateFinished() != null) {
-      info.put("finished", p.getDateFinished().toString());
-    }
-    if (p.getStatus().isRunning()) {
-      info.put("progress", String.valueOf(p.progress()));
-    } else {
-      info.put("progress", String.valueOf(100));
-    }
-    return info;
+  private Map<String, String> populateParagraphInfo(final String paragraphId) {
+    // TODO(egorklimov): необходимо либо получить ParagraphJob и получить информацию о выполнении,
+    // либо выдать информацию о параграфе
+    throw new NotImplementedException("Which paragraph info is needed?");
+    //    Map<String, String> info = new HashMap<>();
+    //    info.put("id", p.getId());
+    //    info.put("status", p.getStatus().toString());
+    //    if (p.getDateStarted() != null) {
+    //      info.put("started", p.getDateStarted().toString());
+    //    }
+    //    if (p.getDateFinished() != null) {
+    //      info.put("finished", p.getDateFinished().toString());
+    //    }
+    //    if (p.getStatus().isRunning()) {
+    //      info.put("progress", String.valueOf(p.progress()));
+    //    } else {
+    //      info.put("progress", String.valueOf(100));
+    //    }
+    //return info;
   }
 
-  private void setParagraphMagic(ParagraphJob p, int index) {
-    if (paragraphs.size() > 0) {
-      String replName;
-      if (index == 0) {
-        replName = paragraphs.get(0).getIntpText();
-      } else {
-        replName = paragraphs.get(index - 1).getIntpText();
-      }
-      if (p.isValidInterpreter(replName) && StringUtils.isNotEmpty(replName)) {
-        p.setText("%" + replName + "\n");
-      }
-    }
-  }
 
-  public void runAllParagraphs(AuthenticationInfo authenticationInfo, boolean blockingParagraph) {
-    runParagraphs(authenticationInfo, true, blockingParagraph, getParagraphs());
-  }
-
-  public void runParagraphs(AuthenticationInfo authenticationInfo,
-      boolean blocking,
-      boolean blockingParagraph,
-      List<ParagraphJob> paragraphs) {
-    synchronized (this) {
-      if (isRunning()) {
-        logger.warn("Can't run note because it already is running");
-        return;
-      }
-      setRunning(true);
-    }
-
-    CountDownLatch cdlLock = new CountDownLatch(1);
-
-    noteExecutor.execute(() -> {
-      try {
-        for (ParagraphJob p : paragraphs) {
-          if (!p.isEnabled()) {
-            continue;
-          }
-          p.setAuthenticationInfo(authenticationInfo);
-          if (this.executionAborted.get() || !run(p.getId(), blockingParagraph)) {
-            logger.warn("Skip running the remain notes because {} ", this.executionAborted.get() ?
-                "note executions is aborted" : "paragraph " + p.getId() + " fails");
-            break;
-          }
-        }
-      } finally {
-        setRunning(false);
-        cdlLock.countDown();
-      }
-    });
-
-    if (blocking) {
-      try {
-        cdlLock.await();
-      } catch (InterruptedException ignore) {
-      }
-    }
-  }
-
-  public boolean run(String paragraphId) {
-    return run(paragraphId, false);
-  }
-
-  /**
-   * Run a single paragraph.
-   *
-   * @param paragraphId ID of paragraph
-   */
-  public boolean run(String paragraphId, boolean blocking) {
-    ParagraphJob p = getParagraph(paragraphId);
-    p.setListener(this.paragraphJobListener);
-    return p.execute(blocking);
-  }
-
-  /**
-   * Return true if there is a running or pending paragraph
-   */
-  boolean haveRunningOrPendingParagraphs() {
-    synchronized (paragraphs) {
-      for (ParagraphJob p : paragraphs) {
-        Status status = p.getStatus();
-        if (status.isRunning() || status.isPending()) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  public boolean isExecutionAborted() {
-    return this.executionAborted.get();
-  }
-
-  public void abortExecution() {
-    this.executionAborted.set(true);
-  }
-
-  public boolean isTrash() {
+  public boolean isTrashed() {
     return this.path.startsWith("/" + NoteManager.TRASH_FOLDER);
   }
 
-
-  public List<ParagraphJob> getParagraphs() {
+  public List<Paragraph> getParagraphs() {
     synchronized (paragraphs) {
-      return new LinkedList<>(paragraphs);
+      return Collections.unmodifiableList(paragraphs);
     }
   }
 
-  private void snapshotAngularObjectRegistry(String user) {
-    angularObjects = new HashMap<>();
+  private void snapshotAngularObjectRegistry(final String user) {
+    angularObjects.clear();
 
-    List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(getId());
-    if (settings == null || settings.size() == 0) {
+    List<InterpreterSetting> interpreterSettings = interpreterSettingManager.getInterpreterSettings(getId());
+    if (interpreterSettings == null || interpreterSettings.isEmpty()) {
       return;
     }
 
-    for (InterpreterSetting setting : settings) {
+    for (InterpreterSetting setting : interpreterSettings) {
       InterpreterGroup intpGroup = setting.getInterpreterGroup(user, id);
       if (intpGroup != null) {
         AngularObjectRegistry registry = intpGroup.getAngularObjectRegistry();
@@ -728,15 +659,17 @@ public class Note implements JsonSerializable {
     }
   }
 
-  private void removeAllAngularObjectInParagraph(String user, String paragraphId) {
-    angularObjects = new HashMap<>();
+  private void removeAllAngularObjectInParagraph(final String user, final String paragraphId) {
+    // TODO(egorklimov): Почему при удалении angularObjects в параграфе удаляются все
+    // angularObjects в ноуте?
+    angularObjects.clear();
 
-    List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(getId());
-    if (settings == null || settings.size() == 0) {
+    List<InterpreterSetting> interpreterSettings = interpreterSettingManager.getInterpreterSettings(getId());
+    if (interpreterSettings == null || interpreterSettings.isEmpty()) {
       return;
     }
 
-    for (InterpreterSetting setting : settings) {
+    for (InterpreterSetting setting : interpreterSettings) {
       if (setting.getInterpreterGroup(user, id) == null) {
         continue;
       }
@@ -747,70 +680,46 @@ public class Note implements JsonSerializable {
         // remove paragraph scope object
         ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(id, paragraphId);
 
-        // remove app scope object
-        List<ApplicationState> appStates = getParagraph(paragraphId).getAllApplicationStates();
-        if (appStates != null) {
-          for (ApplicationState app : appStates) {
-            ((RemoteAngularObjectRegistry) registry)
-                .removeAllAndNotifyRemoteProcess(id, app.getId());
-          }
-        }
+        // TODO(egorklimov): ApplicationState был убран из Paragraph
+
+        //        // remove app scope object
+        //        List<ApplicationState> appStates = getParagraph(paragraphId).getParagraph().getApps();
+        //        if (appStates != null) {
+        //          for (ApplicationState app : appStates) {
+        //            ((RemoteAngularObjectRegistry) registry)
+        //                .removeAllAndNotifyRemoteProcess(id, app.getId());
+        //          }
+        //        }
       } else {
         registry.removeAll(id, paragraphId);
 
-        // remove app scope object
-        List<ApplicationState> appStates = getParagraph(paragraphId).getAllApplicationStates();
-        if (appStates != null) {
-          for (ApplicationState app : appStates) {
-            registry.removeAll(id, app.getId());
-          }
-        }
+        // TODO(egorklimov): ApplicationState был убран из Paragraph
+
+        //        // remove app scope object
+        //        List<ApplicationState> appStates = getParagraph(paragraphId).getParagraph().getApps();
+        //        if (appStates != null) {
+        //          for (ApplicationState app : appStates) {
+        //            registry.removeAll(id, app.getId());
+        //          }
+        //        }
       }
     }
-  }
-
-  /**
-   * Return new note for specific user. this inserts and replaces user paragraph which doesn't
-   * exists in original paragraph
-   *
-   * @param user specific user
-   * @return new Note for the user
-   */
-  public Note getUserNote(String user) {
-    Note newNote = new Note();
-    newNote.name = getName();
-    newNote.id = getId();
-    newNote.config = getConfig();
-    newNote.angularObjects = getAngularObjects();
-
-    ParagraphJob newParagraph;
-    for (ParagraphJob p : paragraphs) {
-      newParagraph = p.getUserParagraph(user);
-      if (null == newParagraph) {
-        newParagraph = p.cloneParagraphForUser(user);
-      }
-      newNote.paragraphs.add(newParagraph);
-    }
-
-    return newNote;
   }
 
   public CronJobConfiguration getConfig() {
     return config;
   }
 
-  public void setConfig(CronJobConfiguration config) {
-    this.config = config;
+  public List<NoteEventListener> getNoteEventListeners() {
+    return noteEventListeners;
   }
 
-  public synchronized void setRunning(boolean runStatus) {
-    this.executionAborted.set(false);
-    if (isRunning != runStatus) {
-      isRunning = runStatus;
-      if (paragraphJobListener != null) {
-        paragraphJobListener.noteRunningStatusChange(this.id, runStatus);
-      }
-    }
+  public void setConfig(final CronJobConfiguration config) {
+    this.config.setCronEnabled(config.isCronEnabled());
+    this.config.setCronExpression(config.getCronExpression());
+    this.config.setReleaseResourceFlag(config.isReleaseResourceFlag());
+    this.config.setCronExecutingUser(config.getCronExecutingUser());
+    this.config.setCronExecutingRoles(config.getCronExecutingRoles());
   }
 
   public synchronized boolean isRunning() {
@@ -826,46 +735,13 @@ public class Note implements JsonSerializable {
     }
   }
 
-  @Override
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static Note fromJson(String json) {
+  public static Note fromJson(final String json) {
     Note note = gson.fromJson(json, Note.class);
-    convertOldInput(note);
-    note.postProcessParagraphs();
     return note;
   }
 
-  public void postProcessParagraphs() {
-    for (ParagraphJob p : paragraphs) {
-      p.cleanRuntimeInfos();
-      p.prepareInterpreterContext();
-
-      if (p.getStatus() == Status.PENDING || p.getStatus() == Status.RUNNING) {
-        p.setStatus(Status.ABORT);
-      }
-
-      List<ApplicationState> appStates = p.getAllApplicationStates();
-      if (appStates != null) {
-        for (ApplicationState app : appStates) {
-          if (app.getStatus() != ApplicationState.Status.ERROR) {
-            app.setStatus(ApplicationState.Status.UNLOADED);
-          }
-        }
-      }
-    }
-  }
-
-  private static void convertOldInput(Note note) {
-    for (ParagraphJob p : note.paragraphs) {
-      p.settings.convertOldInput();
-    }
-  }
-
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -906,9 +782,5 @@ public class Note implements JsonSerializable {
   @VisibleForTesting
   public static Gson getGson() {
     return gson;
-  }
-
-  public void setNoteEventListeners(List<NoteEventListener> noteEventListeners) {
-    this.noteEventListeners = noteEventListeners;
   }
 }
