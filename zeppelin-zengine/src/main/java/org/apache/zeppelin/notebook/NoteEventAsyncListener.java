@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.notebook;
 
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 
 import java.util.concurrent.BlockingQueue;
@@ -70,22 +71,22 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
   }
 
   @Override
-  public void onParagraphCreate(ParagraphJob p) {
+  public void onParagraphCreate(Paragraph p) {
     eventsQueue.add(new ParagraphCreateEvent(p));
   }
 
   @Override
-  public void onParagraphRemove(ParagraphJob p) {
+  public void onParagraphRemove(Paragraph p) {
     eventsQueue.add(new ParagraphRemoveEvent(p));
   }
 
   @Override
-  public void onParagraphUpdate(ParagraphJob p) {
+  public void onParagraphUpdate(Paragraph p) {
     eventsQueue.add(new ParagraphUpdateEvent(p));
   }
 
   @Override
-  public void onParagraphStatusChange(ParagraphJob p, Job.Status status) {
+  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
     eventsQueue.add(new ParagraphStatusChangeEvent(p));
   }
 
@@ -172,49 +173,49 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
   }
 
   public static class ParagraphCreateEvent implements NoteEvent {
-    private ParagraphJob p;
+    private Paragraph p;
 
-    public ParagraphCreateEvent(ParagraphJob p) {
+    public ParagraphCreateEvent(Paragraph p) {
       this.p = p;
     }
 
-    public ParagraphJob getParagraph() {
+    public Paragraph getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphUpdateEvent implements NoteEvent {
-    private ParagraphJob p;
+    private Paragraph p;
 
-    public ParagraphUpdateEvent(ParagraphJob p) {
+    public ParagraphUpdateEvent(Paragraph p) {
       this.p = p;
     }
 
-    public ParagraphJob getParagraph() {
+    public Paragraph getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphRemoveEvent implements NoteEvent {
-    private ParagraphJob p;
+    private Paragraph p;
 
-    public ParagraphRemoveEvent(ParagraphJob p) {
+    public ParagraphRemoveEvent(Paragraph p) {
       this.p = p;
     }
 
-    public ParagraphJob getParagraph() {
+    public Paragraph getParagraph() {
       return p;
     }
   }
 
   public static class ParagraphStatusChangeEvent implements NoteEvent {
-    private ParagraphJob p;
+    private Paragraph p;
 
-    public ParagraphStatusChangeEvent(ParagraphJob p) {
+    public ParagraphStatusChangeEvent(Paragraph p) {
       this.p = p;
     }
 
-    public ParagraphJob getParagraph() {
+    public Paragraph getParagraph() {
       return p;
     }
   }

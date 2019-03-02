@@ -25,7 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 
 /**
- * ParagraphJob runtime info based on paragraph text.
+ * Paragraph runtime info based on paragraph text.
  */
 public class ParagraphJobContext {
 

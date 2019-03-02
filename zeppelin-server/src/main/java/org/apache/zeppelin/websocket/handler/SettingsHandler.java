@@ -23,7 +23,7 @@ import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -68,7 +68,7 @@ public class SettingsHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.ANY, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("paragraphId", fromSockMessage, note);
+    final Paragraph p = safeLoadParagraph("paragraphId", fromSockMessage, note);
 
     final String replName = fromSockMessage.safeGetType("magic", LOG);
 

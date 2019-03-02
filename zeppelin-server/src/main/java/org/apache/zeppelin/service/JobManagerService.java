@@ -20,7 +20,7 @@ package org.apache.zeppelin.service;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ public class JobManagerService {
     return notesJobInfo;
   }
 
-  private static long getUnixTimeLastRunParagraph(final ParagraphJob paragraph) {
+  private static long getUnixTimeLastRunParagraph(final Paragraph paragraph) {
     if (paragraph.isTerminated() && paragraph.getDateFinished() != null) {
       return paragraph.getDateFinished().getTime();
     } else if (paragraph.isRunning()) {
@@ -88,7 +88,7 @@ public class JobManagerService {
     private final String name;
     private final Job.Status status;
 
-    public ParagraphJobInfo(final ParagraphJob p) {
+    public ParagraphJobInfo(final Paragraph p) {
       this.id = p.getId();
       if (StringUtils.isBlank(p.getTitle())) {
         this.name = p.getId();
@@ -124,7 +124,7 @@ public class JobManagerService {
 
       // set paragraphs
       this.paragraphs = new ArrayList<>();
-      for (final ParagraphJob paragraph : note.getParagraphs()) {
+      for (final Paragraph paragraph : note.getParagraphs()) {
         // check paragraph's status.
         if (paragraph.getStatus().isRunning()) {
           isNoteRunning = true;

@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.zeppelin.display.Input;
 import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
@@ -91,11 +92,11 @@ public abstract class AbstractHandler {
     return note;
   }
 
-  protected ParagraphJob safeLoadParagraph(final String paramName,
+  protected Paragraph safeLoadParagraph(final String paramName,
                                         final SockMessage fromSockMessage,
                                         final Note note) {
     final String paragraphId = fromSockMessage.safeGetType(paramName, LOG);
-    final ParagraphJob p = note.getParagraph(paragraphId);
+    final Paragraph p = note.getParagraph(paragraphId);
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);
     }

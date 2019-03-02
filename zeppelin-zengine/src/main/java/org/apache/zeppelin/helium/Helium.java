@@ -39,7 +39,7 @@ import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.resource.DistributedResourcePool;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
@@ -377,7 +377,7 @@ public class Helium {
     return heliumConf.getPackagePersistedConfig(artifact);
   }
 
-  public HeliumPackageSuggestion suggestApp(ParagraphJob paragraph) {
+  public HeliumPackageSuggestion suggestApp(Paragraph paragraph) {
     HeliumPackageSuggestion suggestion = new HeliumPackageSuggestion();
 
     Interpreter intp = null;

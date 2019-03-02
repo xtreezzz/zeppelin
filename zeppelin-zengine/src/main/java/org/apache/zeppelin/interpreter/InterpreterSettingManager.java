@@ -71,7 +71,7 @@ import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
@@ -908,7 +908,7 @@ public class InterpreterSettingManager {
         AngularObjectRegistry registry = interpreterGroup.getAngularObjectRegistry();
         if (registry instanceof RemoteAngularObjectRegistry) {
           // remove paragraph scope object
-          for (ParagraphJob p : note.getParagraphs()) {
+          for (Paragraph p : note.getParagraphs()) {
             ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(note.getId(), p.getId());
 
             // remove app scope object
@@ -924,7 +924,7 @@ public class InterpreterSettingManager {
           ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(note.getId(), null);
         } else {
           // remove paragraph scope object
-          for (ParagraphJob p : note.getParagraphs()) {
+          for (Paragraph p : note.getParagraphs()) {
             registry.removeAll(note.getId(), p.getId());
 
             // remove app scope object

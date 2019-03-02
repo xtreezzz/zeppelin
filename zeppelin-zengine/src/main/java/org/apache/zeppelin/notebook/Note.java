@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,7 @@ import java.io.IOException;
 //TODO(egorklimov):
 // * Убрал toJson, сериализация в json должна производиться явно
 // * Убрал все что связано с исполнением
-// * Убрал все персонализированный мод
+// * Убрал персонализированный мод
 public class Note implements Serializable {
   private static final Logger logger = LoggerFactory.getLogger(Note.class);
   private static Gson gson = new GsonBuilder()
@@ -448,18 +449,18 @@ public class Note implements Serializable {
     removeAllAngularObjectInParagraph(user, paragraphId);
     interpreterSettingManager.removeResourcesBelongsToParagraph(getId(), paragraphId);
     synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
-        //TODO(egorklimov): fix Paragraph's id
-
-        //        if (p.getId().equals(paragraphId)) {
-        //          i.remove();
-        //          try {
-        //            fireParagraphRemoveEvent(p);
-        //          } catch (IOException e) {
-        //            logger.error("Failed to remove paragraph", e);
-        //          }
-        //          return p;
-        //        }
+      Iterator<Paragraph> i = paragraphs.iterator();
+      while (i.hasNext()) {
+        Paragraph p = i.next();
+        if (p.getId().equals(paragraphId)) {
+          i.remove();
+          try {
+            fireParagraphRemoveEvent(p);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          return p;
+        }
       }
     }
     return null;
@@ -523,15 +524,13 @@ public class Note implements Serializable {
       }
 
       for (int i = 0; i < paragraphs.size(); i++) {
-        //TODO(egorklimov): fix Paragraph's id
-
-        //        if (paragraphs.get(i).getId().equals(paragraphId)) {
-        //          oldIndex = i;
-        //          if (oldIndex == index) {
-        //            return;
-        //          }
-        //          p = paragraphs.remove(i);
-        //        }
+        if (paragraphs.get(i).getId().equals(paragraphId)) {
+          oldIndex = i;
+          if (oldIndex == index) {
+            return;
+          }
+          p = paragraphs.remove(i);
+        }
       }
 
       if (p != null) {
@@ -543,11 +542,9 @@ public class Note implements Serializable {
   public boolean isLastParagraph(final String paragraphId) {
     if (!paragraphs.isEmpty()) {
       synchronized (paragraphs) {
-        //TODO(egorklimov): fix Paragraph's id
-
-        //        if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
-        //          return true;
-        //        }
+        if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
+          return true;
+        }
       }
       return false;
     }
@@ -564,11 +561,9 @@ public class Note implements Serializable {
   public Paragraph getParagraph(final String paragraphId) {
     synchronized (paragraphs) {
       for (Paragraph p : paragraphs) {
-        //TODO(egorklimov): fix Paragraph's id
-
-        //        if (p.getId().equals(paragraphId)) {
-        //          return p;
-        //        }
+        if (p.getId().equals(paragraphId)) {
+          return p;
+        }
       }
     }
     return null;
@@ -588,16 +583,15 @@ public class Note implements Serializable {
     List<Map<String, String>> paragraphsInfo = new ArrayList<>();
     synchronized (paragraphs) {
       for (Paragraph p : paragraphs) {
-        //TODO(egorklimov): Fix Paragraph id
-        //Map<String, String> info = populateParagraphInfo(p.getId());
-        //paragraphsInfo.add(info);
+        Map<String, String> info = populateParagraphInfo(p.getId());
+        paragraphsInfo.add(info);
       }
     }
     return paragraphsInfo;
   }
 
   public Map<String, String> generateSingleParagraphInfo(final String paragraphId) {
-    // TODO(egorklimov): необходимо либо получить ParagraphJob и получить информацию о выполнении,
+    // TODO(egorklimov): необходимо либо получить Paragraph и получить информацию о выполнении,
     // либо выдать информацию о параграфе
     throw new NotImplementedException("Which paragraph info is needed?");
     //    synchronized (paragraphs) {
@@ -611,7 +605,7 @@ public class Note implements Serializable {
   }
 
   private Map<String, String> populateParagraphInfo(final String paragraphId) {
-    // TODO(egorklimov): необходимо либо получить ParagraphJob и получить информацию о выполнении,
+    // TODO(egorklimov): необходимо либо получить Paragraph и получить информацию о выполнении,
     // либо выдать информацию о параграфе
     throw new NotImplementedException("Which paragraph info is needed?");
     //    Map<String, String> info = new HashMap<>();

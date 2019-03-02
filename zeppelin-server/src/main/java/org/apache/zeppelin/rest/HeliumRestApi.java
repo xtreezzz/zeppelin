@@ -26,7 +26,7 @@ import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.helium.HeliumPackageSearchResult;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,9 +110,9 @@ public class HeliumRestApi {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
 
-    final ParagraphJob paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
-      return new JsonResponse(HttpStatus.NOT_FOUND, "ParagraphJob " + paragraphId + " not found")
+      return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
               .build();
     }
     try {
@@ -132,9 +132,9 @@ public class HeliumRestApi {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
 
-    final ParagraphJob paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
-      return new JsonResponse(HttpStatus.NOT_FOUND, "ParagraphJob " + paragraphId + " not found")
+      return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
               .build();
     }
     final HeliumPackage pkg = HeliumPackage.fromJson(heliumPackage);

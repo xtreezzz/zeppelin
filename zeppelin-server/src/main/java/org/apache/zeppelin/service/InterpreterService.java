@@ -42,7 +42,7 @@ import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +185,7 @@ public class InterpreterService {
     return notebook.getAllNotes().stream()
             .map(Note::getParagraphs)
             .flatMap(Collection::stream)
-            .filter(ParagraphJob::isRunning)
+            .filter(Paragraph::isRunning)
             .map(this::extractParagraphInfo)
             .collect(Collectors.toList());
   }
@@ -193,7 +193,7 @@ public class InterpreterService {
   /**
    * Extract paragraph's interpreter info with paragraph data.
    */
-  private Map<String, String> extractParagraphInfo(final ParagraphJob paragraph) {
+  private Map<String, String> extractParagraphInfo(final Paragraph paragraph) {
     try {
       final ManagedInterpreterGroup process = (ManagedInterpreterGroup) paragraph
               .getBindedInterpreter().getInterpreterGroup();

@@ -266,7 +266,7 @@ package org.apache.zeppelin.notebook;
 //  public void testSelectingReplImplementation() throws IOException {
 //    Note note = notebook.createNote("note1", anonymous);
 //    // run with default repl
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config = p1.getConfig();
 //    config.put("enabled", true);
 //    p1.setConfig(config);
@@ -277,7 +277,7 @@ package org.apache.zeppelin.notebook;
 //    assertEquals("repl1: hello world", p1.getReturn().message().get(0).getData());
 //
 //    // run with specific repl
-//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p2.setConfig(config);
 //    p2.setText("%mock2 hello world");
 //    p2.setAuthenticationInfo(anonymous);
@@ -290,7 +290,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void testReloadAndSetInterpreter() throws IOException {
 //    Note note = notebook.createNote("note1", AuthenticationInfo.ANONYMOUS);
-//    ParagraphJob p1 = note.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%md hello world");
 //
 //    // when load
@@ -310,7 +310,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void testReloadAllNotes() throws IOException {
 //    Note note1 = notebook.createNote("note1", AuthenticationInfo.ANONYMOUS);
-//    ParagraphJob p1 = note1.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%md hello world");
 //
 //    Note note2 = notebook.cloneNote(note1.getId(), "copied note", AuthenticationInfo.ANONYMOUS);
@@ -346,7 +346,7 @@ package org.apache.zeppelin.notebook;
 //    try {
 //      assertEquals(0, notebook.getAllNotes().size());
 //      note = notebook.createNote("note1", anonymous);
-//      ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//      Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //      Map config = p1.getConfig();
 //      config.put("enabled", true);
 //      p1.setConfig(config);
@@ -364,7 +364,7 @@ package org.apache.zeppelin.notebook;
 //    Note note = notebook.createNote("note1", anonymous);
 //
 //    // run with default repl
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config = p1.getConfig();
 //    config.put("enabled", true);
 //    p1.setConfig(config);
@@ -396,7 +396,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void testClearParagraphOutput() throws IOException, SchedulerException {
 //    Note note = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config = p1.getConfig();
 //    config.put("enabled", true);
 //    p1.setConfig(config);
@@ -416,7 +416,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void testRunBlankParagraph() throws IOException, SchedulerException, InterruptedException {
 //    Note note = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("");
 //    p1.setAuthenticationInfo(anonymous);
 //    note.run(p1.getId());
@@ -432,21 +432,21 @@ package org.apache.zeppelin.notebook;
 //    Note note = notebook.createNote("note1", anonymous);
 //
 //    // p1
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config1 = p1.getConfig();
 //    config1.put("enabled", true);
 //    p1.setConfig(config1);
 //    p1.setText("%mock1 p1");
 //
 //    // p2
-//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config2 = p2.getConfig();
 //    config2.put("enabled", false);
 //    p2.setConfig(config2);
 //    p2.setText("%mock1 p2");
 //
 //    // p3
-//    ParagraphJob p3 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p3 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p3.setText("%mock1 p3");
 //
 //    // when
@@ -463,7 +463,7 @@ package org.apache.zeppelin.notebook;
 //  public void testSchedule() throws InterruptedException, IOException {
 //    // create a note and a paragraph
 //    Note note = notebook.createNote("note1", anonymous);
-//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config = new HashMap<>();
 //    p.setConfig(config);
 //    p.setText("p1");
@@ -496,7 +496,7 @@ package org.apache.zeppelin.notebook;
 //    Note note = notebook.createNote("note1", anonymous);
 //    // append running and pending paragraphs to the note
 //    for (Status status : new Status[]{Status.RUNNING, Status.PENDING}) {
-//      ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//      Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //      Map config = new HashMap<>();
 //      p.setConfig(config);
 //      p.setText("p");
@@ -519,7 +519,7 @@ package org.apache.zeppelin.notebook;
 //    Thread.sleep(2 * 1000);
 //
 //    // check if the executions of the running and pending paragraphs were skipped
-//    for (ParagraphJob p : note.getParagraphs()) {
+//    for (Paragraph p : note.getParagraphs()) {
 //      assertNull(p.getDateFinished());
 //    }
 //
@@ -551,7 +551,7 @@ package org.apache.zeppelin.notebook;
 //  }
 //
 //  private void executeNewParagraphByCron(Note note, String cron) {
-//    ParagraphJob paragraph = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph paragraph = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    paragraph.setText("p");
 //    Map<String, Object> config = note.getConfig();
 //    config.put("enabled", true);
@@ -652,12 +652,12 @@ package org.apache.zeppelin.notebook;
 //    // create a note and a paragraph
 //    Note note = notebook.createNote("note1", anonymous);
 //
-//    ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    Map config = new HashMap<>();
 //    p.setConfig(config);
 //    p.setText("%mock1 sleep 1000");
 //
-//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p2.setConfig(config);
 //    p2.setText("%mock2 sleep 500");
 //
@@ -713,7 +713,7 @@ package org.apache.zeppelin.notebook;
 //            cronNote.getId(), "mock1", "test");
 //
 //    // create a paragraph of the cron scheduled note.
-//    ParagraphJob cronNoteParagraph = cronNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph cronNoteParagraph = cronNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    cronNoteParagraph.setConfig(new HashMap() {
 //      {
 //        put("enabled", true);
@@ -729,7 +729,7 @@ package org.apache.zeppelin.notebook;
 //            anotherNote.getId(), "mock2", "test");
 //
 //    // create a paragraph of another note
-//    ParagraphJob anotherNoteParagraph = anotherNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph anotherNoteParagraph = anotherNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    anotherNoteParagraph.setConfig(new HashMap() {
 //      {
 //        put("enabled", true);
@@ -804,7 +804,7 @@ package org.apache.zeppelin.notebook;
 //      InterruptedException, InterpreterException, SchedulerException, RepositoryException {
 //    Note note = notebook.createNote("note1", anonymous);
 //
-//    final ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    final Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    String simpleText = "hello world";
 //    p.setText(simpleText);
 //
@@ -814,7 +814,7 @@ package org.apache.zeppelin.notebook;
 //
 //    Note importedNote = notebook.importNote(exportedNoteJson, "Title", anonymous);
 //
-//    ParagraphJob p2 = importedNote.getParagraphs().get(0);
+//    Paragraph p2 = importedNote.getParagraphs().get(0);
 //
 //    // Test
 //    assertEquals(p.getId(), p2.getId());
@@ -838,13 +838,13 @@ package org.apache.zeppelin.notebook;
 //  public void testCloneNote() throws IOException {
 //    Note note = notebook.createNote("note1", anonymous);
 //
-//    final ParagraphJob p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    final Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText("hello world");
 //    note.runAllParagraphs(anonymous, true);
 //
 //    p.setStatus(Status.RUNNING);
 //    Note cloneNote = notebook.cloneNote(note.getId(), "clone note", anonymous);
-//    ParagraphJob cp = cloneNote.getParagraph(0);
+//    Paragraph cp = cloneNote.getParagraph(0);
 //    assertEquals(cp.getStatus(), Status.READY);
 //
 //    // Keep same ParagraphId
@@ -869,9 +869,9 @@ package org.apache.zeppelin.notebook;
 //  public void testResourceRemovealOnParagraphNoteRemove() throws IOException {
 //    Note note = notebook.createNote("note1", anonymous);
 //
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%mock1 hello");
-//    ParagraphJob p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p2.setText("%mock2 world");
 //    for (InterpreterGroup intpGroup : interpreterSettingManager.getAllInterpreterGroup()) {
 //      intpGroup.setResourcePool(new LocalResourcePool(intpGroup.getId()));
@@ -899,7 +899,7 @@ package org.apache.zeppelin.notebook;
 //        .getInterpreterSettings(note.getId()).get(0).getOrCreateInterpreterGroup(anonymous.getUser(), "sharedProcess")
 //        .getAngularObjectRegistry();
 //
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // add paragraph scope object
 //    registry.add("o1", "object1", note.getId(), p1.getId());
@@ -931,7 +931,7 @@ package org.apache.zeppelin.notebook;
 //        .getInterpreterSettings(note.getId()).get(0).getOrCreateInterpreterGroup(anonymous.getUser(), "sharedProcess")
 //        .getAngularObjectRegistry();
 //
-//    ParagraphJob p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // add paragraph scope object
 //    registry.add("o1", "object1", note.getId(), p1.getId());
@@ -1041,11 +1041,11 @@ package org.apache.zeppelin.notebook;
 //    Note note = notebook.createNote("note1", anonymous);
 //
 //    // create three paragraphs
-//    ParagraphJob p1 = note.addNewParagraph(anonymous);
+//    Paragraph p1 = note.addNewParagraph(anonymous);
 //    p1.setText("%mock1 sleep 1000");
-//    ParagraphJob p2 = note.addNewParagraph(anonymous);
+//    Paragraph p2 = note.addNewParagraph(anonymous);
 //    p2.setText("%mock1 sleep 1000");
-//    ParagraphJob p3 = note.addNewParagraph(anonymous);
+//    Paragraph p3 = note.addNewParagraph(anonymous);
 //    p3.setText("%mock1 sleep 1000");
 //
 //
@@ -1073,7 +1073,7 @@ package org.apache.zeppelin.notebook;
 //  public void testPerSessionInterpreterCloseOnNoteRemoval() throws IOException, InterpreterException {
 //    // create a notes
 //    Note note1 = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%mock1 getId");
 //    p1.setAuthenticationInfo(anonymous);
 //
@@ -1105,10 +1105,10 @@ package org.apache.zeppelin.notebook;
 //  public void testPerSessionInterpreter() throws IOException, InterpreterException {
 //    // create two notes
 //    Note note1 = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    Note note2 = notebook.createNote("note2", anonymous);
-//    ParagraphJob p2 = note2.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note2.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    p1.setText("%mock1 getId");
 //    p1.setAuthenticationInfo(anonymous);
@@ -1149,10 +1149,10 @@ package org.apache.zeppelin.notebook;
 //  public void testPerNoteSessionInterpreter() throws IOException, InterpreterException {
 //    // create two notes
 //    Note note1 = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    Note note2 = notebook.createNote("note2", anonymous);
-//    ParagraphJob p2 = note2.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note2.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    p1.setText("%mock1 getId");
 //    p1.setAuthenticationInfo(anonymous);
@@ -1225,22 +1225,22 @@ package org.apache.zeppelin.notebook;
 //      }
 //
 //      @Override
-//      public void onParagraphRemove(ParagraphJob p) {
+//      public void onParagraphRemove(Paragraph p) {
 //        onParagraphRemove.incrementAndGet();
 //      }
 //
 //      @Override
-//      public void onParagraphCreate(ParagraphJob p) {
+//      public void onParagraphCreate(Paragraph p) {
 //        onParagraphCreate.incrementAndGet();
 //      }
 //
 //      @Override
-//      public void onParagraphUpdate(ParagraphJob p) throws IOException {
+//      public void onParagraphUpdate(Paragraph p) throws IOException {
 //
 //      }
 //
 //      @Override
-//      public void onParagraphStatusChange(ParagraphJob p, Status status) throws IOException {
+//      public void onParagraphStatusChange(Paragraph p, Status status) throws IOException {
 //
 //      }
 //
@@ -1249,7 +1249,7 @@ package org.apache.zeppelin.notebook;
 //    Note note1 = notebook.createNote("note1", anonymous);
 //    assertEquals(1, onNoteCreate.get());
 //
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    assertEquals(1, onParagraphCreate.get());
 //
 //    note1.addCloneParagraph(p1, AuthenticationInfo.ANONYMOUS);
@@ -1395,15 +1395,15 @@ package org.apache.zeppelin.notebook;
 //
 //    assertEquals("TestNote",sourceNote.getName());
 //
-//    ParagraphJob sourceParagraph = sourceNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph sourceParagraph = sourceNote.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    assertEquals("anonymous", sourceParagraph.getUser());
 //
 //    Note destNote = notebook.createNote("note2", new AuthenticationInfo("user"));
 //    destNote.setName("ClonedNote");
 //    assertEquals("ClonedNote",destNote.getName());
 //
-//    List<ParagraphJob> paragraphs = sourceNote.getParagraphs();
-//    for (ParagraphJob p : paragraphs) {
+//    List<Paragraph> paragraphs = sourceNote.getParagraphs();
+//    for (Paragraph p : paragraphs) {
 //    	  destNote.addCloneParagraph(p, AuthenticationInfo.ANONYMOUS);
 //      assertEquals("anonymous", p.getUser());
 //    }
@@ -1426,17 +1426,17 @@ package org.apache.zeppelin.notebook;
 //
 //
 //  @Override
-//  public void onOutputAppend(ParagraphJob paragraph, int idx, String output) {
+//  public void onOutputAppend(Paragraph paragraph, int idx, String output) {
 //
 //  }
 //
 //  @Override
-//  public void onOutputUpdate(ParagraphJob paragraph, int idx, InterpreterResultMessage msg) {
+//  public void onOutputUpdate(Paragraph paragraph, int idx, InterpreterResultMessage msg) {
 //
 //  }
 //
 //  @Override
-//  public void onOutputUpdateAll(ParagraphJob paragraph, List<InterpreterResultMessage> msgs) {
+//  public void onOutputUpdateAll(Paragraph paragraph, List<InterpreterResultMessage> msgs) {
 //
 //  }
 //
@@ -1446,11 +1446,11 @@ package org.apache.zeppelin.notebook;
 //  }
 //
 //  @Override
-//  public void onProgressUpdate(ParagraphJob paragraph, int progress) {
+//  public void onProgressUpdate(Paragraph paragraph, int progress) {
 //  }
 //
 //  @Override
-//  public void onStatusChange(ParagraphJob paragraph, Status before, Status after) {
+//  public void onStatusChange(Paragraph paragraph, Status before, Status after) {
 //    if (afterStatusChangedListener != null) {
 //      afterStatusChangedListener.onStatusChanged(paragraph, before, after);
 //    }

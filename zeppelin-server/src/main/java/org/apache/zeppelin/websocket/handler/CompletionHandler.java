@@ -23,7 +23,7 @@ import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -57,7 +57,7 @@ public class CompletionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String buffer = fromMessage.safeGetType("buf", LOG);
     final Integer cursor = fromMessage.safeGetType("cursor", LOG);

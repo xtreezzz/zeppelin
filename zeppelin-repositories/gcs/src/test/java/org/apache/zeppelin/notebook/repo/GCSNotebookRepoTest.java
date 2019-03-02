@@ -38,7 +38,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -93,7 +93,7 @@ public class GCSNotebookRepoTest {
     note.setPath("/test_note");
     note.setConfig(ImmutableMap.<String, Object>of("key", "value"));
 
-    ParagraphJob p = new ParagraphJob(note, null);
+    Paragraph p = new Paragraph(note, null);
     p.setText("text");
     p.setStatus(Status.RUNNING);
     note.addParagraph(p);

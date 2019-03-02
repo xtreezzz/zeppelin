@@ -30,7 +30,7 @@ package org.apache.zeppelin.helium;
 //import org.apache.zeppelin.notebook.Note;
 //import org.apache.zeppelin.notebook.Notebook;
 //import org.apache.zeppelin.notebook.NotebookAuthorization;
-//import org.apache.zeppelin.notebook.ParagraphJob;
+//import org.apache.zeppelin.notebook.core.Paragraph;
 //import org.apache.zeppelin.notebook.repo.NotebookRepo;
 //import org.apache.zeppelin.search.SearchService;
 //import org.apache.zeppelin.user.AuthenticationInfo;
@@ -95,7 +95,7 @@ package org.apache.zeppelin.helium;
 //
 //    Note note1 = notebook.createNote("note1", anonymous);
 //
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
@@ -139,7 +139,7 @@ package org.apache.zeppelin.helium;
 //        "", "");
 //
 //    Note note1 = notebook.createNote("note1", anonymous);
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
@@ -178,7 +178,7 @@ package org.apache.zeppelin.helium;
 //
 //    Note note1 = notebook.createNote("note1", anonymous);
 //
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
@@ -206,7 +206,7 @@ package org.apache.zeppelin.helium;
 //    Note note1 = notebook.createNote("note1", anonymous);
 //
 //    // add paragraph with invalid magic
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%fake ");
 //
 //    // make sure that p1's repl is null
@@ -243,7 +243,7 @@ package org.apache.zeppelin.helium;
 //      }
 //    }
 //
-//    ParagraphJob p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note1.addNewParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");

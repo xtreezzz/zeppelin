@@ -65,7 +65,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void scriptBodyWithReplName() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%test(1234567");
 //    assertEquals("test", paragraph.getIntpText());
 //    assertEquals("(1234567", paragraph.getScriptText());
@@ -78,7 +78,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void scriptBodyWithoutReplName() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("1234567");
 //    assertEquals("", paragraph.getIntpText());
 //    assertEquals("1234567", paragraph.getScriptText());
@@ -87,7 +87,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void replNameAndNoBody() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%test");
 //    assertEquals("test", paragraph.getIntpText());
 //    assertEquals("", paragraph.getScriptText());
@@ -96,7 +96,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void replSingleCharName() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%r a");
 //    assertEquals("r", paragraph.getIntpText());
 //    assertEquals("a", paragraph.getScriptText());
@@ -105,7 +105,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void testParagraphProperties() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%test(p1=v1,p2=v2) a");
 //    assertEquals("test", paragraph.getIntpText());
 //    assertEquals("a", paragraph.getScriptText());
@@ -137,14 +137,14 @@ package org.apache.zeppelin.notebook;
 //    expectedEx.expectMessage("Invalid paragraph properties format");
 //
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%test(p1=v1=v2) a");
 //  }
 //
 //  @Test
 //  public void replInvalid() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("foo %r");
 //    assertEquals("", paragraph.getIntpText());
 //    assertEquals("foo %r", paragraph.getScriptText());
@@ -161,7 +161,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void replNameEndsWithWhitespace() {
 //    Note note = createNote();
-//    ParagraphJob paragraph = new ParagraphJob(note, null);
+//    Paragraph paragraph = new Paragraph(note, null);
 //    paragraph.setText("%test\r\n###Hello");
 //    assertEquals("test", paragraph.getIntpText());
 //    assertEquals("###Hello", paragraph.getScriptText());
@@ -214,7 +214,7 @@ package org.apache.zeppelin.notebook;
 //    final String scriptBody = "My name is ${name} and I am ${age=20} years old. " +
 //            "My occupation is ${ job = engineer | developer | artists}";
 //
-//    final ParagraphJob paragraph = new ParagraphJob(note, null);
+//    final Paragraph paragraph = new Paragraph(note, null);
 //    final String paragraphId = paragraph.getId();
 //
 //    final AngularObject nameAO = AngularObjectBuilder.build("name", "DuyHai DOAN", noteId,
@@ -240,10 +240,10 @@ package org.apache.zeppelin.notebook;
 //
 //  @Test
 //  public void returnDefaultParagraphWithNewUser() {
-//    ParagraphJob p = new ParagraphJob("para_1", null, null);
+//    Paragraph p = new Paragraph("para_1", null, null);
 //    String defaultValue = "Default Value";
 //    p.setResult(new InterpreterResult(Code.SUCCESS, defaultValue));
-//    ParagraphJob newUserParagraph = p.getUserParagraph("new_user");
+//    Paragraph newUserParagraph = p.getUserParagraph("new_user");
 //    assertNotNull(newUserParagraph);
 //    assertEquals(defaultValue, newUserParagraph.getReturn().message().get(0).getData());
 //  }
@@ -252,7 +252,7 @@ package org.apache.zeppelin.notebook;
 //  public void returnUnchangedResultsWithDifferentUser() throws Throwable {
 //    Note mockNote = mock(Note.class);
 //    when(mockNote.getCredentials()).thenReturn(mock(Credentials.class));
-//    ParagraphJob spyParagraph = spy(new ParagraphJob("para_1", mockNote,  null));
+//    Paragraph spyParagraph = spy(new Paragraph("para_1", mockNote,  null));
 //
 //    Interpreter mockInterpreter = mock(Interpreter.class);
 //    spyParagraph.setInterpreter(mockInterpreter);
@@ -281,7 +281,7 @@ package org.apache.zeppelin.notebook;
 //
 //    ParagraphJobListener mockJobListener = mock(ParagraphJobListener.class);
 //    doReturn(mockJobListener).when(spyParagraph).getListener();
-//    doNothing().when(mockJobListener).onOutputUpdateAll(Mockito.<ParagraphJob>any(), Mockito.anyList());
+//    doNothing().when(mockJobListener).onOutputUpdateAll(Mockito.<Paragraph>any(), Mockito.anyList());
 //
 //    InterpreterResult mockInterpreterResult = mock(InterpreterResult.class);
 //    when(mockInterpreter.interpret(anyString(), Mockito.<InterpreterContext>any())).thenReturn(mockInterpreterResult);
@@ -295,7 +295,7 @@ package org.apache.zeppelin.notebook;
 //    AuthenticationInfo user1 = new AuthenticationInfo("user1");
 //    spyParagraph.setAuthenticationInfo(user1);
 //    spyParagraph.jobRun();
-//    ParagraphJob p1 = spyParagraph.getUserParagraph(user1.getUser());
+//    Paragraph p1 = spyParagraph.getUserParagraph(user1.getUser());
 //
 //    List<InterpreterResultMessage> result2 = Lists.newArrayList();
 //    result2.add(new InterpreterResultMessage(Type.TEXT, "result2"));
@@ -304,7 +304,7 @@ package org.apache.zeppelin.notebook;
 //    AuthenticationInfo user2 = new AuthenticationInfo("user2");
 //    spyParagraph.setAuthenticationInfo(user2);
 //    spyParagraph.jobRun();
-//    ParagraphJob p2 = spyParagraph.getUserParagraph(user2.getUser());
+//    Paragraph p2 = spyParagraph.getUserParagraph(user2.getUser());
 //
 //    assertNotEquals(p1.getReturn().toString(), p2.getReturn().toString());
 //
@@ -313,7 +313,7 @@ package org.apache.zeppelin.notebook;
 //
 //  @Test
 //  public void testCursorPosition() {
-//    ParagraphJob paragraph = spy(new ParagraphJob());
+//    Paragraph paragraph = spy(new Paragraph());
 //    // left = buffer, middle = cursor position into source code, right = cursor position after parse
 //    List<Triple<String, Integer, Integer>> dataSet = Arrays.asList(
 //        Triple.of("%jdbc schema.", 13, 7),

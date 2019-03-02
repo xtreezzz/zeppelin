@@ -22,7 +22,7 @@ import org.apache.zeppelin.interpreter.InterpreterSetting;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -92,7 +92,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
     final Note note = notebook.getNote(noteId);
 
     note.clearParagraphOutput(paragraphId);
-    final ParagraphJob paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = note.getParagraph(paragraphId);
     final SockMessage msg = new SockMessage(Operation.PARAGRAPH)
             .put("paragraph", paragraph);
     connectionManager.broadcast(note.getId(), msg);
@@ -105,7 +105,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
                                   final Map<String, String> metaInfos) {
     final Note note = notebook.getNote(noteId);
     if (note != null) {
-      final ParagraphJob paragraph = note.getParagraph(paragraphId);
+      final Paragraph paragraph = note.getParagraph(paragraphId);
       if (paragraph != null) {
         final InterpreterSetting setting = notebook.getInterpreterSettingManager()
                 .get(interpreterSettingId);
@@ -163,7 +163,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
     }
     // run the whole note except the current paragraph
     if (paragraphIds.isEmpty() && paragraphIndices.isEmpty()) {
-      for (final ParagraphJob paragraph : note.getParagraphs()) {
+      for (final Paragraph paragraph : note.getParagraphs()) {
         if (!paragraph.getId().equals(curParagraphId)) {
           toBeRunParagraphIds.add(paragraph.getId());
         }

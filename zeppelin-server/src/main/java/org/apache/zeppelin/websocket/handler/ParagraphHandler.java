@@ -23,7 +23,7 @@ import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -62,7 +62,7 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String title = fromMessage.safeGetType("title", LOG);
     final String text = fromMessage.safeGetType("paragraph", LOG);
@@ -86,7 +86,7 @@ public class ParagraphHandler extends AbstractHandler {
     }
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String paragraphId = fromMessage.safeGetType("id", LOG);
     final String patchText = fromMessage.safeGetType("patch", LOG);
@@ -110,7 +110,7 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     note.removeParagraph(serviceContext.getAutheInfo().getUser(), p.getId());
     notebook.saveNote(note);
@@ -124,7 +124,7 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     note.clearParagraphOutput(p.getId());
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
@@ -134,7 +134,7 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
     final Integer index = fromMessage.safeGetType("index", LOG);
 
     if (index > 0 && index >= note.getParagraphCount()) {
@@ -163,7 +163,7 @@ public class ParagraphHandler extends AbstractHandler {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
 
-    final ParagraphJob newPara = note.insertNewParagraph(index, serviceContext.getAutheInfo());
+    final Paragraph newPara = note.insertNewParagraph(index, serviceContext.getAutheInfo());
     newPara.setConfig(config);
     notebook.saveNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));

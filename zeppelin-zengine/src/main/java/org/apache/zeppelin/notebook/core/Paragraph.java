@@ -17,9 +17,14 @@
 
 package org.apache.zeppelin.notebook.core;
 
+import java.security.SecureRandom;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.zeppelin.display.GUI;
+import org.apache.zeppelin.interpreter.Interpreter;
+import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
+import org.apache.zeppelin.notebook.Note;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -35,6 +40,7 @@ public class Paragraph implements Serializable {
     //  * Убрал ApplicationState - надо сделать сервис по загрузке
     //  * Что делать с id? Нужно согласование с id ParagraphJob и Job
 
+    private final String id;
     private String title;
     private String text;
     private String user;
@@ -48,6 +54,7 @@ public class Paragraph implements Serializable {
                      final String text,
                      final String user,
                      final GUI settings) {
+        this.id = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
         this.title = title;
         this.text = text;
         this.user = user;
@@ -56,8 +63,12 @@ public class Paragraph implements Serializable {
         this.settings = settings;
     }
 
+    public String getId() {
+      return id;
+    }
+
     public String getTitle() {
-        return title;
+      return title;
     }
 
     public void setTitle(final String title) {
@@ -129,14 +140,24 @@ public class Paragraph implements Serializable {
                 .isEquals();
     }
 
+
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(title)
-                .append(text)
-                .append(user)
-                .append(created)
-                .append(settings)
-                .toHashCode();
+      return new HashCodeBuilder(17, 37)
+          .append(title)
+          .append(text)
+          .append(user)
+          .append(created)
+          .append(settings)
+          .toHashCode();
+    }
+
+    // Много где вызывается, проще сделать такую заглушку
+    public Note getNote() {
+      throw new NotImplementedException("Parent note has been removed from paragraph");
+    }
+
+    public Interpreter getBindedInterpreter() throws InterpreterNotFoundException {
+      throw new NotImplementedException("Interpreter has been removed from paragraph");
     }
 }

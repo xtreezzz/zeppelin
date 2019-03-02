@@ -24,7 +24,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.quartz.CronExpression;
 
 /**
- * ParagraphJob cron configuration.
+ * Paragraph cron configuration.
  */
 public class CronJobConfiguration {
 

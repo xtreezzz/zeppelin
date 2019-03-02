@@ -19,6 +19,7 @@ package org.apache.zeppelin.helium;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterException;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
@@ -32,7 +33,7 @@ import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventListener;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.ExecutorFactory;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
@@ -66,12 +67,14 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   /**
    * Load pkg and run task
    */
-  public String loadAndRun(HeliumPackage pkg, ParagraphJob paragraph) {
-    ApplicationState appState = paragraph.createOrGetApplicationState(pkg);
-    onLoad(paragraph.getNote().getId(), paragraph.getId(), appState.getId(),
-        appState.getHeliumPackage());
-    executor.submit(new LoadApplication(appState, pkg, paragraph));
-    return appState.getId();
+  public String loadAndRun(HeliumPackage pkg, Paragraph paragraph) {
+    //TODO(egorklimov): package should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+    //    ApplicationState appState = paragraph.createOrGetApplicationState(pkg);
+    //    onLoad(paragraph.getNote().getId(), paragraph.getId(), appState.getId(),
+    //        appState.getHeliumPackage());
+    //    executor.submit(new LoadApplication(appState, pkg, paragraph));
+    //    return appState.getId();
   }
 
   /**
@@ -79,10 +82,10 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    */
   private class LoadApplication implements Runnable {
     private final HeliumPackage pkg;
-    private final ParagraphJob paragraph;
+    private final Paragraph paragraph;
     private final ApplicationState appState;
 
-    public LoadApplication(ApplicationState appState, HeliumPackage pkg, ParagraphJob paragraph) {
+    public LoadApplication(ApplicationState appState, HeliumPackage pkg, Paragraph paragraph) {
       this.appState = appState;
       this.pkg = pkg;
       this.paragraph = paragraph;
@@ -156,8 +159,10 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param appId
    * @return
    */
-  public ApplicationState get(ParagraphJob paragraph, String appId) {
-    return paragraph.getApplicationState(appId);
+  public ApplicationState get(Paragraph paragraph, String appId) {
+    //TODO(egorklimov): applicationState should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+    //    return paragraph.getApplicationState(appId);
   }
 
   /**
@@ -167,7 +172,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param paragraph
    * @param appId
    */
-  public void unload(ParagraphJob paragraph, String appId) {
+  public void unload(Paragraph paragraph, String appId) {
     executor.execute(new UnloadApplication(paragraph, appId));
   }
 
@@ -175,36 +180,38 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * Unload application task
    */
   private class UnloadApplication implements Runnable {
-    private final ParagraphJob paragraph;
+    private final Paragraph paragraph;
     private final String appId;
 
-    public UnloadApplication(ParagraphJob paragraph, String appId) {
+    public UnloadApplication(Paragraph paragraph, String appId) {
       this.paragraph = paragraph;
       this.appId = appId;
     }
 
     @Override
     public void run() {
-      ApplicationState appState = null;
-      try {
-        appState = paragraph.getApplicationState(appId);
-
-        if (appState == null) {
-          logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
-          return;
-        }
-        if (appState.getStatus() == ApplicationState.Status.UNLOADED) {
-          // not loaded
-          return;
-        }
-        unload(appState);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        if (appState != null) {
-          appStatusChange(paragraph, appId, ApplicationState.Status.ERROR);
-          appState.setOutput(e.getMessage());
-        }
-      }
+      //TODO(egorklimov): package should be loaded by HeliumService
+      throw new NotImplementedException("ApplicationState removed from paragraph");
+    //      ApplicationState appState = null;
+    //      try {
+    //        appState = paragraph.getApplicationState(appId);
+    //
+    //        if (appState == null) {
+    //          logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
+    //          return;
+    //        }
+    //        if (appState.getStatus() == ApplicationState.Status.UNLOADED) {
+    //          // not loaded
+    //          return;
+    //        }
+    //        unload(appState);
+    //      } catch (Exception e) {
+    //        logger.error(e.getMessage(), e);
+    //        if (appState != null) {
+    //          appStatusChange(paragraph, appId, ApplicationState.Status.ERROR);
+    //          appState.setOutput(e.getMessage());
+    //        }
+    //      }
     }
 
     private void unload(final ApplicationState appsToUnload) throws ApplicationException {
@@ -252,7 +259,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * @param paragraph
    * @param appId
    */
-  public void run(ParagraphJob paragraph, String appId) {
+  public void run(Paragraph paragraph, String appId) {
     executor.execute(new RunApplication(paragraph, appId));
   }
 
@@ -260,33 +267,36 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
    * Run application task
    */
   private class RunApplication implements Runnable {
-    private final ParagraphJob paragraph;
+    private final Paragraph paragraph;
     private final String appId;
 
-    public RunApplication(ParagraphJob paragraph, String appId) {
+    public RunApplication(Paragraph paragraph, String appId) {
       this.paragraph = paragraph;
       this.appId = appId;
     }
 
     @Override
     public void run() {
-      ApplicationState appState = null;
-      try {
-        appState = paragraph.getApplicationState(appId);
+      //TODO(egorklimov): package should be loaded by HeliumService
+      throw new NotImplementedException("ApplicationState removed from paragraph");
 
-        if (appState == null) {
-          logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
-          return;
-        }
-
-        run(appState);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        if (appState != null) {
-          appStatusChange(paragraph, appId, ApplicationState.Status.UNLOADED);
-          appState.setOutput(e.getMessage());
-        }
-      }
+      //      ApplicationState appState = null;
+      //      try {
+      //        appState = paragraph.getApplicationState(appId);
+      //
+      //        if (appState == null) {
+      //          logger.warn("Can not find {} to unload from {}", appId, paragraph.getId());
+      //          return;
+      //        }
+      //
+      //        run(appState);
+      //      } catch (Exception e) {
+      //        logger.error(e.getMessage(), e);
+      //        if (appState != null) {
+      //          appStatusChange(paragraph, appId, ApplicationState.Status.UNLOADED);
+      //          appState.setOutput(e.getMessage());
+      //        }
+      //      }
     }
 
     private void run(final ApplicationState app) throws ApplicationException {
@@ -378,12 +388,15 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
     }
   }
 
-  private void appStatusChange(ParagraphJob paragraph,
+  private void appStatusChange(Paragraph paragraph,
                                String appId,
                                ApplicationState.Status status) {
-    ApplicationState app = paragraph.getApplicationState(appId);
-    app.setStatus(status);
-    onStatusChange(paragraph.getNote().getId(), paragraph.getId(), appId, status.toString());
+    //TODO(egorklimov): package should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+
+    //    ApplicationState app = paragraph.getApplicationState(appId);
+    //    app.setStatus(status);
+    //    onStatusChange(paragraph.getNote().getId(), paragraph.getId(), appId, status.toString());
   }
 
   private ApplicationState getAppState(String noteId, String paragraphId, String appId) {
@@ -397,15 +410,16 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
       logger.error("Can't get note {}", noteId);
       return null;
     }
-    ParagraphJob paragraph = note.getParagraph(paragraphId);
+    Paragraph paragraph = note.getParagraph(paragraphId);
     if (paragraph == null) {
       logger.error("Can't get paragraph {}", paragraphId);
       return null;
     }
-
-    ApplicationState appFound = paragraph.getApplicationState(appId);
-
-    return appFound;
+    //TODO(egorklimov): package should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+    //    ApplicationState appFound = paragraph.getApplicationState(appId);
+    //
+    //    return appFound;
   }
 
   @Override
@@ -424,33 +438,38 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   }
 
   @Override
-  public void onParagraphRemove(ParagraphJob paragraph) {
-    List<ApplicationState> appStates = paragraph.getAllApplicationStates();
-    for (ApplicationState app : appStates) {
-      UnloadApplication unloadJob = new UnloadApplication(paragraph, app.getId());
-      unloadJob.run();
-    }
+  public void onParagraphRemove(Paragraph paragraph) {
+    //TODO(egorklimov): package should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+
+    //    List<ApplicationState> appStates = paragraph.getAllApplicationStates();
+    //    for (ApplicationState app : appStates) {
+    //      UnloadApplication unloadJob = new UnloadApplication(paragraph, app.getId());
+    //      unloadJob.run();
+    //    }
   }
 
   @Override
-  public void onParagraphCreate(ParagraphJob p) {
+  public void onParagraphCreate(Paragraph p) {
 
   }
 
   @Override
-  public void onParagraphUpdate(ParagraphJob p) throws IOException {
+  public void onParagraphUpdate(Paragraph p) throws IOException {
 
   }
 
   @Override
-  public void onParagraphStatusChange(ParagraphJob p, Job.Status status) {
-    if (status == Job.Status.FINISHED) {
-      // refresh application
-      List<ApplicationState> appStates = p.getAllApplicationStates();
-
-      for (ApplicationState app : appStates) {
-        loadAndRun(app.getHeliumPackage(), p);
-      }
-    }
+  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
+    //TODO(egorklimov): package should be loaded by HeliumService
+    throw new NotImplementedException("ApplicationState removed from paragraph");
+    //    if (status == Job.Status.FINISHED) {
+    //      // refresh application
+    //      List<ApplicationState> appStates = p.getAllApplicationStates();
+    //
+    //      for (ApplicationState app : appStates) {
+    //        loadAndRun(app.getHeliumPackage(), p);
+    //      }
+    //    }
   }
 }

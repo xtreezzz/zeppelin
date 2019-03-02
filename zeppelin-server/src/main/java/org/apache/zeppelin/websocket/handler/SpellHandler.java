@@ -22,7 +22,7 @@ import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -57,7 +57,7 @@ public class SpellHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, session);
-    final ParagraphJob p = safeLoadParagraph("id", fromMessage, note);
+    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String text = fromMessage.safeGetType("paragraph", LOG);
     final String title = fromMessage.safeGetType("title", LOG);
@@ -99,7 +99,7 @@ public class SpellHandler extends AbstractHandler {
   }
 
 
-  private void addNewParagraphIfLastParagraphIsExecuted(final Note note, final ParagraphJob p) {
+  private void addNewParagraphIfLastParagraphIsExecuted(final Note note, final Paragraph p) {
     // if it's the last paragraph and not empty, let's add a new one
     if (!(Strings.isNullOrEmpty(p.getText()) ||
             Strings.isNullOrEmpty(p.getScriptText())) &&

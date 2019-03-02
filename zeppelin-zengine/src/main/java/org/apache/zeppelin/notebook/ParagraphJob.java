@@ -22,14 +22,12 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.notebook.conf.ParagraphJobContext;
-import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.SecureRandom;
 
 /**
  * Paragraph execution unit.
@@ -50,7 +48,7 @@ public class ParagraphJob {
   /**
    * Paragraph data.
    */
-  private final Paragraph paragraph;
+  private final org.apache.zeppelin.notebook.core.Paragraph paragraph;
 
   private boolean isEnabled;
 
@@ -65,14 +63,10 @@ public class ParagraphJob {
     this.context = new ParagraphJobContext(paragraph.getText());
   }
 
-  public ParagraphJob(final Note note, final Paragraph p, final JobListener listener) {
+  public ParagraphJob(final Note note, final org.apache.zeppelin.notebook.core.Paragraph p, final JobListener listener) {
     //super(generateId(), listener);
     this.paragraph = p;
     this.context = new ParagraphJobContext(paragraph.getText());
-  }
-
-  private static String generateId() {
-    return "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
   }
 
   //  @Override
@@ -105,7 +99,7 @@ public class ParagraphJob {
     }
   }
 
-  public Paragraph getParagraph() {
+  public org.apache.zeppelin.notebook.core.Paragraph getParagraph() {
     return paragraph;
   }
 
@@ -123,7 +117,7 @@ public class ParagraphJob {
 
   private InterpreterContext getInterpreterContext() {
     throw new NotImplementedException("Execution logic should be fixed");
-    //    final ParagraphJob self = this;
+    //    final Paragraph self = this;
     //
     //    return getInterpreterContext(
     //        new InterpreterOutput(

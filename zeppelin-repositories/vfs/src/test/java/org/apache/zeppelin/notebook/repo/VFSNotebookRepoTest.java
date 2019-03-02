@@ -23,7 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.ParagraphJob;
+import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.junit.After;
@@ -64,7 +64,7 @@ public class VFSNotebookRepoTest {
     // create note1
     Note note1 = new Note();
     note1.setPath("/my_project/my_note1");
-    ParagraphJob p1 = note1.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
+    Paragraph p1 = note1.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
     p1.setText("%md hello world");
     p1.getParagraph().setTitle("my title");
     notebookRepo.save(note1);
@@ -77,7 +77,7 @@ public class VFSNotebookRepoTest {
     // create note2
     Note note2 = new Note();
     note2.setPath("/my_note2");
-    ParagraphJob p2 = note2.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
+    Paragraph p2 = note2.insertNewParagraph(0, AuthenticationInfo.ANONYMOUS);
     p2.setText("%md hello world2");
     p2.getParagraph().setTitle("my title2");
     notebookRepo.save(note2);
