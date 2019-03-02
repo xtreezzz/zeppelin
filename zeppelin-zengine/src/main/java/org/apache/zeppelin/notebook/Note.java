@@ -418,8 +418,7 @@ public class Note implements Serializable {
    */
   public Paragraph insertNewParagraph(final int index, final AuthenticationInfo authenticationInfo) {
     //TODO(egorklimov): Fix this.
-    Paragraph paragraph = new Paragraph("", "", authenticationInfo.getUser(), new Date(),
-        new GUI());
+    Paragraph paragraph = new Paragraph("", "", authenticationInfo.getUser(), new GUI());
     insertParagraph(paragraph, index);
     return paragraph;
   }

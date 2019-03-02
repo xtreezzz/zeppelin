@@ -93,7 +93,7 @@ public class FileSystemNotebookRepo implements NotebookRepo {
 
   @Override
   public void save(Note note) throws IOException {
-    this.fs.writeFile(note.toJson(),
+    this.fs.writeFile(Note.getGson().toJson(note),
         new Path(notebookDir, buildNoteFileName(note.getId(), note.getPath())),
         true);
   }

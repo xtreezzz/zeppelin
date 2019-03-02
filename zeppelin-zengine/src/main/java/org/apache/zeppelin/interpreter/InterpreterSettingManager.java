@@ -911,14 +911,16 @@ public class InterpreterSettingManager {
           for (Paragraph p : note.getParagraphs()) {
             ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(note.getId(), p.getId());
 
+            //TODO(egorklimov): application state removed from paragraph
+
             // remove app scope object
-            List<ApplicationState> appStates = p.getAllApplicationStates();
-            if (appStates != null) {
-              for (ApplicationState app : appStates) {
-                ((RemoteAngularObjectRegistry) registry)
-                    .removeAllAndNotifyRemoteProcess(note.getId(), app.getId());
-              }
-            }
+            //            List<ApplicationState> appStates = p.getAllApplicationStates();
+            //            if (appStates != null) {
+            //              for (ApplicationState app : appStates) {
+            //                ((RemoteAngularObjectRegistry) registry)
+            //                    .removeAllAndNotifyRemoteProcess(note.getId(), app.getId());
+            //              }
+            //            }
           }
           // remove note scope object
           ((RemoteAngularObjectRegistry) registry).removeAllAndNotifyRemoteProcess(note.getId(), null);
@@ -927,13 +929,15 @@ public class InterpreterSettingManager {
           for (Paragraph p : note.getParagraphs()) {
             registry.removeAll(note.getId(), p.getId());
 
+            //TODO(egorklimov): application state removed from paragraph
+
             // remove app scope object
-            List<ApplicationState> appStates = p.getAllApplicationStates();
-            if (appStates != null) {
-              for (ApplicationState app : appStates) {
-                registry.removeAll(note.getId(), app.getId());
-              }
-            }
+            //            List<ApplicationState> appStates = p.getAllApplicationStates();
+            //            if (appStates != null) {
+            //              for (ApplicationState app : appStates) {
+            //                registry.removeAll(note.getId(), app.getId());
+            //              }
+            //            }
           }
           // remove note scope object
           registry.removeAll(note.getId(), null);

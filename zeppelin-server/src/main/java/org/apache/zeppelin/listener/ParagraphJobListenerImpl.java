@@ -17,11 +17,13 @@
 
 package org.apache.zeppelin.listener;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.scheduler.Job;
+import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -86,40 +88,46 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
   }
 
   @Override
-  public void onProgressUpdate(final Paragraph p, final int progress) {
+  //TODO(egorklimov): Replace Job with corresponding Paragraph class
+  public void onProgressUpdate(final Job p, final int progress) {
     final SockMessage message = new SockMessage(Operation.PROGRESS)
             .put("id", p.getId())
             .put("progress", progress);
-    connectionManager.broadcast(p.getNote().getId(), message);
+    //TODO(egorklimov): parent note has been removed from paragraph
+    throw new NotImplementedException("Parent note has been removed from paragraph");
+    //connectionManager.broadcast(p.getNote().getId(), message);
   }
 
   @Override
-  public void onStatusChange(final Paragraph p, final Job.Status before, final Job.Status after) {
-    if (after == Job.Status.ERROR) {
-      if (p.getException() != null) {
-        LOG.error("Error", p.getException());
-      }
-    }
-
-    if (p.isTerminated()) {
-      if (p.getStatus() == Job.Status.FINISHED) {
-        LOG.info("Note {}, job {} is finished successfully, status: {}",
-                p.getNote().getId(), p.getId(), p.getStatus());
-      } else {
-        LOG.warn("Note {}. job {} is finished, status: {}, exception: {}, "
-                        + "result\n@@@@@ Result start @@@@@\n{}\n@@@@@ Result end @@@@@",
-                p.getNote().getId(), p.getId(), p.getStatus(), p.getException(), p.getReturn());
-      }
-
-      try {
-        notebook.saveNote(p.getNote());
-      } catch (final IOException e) {
-        LOG.error(e.toString(), e);
-      }
-    }
-
-    p.setStatusToUserParagraph(p.getStatus());
-    connectionManager.broadcast(p.getNote().getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+  public void onStatusChange(final Job p, final Job.Status before, final Job.Status after) {
+    //TODO(egorklimov): result has been removed from paragraph:
+    throw new NotImplementedException("Paragraph status should be loaded by not implemented "
+        + "InterpreterResultService");
+    //    if (after == Job.Status.ERROR) {
+    //      if (p.getException() != null) {
+    //        LOG.error("Error", p.getException());
+    //      }
+    //    }
+    //
+    //    if (p.isTerminated()) {
+    //      if (p.getStatus() == Job.Status.FINISHED) {
+    //        LOG.info("Note {}, job {} is finished successfully, status: {}",
+    //                p.getNote().getId(), p.getId(), p.getStatus());
+    //      } else {
+    //        LOG.warn("Note {}. job {} is finished, status: {}, exception: {}, "
+    //                        + "result\n@@@@@ Result start @@@@@\n{}\n@@@@@ Result end @@@@@",
+    //                p.getNote().getId(), p.getId(), p.getStatus(), p.getException(), p.getReturn());
+    //      }
+    //
+    //      try {
+    //        notebook.saveNote(p.getNote());
+    //      } catch (final IOException e) {
+    //        LOG.error(e.toString(), e);
+    //      }
+    //    }
+    //
+    //    p.setStatusToUserParagraph(p.getStatus());
+    //    connectionManager.broadcast(p.getNote().getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
 
     //    for (NoteEventListener listener : notebook.getNoteEventListeners()) {
     //      listener.onParagraphStatusChange(p, after);

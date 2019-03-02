@@ -195,7 +195,7 @@ public class GCSNotebookRepo implements NotebookRepo {
         .setContentType("application/json")
         .build();
     try {
-      storage.create(info, note.toJson().getBytes("UTF-8"));
+      storage.create(info, Note.getGson().toJson(note).getBytes("UTF-8"));
     } catch (StorageException se) {
       throw new IOException("Could not write " + info.toString() + ": " + se.getMessage(), se);
     }

@@ -133,7 +133,7 @@ public class AzureNotebookRepo implements NotebookRepo {
     try {
       CloudFile noteFile = rootDir.getFileReference(buildNoteFileName(note));
       noteFile.getParent().createIfNotExists();
-      noteFile.uploadText(note.toJson());
+      noteFile.uploadText(Note.getGson().toJson(note));
     } catch (URISyntaxException | StorageException e) {
       String msg = String.format("Error saving notebook %s to Azure storage",
           buildNoteFileName(note));

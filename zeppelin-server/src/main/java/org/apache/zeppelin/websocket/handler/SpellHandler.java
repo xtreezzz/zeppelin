@@ -17,13 +17,12 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import com.google.common.base.Strings;
-import org.apache.zeppelin.interpreter.InterpreterResult;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NotePermissionsService;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.core.Paragraph;
-import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -35,8 +34,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Map;
 
 
@@ -53,6 +50,7 @@ public class SpellHandler extends AbstractHandler {
   }
 
   //TODO(KOT): check "noteId"
+  //TODO(egorklimov): authInfo, config, result removed fron paragraph
   public void broadcastSpellExecution(final WebSocketSession session, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
@@ -61,37 +59,20 @@ public class SpellHandler extends AbstractHandler {
 
     final String text = fromMessage.safeGetType("paragraph", LOG);
     final String title = fromMessage.safeGetType("title", LOG);
-    final Job.Status status = fromMessage.safeGetType("status", LOG);
     final Map<String, Object> params = fromMessage.safeGetType("params", LOG);
-    final Map<String, Object> config = fromMessage.safeGetType("config", LOG);
-    final InterpreterResult interpreterResult = fromMessage.safeGetType("results", LOG);
-    final String errorSockMessage = fromMessage.safeGetType("errorSockMessage", LOG);
     final String dateStarted = fromMessage.safeGetType("dateStarted", LOG);
     final String dateFinished = fromMessage.safeGetType("dateFinished", LOG);
 
-    final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 
     p.setText(text);
     p.setTitle(title);
-    p.setAuthenticationInfo(serviceContext.getAutheInfo());
-    p.settings.setParams(params);
-    p.setConfig(config);
-    p.setResult(interpreterResult);
-    p.setErrorMessage(errorSockMessage);
-    p.setStatusWithoutNotification(status);
+    p.getSettings().setParams(params);
 
     // Spell uses ISO 8601 formatted string generated from moment
-    try {
-      p.setDateStarted(df.parse(dateStarted));
-    } catch (final ParseException e) {
-      LOG.error("Failed parse dateStarted", e);
-    }
+    p.setCreated(LocalDateTime.parse(dateStarted, formatter));
 
-    try {
-      p.setDateFinished(df.parse(dateFinished));
-    } catch (final ParseException e) {
-      LOG.error("Failed parse dateFinished", e);
-    }
+    p.setUpdated(LocalDateTime.parse(dateFinished, formatter));
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
     notebook.saveNote(note);
@@ -101,11 +82,11 @@ public class SpellHandler extends AbstractHandler {
 
   private void addNewParagraphIfLastParagraphIsExecuted(final Note note, final Paragraph p) {
     // if it's the last paragraph and not empty, let's add a new one
-    if (!(Strings.isNullOrEmpty(p.getText()) ||
-            Strings.isNullOrEmpty(p.getScriptText())) &&
-            note.isLastParagraph(p.getId())) {
-      note.addNewParagraph(p.getAuthenticationInfo());
-    }
+    //TODO(egorklimov): Should get ParagraphJobContext
+    //    if (!(Strings.isNullOrEmpty(p.getText()) ||
+    //            Strings.isNullOrEmpty(p.getScriptText())) &&
+    //            note.isLastParagraph(p.getId())) {
+    //      note.addNewParagraph(p.getAuthenticationInfo());
   }
 
 }

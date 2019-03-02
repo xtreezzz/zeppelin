@@ -150,7 +150,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     OutputStream out = null;
     try {
       out = noteJson.getContent().getOutputStream(false);
-      IOUtils.write(note.toJson().getBytes(conf.getString(ConfVars.ZEPPELIN_ENCODING)), out);
+      IOUtils.write(Note.getGson().toJson(note).getBytes(conf.getString(ConfVars.ZEPPELIN_ENCODING)), out);
     } finally {
       if (out != null) {
         out.close();

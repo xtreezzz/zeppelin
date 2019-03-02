@@ -18,6 +18,8 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
+import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.JobListener;
 
 import java.util.List;
@@ -25,7 +27,8 @@ import java.util.List;
 /**
  * Listen paragraph update
  */
-public interface ParagraphJobListener extends JobListener<Paragraph> {
+//TODO(egorklimov): fix generic type
+public interface ParagraphJobListener extends JobListener<Job> {
   void onOutputAppend(Paragraph paragraph, int idx, String output);
   void onOutputUpdate(Paragraph paragraph, int idx, InterpreterResultMessage msg);
   void onOutputUpdateAll(Paragraph paragraph, List<InterpreterResultMessage> msgs);

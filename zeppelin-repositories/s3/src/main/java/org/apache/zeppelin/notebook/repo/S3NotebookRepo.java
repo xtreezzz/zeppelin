@@ -224,7 +224,7 @@ public class S3NotebookRepo implements NotebookRepo {
 
   @Override
   public void save(Note note) throws IOException {
-    String json = note.toJson();
+    String json = Note.getGson().toJson(note);
     String key = rootFolder + "/" + buildNoteFileName(note);
     File file = File.createTempFile("note", "zpln");
     try {

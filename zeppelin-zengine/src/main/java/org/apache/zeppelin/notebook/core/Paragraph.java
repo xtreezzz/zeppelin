@@ -34,130 +34,128 @@ import java.time.LocalDateTime;
  */
 public class Paragraph implements Serializable {
 
-    //TODO(egorklimov):
-    //  * Убрал конфиг, так как видимо в нем хранилось только isEnabled - думаю стоит вынести это в джобу
-    //  * Убрал InterpreterResult - надо сделать сервис по загрузке
-    //  * Убрал ApplicationState - надо сделать сервис по загрузке
-    //  * Что делать с id? Нужно согласование с id ParagraphJob и Job
+  //TODO(egorklimov):
+  //  * Убрал конфиг, так как видимо в нем хранилось только isEnabled - думаю стоит вынести это в джобу
+  //  * Убрал InterpreterResult - надо сделать сервис по загрузке
+  //  * Убрал ApplicationState - надо сделать сервис по загрузке
 
-    private final String id;
-    private String title;
-    private String text;
-    private String user;
-    private LocalDateTime created;
-    private LocalDateTime updated;
+  private final String id;
+  private String title;
+  private String text;
+  private String user;
+  private LocalDateTime created;
+  private LocalDateTime updated;
 
-    // form and parameter settings
-    private GUI settings;
+  // form and parameter settings
+  private GUI settings;
 
-    public Paragraph(final String title,
-                     final String text,
-                     final String user,
-                     final GUI settings) {
-        this.id = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
-        this.title = title;
-        this.text = text;
-        this.user = user;
-        this.created = LocalDateTime.now();
-        this.updated = LocalDateTime.now();
-        this.settings = settings;
+  public Paragraph(final String title,
+      final String text,
+      final String user,
+      final GUI settings) {
+    this.id = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
+    this.title = title;
+    this.text = text;
+    this.user = user;
+    this.created = LocalDateTime.now();
+    this.updated = LocalDateTime.now();
+    this.settings = settings;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(final String title) {
+    this.title = title;
+    this.updated = LocalDateTime.now();
+  }
+
+  public String getText() {
+    return text;
+  }
+
+  public void setText(final String text) {
+    this.text = text;
+    this.updated = LocalDateTime.now();
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public void setUser(final String user) {
+    this.user = user;
+    this.updated = LocalDateTime.now();
+  }
+
+  public LocalDateTime getCreated() {
+    return created;
+  }
+
+  public void setCreated(final LocalDateTime created) {
+    this.created = created;
+  }
+
+  public LocalDateTime getUpdated() {
+    return updated;
+  }
+
+  public void setUpdated(final LocalDateTime updated) {
+    this.updated = updated;
+  }
+
+  public GUI getSettings() {
+    return settings;
+  }
+
+  public void setSettings(final GUI settings) {
+    this.settings = settings;
+    this.updated = LocalDateTime.now();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
     }
 
-    public String getId() {
-      return id;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    public String getTitle() {
-      return title;
-    }
+    final Paragraph paragraph = (Paragraph) o;
 
-    public void setTitle(final String title) {
-        this.title = title;
-        this.updated = LocalDateTime.now();
-    }
+    return new EqualsBuilder()
+        .append(title, paragraph.title)
+        .append(text, paragraph.text)
+        .append(user, paragraph.user)
+        .append(created, paragraph.created)
+        .append(settings, paragraph.settings)
+        .isEquals();
+  }
 
-    public String getText() {
-        return text;
-    }
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(title)
+        .append(text)
+        .append(user)
+        .append(created)
+        .append(settings)
+        .toHashCode();
+  }
 
-    public void setText(final String text) {
-        this.text = text;
-        this.updated = LocalDateTime.now();
-    }
+  // Много где вызывается, проще сделать такую заглушку
+  public Note getNote() {
+    throw new NotImplementedException("Parent note has been removed from paragraph");
+  }
 
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(final String user) {
-        this.user = user;
-        this.updated = LocalDateTime.now();
-    }
-
-    public LocalDateTime getCreated() {
-        return created;
-    }
-
-    public void setCreated(final LocalDateTime created) {
-        this.created = created;
-    }
-
-    public LocalDateTime getUpdated() {
-        return updated;
-    }
-
-    public void setUpdated(final LocalDateTime updated) {
-        this.updated = updated;
-    }
-
-    public GUI getSettings() {
-        return settings;
-    }
-
-    public void setSettings(final GUI settings) {
-        this.settings = settings;
-        this.updated = LocalDateTime.now();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        final Paragraph paragraph = (Paragraph) o;
-
-        return new EqualsBuilder()
-                .append(title, paragraph.title)
-                .append(text, paragraph.text)
-                .append(user, paragraph.user)
-                .append(created, paragraph.created)
-                .append(settings, paragraph.settings)
-                .isEquals();
-    }
-
-
-    @Override
-    public int hashCode() {
-      return new HashCodeBuilder(17, 37)
-          .append(title)
-          .append(text)
-          .append(user)
-          .append(created)
-          .append(settings)
-          .toHashCode();
-    }
-
-    // Много где вызывается, проще сделать такую заглушку
-    public Note getNote() {
-      throw new NotImplementedException("Parent note has been removed from paragraph");
-    }
-
-    public Interpreter getBindedInterpreter() throws InterpreterNotFoundException {
-      throw new NotImplementedException("Interpreter has been removed from paragraph");
-    }
+  public Interpreter getBindedInterpreter() throws InterpreterNotFoundException {
+    throw new NotImplementedException("Interpreter has been removed from paragraph");
+  }
 }
