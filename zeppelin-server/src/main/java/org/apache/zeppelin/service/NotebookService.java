@@ -636,15 +636,21 @@ public class NotebookService {
       return;
     }
 
+    LOGGER.info("[CRON]: update note with id={}, cronEenabled? - {}", noteId,
+        note.getConfig().get("isZeppelinNotebookCronEnable"));
     if (!(Boolean) note.getConfig().get("isZeppelinNotebookCronEnable")) {
       if (config.get("cron") != null) {
+        LOGGER.info("[CRON] cron is not enabled - remove cron from note[id={}]", noteId);
         config.remove("cron");
       }
     }
     boolean cronUpdated = isCronUpdated(config, note.getConfig());
+    LOGGER.info("[CRON] is cron updated? - {}\n\tNew config - {}\n\tOld - {}", cronUpdated,
+        config, note.getConfig());
     note.setName(name);
     note.setConfig(config);
     if (cronUpdated) {
+      LOGGER.info("[CRON] Refresing cron for note[id={}]", note.getId());
       notebook.refreshCron(note.getId());
     }
 
