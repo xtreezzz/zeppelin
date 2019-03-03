@@ -20,17 +20,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.repo.ZeppelinRepository;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
-import org.apache.zeppelin.websocket.Operation;
-import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +39,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * NoteRepo rest API endpoint.
@@ -53,19 +48,16 @@ import java.util.List;
 public class NotebookRepoRestApi extends AbstractRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRepoRestApi.class);
 
-  private final ZeppelinRepository zeppelinRepository;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
   private final ConnectionManager connectionManager;
-  private final Notebook notebook;
 
   @Autowired
-  public NotebookRepoRestApi(final ZeppelinRepository zeppelinRepository,
+  public NotebookRepoRestApi(final ZeppelinNoteRepository zeppelinNoteRepository,
                              @Qualifier("NoSecurityService") final SecurityService securityService,
-                             final ConnectionManager connectionManager,
-                             final Notebook notebook) {
+                             final ConnectionManager connectionManager) {
     super(securityService);
-    this.zeppelinRepository = zeppelinRepository;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
     this.connectionManager = connectionManager;
-    this.notebook = notebook;
   }
 
   /**
@@ -90,15 +82,15 @@ public class NotebookRepoRestApi extends AbstractRestApi {
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     LOG.info("Reloading notebook repository for user {}", subject.getUser());
 
-    final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
-    connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
+    //final List<NoteInfo> notesInfo = notebook.getNotesInfo(getServiceContext().getUserAndRoles());
+    //connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "", null).build();
   }
 
 
   /**
-   * Update a specific note repo.
+   * Update a specific note repository.
    */
   @ZeppelinApi
   @PutMapping(produces = "application/json")
@@ -111,7 +103,7 @@ public class NotebookRepoRestApi extends AbstractRestApi {
     try {
       newSettings = NotebookRepoSettingsRequest.fromJson(payload);
     } catch (final JsonSyntaxException e) {
-      LOG.error("Cannot update notebook repo settings", e);
+      LOG.error("Cannot update notebook repository settings", e);
       return new JsonResponse(HttpStatus.NOT_ACCEPTABLE, "",
               ImmutableMap.of("error", "Invalid payload structure")).build();
     }
@@ -121,7 +113,7 @@ public class NotebookRepoRestApi extends AbstractRestApi {
       return new JsonResponse(HttpStatus.NOT_ACCEPTABLE, "",
               ImmutableMap.of("error", "Invalid payload")).build();
     }
-    LOG.info("User {} is going to change repo setting", subject.getUser());
+    LOG.info("User {} is going to change repository setting", subject.getUser());
     //final NotebookRepoWithSettings updatedSettings =
      //       zeppelinRepository.get().updateNotebookRepo(newSettings.name, newSettings.settings, subject);
     //if (!updatedSettings.isEmpty()) {

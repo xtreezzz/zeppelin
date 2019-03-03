@@ -1,6 +1,6 @@
 package org.apache.zeppelin.notebook;
 
-//import org.apache.zeppelin.notebook.repo.InMemoryNotebookRepo;
+//import org.apache.zeppelin.notebook.repository.InMemoryNotebookRepo;
 //import org.apache.zeppelin.user.AuthenticationInfo;
 //import org.junit.Before;
 //import org.junit.Test;

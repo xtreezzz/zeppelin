@@ -17,19 +17,13 @@
 
 package org.apache.zeppelin.python;
 
-import org.apache.zeppelin.display.ui.CheckBox;
-import org.apache.zeppelin.display.ui.Password;
-import org.apache.zeppelin.display.ui.Select;
-import org.apache.zeppelin.display.ui.TextBox;
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterGroup;
-import org.apache.zeppelin.interpreter.InterpreterOutput;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResultMessage;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterEventClient;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import org.apache.zeppelin.notebook.display.ui.CheckBox;
+import org.apache.zeppelin.notebook.display.ui.Password;
+import org.apache.zeppelin.notebook.display.ui.Select;
+import org.apache.zeppelin.notebook.display.ui.TextBox;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

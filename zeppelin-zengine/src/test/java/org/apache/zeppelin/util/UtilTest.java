@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.util;
 
+import org.apache.zeppelin.utils.Util;
 import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 

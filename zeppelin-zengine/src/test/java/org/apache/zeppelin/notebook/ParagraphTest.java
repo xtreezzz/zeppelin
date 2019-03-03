@@ -36,10 +36,10 @@ package org.apache.zeppelin.notebook;
 //import java.util.List;
 //
 //import org.apache.commons.lang3.tuple.Triple;
-//import org.apache.zeppelin.display.AngularObject;
+//import AngularObject;
 //import org.apache.zeppelin.display.AngularObjectBuilder;
-//import org.apache.zeppelin.display.AngularObjectRegistry;
-//import org.apache.zeppelin.display.Input;
+//import AngularObjectRegistry;
+//import Input;
 //import org.apache.zeppelin.interpreter.*;
 //import org.apache.zeppelin.interpreter.Interpreter.FormType;
 //import org.apache.zeppelin.interpreter.InterpreterContext;

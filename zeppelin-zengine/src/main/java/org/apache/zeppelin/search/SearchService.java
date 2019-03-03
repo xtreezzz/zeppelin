@@ -16,14 +16,13 @@
  */
 package org.apache.zeppelin.search;
 
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Paragraph;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteEventAsyncListener;
-import org.apache.zeppelin.notebook.core.Paragraph;
 
 /**
  * Search (both, indexing and query) the notes.

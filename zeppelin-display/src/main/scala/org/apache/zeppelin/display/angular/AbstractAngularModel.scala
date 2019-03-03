@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zeppelin.display.angular
+package org.apache.zeppelin.notebook.display.angular
 
 import org.apache.zeppelin.annotation.ZeppelinApi
-import org.apache.zeppelin.display.AngularObject
+import org.apache.zeppelin.notebook.display.AngularObject
 import org.apache.zeppelin.interpreter.InterpreterContext
 
 /**

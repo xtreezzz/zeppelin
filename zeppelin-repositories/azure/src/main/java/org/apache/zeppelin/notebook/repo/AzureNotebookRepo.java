@@ -17,13 +17,18 @@
 
 package org.apache.zeppelin.notebook.repo;
 
+import com.google.gson.Gson;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.file.CloudFile;
-import com.microsoft.azure.storage.file.CloudFileClient;
-import com.microsoft.azure.storage.file.CloudFileDirectory;
-import com.microsoft.azure.storage.file.CloudFileShare;
-import com.microsoft.azure.storage.file.ListFileItem;
+import com.microsoft.azure.storage.file.*;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.repository.NotebookRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,15 +37,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.repo.api.NotebookRepo;
-import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Azure storage backend for notebooks
@@ -133,7 +129,7 @@ public class AzureNotebookRepo implements NotebookRepo {
     try {
       CloudFile noteFile = rootDir.getFileReference(buildNoteFileName(note));
       noteFile.getParent().createIfNotExists();
-      noteFile.uploadText(Note.getGson().toJson(note));
+      noteFile.uploadText(new Gson().toJson(note));
     } catch (URISyntaxException | StorageException e) {
       String msg = String.format("Error saving notebook %s to Azure storage",
           buildNoteFileName(note));
@@ -175,7 +171,7 @@ public class AzureNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings() {
+  public List<Settings> getSettings() {
     LOGGER.warn("Method not implemented");
     return Collections.emptyList();
   }

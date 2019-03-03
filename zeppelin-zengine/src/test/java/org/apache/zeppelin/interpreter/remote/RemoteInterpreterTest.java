@@ -18,10 +18,10 @@
 package org.apache.zeppelin.interpreter.remote;
 //
 //import org.apache.thrift.transport.TTransportException;
-//import org.apache.zeppelin.display.AngularObjectRegistry;
-//import org.apache.zeppelin.display.GUI;
-//import org.apache.zeppelin.display.Input;
-//import org.apache.zeppelin.display.ui.OptionInput;
+//import AngularObjectRegistry;
+//import GUI;
+//import Input;
+//import OptionInput;
 //import org.apache.zeppelin.interpreter.*;
 //import org.apache.zeppelin.interpreter.InterpreterResult.Code;
 //import org.apache.zeppelin.interpreter.remote.mock.GetAngularObjectSizeInterpreter;

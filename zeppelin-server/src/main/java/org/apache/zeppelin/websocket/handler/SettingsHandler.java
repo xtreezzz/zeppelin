@@ -17,13 +17,10 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -45,19 +42,24 @@ public class SettingsHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SettingsHandler.class);
 
   private final ConfigurationService configurationService;
+  private final InterpreterSettingManager interpreterSettingManager;
+  private final InterpreterFactory interpreterFactory;
 
   @Autowired
-  public SettingsHandler(final NotePermissionsService notePermissionsService,
-                         final Notebook notebook,
+  public SettingsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                          final ConnectionManager connectionManager,
-                         final ConfigurationService configurationService) {
-    super(notePermissionsService, notebook, connectionManager);
+                         final ConfigurationService configurationService,
+                         final InterpreterSettingManager interpreterSettingManager,
+                         final InterpreterFactory interpreterFactory) {
+    super(connectionManager, zeppelinNoteRepository);
     this.configurationService = configurationService;
+    this.interpreterSettingManager = interpreterSettingManager;
+    this.interpreterFactory = interpreterFactory;
   }
 
   public void sendAllConfigurations(final WebSocketSession conn) throws IOException {
     final Map<String, String> properties = configurationService.getAllProperties();
-    properties.put("isRevisionSupported", String.valueOf(notebook.isRevisionSupported()));
+    properties.put("isRevisionSupported", String.valueOf(zeppelinNoteRepository.isRevisionSupported()));
 
     final SockMessage message = new SockMessage(Operation.CONFIGURATIONS_INFO)
             .put("configurations", properties);
@@ -73,12 +75,12 @@ public class SettingsHandler extends AbstractHandler {
     final String replName = fromSockMessage.safeGetType("magic", LOG);
 
     try {
-      final Interpreter intp = notebook.getInterpreterFactory().getInterpreter(
+      final Interpreter intp = interpreterFactory.getInterpreter(
               serviceContext.getAutheInfo().getUser(),
               note.getId(),
               replName,
               note.getDefaultInterpreterGroup());
-      final Map<String, Object> settings = notebook.getInterpreterSettingManager().
+      final Map<String, Object> settings = interpreterSettingManager.
               getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getId(), replName);
 
       final SockMessage message = new SockMessage(Operation.EDITOR_SETTING)
@@ -93,7 +95,7 @@ public class SettingsHandler extends AbstractHandler {
 
 
   public void getInterpreterSettings(final WebSocketSession conn) throws IOException {
-    final List<InterpreterSetting> availableSettings = notebook.getInterpreterSettingManager().get();
+    final List<InterpreterSetting> availableSettings = interpreterSettingManager.get();
     final SockMessage message = new SockMessage(Operation.INTERPRETER_SETTINGS)
             .put("interpreterSettings", availableSettings);
     conn.sendMessage(message.toSend());

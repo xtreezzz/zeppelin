@@ -16,15 +16,15 @@
  */
 package org.apache.zeppelin.display.angular.notebookscope
 
-import org.apache.zeppelin.display.AngularObject
-import org.apache.zeppelin.display.angular.AbstractAngularModel
+import org.apache.zeppelin.notebook.display.AngularObject
+import org.apache.zeppelin.notebook.display.angular.AbstractAngularModel
 import org.apache.zeppelin.interpreter.InterpreterContext
 
 /**
   * Represents ng-model in notebook scope
   */
 class AngularModel(name: String)
-  extends org.apache.zeppelin.display.angular.AbstractAngularModel(name) {
+  extends org.apache.zeppelin.notebook.display.angular.AbstractAngularModel(name) {
 
   def this(name: String, newValue: Any) = {
     this(name)

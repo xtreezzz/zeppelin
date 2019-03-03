@@ -17,10 +17,6 @@
 
 package org.apache.zeppelin.interpreter;
 
-import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_MAX_POOL_SIZE;
-import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_OUTPUT_LIMIT;
-import static org.apache.zeppelin.util.IdHashes.generateId;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -28,26 +24,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.display.AngularObjectRegistry;
-import org.apache.zeppelin.display.AngularObjectRegistryListener;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLaunchContext;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
@@ -55,9 +35,21 @@ import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.plugin.PluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
+
+import static org.apache.zeppelin.util.IdHashes.generateId;
 
 /**
  * Represent one InterpreterSetting in the interpreter setting page
@@ -487,12 +479,12 @@ public class InterpreterSetting {
 
     if (!jProperties.containsKey("zeppelin.interpreter.output.limit")) {
       jProperties.setProperty("zeppelin.interpreter.output.limit",
-          conf.getInt(ZEPPELIN_INTERPRETER_OUTPUT_LIMIT) + "");
+          conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_OUTPUT_LIMIT) + "");
     }
 
     if (!jProperties.containsKey("zeppelin.interpreter.max.poolsize")) {
       jProperties.setProperty("zeppelin.interpreter.max.poolsize",
-          conf.getInt(ZEPPELIN_INTERPRETER_MAX_POOL_SIZE) + "");
+          conf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_MAX_POOL_SIZE) + "");
     }
 
     String interpreterLocalRepoPath = conf.getInterpreterLocalRepoPath();

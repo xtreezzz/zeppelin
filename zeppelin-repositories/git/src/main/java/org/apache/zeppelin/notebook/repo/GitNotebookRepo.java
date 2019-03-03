@@ -17,13 +17,9 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
-import org.apache.zeppelin.repo.api.Revision;
+import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -40,15 +36,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * NotebookRepo that hosts all the notebook FS in a single Git repo
+ * NotebookRepo that hosts all the notebook FS in a single Git repository
  *
  * This impl intended to be simple and straightforward:
  *   - does not handle branches
- *   - only basic local git file repo, no remote Github push\pull. GitHub integration is
+ *   - only basic local git file repository, no remote Github push\pull. GitHub integration is
  *   implemented in @see {@link org.apache.zeppelin.notebook.repo.GitNotebookRepo}
  *
  *   TODO(bzz): add default .gitignore
@@ -62,7 +59,6 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
     super();
   }
 
-  @VisibleForTesting
   public GitNotebookRepo(ZeppelinConfiguration conf) throws IOException {
     this();
     init(conf);
@@ -75,11 +71,10 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
     this.conf = conf;
     setNotebookDirectory(conf.getNotebookDir());
 
-    LOGGER.info("Opening a git repo at '{}'", this.rootNotebookFolder);
-    Repository localRepo = new FileRepository(Joiner.on(File.separator)
-        .join(this.rootNotebookFolder, ".git"));
+    LOGGER.info("Opening a git repository at '{}'", this.rootNotebookFolder);
+    Repository localRepo = new FileRepository(this.rootNotebookFolder + File.separator + ".git");
     if (!localRepo.getDirectory().exists()) {
-      LOGGER.info("Git repo {} does not exist, creating a new one", localRepo.getDirectory());
+      LOGGER.info("Git repository {} does not exist, creating a new one", localRepo.getDirectory());
       localRepo.create();
     }
     git = new Git(localRepo);
@@ -119,7 +114,7 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
    * @param noteName name of the note
    * @param commitMessage is a commit message (checkpoint message)
    * (non-Javadoc)
-   * @see org.apache.zeppelin.notebook.repo.VFSNotebookRepo#checkpoint(String, String)
+   * @see org.apache.zeppelin.notebook.repository.VFSNotebookRepo#checkpoint(String, String)
    */
   @Override
   public Revision checkpoint(String noteId, String notePath,
@@ -186,8 +181,8 @@ public class GitNotebookRepo extends VFSNotebookRepo implements NotebookRepoWith
   }
 
   @Override
-  public List<Revision> revisionHistory(String noteId, String notePath) throws IOException {
-    List<Revision> history = Lists.newArrayList();
+  public List<NotebookRepoWithVersionControl.Revision> revisionHistory(String noteId, String notePath) throws IOException {
+    List<Revision> history = new ArrayList<>();
     String noteFileName = buildNoteFileName(noteId, notePath);
     LOGGER.debug("Listing history for {}:", noteFileName);
     try {

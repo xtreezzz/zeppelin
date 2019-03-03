@@ -17,9 +17,10 @@
 
 package org.apache.zeppelin.interpreter.launcher;
 
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+
 import java.io.IOException;
 import java.util.Properties;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
 
 /**
  * Component to Launch interpreter process.

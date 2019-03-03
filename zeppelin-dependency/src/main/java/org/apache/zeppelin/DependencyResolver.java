@@ -46,7 +46,7 @@ import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 
 /**
  * Deps resolver.
- * Add new dependencies from mvn repo (at runtime) to Zeppelin.
+ * Add new dependencies from mvn repository (at runtime) to Zeppelin.
  */
 //TODO(egorklimov) @Component?
 public class DependencyResolver extends AbstractDependencyResolver {

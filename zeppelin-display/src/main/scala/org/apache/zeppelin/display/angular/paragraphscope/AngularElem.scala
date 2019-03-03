@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.display.angular.paragraphscope
+package org.apache.zeppelin.notebook.display.angular.paragraphscope
 
 
-import org.apache.zeppelin.display.angular.AbstractAngularElem
-import org.apache.zeppelin.display.{angular, AngularObject}
+import org.apache.zeppelin.notebook.display.angular.AbstractAngularElem
+import org.apache.zeppelin.notebook.display.{angular, AngularObject}
 import org.apache.zeppelin.interpreter.InterpreterContext
 
 import scala.collection.JavaConversions

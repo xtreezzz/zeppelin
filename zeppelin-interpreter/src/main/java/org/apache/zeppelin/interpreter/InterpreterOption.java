@@ -17,9 +17,10 @@
 
 package org.apache.zeppelin.interpreter;
 
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
 
 /**
  *

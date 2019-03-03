@@ -16,7 +16,7 @@
  */
 package org.apache.zeppelin.server;
 
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

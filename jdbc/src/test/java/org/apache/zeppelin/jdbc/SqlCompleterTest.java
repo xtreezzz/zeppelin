@@ -14,14 +14,11 @@
  */
 package org.apache.zeppelin.jdbc;
 
-import static com.google.common.collect.Sets.newHashSet;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.google.common.base.Joiner;
-
+import jline.console.completer.ArgumentCompleter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import org.apache.zeppelin.jdbc.completer.CompletionType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,17 +27,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import jline.console.completer.ArgumentCompleter;
-
-import org.apache.zeppelin.completer.CompletionType;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * SQL completer unit tests.

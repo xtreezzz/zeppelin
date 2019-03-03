@@ -17,9 +17,9 @@
 
 package org.apache.zeppelin.interpreter;
 
-import org.apache.zeppelin.display.AngularObjectRegistry;
-import org.apache.zeppelin.display.GUI;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterEventClient;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.user.AuthenticationInfo;
 

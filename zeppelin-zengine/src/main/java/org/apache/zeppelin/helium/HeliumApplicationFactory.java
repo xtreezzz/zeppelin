@@ -16,12 +16,8 @@
  */
 package org.apache.zeppelin.helium;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterException;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
@@ -32,8 +28,7 @@ import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventListener;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.scheduler.ExecutorFactory;
 import org.apache.zeppelin.scheduler.Job;
 import org.slf4j.Logger;
@@ -42,6 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+
 /**
  * HeliumApplicationFactory
  */
@@ -49,13 +47,11 @@ import org.springframework.stereotype.Component;
 public class HeliumApplicationFactory implements ApplicationEventListener, NoteEventListener {
   private final Logger logger = LoggerFactory.getLogger(HeliumApplicationFactory.class);
   private final ExecutorService executor;
-  private Notebook notebook;
   private ApplicationEventListener applicationEventListener;
 
   @Autowired
-  public HeliumApplicationFactory(Notebook notebook, @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener applicationEventListener) {
+  public HeliumApplicationFactory( @Qualifier("ApplicationEventListenerImpl") ApplicationEventListener applicationEventListener) {
     this.executor = ExecutorFactory.singleton().createOrGet(HeliumApplicationFactory.class.getName(), 10);
-    this.notebook = notebook;
     this.applicationEventListener = applicationEventListener;
   }
 
@@ -95,7 +91,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
     public void run() {
       try {
         // get interpreter process
-        Interpreter intp = paragraph.getBindedInterpreter();
+        Interpreter intp = null;//paragraph.getBindedInterpreter();
         ManagedInterpreterGroup intpGroup = (ManagedInterpreterGroup) intp.getInterpreterGroup();
         RemoteInterpreterProcess intpProcess = intpGroup.getRemoteInterpreterProcess();
         if (intpProcess == null) {
@@ -222,11 +218,11 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         }
         appStatusChange(paragraph, appsToUnload.getId(), ApplicationState.Status.UNLOADING);
         Interpreter intp = null;
-        try {
-          intp = paragraph.getBindedInterpreter();
-        } catch (InterpreterException e) {
-          throw new ApplicationException("No interpreter found", e);
-        }
+        //try {
+        //  intp = paragraph.getBindedInterpreter();
+        //} catch (InterpreterException e) {
+        //  throw new ApplicationException("No interpreter found", e);
+        //}
 
         RemoteInterpreterProcess intpProcess =
             ((ManagedInterpreterGroup) intp.getInterpreterGroup()).getRemoteInterpreterProcess();
@@ -307,11 +303,11 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
         }
 
         Interpreter intp = null;
-        try {
-          intp = paragraph.getBindedInterpreter();
-        } catch (InterpreterException e) {
-          throw new ApplicationException("No interpreter found", e);
-        }
+        //try {
+        //  intp = paragraph.getBindedInterpreter();
+        //} catch (InterpreterException e) {
+        //  throw new ApplicationException("No interpreter found", e);
+        //}
 
         RemoteInterpreterProcess intpProcess =
             ((ManagedInterpreterGroup) intp.getInterpreterGroup()).getRemoteInterpreterProcess();
@@ -400,7 +396,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
   }
 
   private ApplicationState getAppState(String noteId, String paragraphId, String appId) {
-    if (notebook == null) {
+    /*if (notebook == null) {
       return null;
     }
 
@@ -420,6 +416,9 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
     //    ApplicationState appFound = paragraph.getApplicationState(appId);
     //
     //    return appFound;
+
+    */
+    throw new NotImplementedException("NotImplemented yet");
   }
 
   @Override
@@ -459,7 +458,7 @@ public class HeliumApplicationFactory implements ApplicationEventListener, NoteE
 
   }
 
-  @Override
+  //@Override
   public void onParagraphStatusChange(Paragraph p, Job.Status status) {
     //TODO(egorklimov): package should be loaded by HeliumService
     throw new NotImplementedException("ApplicationState removed from paragraph");

@@ -21,12 +21,12 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.helium.Helium;
 import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.helium.HeliumPackageSearchResult;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,13 +49,13 @@ public class HeliumRestApi {
   Logger logger = LoggerFactory.getLogger(HeliumRestApi.class);
 
   private final Helium helium;
-  private final Notebook notebook;
   private final Gson gson = new Gson();
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
 
   @Autowired
-  public HeliumRestApi(final Helium helium, final Notebook notebook) {
+  public HeliumRestApi(final Helium helium, ZeppelinNoteRepository zeppelinNoteRepository) {
     this.helium = helium;
-    this.notebook = notebook;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
   /**
@@ -105,7 +105,7 @@ public class HeliumRestApi {
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
@@ -127,7 +127,7 @@ public class HeliumRestApi {
   @PostMapping(value = "/load/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity load(@PathVariable("noteId") final String noteId,
                              @PathVariable("paragraphId") final String paragraphId, final String heliumPackage) {
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }

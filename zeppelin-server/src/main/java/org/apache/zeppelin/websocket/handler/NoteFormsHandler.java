@@ -17,11 +17,10 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.display.GUI;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -41,10 +40,9 @@ public class NoteFormsHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteFormsHandler.class);
 
   @Autowired
-  public NoteFormsHandler(final NotePermissionsService notePermissionsService,
-                          final Notebook notebook,
+  public NoteFormsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                           final ConnectionManager connectionManager) {
-    super(notePermissionsService, notebook, connectionManager);
+    super(connectionManager, zeppelinNoteRepository);
   }
 
   @ZeppelinApi
@@ -55,8 +53,9 @@ public class NoteFormsHandler extends AbstractHandler {
     final Map<String, Object> noteParams = fromSockMessage.safeGetType("noteParams", LOG);
 
     //TODO(KOT): wrong field
-    note.setNoteParams(noteParams);
-    notebook.saveNote(note);
+    note.getGuiConfiguration().setParams(noteParams);
+
+    zeppelinNoteRepository.updateNote(note);
     broadcastNoteForms(note);
   }
 
@@ -67,17 +66,17 @@ public class NoteFormsHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, serviceContext, conn);
     final String formName = fromSockMessage.safeGetType("formName", LOG);
 
-    note.getNoteForms().remove(formName);
-    note.getNoteParams().remove(formName);
-    notebook.saveNote(note);
+    note.getGuiConfiguration().getForms().remove(formName);
+    note.getGuiConfiguration().getParams().remove(formName);
+    zeppelinNoteRepository.updateNote(note);
 
     broadcastNoteForms(note);
   }
 
   private void broadcastNoteForms(final Note note) {
     final GUI formsSettings = new GUI();
-    formsSettings.setForms(note.getNoteForms());
-    formsSettings.setParams(note.getNoteParams());
+    formsSettings.setForms(note.getGuiConfiguration().getForms());
+    formsSettings.setParams(note.getGuiConfiguration().getParams());
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.SAVE_NOTE_FORMS).put("formsData", formsSettings));
   }
 }

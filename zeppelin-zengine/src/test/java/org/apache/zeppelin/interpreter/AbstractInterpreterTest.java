@@ -2,7 +2,7 @@ package org.apache.zeppelin.interpreter;
 
 //import org.apache.commons.io.FileUtils;
 //import org.apache.zeppelin.conf.ZeppelinConfiguration;
-//import org.apache.zeppelin.display.AngularObjectRegistryListener;
+//import AngularObjectRegistryListener;
 //import org.apache.zeppelin.helium.ApplicationEventListener;
 //import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 //import org.apache.zeppelin.notebook.Note;

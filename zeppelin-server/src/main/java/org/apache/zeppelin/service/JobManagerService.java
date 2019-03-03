@@ -18,16 +18,17 @@
 package org.apache.zeppelin.service;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
-import org.apache.zeppelin.scheduler.Job;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Service class for JobManager Page
@@ -37,16 +38,16 @@ public class JobManagerService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JobManagerService.class);
 
-  private final Notebook notebook;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
 
   @Autowired
-  public JobManagerService(final Notebook notebook) {
-    this.notebook = notebook;
+  public JobManagerService(final ZeppelinNoteRepository zeppelinNoteRepository) {
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
   public List<NoteJobInfo> getNoteJobInfo(final String noteId) {
     final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
-    final Note jobNote = notebook.getNote(noteId);
+    final Note jobNote = zeppelinNoteRepository.getNote(noteId);
     notesJobInfo.add(new NoteJobInfo(jobNote));
     return notesJobInfo;
   }
@@ -55,7 +56,7 @@ public class JobManagerService {
    * Get all NoteJobInfo after lastUpdateServerUnixTime
    */
   public List<NoteJobInfo> getNoteJobInfoByUnixTime(final long lastUpdateServerUnixTime) {
-    final List<Note> notes = notebook.getAllNotes();
+    final List<Note> notes = zeppelinNoteRepository.getAllNotes();
     final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
     for (final Note note : notes) {
       final NoteJobInfo noteJobInfo = new NoteJobInfo(note);
@@ -73,20 +74,21 @@ public class JobManagerService {
   }
 
   private static long getUnixTimeLastRunParagraph(final Paragraph paragraph) {
-    if (paragraph.isTerminated() && paragraph.getDateFinished() != null) {
+    /*if (paragraph.isTerminated() && paragraph.getDateFinished() != null) {
       return paragraph.getDateFinished().getTime();
     } else if (paragraph.isRunning()) {
       return new Date().getTime();
     } else {
       return paragraph.getDateCreated().getTime();
-    }
+    } */
+    return new Date().getTime();
   }
 
 
   public static class ParagraphJobInfo {
     private final String id;
     private final String name;
-    private final Job.Status status;
+    //private final Job.Status status;
 
     public ParagraphJobInfo(final Paragraph p) {
       this.id = p.getId();
@@ -95,7 +97,7 @@ public class JobManagerService {
       } else {
         this.name = p.getTitle();
       }
-      this.status = p.getStatus();
+      //this.status = p.getStatus();
     }
   }
 
@@ -126,9 +128,9 @@ public class JobManagerService {
       this.paragraphs = new ArrayList<>();
       for (final Paragraph paragraph : note.getParagraphs()) {
         // check paragraph's status.
-        if (paragraph.getStatus().isRunning()) {
-          isNoteRunning = true;
-        }
+        //if (paragraph.getStatus().isRunning()) {
+        //  isNoteRunning = true;
+        //}
         // get data for the job manager.
         final ParagraphJobInfo paragraphItem = new ParagraphJobInfo(paragraph);
         lastRunningUnixTime = getUnixTimeLastRunParagraph(paragraph);
@@ -140,7 +142,7 @@ public class JobManagerService {
     }
 
     private boolean isCron(final Note note) {
-      return note.getConfig().isCronEnabled;
+      return false; //note.getNoteCronConfiguration().isCronEnabled;
     }
 
     public NoteJobInfo(final String noteId, final boolean isRemoved) {

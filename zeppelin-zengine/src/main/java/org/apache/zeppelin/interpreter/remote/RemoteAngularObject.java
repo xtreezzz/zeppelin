@@ -17,10 +17,9 @@
 
 package org.apache.zeppelin.interpreter.remote;
 
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectListener;
-import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectListener;
 
 /**
  * Proxy for AngularObject that exists in remote interpreter process

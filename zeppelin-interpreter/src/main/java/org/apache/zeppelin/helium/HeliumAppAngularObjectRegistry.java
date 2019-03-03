@@ -16,8 +16,8 @@
  */
 package org.apache.zeppelin.helium;
 
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 
 import java.util.List;
 

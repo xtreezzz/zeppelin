@@ -33,7 +33,7 @@ package org.apache.zeppelin.search;
 //import org.apache.zeppelin.notebook.Notebook;
 //import org.apache.zeppelin.notebook.NotebookAuthorization;
 //import org.apache.zeppelin.notebook.core.Paragraph;
-//import org.apache.zeppelin.notebook.repo.NotebookRepo;
+//import org.apache.zeppelin.notebook.repository.NotebookRepo;
 //import org.apache.zeppelin.user.AuthenticationInfo;
 //import org.apache.zeppelin.user.Credentials;
 //import org.junit.After;
@@ -275,13 +275,13 @@ package org.apache.zeppelin.search;
 //  }
 //
 //  private Paragraph addParagraphWithText(Note note, String text) {
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(text);
 //    return p;
 //  }
 //
 //  private Paragraph addParagraphWithTextAndTitle(Note note, String text, String title) {
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(text);
 //    p.setTitle(title);
 //    return p;

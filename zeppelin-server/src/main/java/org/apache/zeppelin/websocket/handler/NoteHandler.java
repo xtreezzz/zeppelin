@@ -19,10 +19,14 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.*;
-import org.apache.zeppelin.notebook.conf.CronJobConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.NoteCronConfiguration;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -33,14 +37,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN;
 
 @Component
 public class NoteHandler extends AbstractHandler {
@@ -51,12 +53,11 @@ public class NoteHandler extends AbstractHandler {
   private final ZeppelinConfiguration zeppelinConfiguration;
 
   @Autowired
-  public NoteHandler(final NotePermissionsService notePermissionsService,
-                     final Notebook notebook,
+  public NoteHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                      final ConnectionManager connectionManager,
                      final AngularObjectsHandler angularObjectsService,
                      final ZeppelinConfiguration zeppelinConfiguration) {
-    super(notePermissionsService, notebook, connectionManager);
+    super(connectionManager, zeppelinNoteRepository);
     this.angularObjectsService = angularObjectsService;
     this.zeppelinConfiguration = zeppelinConfiguration;
   }
@@ -65,7 +66,8 @@ public class NoteHandler extends AbstractHandler {
   public void listNotesInfo(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final List<NoteInfo> notesInfo = notebook.getNotesInfo(serviceContext.getUserAndRoles());
+    final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+    //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(serviceContext.getUserAndRoles());
     conn.sendMessage(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo).toSend());
   }
 
@@ -77,10 +79,10 @@ public class NoteHandler extends AbstractHandler {
   public void getHomeNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String noteId = notebook.getConf().getString(ZEPPELIN_NOTEBOOK_HOMESCREEN);
+    final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
     checkPermission(noteId, Permission.READER, serviceContext);
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     if (note != null) {
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
@@ -112,10 +114,10 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
     final String name = fromMessage.safeGetType("name", LOG);
-    final CronJobConfiguration config = fromMessage.safeGetType("config", LOG);
+    final NoteCronConfiguration config = fromMessage.safeGetType("config", LOG);
 
     //TODO(egorklimov) fix cron logic
-    if (!note.getConfig().isCronEnabled()) {
+    if (!note.getNoteCronConfiguration().isCronEnabled()) {
       //??????????????????
       // было - config.remove("cron"), т.е. из конфига выкидывается cronExpression, но вся остальная
       // инфа остается, wtf, вохможно это сделано чтобы вдруг не включился крон, но сохранился
@@ -123,12 +125,12 @@ public class NoteHandler extends AbstractHandler {
     }
 
     note.setName(name);
-    note.setConfig(config);
-    if (!note.getConfig().equals(config)) {
-      notebook.refreshCron(note.getId());
-    }
+    note.setNoteCronConfiguration(config);
+    //if (!note.getNoteCronConfiguration().equals(config)) {
+    //  zeppelinRepository.refreshCron(note.getId());
+    //}
 
-    notebook.saveNote(note);
+    zeppelinNoteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
             .put("name", name)
@@ -148,16 +150,10 @@ public class NoteHandler extends AbstractHandler {
     final String name = fromMessage.safeGetType("name", LOG);
     final boolean isRelativePath = fromMessage.getType("relative", LOG) != null && (Boolean) fromMessage.getType("relative", LOG);
 
-    String newName = StringUtils.EMPTY;
-    if (isRelativePath && !note.getParentPath().equals("/")) {
-      newName = note.getParentPath() + "/" + name;
-    } else {
-      if (!name.startsWith("/")) {
-        newName = "/" + name;
-      }
-    }
-    note.setCronSupported(notebook.getConf());
-    notebook.moveNote(note.getId(), newName);
+    note.setPath(name.substring(0, name.lastIndexOf("/")));
+    note.setName(name.substring(name.lastIndexOf("/") + 1));
+    zeppelinNoteRepository.updateNote(note);
+
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
@@ -166,7 +162,8 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
-    notebook.removeNote(note.getId(), serviceContext.getAutheInfo());
+    zeppelinNoteRepository.removeNote(note.getId());
+    //zeppelinRepository.removeNote(note.getId(), serviceContext.getAutheInfo());
     connectionManager.removeNoteSubscribers(note.getId());
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
@@ -182,13 +179,19 @@ public class NoteHandler extends AbstractHandler {
             : zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
 
     try {
-      final Note note = notebook.createNote(normalizeNotePath(noteName),
-              defaultInterpreterGroup,
-              serviceContext.getAutheInfo());
+      final Note note = new Note(
+              noteName.substring(noteName.lastIndexOf("/") + 1),
+              File.separator + noteName.substring(0, noteName.lastIndexOf("/")) + File.separator,
+              defaultInterpreterGroup
+              //serviceContext.getAutheInfo());
+      );
 
       // it's an empty note. so add one paragraph
-      note.addNewParagraph(serviceContext.getAutheInfo());
-      notebook.saveNote(note);
+      //note.addParagraph(serviceContext.getAutheInfo());
+      final Paragraph paragraph = new Paragraph("", "", serviceContext.getAutheInfo().getUser(), new GUI());
+      note.getParagraphs().add(paragraph);
+
+      zeppelinNoteRepository.persistNote(note);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
       publishNote(note, conn, serviceContext);
@@ -208,10 +211,10 @@ public class NoteHandler extends AbstractHandler {
             ? "/Cloned Note_" + note.getId()
             : name;
 
-    final Note newNote = notebook.cloneNote(note.getId(), normalizeNotePath(newNoteName), serviceContext.getAutheInfo());
+    //final Note newNote = zeppelinRepository.cloneNote(note.getId(), normalizeNotePath(newNoteName), serviceContext.getAutheInfo());
 
-    connectionManager.addSubscriberToNode(newNote.getId(), conn);
-    publishNote(newNote, conn, serviceContext);
+    //connectionManager.addSubscriberToNode(newNote.getId(), conn);
+    //publishNote(newNote, conn, serviceContext);
   }
 
   public void importNote(final SockMessage fromMessage) throws IOException {
@@ -224,10 +227,10 @@ public class NoteHandler extends AbstractHandler {
             ? noteName
             : normalizeNotePath(noteName);
 
-    final Note note = notebook.importNote(noteJson, resultNoteName, serviceContext.getAutheInfo());
+    //final Note note = zeppelinRepository.importNote(noteJson, resultNoteName, serviceContext.getAutheInfo());
 
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    //connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+    //broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void moveNoteToTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -235,12 +238,12 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
-    String destNotePath = "/" + NoteManager.TRASH_FOLDER + note.getPath();
-    if (notebook.containsNote(destNotePath)) {
-      final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      destNotePath = destNotePath + " " + formatter.format(LocalDateTime.now());
-    }
-    notebook.moveNote(note.getId(), destNotePath);
+    //String destNotePath = "/" + NoteManager.TRASH_FOLDER + note.getPath();
+    //if (zeppelinRepository.containsNote(destNotePath)) {
+    //  final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    //  destNotePath = destNotePath + " " + formatter.format(LocalDateTime.now());
+   // }
+    //zeppelinRepository.moveNote(note.getId(), destNotePath);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
@@ -250,35 +253,35 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
-    if (!note.getPath().startsWith("/" + NoteManager.TRASH_FOLDER)) {
-      throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
-    }
+    //if (!note.getPath().startsWith("/" + NoteManager.TRASH_FOLDER)) {
+    //  throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
+    //}
 
-    try {
-      final String destNotePath = note.getPath().replace("/" + NoteManager.TRASH_FOLDER, "");
-      notebook.moveNote(note.getId(), destNotePath);
-      connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-      broadcastNoteList(serviceContext.getUserAndRoles());
-    } catch (final IOException e) {
-      throw new IOException("Fail to restore note: " + note.getId(), e);
-    }
+    //try {
+      //final String destNotePath = note.getPath().replace("/" + NoteManager.TRASH_FOLDER, "");
+      //zeppelinRepository.moveNote(note.getId(), destNotePath);
+      //connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+      //broadcastNoteList(serviceContext.getUserAndRoles());
+    //} catch (final IOException e) {
+    //  throw new IOException("Fail to restore note: " + note.getId(), e);
+    //}
   }
 
   public void restoreFolder(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
+    /*final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
 
     if (!folderPath.startsWith("/" + NoteManager.TRASH_FOLDER)) {
       throw new IOException("Can not restore this folder: " + folderPath + " as it is not in trash folder");
     }
     try {
       final String destFolderPath = folderPath.replace("/" + NoteManager.TRASH_FOLDER, "");
-      notebook.moveFolder(folderPath, destFolderPath);
+      zeppelinRepository.moveFolder(folderPath, destFolderPath);
       broadcastNoteList(serviceContext.getUserAndRoles());
     } catch (final IOException e) {
       throw new IOException("Fail to restore folder: " + folderPath, e);
-    }
+    }*/
   }
 
   public void renameFolder(final SockMessage fromMessage) throws IOException {
@@ -288,12 +291,12 @@ public class NoteHandler extends AbstractHandler {
     final String newFolderId = fromMessage.safeGetType("name", LOG);
     //TODO(zjffdu) folder permission check
 
-    try {
-      notebook.moveFolder(oldFolderId, newFolderId);
+    //try {
+      //zeppelinRepository.moveFolder(oldFolderId, newFolderId);
       broadcastNoteList(serviceContext.getUserAndRoles());
-    } catch (final IOException e) {
-      throw new IOException("Fail to rename folder: " + oldFolderId, e);
-    }
+    //} catch (final IOException e) {
+     // throw new IOException("Fail to rename folder: " + oldFolderId, e);
+    //}
   }
 
   public void moveFolderToTrash(final SockMessage fromMessage) throws IOException {
@@ -303,13 +306,13 @@ public class NoteHandler extends AbstractHandler {
     //TODO(zjffdu) folder permission check
     //TODO(zjffdu) folderPath is relative path, need to fix it in frontend
 
-    String destFolderPath = "/" + NoteManager.TRASH_FOLDER + "/" + folderPath;
-    if (notebook.containsNote(destFolderPath)) {
-      final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      destFolderPath = destFolderPath + " " + formatter.format(LocalDateTime.now());
-    }
+    //String destFolderPath = "/" + NoteManager.TRASH_FOLDER + "/" + folderPath;
+    //if (zeppelinRepository.containsNote(destFolderPath)) {
+    //  final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    //  destFolderPath = destFolderPath + " " + formatter.format(LocalDateTime.now());
+    //}
 
-    notebook.moveFolder("/" + folderPath, destFolderPath);
+    //zeppelinRepository.moveFolder("/" + folderPath, destFolderPath);
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
@@ -317,35 +320,36 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
-    try {
-      notebook.removeFolder(folderPath);
-      final List<NoteInfo> notesInfo = notebook.getNotesInfo(serviceContext.getUserAndRoles());
+    //try {
+      //zeppelinRepository.removeFolder(folderPath);
+      final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+      //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(serviceContext.getUserAndRoles());
       for (final NoteInfo noteInfo : notesInfo) {
         connectionManager.removeNoteSubscribers(noteInfo.getId());
       }
       broadcastNoteList(serviceContext.getUserAndRoles());
-    } catch (final IOException e) {
-      throw new IOException("Fail to remove folder: " + folderPath, e);
-    }
+    //} catch (final IOException e) {
+    //  throw new IOException("Fail to remove folder: " + folderPath, e);
+    //}
   }
 
   public void emptyTrash(final SockMessage fromMessage) throws IOException {
-    try {
-      notebook.emptyTrash();
-    } catch (final IOException e) {
-      throw new IOException("Fail to clear trash folder", e);
-    }
+    //try {
+      //zeppelinRepository.emptyTrash();
+    //} catch (final IOException e) {
+      //throw new IOException("Fail to clear trash folder", e);
+    //}
   }
 
   public void restoreAll(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    try {
-      notebook.restoreAll();
-      broadcastNoteList(serviceContext.getUserAndRoles());
-    } catch (final IOException e) {
-      throw new IOException("Fail to restore all", e);
-    }
+    //try {
+      //zeppelinRepository.restoreAll();
+    //  broadcastNoteList(serviceContext.getUserAndRoles());
+    //} catch (final IOException e) {
+    //  throw new IOException("Fail to restore all", e);
+    //}
   }
 
   public void updatePersonalizedMode(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -356,7 +360,7 @@ public class NoteHandler extends AbstractHandler {
     //    final boolean isPersonalized = fromMessage.getType("personalized", LOG).equals("true");
     //
     //    note.setPersonalizedMode(isPersonalized);
-    //    notebook.saveNote(note);
+    //    zeppelinRepository.saveNote(note);
     //    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 
@@ -364,12 +368,13 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
-    note.clearAllParagraphOutput();
+    //note.clearAllParagraphOutput();
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 
   private void broadcastNoteList(final Set<String> userAndRoles) {
-    final List<NoteInfo> notesInfo = notebook.getNotesInfo(userAndRoles);
+    final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+    //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(userAndRoles);
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
   }
 

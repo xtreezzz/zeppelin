@@ -17,6 +17,8 @@
 
 package org.apache.zeppelin.display;
 
+import org.apache.zeppelin.notebook.display.AngularObject;
+
 public class AngularObjectBuilder {
 
     public static <T> AngularObject<T> build(String varName, T value, String noteId,

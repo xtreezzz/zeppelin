@@ -18,23 +18,12 @@ package org.apache.zeppelin.interpreter.remote;
 
 import com.google.gson.Gson;
 import org.apache.thrift.TException;
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
-import org.apache.zeppelin.interpreter.thrift.AppOutputAppendEvent;
-import org.apache.zeppelin.interpreter.thrift.AppOutputUpdateEvent;
-import org.apache.zeppelin.interpreter.thrift.AppStatusUpdateEvent;
-import org.apache.zeppelin.interpreter.thrift.OutputAppendEvent;
-import org.apache.zeppelin.interpreter.thrift.OutputUpdateAllEvent;
-import org.apache.zeppelin.interpreter.thrift.OutputUpdateEvent;
-import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterEventService;
-import org.apache.zeppelin.interpreter.thrift.RunParagraphsEvent;
-import org.apache.zeppelin.resource.RemoteResource;
-import org.apache.zeppelin.resource.Resource;
-import org.apache.zeppelin.resource.ResourceId;
-import org.apache.zeppelin.resource.ResourcePoolConnector;
-import org.apache.zeppelin.resource.ResourceSet;
+import org.apache.zeppelin.interpreter.thrift.*;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
+import org.apache.zeppelin.resource.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +38,7 @@ import java.util.Map;
  * All the methods are synchronized because thrift client is not thread safe.
  */
 public class RemoteInterpreterEventClient implements ResourcePoolConnector,
-    AngularObjectRegistryListener {
+        AngularObjectRegistryListener {
   private final Logger LOGGER = LoggerFactory.getLogger(RemoteInterpreterEventClient.class);
   private final Gson gson = new Gson();
 

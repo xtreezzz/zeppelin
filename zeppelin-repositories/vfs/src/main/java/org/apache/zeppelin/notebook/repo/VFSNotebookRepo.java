@@ -17,32 +17,23 @@
 
 package org.apache.zeppelin.notebook.repo;
 
+import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.vfs2.*;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.repository.NotebookRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.NameScope;
-import org.apache.commons.vfs2.Selectors;
-import org.apache.commons.vfs2.VFS;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.repo.api.NotebookRepo;
-import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 /**
 * NotebookRepo implementation based on apache vfs
@@ -134,7 +125,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     FileObject noteFile = rootNotebookFileObject.resolveFile(buildNoteFileName(noteId, notePath),
         NameScope.DESCENDENT);
     String json = IOUtils.toString(noteFile.getContent().getInputStream(),
-        conf.getString(ConfVars.ZEPPELIN_ENCODING));
+        conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_ENCODING));
     Note note = Note.fromJson(json);
     // setPath here just for testing, because actually NoteManager will setPath
     note.setPath(notePath);
@@ -145,19 +136,17 @@ public class VFSNotebookRepo implements NotebookRepo {
   public synchronized void save(Note note) throws IOException {
     LOGGER.info("Saving note " + note.getId() + " to " + buildNoteFileName(note));
     // write to tmp file first, then rename it to the {note_name}_{note_id}.zpln
-    FileObject noteJson = rootNotebookFileObject.resolveFile(
-        buildNoteTempFileName(note), NameScope.DESCENDENT);
+    FileObject noteJson = rootNotebookFileObject.resolveFile(buildNoteTempFileName(note), NameScope.DESCENDENT);
     OutputStream out = null;
     try {
       out = noteJson.getContent().getOutputStream(false);
-      IOUtils.write(Note.getGson().toJson(note).getBytes(conf.getString(ConfVars.ZEPPELIN_ENCODING)), out);
+      IOUtils.write(new Gson().toJson(note).getBytes(conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_ENCODING)), out);
     } finally {
       if (out != null) {
         out.close();
       }
     }
-    noteJson.moveTo(rootNotebookFileObject.resolveFile(
-        buildNoteFileName(note), NameScope.DESCENDENT));
+    noteJson.moveTo(rootNotebookFileObject.resolveFile(buildNoteFileName(note), NameScope.DESCENDENT));
   }
 
   @Override
@@ -207,11 +196,11 @@ public class VFSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings() {
-    NotebookRepoSettingsInfo repoSetting = NotebookRepoSettingsInfo.newInstance();
-    List<NotebookRepoSettingsInfo> settings = new ArrayList<>();
+  public List<NotebookRepo.Settings> getSettings() {
+    NotebookRepo.Settings repoSetting = new NotebookRepo.Settings();
+    List<NotebookRepo.Settings> settings = new ArrayList<>();
     repoSetting.name = "Notebook Path";
-    repoSetting.type = NotebookRepoSettingsInfo.Type.INPUT;
+    repoSetting.type = NotebookRepo.Settings.Type.INPUT;
     repoSetting.value = Collections.emptyList();
     repoSetting.selected = rootNotebookFileObject.getName().getPath();
 

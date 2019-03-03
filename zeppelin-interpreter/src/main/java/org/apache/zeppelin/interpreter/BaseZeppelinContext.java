@@ -20,11 +20,11 @@ package org.apache.zeppelin.interpreter;
 import org.apache.thrift.TException;
 import org.apache.zeppelin.annotation.Experimental;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistry;
-import org.apache.zeppelin.display.AngularObjectWatcher;
-import org.apache.zeppelin.display.GUI;
-import org.apache.zeppelin.display.ui.OptionInput.ParamOption;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.AngularObjectWatcher;
+import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.notebook.display.ui.OptionInput;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
@@ -116,18 +116,18 @@ public abstract class BaseZeppelinContext {
   }
 
   @ZeppelinApi
-  public List<Object> checkbox(String name, ParamOption[] options) {
+  public List<Object> checkbox(String name, OptionInput.ParamOption[] options) {
     return checkbox(name, options, false);
   }
 
   @ZeppelinApi
   public List<Object> checkbox(String name, List<Object> defaultChecked,
-                                     ParamOption[] options) {
+                                     OptionInput.ParamOption[] options) {
     return checkbox(name, defaultChecked, options, false);
   }
 
   @ZeppelinApi
-  public Object select(String name, Object defaultValue, ParamOption[] paramOptions) {
+  public Object select(String name, Object defaultValue, OptionInput.ParamOption[] paramOptions) {
     return select(name, defaultValue, paramOptions, false);
   }
 
@@ -142,23 +142,23 @@ public abstract class BaseZeppelinContext {
   }
 
   @ZeppelinApi
-  public List<Object> noteCheckbox(String name, ParamOption[] options) {
+  public List<Object> noteCheckbox(String name, OptionInput.ParamOption[] options) {
     return checkbox(name, options, true);
   }
 
   @ZeppelinApi
   public List<Object> noteCheckbox(String name, List<Object> defaultChecked,
-                                         ParamOption[] options) {
+                                         OptionInput.ParamOption[] options) {
     return checkbox(name, defaultChecked, options, true);
   }
 
   @ZeppelinApi
-  public Object noteSelect(String name, Object defaultValue, ParamOption[] paramOptions) {
+  public Object noteSelect(String name, Object defaultValue, OptionInput.ParamOption[] paramOptions) {
     return select(name, defaultValue, paramOptions, true);
   }
 
 
-  private Object select(String name, Object defaultValue, ParamOption[] paramOptions,
+  private Object select(String name, Object defaultValue, OptionInput.ParamOption[] paramOptions,
                         boolean noteForm) {
     if (noteForm) {
       return noteGui.select(name, defaultValue, paramOptions);
@@ -175,10 +175,10 @@ public abstract class BaseZeppelinContext {
     }
   }
 
-  private List<Object> checkbox(String name, ParamOption[] options,
+  private List<Object> checkbox(String name, OptionInput.ParamOption[] options,
                                       boolean noteForm) {
     List<Object> defaultValues = new LinkedList<>();
-    for (ParamOption option : options) {
+    for (OptionInput.ParamOption option : options) {
       defaultValues.add(option.getValue());
     }
     if (noteForm) {
@@ -189,7 +189,7 @@ public abstract class BaseZeppelinContext {
   }
 
   private List<Object> checkbox(String name, List<Object> defaultChecked,
-                                      ParamOption[] options, boolean noteForm) {
+                                      OptionInput.ParamOption[] options, boolean noteForm) {
     if (noteForm) {
       return noteGui.checkbox(name, defaultChecked, options);
     } else {

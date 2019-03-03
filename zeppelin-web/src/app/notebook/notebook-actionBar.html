@@ -14,7 +14,7 @@ limitations under the License.
 <headroom tolerance="10" offset="30" class="noteAction"
           ng-show="note.id && !paragraphUrl">
   <h3>
-    <div class="notebook-actionBar-title"
+    <div class="zeppelinRepository-actionBar-title"
          ng-controller="ElasticInputCtrl as input">
       <input type="text" pu-elastic-input class="form-control-title-input" placeholder="New name"
              ng-if="input.showEditor" ng-model="input.value" ng-escape="input.showEditor = false" focus-if="input.showEditor"
@@ -63,7 +63,7 @@ limitations under the License.
               ng-hide="viewOnly"
               tooltip-placement="bottom" uib-tooltip="Show/hide the output"
               ng-disabled="revisionView">
-        <i ng-class="tableToggled ? 'fa icon-notebook' : 'fa icon-book-open'"></i>
+        <i ng-class="tableToggled ? 'fa icon-zeppelinRepository' : 'fa icon-book-open'"></i>
       </button>
       <button type="button"
               class="btn btn-default btn-xs"
@@ -314,7 +314,7 @@ limitations under the License.
       <span ng-controller="CronCtrl"
             ng-init="init(note.config.cron)"
             ng-hide="viewOnly"
-            ng-include src="'app/notebook/cron/cron.html'"></span>
+            ng-include src="'app/zeppelinRepository/cron/cron.html'"></span>
     </div>
 
 

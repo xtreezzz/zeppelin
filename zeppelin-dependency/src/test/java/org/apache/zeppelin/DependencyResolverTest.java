@@ -44,8 +44,8 @@ public class DependencyResolverTest {
   public static void setUp() throws Exception {
     tmpDir = new File(System.getProperty("java.io.tmpdir") + "/ZeppelinLTest_" +
         System.currentTimeMillis());
-    testPath = tmpDir.getAbsolutePath() + "/test-repo";
-    testCopyPath = new File(tmpDir, "test-copy-repo");
+    testPath = tmpDir.getAbsolutePath() + "/test-repository";
+    testCopyPath = new File(tmpDir, "test-copy-repository");
     resolver = new DependencyResolver(testPath);
   }
 

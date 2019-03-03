@@ -17,9 +17,9 @@
 package org.apache.zeppelin.interpreter.install;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.util.Util;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.utils.Util;
 import org.sonatype.aether.RepositoryException;
 
 import java.io.File;

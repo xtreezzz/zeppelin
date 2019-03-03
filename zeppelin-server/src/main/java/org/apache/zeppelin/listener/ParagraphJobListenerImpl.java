@@ -18,12 +18,11 @@
 package org.apache.zeppelin.listener;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.ParagraphJobListener;
 import org.apache.zeppelin.scheduler.Job;
-import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.List;
 
 @Component
@@ -41,14 +39,14 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
   private static final Logger LOG = LoggerFactory.getLogger(ParagraphJobListenerImpl.class);
 
   private final ConnectionManager connectionManager;
-  private final Notebook notebook;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
 
 
   @Autowired
   public ParagraphJobListenerImpl(final ConnectionManager connectionManager,
-                                  final Notebook notebook) {
+                                  final ZeppelinNoteRepository zeppelinNoteRepository) {
     this.connectionManager = connectionManager;
-    this.notebook = notebook;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
   /**
@@ -120,7 +118,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
     //      }
     //
     //      try {
-    //        notebook.saveNote(p.getNote());
+    //        zeppelinRepository.saveNote(p.getNote());
     //      } catch (final IOException e) {
     //        LOG.error(e.toString(), e);
     //      }
@@ -129,7 +127,7 @@ public class ParagraphJobListenerImpl implements ParagraphJobListener {
     //    p.setStatusToUserParagraph(p.getStatus());
     //    connectionManager.broadcast(p.getNote().getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
 
-    //    for (NoteEventListener listener : notebook.getNoteEventListeners()) {
+    //    for (NoteEventListener listener : zeppelinRepository.getNoteEventListeners()) {
     //      listener.onParagraphStatusChange(p, after);
     //    }
 

@@ -24,9 +24,6 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.realm.jwt.JWTAuthenticationToken;
 import org.apache.zeppelin.realm.jwt.KnoxJwtRealm;
 import org.apache.zeppelin.realm.kerberos.KerberosRealm;
@@ -55,16 +52,11 @@ import java.util.*;
 public class LoginRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
   private static final Gson gson = new Gson();
-  private final ZeppelinConfiguration zConf;
   private final SecurityService securityService;
-  private final NotePermissionsService notePermissionsService;
 
   @Autowired
-  public LoginRestApi(final Notebook notebook,
-                      @Qualifier("NoSecurityService") final SecurityService securityService) {
-    this.zConf = notebook.getConf();
+  public LoginRestApi(@Qualifier("NoSecurityService") final SecurityService securityService) {
     this.securityService = securityService;
-    this.notePermissionsService = notebook.getNotePermissionsService();
   }
 
   @ZeppelinApi
@@ -190,8 +182,6 @@ public class LoginRestApi {
 
       response = new JsonResponse(HttpStatus.OK, "", data);
       // if no exception, that's it, we're done!
-
-      notePermissionsService.setUserRoles(principal, roles);
     } catch (final AuthenticationException uae) {
       // username wasn't in the system, show them an error message?
       // password didn't match, try again?
@@ -244,13 +234,6 @@ public class LoginRestApi {
     logoutCurrentUser();
     HttpStatus status = null;
     final Map<String, String> data = new HashMap<>();
-    if (zConf.isAuthorizationHeaderClear()) {
-      status = HttpStatus.UNAUTHORIZED;
-      data.put("clearAuthorizationHeader", "true");
-    } else {
-      status = HttpStatus.FORBIDDEN;
-      data.put("clearAuthorizationHeader", "false");
-    }
     if (isKnoxSSOEnabled()) {
       final KnoxJwtRealm knoxJwtRealm = getJTWRealm();
       data.put("redirectURL", constructKnoxUrl(knoxJwtRealm, knoxJwtRealm.getLogout()));

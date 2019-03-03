@@ -19,6 +19,22 @@ package org.apache.zeppelin.service;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jline.internal.Preconditions;
+import org.apache.commons.io.FileUtils;
+import org.apache.zeppelin.DependencyResolver;
+import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
+import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonatype.aether.RepositoryException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,29 +42,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
-import jline.internal.Preconditions;
-import org.apache.commons.io.FileUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
-import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
-import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonatype.aether.RepositoryException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * This class handles all of business logic for {@link org.apache.zeppelin.rest.InterpreterRestApi}
@@ -66,15 +64,15 @@ public class InterpreterService {
 
   private final ZeppelinConfiguration conf;
   private final InterpreterSettingManager interpreterSettingManager;
-  private final Notebook notebook;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
                             final InterpreterSettingManager interpreterSettingManager,
-                            final Notebook notebook) {
+                            final ZeppelinNoteRepository zeppelinNoteRepository) {
     this.conf = conf;
     this.interpreterSettingManager = interpreterSettingManager;
-    this.notebook = notebook;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
   public void installInterpreter(
@@ -182,10 +180,10 @@ public class InterpreterService {
    * Extract info about running interpreters with additional paragraph info.
    */
   public List<Map<String, String>> getRunningInterpretersParagraphInfo() {
-    return notebook.getAllNotes().stream()
+    return zeppelinNoteRepository.getAllNotes().stream()
             .map(Note::getParagraphs)
             .flatMap(Collection::stream)
-            .filter(Paragraph::isRunning)
+            //.filter(Paragraph::isRunning)
             .map(this::extractParagraphInfo)
             .collect(Collectors.toList());
   }
@@ -194,21 +192,21 @@ public class InterpreterService {
    * Extract paragraph's interpreter info with paragraph data.
    */
   private Map<String, String> extractParagraphInfo(final Paragraph paragraph) {
-    try {
-      final ManagedInterpreterGroup process = (ManagedInterpreterGroup) paragraph
-              .getBindedInterpreter().getInterpreterGroup();
+    //try {
+      final ManagedInterpreterGroup process = null ;//(ManagedInterpreterGroup) paragraph
+              //.getBindedInterpreter().getInterpreterGroup();
       // add all info about binded interpreter
-      final Map<String, String> info = notebook.getInterpreterSettingManager().extractProcessInfo(process);
+      final Map<String, String> info = interpreterSettingManager.extractProcessInfo(process);
       // add paragraph info
-      info.put("interpreterText", paragraph.getIntpText());
+      //info.put("interpreterText", paragraph.getIntpText());
       info.put("noteName", paragraph.getNote().getName());
       info.put("noteId", paragraph.getNote().getId());
       info.put("id", paragraph.getId());
       info.put("user", paragraph.getUser());
       return info;
-    } catch (InterpreterNotFoundException e) {
-      LOG.error("Failed to get binded interpreter for paragraph {}", paragraph, e);
-      return new HashMap<>();
-    }
+    //} catch (InterpreterNotFoundException e) {
+    //  LOG.error("Failed to get binded interpreter for paragraph {}", paragraph, e);
+     // return new HashMap<>();
+    //}
   }
 }

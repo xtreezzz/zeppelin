@@ -33,7 +33,7 @@ import org.sonatype.aether.resolution.ArtifactResult;
 
 /**
  * Abstract dependency resolver.
- * Add new dependencies from mvn repo (at runtime) Zeppelin.
+ * Add new dependencies from mvn repository (at runtime) Zeppelin.
  */
 public abstract class AbstractDependencyResolver {
   protected RepositorySystem system = Booter.newRepositorySystem();

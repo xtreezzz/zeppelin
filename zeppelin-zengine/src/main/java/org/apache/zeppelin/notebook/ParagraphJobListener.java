@@ -18,7 +18,6 @@
 package org.apache.zeppelin.notebook;
 
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
-import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.JobListener;
 

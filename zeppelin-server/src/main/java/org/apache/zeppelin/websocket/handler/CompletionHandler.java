@@ -18,12 +18,11 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
-import org.apache.zeppelin.interpreter.*;
+import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -44,11 +43,10 @@ public class CompletionHandler extends AbstractHandler {
   private InterpreterFactory interpreterFactory;
 
   @Autowired
-  public CompletionHandler(final NotePermissionsService notePermissionsService,
-                           final Notebook notebook,
-                           final ConnectionManager connectionManager,
-                           final InterpreterFactory interpreterFactory) {
-    super(notePermissionsService, notebook, connectionManager);
+  public CompletionHandler(final ConnectionManager connectionManager,
+                           final InterpreterFactory interpreterFactory,
+                           final ZeppelinNoteRepository zeppelinNoteRepository) {
+    super(connectionManager, zeppelinNoteRepository);
     this.interpreterFactory = interpreterFactory;
   }
 
@@ -64,6 +62,7 @@ public class CompletionHandler extends AbstractHandler {
 
 
     final List<InterpreterCompletion> completions = Lists.newArrayList();
+    /*
     try {
       final Interpreter interpreter =
               interpreterFactory.getInterpreter(
@@ -80,9 +79,10 @@ public class CompletionHandler extends AbstractHandler {
       InterpreterContext interpreterContext = p.getInterpreterContext(null);
 
       completions.addAll(interpreter.completion(p.getScriptText(), resultCursor, interpreterContext));
+
     } catch (final InterpreterException e) {
       // SKIP
-    }
+    }*/
 
     final SockMessage message = new SockMessage(Operation.COMPLETION_LIST)
             .put("id", p.getId())

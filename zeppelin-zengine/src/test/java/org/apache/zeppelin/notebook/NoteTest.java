@@ -18,14 +18,14 @@
 package org.apache.zeppelin.notebook;
 
 //import com.google.common.collect.Lists;
-//import org.apache.zeppelin.display.AngularObject;
-//import org.apache.zeppelin.display.ui.TextBox;
+//import AngularObject;
+//import TextBox;
 //import org.apache.zeppelin.interpreter.Interpreter;
 //import org.apache.zeppelin.interpreter.InterpreterFactory;
 //import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 //import org.apache.zeppelin.interpreter.InterpreterResult;
 //import org.apache.zeppelin.interpreter.InterpreterSettingManager;
-//import org.apache.zeppelin.notebook.repo.NotebookRepo;
+//import org.apache.zeppelin.notebook.repository.NotebookRepo;
 //import org.apache.zeppelin.scheduler.Scheduler;
 //import org.apache.zeppelin.user.AuthenticationInfo;
 //import org.apache.zeppelin.user.Credentials;
@@ -44,7 +44,7 @@ package org.apache.zeppelin.notebook;
 //@RunWith(MockitoJUnitRunner.class)
 //public class NoteTest {
 //  @Mock
-//  NotebookRepo repo;
+//  NotebookRepo repository;
 //
 //  @Mock
 //  ParagraphJobListener paragraphJobListener;
@@ -76,7 +76,7 @@ package org.apache.zeppelin.notebook;
 //    String pText = "%spark sc.version";
 //    Note note = new Note("test", "test", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
 //
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(pText);
 //    p.setAuthenticationInfo(anonymous);
 //    note.run(p.getId());
@@ -91,7 +91,7 @@ package org.apache.zeppelin.notebook;
 //  @Test
 //  public void addParagraphWithEmptyReplNameTest() {
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    assertNull(p.getText());
 //  }
 //
@@ -99,9 +99,9 @@ package org.apache.zeppelin.notebook;
 //  public void addParagraphWithLastReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("spark"), anyString())).thenReturn(interpreter);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%spark ");
-//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //
 //    assertEquals("%spark\n", p2.getText());
 //  }
@@ -110,7 +110,7 @@ package org.apache.zeppelin.notebook;
 //  public void insertParagraphWithLastReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("spark"), anyString())).thenReturn(interpreter);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%spark ");
 //    Paragraph p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
 //
@@ -121,7 +121,7 @@ package org.apache.zeppelin.notebook;
 //  public void insertParagraphWithInvalidReplNameTest() throws InterpreterNotFoundException {
 //    when(interpreterFactory.getInterpreter(anyString(), anyString(), eq("invalid"), anyString())).thenReturn(null);
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p1.setText("%invalid ");
 //    Paragraph p2 = note.insertNewParagraph(note.getParagraphs().size(), AuthenticationInfo.ANONYMOUS);
 //
@@ -141,11 +141,11 @@ package org.apache.zeppelin.notebook;
 //    when(interpreter.getScheduler()).thenReturn(scheduler);
 //
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
-//    Paragraph p1 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p1 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    InterpreterResult result = new InterpreterResult(InterpreterResult.Code.SUCCESS, InterpreterResult.Type.TEXT, "result");
 //    p1.setResult(result);
 //
-//    Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p2 = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p2.setReturn(result, new Throwable());
 //
 //    note.clearAllParagraphOutput();
@@ -161,7 +161,7 @@ package org.apache.zeppelin.notebook;
 //    String user1 = "user1";
 //    String user2 = "user2";
 //    note.setPersonalizedMode(true);
-//    note.addNewParagraph(new AuthenticationInfo(user1));
+//    note.addParagraph(new AuthenticationInfo(user1));
 //    Paragraph baseParagraph = note.getParagraphs().get(0);
 //    Paragraph user1Paragraph = baseParagraph.getUserParagraph(user1);
 //    Paragraph user2Paragraph = baseParagraph.getUserParagraph(user2);
@@ -173,10 +173,10 @@ package org.apache.zeppelin.notebook;
 //  public void testNoteJson() {
 //    Note note = new Note("test", "", interpreterFactory, interpreterSettingManager, paragraphJobListener, credentials, noteEventListener);
 //    note.setName("/test_note");
-//    note.getConfig().put("config_1", "value_1");
+//    note.getNoteCronConfiguration().put("config_1", "value_1");
 //    note.getInfo().put("info_1", "value_1");
 //    String pText = "%spark sc.version";
-//    Paragraph p = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
+//    Paragraph p = note.addParagraph(AuthenticationInfo.ANONYMOUS);
 //    p.setText(pText);
 //    p.setResult(new InterpreterResult(InterpreterResult.Code.SUCCESS, "1.6.2"));
 //    p.settings.getForms().put("textbox_1", new TextBox("name", "default_name"));

@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zeppelin.display.angular
+package org.apache.zeppelin.notebook.display.angular
 
 import java.io.PrintStream
 
 import org.apache.zeppelin.annotation.ZeppelinApi
-import org.apache.zeppelin.display.{AngularObjectWatcher, AngularObject}
+import org.apache.zeppelin.notebook.display.{AngularObjectWatcher, AngularObject}
 import org.apache.zeppelin.interpreter.{InterpreterResult, InterpreterContext}
 
 import scala.xml._
@@ -136,13 +136,14 @@ abstract class AbstractAngularElem(val interpreterContext: InterpreterContext,
 
     val angularObject = addAngularObject(functionName, 0)
 
-    angularObject.addWatcher(new AngularObjectWatcher(interpreterContext) {
-      override def watch(oldObject: scala.Any, newObject: scala.Any, context: InterpreterContext)
-      :Unit = {
-        InterpreterContext.set(interpreterContext)
-        callback()
-      }
-    })
+    //angularObject.addWatcher(new AngularObjectWatcher(interpreterContext) {
+   // angularObject.addWatcher(new AngularObjectWatcher() {
+   //   override def watch(oldObject: scala.Any, newObject: scala.Any, context: InterpreterContext)
+   //   :Unit = {
+   //     InterpreterContext.set(interpreterContext)
+   //     callback()
+   //   }
+   // })
 
     newElem(
       interpreterContext,

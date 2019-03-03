@@ -20,19 +20,13 @@ package org.apache.zeppelin.user;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;

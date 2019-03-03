@@ -17,13 +17,7 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
+import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -32,15 +26,21 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.repo.api.NotebookRepo;
-import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
+import org.apache.zeppelin.repository.NotebookRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,7 @@ public class FileSystemNotebookRepo implements NotebookRepo {
 
   @Override
   public void save(Note note) throws IOException {
-    this.fs.writeFile(Note.getGson().toJson(note),
+    this.fs.writeFile(new Gson().toJson(note),
         new Path(notebookDir, buildNoteFileName(note.getId(), note.getPath())),
         true);
   }
@@ -135,8 +135,8 @@ public class FileSystemNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings() {
-    LOGGER.warn("getSettings is not implemented for HdfsNotebookRepo");
+  public List<NotebookRepo.Settings> getSettings() {
+    LOGGER.warn("getGuiConfiguration is not implemented for HdfsNotebookRepo");
     return null;
   }
 

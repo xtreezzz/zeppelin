@@ -17,11 +17,12 @@
 
 package org.apache.zeppelin.listener;
 
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistryListener;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -34,13 +35,16 @@ import java.util.List;
 public class AngularObjectRegistryListenerImpl implements AngularObjectRegistryListener {
 
   private final ConnectionManager connectionManager;
-  private final Notebook notebook;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final InterpreterSettingManager interpreterSettingManager;
 
   @Autowired
   public AngularObjectRegistryListenerImpl(final ConnectionManager connectionManager,
-                                           final Notebook notebook) {
+                                           final ZeppelinNoteRepository zeppelinNoteRepository,
+                                           final InterpreterSettingManager interpreterSettingManager) {
     this.connectionManager = connectionManager;
-    this.notebook = notebook;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.interpreterSettingManager = interpreterSettingManager;
   }
 
   @Override
@@ -52,14 +56,13 @@ public class AngularObjectRegistryListenerImpl implements AngularObjectRegistryL
   @Override
   public void onUpdate(final String interpreterGroupId,
                        final AngularObject object) {
-    final List<Note> notes = notebook.getAllNotes();
+    final List<Note> notes = zeppelinNoteRepository.getAllNotes();
     for (final Note note : notes) {
       if (object.getNoteId() != null && !note.getId().equals(object.getNoteId())) {
         continue;
       }
 
-      final List<InterpreterSetting> intpSettings =
-              notebook.getInterpreterSettingManager().getInterpreterSettings(note.getId());
+      final List<InterpreterSetting> intpSettings = interpreterSettingManager.getInterpreterSettings(note.getId());
       if (intpSettings.isEmpty()) {
         continue;
       }
@@ -79,12 +82,12 @@ public class AngularObjectRegistryListenerImpl implements AngularObjectRegistryL
                        final String name,
                        final String noteId,
                        final String paragraphId) {
-    for (final Note note : notebook.getAllNotes()) {
+    for (final Note note : zeppelinNoteRepository.getAllNotes()) {
       if (noteId != null && !note.getId().equals(noteId)) {
         continue;
       }
 
-      final List<String> settingIds = notebook.getInterpreterSettingManager().getSettingIds();
+      final List<String> settingIds = interpreterSettingManager.getSettingIds();
       for (final String id : settingIds) {
         if (interpreterGroupId.contains(id)) {
           final SockMessage message = new SockMessage(Operation.ANGULAR_OBJECT_REMOVE)

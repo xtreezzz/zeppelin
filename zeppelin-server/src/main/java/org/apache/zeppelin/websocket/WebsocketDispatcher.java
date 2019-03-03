@@ -18,8 +18,7 @@
 package org.apache.zeppelin.websocket;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Notebook;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.ticket.TicketContainer;
 import org.apache.zeppelin.websocket.handler.*;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -49,10 +47,9 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   private final RunnerHandler runnerHandler;
   private final CompletionHandler completionHandler;
   private final ConnectionManager sessionectionManager;
-  private final Notebook notebook;
 
   @Autowired
-  public WebsocketDispatcher(final SettingsHandler settingsService, final ParagraphHandler paragraphService, final NoteHandler noteService, final NoteRevisionHandler noteRevisionService, final NoteFormsHandler noteFormsService, final AngularObjectsHandler angularObjectsHandler, final SpellHandler spellHandler, final RunnerHandler runnerHandler, final CompletionHandler completionHandler, final ConnectionManager sessionectionManager, final Notebook notebook) {
+  public WebsocketDispatcher(final SettingsHandler settingsService, final ParagraphHandler paragraphService, final NoteHandler noteService, final NoteRevisionHandler noteRevisionService, final NoteFormsHandler noteFormsService, final AngularObjectsHandler angularObjectsHandler, final SpellHandler spellHandler, final RunnerHandler runnerHandler, final CompletionHandler completionHandler, final ConnectionManager sessionectionManager) {
     this.settingsService = settingsService;
     this.paragraphService = paragraphService;
     this.noteService = noteService;
@@ -63,7 +60,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
     this.runnerHandler = runnerHandler;
     this.completionHandler = completionHandler;
     this.sessionectionManager = sessionectionManager;
-    this.notebook = notebook;
   }
 
   @Override

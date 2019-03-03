@@ -54,7 +54,7 @@ import scala.tools.nsc.util.MergedClassPath;
 
 /**
  * Deps resolver.
- * Add new dependencies from mvn repo (at runtime) to Spark interpreter group.
+ * Add new dependencies from mvn repository (at runtime) to Spark interpreter group.
  */
 public class SparkDependencyResolver extends AbstractDependencyResolver {
   Logger logger = LoggerFactory.getLogger(SparkDependencyResolver.class);

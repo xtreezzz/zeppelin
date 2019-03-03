@@ -16,25 +16,22 @@
  */
 package org.apache.zeppelin.helium;
 
-import static org.apache.zeppelin.helium.HeliumBundleFactory.HELIUM_LOCAL_REPO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.github.eirslett.maven.plugins.frontend.lib.InstallationException;
 import com.github.eirslett.maven.plugins.frontend.lib.TaskRunnerException;
 import com.google.common.io.Resources;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import static org.apache.zeppelin.helium.HeliumBundleFactory.HELIUM_LOCAL_REPO;
+import static org.junit.Assert.*;
 
 public class HeliumBundleFactoryTest {
   private HeliumBundleFactory hbf;
@@ -43,12 +40,12 @@ public class HeliumBundleFactoryTest {
 
   @Before
   public void setUp() throws InstallationException, TaskRunnerException, IOException {
-    zeppelinHomePath = System.getProperty(ConfVars.ZEPPELIN_HOME.getVarName());
-    System.setProperty(ConfVars.ZEPPELIN_HOME.getVarName(), "../");
+    zeppelinHomePath = System.getProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName());
+    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), "../");
 
     ZeppelinConfiguration conf = ZeppelinConfiguration.create();
     nodeInstallationDir =
-        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
+        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
     hbf = new HeliumBundleFactory(conf);
     hbf.installNodeAndNpm();
     hbf.copyFrameworkModulesToInstallPath(true);
@@ -57,7 +54,7 @@ public class HeliumBundleFactoryTest {
   @After
   public void tearDown() throws IOException {
     if (null != zeppelinHomePath) {
-      System.setProperty(ConfVars.ZEPPELIN_HOME.getVarName(), zeppelinHomePath);
+      System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), zeppelinHomePath);
     }
   }
 

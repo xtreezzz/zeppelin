@@ -21,9 +21,7 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.interpreter.*;
-import org.apache.zeppelin.notebook.conf.ParagraphJobContext;
 import org.apache.zeppelin.scheduler.Job.Status;
-import org.apache.zeppelin.scheduler.JobListener;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +46,7 @@ public class ParagraphJob {
   /**
    * Paragraph data.
    */
-  private final org.apache.zeppelin.notebook.core.Paragraph paragraph;
+  private final Paragraph paragraph;
 
   private boolean isEnabled;
 
@@ -57,13 +55,7 @@ public class ParagraphJob {
 
   private AuthenticationInfo subject;
 
-  public ParagraphJob(final String paragraphId, final Note note, final JobListener listener) {
-    //super(paragraphId, generateId(), listener);
-    this.paragraph = note.getParagraph(paragraphId);
-    this.context = new ParagraphJobContext(paragraph.getText());
-  }
-
-  public ParagraphJob(final Note note, final org.apache.zeppelin.notebook.core.Paragraph p, final JobListener listener) {
+  public ParagraphJob(final Note note, final Paragraph p) {
     //super(generateId(), listener);
     this.paragraph = p;
     this.context = new ParagraphJobContext(paragraph.getText());
@@ -99,7 +91,7 @@ public class ParagraphJob {
     }
   }
 
-  public org.apache.zeppelin.notebook.core.Paragraph getParagraph() {
+  public Paragraph getParagraph() {
     return paragraph;
   }
 
@@ -192,7 +184,7 @@ public class ParagraphJob {
     //            .setParagraphText(paragraph.getText())
     //            .setAuthenticationInfo(subject)
     //            .setLocalProperties(localProperties)
-    //            .setGUI(paragraph.getSettings())
+    //            .setGUI(paragraph.getGuiConfiguration())
     //            .setNoteGUI(getNoteGui())
     //            .setAngularObjectRegistry(registry)
     //            .setResourcePool(resourcePool)

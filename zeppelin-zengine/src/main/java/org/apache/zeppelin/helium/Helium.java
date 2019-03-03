@@ -18,28 +18,15 @@ package org.apache.zeppelin.helium;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterNotFoundException;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.resource.DistributedResourcePool;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
@@ -48,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Manages helium packages
@@ -77,7 +68,7 @@ public class Helium {
     this(
         conf.getHeliumConfPath(),
         conf.getHeliumRegistry(),
-        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO), "helium-registry-cache"),
+        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), "helium-registry-cache"),
         heliumBundleFactory,
         heliumApplicationFactory,
         interpreterSettingManager);
@@ -381,11 +372,11 @@ public class Helium {
     HeliumPackageSuggestion suggestion = new HeliumPackageSuggestion();
 
     Interpreter intp = null;
-    try {
-      intp = paragraph.getBindedInterpreter();
-    } catch (InterpreterNotFoundException e) {
-      return suggestion;
-    }
+    //try {
+    //  intp = paragraph.getBindedInterpreter();
+    //} catch (InterpreterNotFoundException e) {
+    //  return suggestion;
+   // }
 
     ResourcePool resourcePool = intp.getInterpreterGroup().getResourcePool();
     ResourceSet allResources;

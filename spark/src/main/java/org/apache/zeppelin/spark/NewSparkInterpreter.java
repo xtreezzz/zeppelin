@@ -234,7 +234,7 @@ public class NewSparkInterpreter extends AbstractSparkInterpreter {
       }
     }
 
-    // add jar from local repo
+    // add jar from local repository
     String localRepo = getProperty("zeppelin.interpreter.localRepo");
     if (localRepo != null) {
       File localRepoDir = new File(localRepo);

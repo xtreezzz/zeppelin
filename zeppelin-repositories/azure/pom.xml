@@ -45,16 +45,19 @@
 
         <dependency>
             <groupId>org.apache.zeppelin</groupId>
-            <artifactId>zeppelin-zengine</artifactId>
+            <artifactId>zeppelin-core</artifactId>
             <version>0.9.0-SNAPSHOT</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${dependency.org.slf4j}</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${dependency.commons-io}</version>
         </dependency>
 
 

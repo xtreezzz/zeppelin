@@ -17,15 +17,16 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistry;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -37,17 +38,18 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.List;
-import org.apache.commons.lang3.NotImplementedException;
 
 @Component
 public class AngularObjectsHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AngularObjectsHandler.class);
+  private final InterpreterSettingManager interpreterSettingManager;
 
-  public AngularObjectsHandler(final NotePermissionsService notePermissionsService,
-                               final Notebook notebook,
-                               final ConnectionManager connectionManager) {
-    super(notePermissionsService, notebook, connectionManager);
+  public AngularObjectsHandler(final ConnectionManager connectionManager,
+                               final ZeppelinNoteRepository zeppelinNoteRepository,
+                               final InterpreterSettingManager interpreterSettingManager) {
+    super(connectionManager, zeppelinNoteRepository);
+    this.interpreterSettingManager = interpreterSettingManager;
   }
 
   /**
@@ -67,9 +69,9 @@ public class AngularObjectsHandler extends AbstractHandler {
     AngularObject ao = null;
     boolean global = false;
     // propagate change to (Remote) AngularObjectRegistry
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     if (note != null) {
-      final List<InterpreterSetting> settings = notebook.getInterpreterSettingManager().getInterpreterSettings(note.getId());
+      final List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(note.getId());
       for (final InterpreterSetting setting : settings) {
         if (setting.getInterpreterGroup(user, note.getId()) == null) {
           continue;
@@ -197,7 +199,7 @@ public class AngularObjectsHandler extends AbstractHandler {
 
   public void sendAllAngularObjects(final Note note, final String user, final WebSocketSession conn) throws IOException {
 
-    final List<InterpreterSetting> settings = notebook.getInterpreterSettingManager().getInterpreterSettings(note.getId());
+    final List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(note.getId());
     if (settings == null || settings.size() == 0) {
       return;
     }

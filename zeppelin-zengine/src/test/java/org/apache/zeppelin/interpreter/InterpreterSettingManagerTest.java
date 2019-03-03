@@ -20,7 +20,7 @@ package org.apache.zeppelin.interpreter;
 //
 //import org.apache.zeppelin.conf.ZeppelinConfiguration;
 //import org.apache.zeppelin.Dependency;
-//import org.apache.zeppelin.display.AngularObjectRegistryListener;
+//import AngularObjectRegistryListener;
 //import org.apache.zeppelin.helium.ApplicationEventListener;
 //import org.apache.zeppelin.interpreter.lifecycle.NullLifecycleManager;
 //import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;

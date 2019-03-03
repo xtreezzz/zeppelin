@@ -18,10 +18,7 @@
 
 package org.apache.zeppelin.interpreter.launcher;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.InterpreterRunner;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterManagedProcess;
@@ -29,6 +26,10 @@ import org.apache.zeppelin.interpreter.remote.RemoteInterpreterRunningProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Interpreter Launcher which use shell script to launch the interpreter process.

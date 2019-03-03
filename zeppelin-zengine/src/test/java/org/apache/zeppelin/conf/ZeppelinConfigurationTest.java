@@ -18,7 +18,7 @@ package org.apache.zeppelin.conf;
 
 import junit.framework.Assert;
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ import java.util.List;
 public class ZeppelinConfigurationTest {
   @Before
   public void clearSystemVariables() {
-    System.clearProperty(ConfVars.ZEPPELIN_NOTEBOOK_DIR.getVarName());
+    System.clearProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_DIR.getVarName());
   }
 
   @Test
@@ -96,7 +96,7 @@ public class ZeppelinConfigurationTest {
 
   @Test
   public void getPathTest() throws ConfigurationException {
-    System.setProperty(ConfVars.ZEPPELIN_HOME.getVarName(), "/usr/lib/zeppelin");
+    System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), "/usr/lib/zeppelin");
     ZeppelinConfiguration conf = new ZeppelinConfiguration(this.getClass().getResource("/zeppelin-site.xml"));
     Assert.assertEquals("/usr/lib/zeppelin", conf.getZeppelinHome());
     Assert.assertEquals("/usr/lib/zeppelin/conf", conf.getConfDir());

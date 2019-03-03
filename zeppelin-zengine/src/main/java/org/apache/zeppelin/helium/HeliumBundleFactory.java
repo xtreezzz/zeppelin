@@ -16,40 +16,12 @@
  */
 package org.apache.zeppelin.helium;
 
-import com.github.eirslett.maven.plugins.frontend.lib.FrontendPluginFactory;
-import com.github.eirslett.maven.plugins.frontend.lib.InstallationException;
-import com.github.eirslett.maven.plugins.frontend.lib.NPMInstaller;
-import com.github.eirslett.maven.plugins.frontend.lib.NodeInstaller;
-import com.github.eirslett.maven.plugins.frontend.lib.NpmRunner;
-import com.github.eirslett.maven.plugins.frontend.lib.ProxyConfig;
-import com.github.eirslett.maven.plugins.frontend.lib.TaskRunnerException;
-import com.github.eirslett.maven.plugins.frontend.lib.YarnInstaller;
-import com.github.eirslett.maven.plugins.frontend.lib.YarnRunner;
+import com.github.eirslett.maven.plugins.frontend.lib.*;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.net.URI;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import javax.inject.Inject;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -61,12 +33,15 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.io.*;
+import java.net.URI;
+import java.util.*;
 
 /**
  * Load helium visualization & spell
@@ -112,7 +87,7 @@ public class HeliumBundleFactory {
   @Autowired
   public HeliumBundleFactory(ZeppelinConfiguration conf) {
     this.heliumLocalRepoDirectory =
-        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
+        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
     this.heliumBundleDirectory = new File(heliumLocalRepoDirectory, HELIUM_BUNDLES_DIR);
     this.heliumLocalModuleDirectory = new File(heliumLocalRepoDirectory, HELIUM_LOCAL_MODULE_DIR);
     this.yarnCacheDir = new File(heliumLocalRepoDirectory, YARN_CACHE_DIR);

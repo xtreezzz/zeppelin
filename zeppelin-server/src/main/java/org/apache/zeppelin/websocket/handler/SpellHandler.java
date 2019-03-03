@@ -17,12 +17,9 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -34,6 +31,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 
@@ -43,10 +42,9 @@ public class SpellHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SpellHandler.class);
 
   @Autowired
-  public SpellHandler(final NotePermissionsService notePermissionsService,
-                      final Notebook notebook,
+  public SpellHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                       final ConnectionManager connectionManager) {
-    super(notePermissionsService, notebook, connectionManager);
+    super(connectionManager, zeppelinNoteRepository);
   }
 
   //TODO(KOT): check "noteId"
@@ -75,7 +73,7 @@ public class SpellHandler extends AbstractHandler {
     p.setUpdated(LocalDateTime.parse(dateFinished, formatter));
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
-    notebook.saveNote(note);
+    zeppelinNoteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
   }
 
@@ -86,7 +84,7 @@ public class SpellHandler extends AbstractHandler {
     //    if (!(Strings.isNullOrEmpty(p.getText()) ||
     //            Strings.isNullOrEmpty(p.getScriptText())) &&
     //            note.isLastParagraph(p.getId())) {
-    //      note.addNewParagraph(p.getAuthenticationInfo());
+    //      note.addParagraph(p.getAuthenticationInfo());
   }
 
 }

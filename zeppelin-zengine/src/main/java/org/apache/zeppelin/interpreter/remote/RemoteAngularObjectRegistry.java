@@ -18,13 +18,11 @@
 package org.apache.zeppelin.interpreter.remote;
 
 import com.google.gson.Gson;
-import org.apache.thrift.TException;
-import org.apache.zeppelin.display.AngularObject;
-import org.apache.zeppelin.display.AngularObjectRegistry;
-import org.apache.zeppelin.display.AngularObjectRegistryListener;
-import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService.Client;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

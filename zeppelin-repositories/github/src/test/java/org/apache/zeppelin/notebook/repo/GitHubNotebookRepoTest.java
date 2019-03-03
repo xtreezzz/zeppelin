@@ -106,7 +106,7 @@ public class GitHubNotebookRepoTest {
     // Set the GitHub configurations
     System.setProperty(
             ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_STORAGE.getVarName(),
-            "org.apache.zeppelin.notebook.repo.GitHubNotebookRepo");
+            "org.apache.zeppelin.notebook.repository.GitHubNotebookRepo");
     System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_GIT_REMOTE_URL.getVarName(),
             remoteNotebooksDir + File.separator + ".git");
     System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_GIT_REMOTE_USERNAME.getVarName(), "token");
@@ -196,7 +196,7 @@ public class GitHubNotebookRepoTest {
   private void addParagraphToNotebook() throws IOException {
     Note note = gitHubNotebookRepo.get(TEST_NOTE_ID, TEST_NOTE_PATH, null);
     note.setInterpreterFactory(mock(InterpreterFactory.class));
-    Paragraph paragraph = note.addNewParagraph();
+    Paragraph paragraph = note.addParagraph();
     paragraph.setText("%md text");
     gitHubNotebookRepo.save(note, null);
   }

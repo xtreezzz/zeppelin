@@ -1,7 +1,7 @@
 package org.apache.zeppelin.interpreter.install;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class InstallInterpreterTest {
     tmpDir = new File(System.getProperty("java.io.tmpdir")+"/ZeppelinLTest_"+System.currentTimeMillis());
     new File(tmpDir, "conf").mkdirs();
     interpreterBaseDir = new File(tmpDir, "interpreter");
-    File localRepoDir = new File(tmpDir, "local-repo");
+    File localRepoDir = new File(tmpDir, "local-repository");
     interpreterBaseDir.mkdir();
     localRepoDir.mkdir();
 

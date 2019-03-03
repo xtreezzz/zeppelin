@@ -17,9 +17,9 @@
 
 package org.apache.zeppelin.interpreter.remote;
 
-//import org.apache.zeppelin.display.AngularObject;
-//import org.apache.zeppelin.display.AngularObjectRegistry;
-//import org.apache.zeppelin.display.AngularObjectRegistryListener;
+//import AngularObject;
+//import AngularObjectRegistry;
+//import AngularObjectRegistryListener;
 //import org.apache.zeppelin.interpreter.AbstractInterpreterTest;
 //import org.apache.zeppelin.interpreter.InterpreterContext;
 //import org.apache.zeppelin.interpreter.InterpreterException;

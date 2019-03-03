@@ -31,6 +31,7 @@ import static org.apache.zeppelin.jdbc.JDBCInterpreter.DEFAULT_PRECODE;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.PRECODE_KEY_TEMPLATE;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.jdbc.completer.CompletionType;
 import org.junit.Before;
 import org.junit.Test;
 import static org.apache.zeppelin.jdbc.JDBCInterpreter.STATEMENT_PRECODE_KEY_TEMPLATE;
@@ -51,7 +52,6 @@ import java.util.Properties;
 
 import com.mockrunner.jdbc.BasicJDBCTestCaseAdapter;
 
-import org.apache.zeppelin.completer.CompletionType;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterException;
 import org.apache.zeppelin.interpreter.InterpreterResult;

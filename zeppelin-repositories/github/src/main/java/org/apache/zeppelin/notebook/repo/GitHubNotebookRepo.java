@@ -17,9 +17,8 @@
 
 package org.apache.zeppelin.notebook.repo;
 
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.repo.api.NotebookRepoWithVersionControl;
-import org.apache.zeppelin.repo.api.Revision;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
@@ -65,10 +64,10 @@ public class GitHubNotebookRepo extends GitNotebookRepo implements NotebookRepoW
   }
 
   @Override
-  public Revision checkpoint(String noteId,
-                             String notePath,
-                             String commitMessage) throws IOException {
-    Revision revision = super.checkpoint(noteId, notePath, commitMessage);
+  public NotebookRepoWithVersionControl.Revision checkpoint(String noteId,
+                                                            String notePath,
+                                                            String commitMessage) throws IOException {
+    NotebookRepoWithVersionControl.Revision revision = super.checkpoint(noteId, notePath, commitMessage);
 
     updateRemoteStream();
 

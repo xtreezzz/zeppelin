@@ -18,9 +18,9 @@
 package org.apache.zeppelin.websocket;
 
 
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.display.GUI;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.display.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -151,8 +151,8 @@ public class ConnectionManager {
   //TODO(KOT): вернуть обратно
   private void broadcastNoteForms(final Note note) {
     final GUI formsSettings = new GUI();
-    formsSettings.setForms(note.getNoteForms());
-    formsSettings.setParams(note.getNoteParams());
+    formsSettings.setForms(note.getGuiConfiguration().getForms());
+    formsSettings.setParams(note.getGuiConfiguration().getParams());
   //broadcast(note.getId(), new Message(Message.OP.SAVE_NOTE_FORMS)
   //          .put("formsData", formsSettings));
   }

@@ -19,37 +19,23 @@ package org.apache.zeppelin.notebook.repo;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.*;
 import com.google.cloud.storage.Storage.BlobListOption;
-import com.google.cloud.storage.StorageException;
-import com.google.cloud.storage.StorageOptions;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteInfo;
+import org.apache.zeppelin.repository.NotebookRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.repo.api.NotebookRepo;
-import org.apache.zeppelin.repo.api.NotebookRepoSettingsInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A NotebookRepo implementation for storing notebooks in Google Cloud Storage.
@@ -77,7 +63,6 @@ public class GCSNotebookRepo implements NotebookRepo {
   public GCSNotebookRepo() {
   }
 
-  @VisibleForTesting
   public GCSNotebookRepo(ZeppelinConfiguration zConf, Storage storage) throws IOException {
     init(zConf);
     this.storage = storage;
@@ -85,7 +70,7 @@ public class GCSNotebookRepo implements NotebookRepo {
 
   @Override
   public void init(ZeppelinConfiguration zConf) throws IOException {
-    this.encoding =  zConf.getString(ConfVars.ZEPPELIN_ENCODING);
+    this.encoding =  zConf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_ENCODING);
 
     String gcsStorageDir = zConf.getGCSStorageDir();
     if (gcsStorageDir.isEmpty()) {
@@ -109,7 +94,7 @@ public class GCSNotebookRepo implements NotebookRepo {
       this.basePath = Optional.of(StringUtils.join(
           pathComponents.subList(1, pathComponents.size()), "/"));
     } else {
-      this.basePath = Optional.absent();
+      this.basePath = Optional.ofNullable(null);
     }
 
     // Notes are stored at gs://bucketName/basePath/<note-id>/note.json
@@ -121,7 +106,7 @@ public class GCSNotebookRepo implements NotebookRepo {
     }
 
     Credentials credentials = GoogleCredentials.getApplicationDefault();
-    String credentialJsonPath = zConf.getString(ConfVars.ZEPPELIN_NOTEBOOK_GCS_CREDENTIALS_FILE);
+    String credentialJsonPath = zConf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_GCS_CREDENTIALS_FILE);
     if (credentialJsonPath != null) {
       credentials = GoogleCredentials.fromStream(new FileInputStream(credentialJsonPath));
     }
@@ -195,7 +180,7 @@ public class GCSNotebookRepo implements NotebookRepo {
         .setContentType("application/json")
         .build();
     try {
-      storage.create(info, Note.getGson().toJson(note).getBytes("UTF-8"));
+      storage.create(info, new Gson().toJson(note).getBytes("UTF-8"));
     } catch (StorageException se) {
       throw new IOException("Could not write " + info.toString() + ": " + se.getMessage(), se);
     }
@@ -213,7 +198,6 @@ public class GCSNotebookRepo implements NotebookRepo {
 
   @Override
   public void remove(String noteId, String notePath) throws IOException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(noteId));
     BlobId blobId = makeBlobId(noteId, notePath);
     try {
       boolean deleted = storage.delete(blobId);
@@ -236,8 +220,8 @@ public class GCSNotebookRepo implements NotebookRepo {
   }
 
   @Override
-  public List<NotebookRepoSettingsInfo> getSettings() {
-    LOGGER.warn("getSettings is not implemented for GCSNotebookRepo");
+  public List<NotebookRepo.Settings> getSettings() {
+    LOGGER.warn("getGuiConfiguration is not implemented for GCSNotebookRepo");
     return Collections.emptyList();
   }
 

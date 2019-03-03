@@ -21,8 +21,8 @@ import java.util
 
 import org.apache.spark.SparkContext
 import org.apache.zeppelin.annotation.ZeppelinApi
-import org.apache.zeppelin.display.AngularObjectWatcher
-import org.apache.zeppelin.display.ui.OptionInput.ParamOption
+import org.apache.zeppelin.notebook.display.AngularObjectWatcher
+import org.apache.zeppelin.notebook.display.ui.OptionInput.ParamOption
 import org.apache.zeppelin.interpreter.{BaseZeppelinContext, InterpreterContext, InterpreterHookRegistry}
 
 import scala.collection.{JavaConversions, Seq}
@@ -130,21 +130,21 @@ class SparkZeppelinContext(val sc: SparkContext,
   }
 
   private def angularWatch(name: String, noteId: String, func: (AnyRef, AnyRef) => Unit): Unit = {
-    val w = new AngularObjectWatcher(getInterpreterContext) {
-      override def watch(oldObject: Any, newObject: AnyRef, context: InterpreterContext): Unit = {
-        func(newObject, newObject)
-      }
-    }
-    angularWatch(name, noteId, w)
+    //val w = new AngularObjectWatcher(getInterpreterContext) {
+    //  override def watch(oldObject: Any, newObject: AnyRef, context: InterpreterContext): Unit = {
+    //    func(newObject, newObject)
+    //  }
+    //}
+    //angularWatch(name, noteId, w)
   }
 
   private def angularWatch(name: String, noteId: String,
                            func: (AnyRef, AnyRef, InterpreterContext) => Unit): Unit = {
-    val w = new AngularObjectWatcher(getInterpreterContext) {
-      override def watch(oldObject: AnyRef, newObject: AnyRef, context: InterpreterContext): Unit = {
-        func(oldObject, newObject, context)
-      }
-    }
-    angularWatch(name, noteId, w)
+    //val w = new AngularObjectWatcher(getInterpreterContext) {
+    //  override def watch(oldObject: AnyRef, newObject: AnyRef, context: InterpreterContext): Unit = {
+    //    func(oldObject, newObject, context)
+     // }
+    //}
+    //angularWatch(name, noteId, w)
   }
 }

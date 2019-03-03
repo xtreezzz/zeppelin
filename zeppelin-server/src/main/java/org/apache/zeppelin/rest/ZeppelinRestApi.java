@@ -20,7 +20,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.util.Util;
+import org.apache.zeppelin.utils.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -17,11 +17,8 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NotePermissionsService;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -35,13 +32,14 @@ import java.io.IOException;
 public class RunnerHandler extends AbstractHandler {
 
   @Autowired
-  public RunnerHandler(final NotePermissionsService notePermissionsService, final Notebook notebook, final ConnectionManager connectionManager) {
-    super(notePermissionsService, notebook, connectionManager);
+  public RunnerHandler(final ConnectionManager connectionManager, final ZeppelinNoteRepository zeppelinNoteRepository) {
+    super(connectionManager, zeppelinNoteRepository);
   }
 
   public void stopNoteExecution(final WebSocketSession conn,
                                 final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
+    /*
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
 
@@ -55,6 +53,7 @@ public class RunnerHandler extends AbstractHandler {
         break;
       }
     }
+    */
   }
 
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
@@ -123,7 +122,7 @@ public class RunnerHandler extends AbstractHandler {
                 if (!(Strings.isNullOrEmpty(p.getText()) ||
                         Strings.isNullOrEmpty(p.getScriptText())) &&
                         isTheLastParagraph) {
-                  Paragraph newPara = p.getNote().addNewParagraph(p.getAuthenticationInfo());
+                  Paragraph newPara = p.getNote().addParagraph(p.getAuthenticationInfo());
                   //connectionManager.broadcastNewParagraph(p.getNote(), newPara);
                   connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));
                 }

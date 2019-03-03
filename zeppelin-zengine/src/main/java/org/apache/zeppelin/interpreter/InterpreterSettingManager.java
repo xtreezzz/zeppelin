@@ -27,51 +27,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
-import org.apache.zeppelin.display.AngularObjectRegistry;
-import org.apache.zeppelin.display.AngularObjectRegistryListener;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.Interpreter.RegisteredInterpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
-import org.apache.zeppelin.notebook.ApplicationState;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
+import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.resource.Resource;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.resource.ResourceSet;
@@ -86,6 +58,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import java.io.*;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -150,9 +133,9 @@ public class InterpreterSettingManager {
     this.defaultOption = defaultOption;
     this.interpreterDirPath = Paths.get(conf.getInterpreterDir());
     LOGGER.debug("InterpreterRootPath: {}", interpreterDirPath);
-    this.dependencyResolver = new DependencyResolver(conf.getString(ConfVars.ZEPPELIN_INTERPRETER_LOCALREPO));
+    this.dependencyResolver = new DependencyResolver(conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_LOCALREPO));
     this.interpreterRepositories = dependencyResolver.getRepos();
-    this.defaultInterpreterGroup = conf.getString(ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
+    this.defaultInterpreterGroup = conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
     this.gson = new GsonBuilder().setPrettyPrinting().create();
 
     this.appEventListener = appEventListener;
@@ -320,7 +303,7 @@ public class InterpreterSettingManager {
 
     loadInterpreterSettingFromDefaultDir(true);
     loadFromFile();
-    saveToFile();
+    //saveToFile();
   }
 
   private void loadInterpreterSettingFromDefaultDir(boolean override) throws IOException {
@@ -616,7 +599,7 @@ public class InterpreterSettingManager {
   }
 
   /**
-   * Overwrite dependency jar under local-repo/{interpreterId} if jar file in original path is
+   * Overwrite dependency jar under local-repository/{interpreterId} if jar file in original path is
    * changed
    */
   private void copyDependenciesFromLocalPath(final InterpreterSetting setting) {
@@ -628,7 +611,7 @@ public class InterpreterSettingManager {
           if (deps != null) {
             for (Dependency d : deps) {
               File destDir = new File(
-                  conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO));
+                  conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO));
 
               int numSplits = d.getGroupArtifactVersion().split(":").length;
               if (!(numSplits >= 3 && numSplits <= 6)) {
@@ -806,7 +789,7 @@ public class InterpreterSettingManager {
     // 1. close interpreter groups of this interpreter setting
     // 2. remove this interpreter setting
     // 3. remove this interpreter setting from note binding
-    // 4. clean local repo directory
+    // 4. clean local repository directory
     LOGGER.info("Remove interpreter setting: " + id);
     if (interpreterSettings.containsKey(id)) {
       InterpreterSetting intp = interpreterSettings.get(id);
@@ -841,7 +824,7 @@ public class InterpreterSettingManager {
 
   public InterpreterSetting getDefaultInterpreterSetting() {
     InterpreterSetting setting =
-        getByName(conf.getString(ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT));
+        getByName(conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT));
     if (setting != null) {
       return setting;
     } else {

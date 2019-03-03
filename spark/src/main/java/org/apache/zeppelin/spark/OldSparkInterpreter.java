@@ -586,7 +586,7 @@ public class OldSparkInterpreter extends AbstractSparkInterpreter {
     }
     classpath += depInterpreterClasspath;
 
-    // add dependency from local repo
+    // add dependency from local repository
     String localRepo = getProperty("zeppelin.interpreter.localRepo");
     if (localRepo != null) {
       File localRepoDir = new File(localRepo);
@@ -799,7 +799,7 @@ public class OldSparkInterpreter extends AbstractSparkInterpreter {
       }
     }
 
-    // add jar from local repo
+    // add jar from local repository
     if (localRepo != null) {
       File localRepoDir = new File(localRepo);
       if (localRepoDir.exists()) {

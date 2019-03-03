@@ -17,12 +17,13 @@
 
 package org.apache.zeppelin.listener;
 
+import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterSetting;
+import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Notebook;
-import org.apache.zeppelin.notebook.core.Paragraph;
+import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -38,12 +39,15 @@ import java.util.Map;
 public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterProcessListener {
 
   private final ConnectionManager connectionManager;
-  private final Notebook notebook;
+  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final InterpreterSettingManager interpreterSettingManager;
 
   public RemoteInterpreterProcessListenerImpl(final ConnectionManager connectionManager,
-                                              final Notebook notebook) {
+                                              final ZeppelinNoteRepository zeppelinNoteRepository,
+                                              final InterpreterSettingManager interpreterSettingManager) {
     this.connectionManager = connectionManager;
-    this.notebook = notebook;
+    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.interpreterSettingManager = interpreterSettingManager;
   }
 
   /**
@@ -78,7 +82,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
             .put("index", index)
             .put("type", type)
             .put("data", output);
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
 
     connectionManager.broadcast(noteId, msg);
   }
@@ -89,9 +93,9 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
   @Override
   public void onOutputClear(final String noteId,
                             final String paragraphId) {
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
 
-    note.clearParagraphOutput(paragraphId);
+    //note.clearParagraphOutput(paragraphId);
     final Paragraph paragraph = note.getParagraph(paragraphId);
     final SockMessage msg = new SockMessage(Operation.PARAGRAPH)
             .put("paragraph", paragraph);
@@ -103,12 +107,11 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
                                   final String paragraphId,
                                   final String interpreterSettingId,
                                   final Map<String, String> metaInfos) {
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     if (note != null) {
       final Paragraph paragraph = note.getParagraph(paragraphId);
       if (paragraph != null) {
-        final InterpreterSetting setting = notebook.getInterpreterSettingManager()
-                .get(interpreterSettingId);
+        final InterpreterSetting setting = interpreterSettingManager.get(interpreterSettingId);
         final String label = metaInfos.get("label");
         final String tooltip = metaInfos.get("tooltip");
         final List<String> keysToRemove = Arrays.asList("noteId", "paraId", "label", "tooltip");
@@ -116,11 +119,11 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
           metaInfos.remove(removeKey);
         }
 
-        paragraph.updateRuntimeInfos(label, tooltip, metaInfos, setting.getGroup(), setting.getId());
+        //paragraph.updateRuntimeInfos(label, tooltip, metaInfos, setting.getGroup(), setting.getId());
 
         final SockMessage msg = new SockMessage(Operation.PARAS_INFO)
                 .put("id", paragraphId)
-                .put("infos", paragraph.getRuntimeInfos());
+                .put("infos", "paragraph.getRuntimeInfos()");
         connectionManager.broadcast(note.getId(), msg);
       }
     }
@@ -133,7 +136,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
                             final List<Integer> paragraphIndices,
                             final List<String> paragraphIds,
                             final String curParagraphId) throws IOException {
-    final Note note = notebook.getNote(noteId);
+    final Note note = zeppelinNoteRepository.getNote(noteId);
     final List<String> toBeRunParagraphIds = new ArrayList<>();
     if (note == null) {
       throw new IOException("Not existed noteId: " + noteId);
@@ -153,11 +156,11 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
     }
     if (paragraphIndices != null && !paragraphIndices.isEmpty()) {
       for (final int paragraphIndex : paragraphIndices) {
-        if (note.getParagraph(paragraphIndex) == null) {
+        if (note.getParagraphs().get(paragraphIndex) == null) {
           throw new IOException("Not existed paragraphIndex: " + paragraphIndex);
         }
-        if (!note.getParagraph(paragraphIndex).getId().equals(curParagraphId)) {
-          toBeRunParagraphIds.add(note.getParagraph(paragraphIndex).getId());
+        if (!note.getParagraphs().get(paragraphIndex).getId().equals(curParagraphId)) {
+          toBeRunParagraphIds.add(note.getParagraphs().get(paragraphIndex).getId());
         }
       }
     }
@@ -173,7 +176,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
       @Override
       public void run() {
         for (final String paragraphId : toBeRunParagraphIds) {
-          note.run(paragraphId, true);
+          //note.run(paragraphId, true);
         }
       }
     };

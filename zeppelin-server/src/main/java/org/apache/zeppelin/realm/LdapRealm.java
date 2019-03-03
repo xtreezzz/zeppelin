@@ -18,37 +18,7 @@
  */
 package org.apache.zeppelin.realm;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.naming.AuthenticationException;
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.PartialResultException;
-import javax.naming.SizeLimitExceededException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.PagedResultsControl;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.alias.CredentialProvider;
-import org.apache.hadoop.security.alias.CredentialProviderFactory;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.ShiroException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -69,6 +39,19 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.naming.*;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.PagedResultsControl;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of {@link org.apache.shiro.realm.ldap.JndiLdapRealm} that also returns each user's
@@ -226,7 +209,7 @@ public class LdapRealm extends JndiLdapRealm {
   static String getSystemPassword(final String hadoopSecurityCredentialPath,
                                   final String keystorePass) {
     String password = "";
-    try {
+    /*try {
       final Configuration configuration = new Configuration();
       configuration.set(CredentialProviderFactory.CREDENTIAL_PROVIDER_PATH,
           hadoopSecurityCredentialPath);
@@ -241,7 +224,7 @@ public class LdapRealm extends JndiLdapRealm {
     if (org.apache.commons.lang.StringUtils.isEmpty(password)) {
       throw new ShiroException("Error getting SystemPassword from the provided keystore:"
           + keystorePass + ", in path:" + hadoopSecurityCredentialPath);
-    }
+    } */
     return password;
   }
 

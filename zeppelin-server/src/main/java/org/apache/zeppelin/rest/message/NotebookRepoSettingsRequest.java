@@ -26,7 +26,7 @@ import java.util.Map;
 import org.apache.zeppelin.common.JsonSerializable;
 
 /**
- * Represent payload of a notebook repo settings.
+ * Represent payload of a notebook repository settings.
  */
 public class NotebookRepoSettingsRequest implements JsonSerializable {
   private static final Gson gson = new Gson();

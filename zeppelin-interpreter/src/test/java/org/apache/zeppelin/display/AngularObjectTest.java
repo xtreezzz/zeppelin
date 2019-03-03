@@ -19,6 +19,9 @@ package org.apache.zeppelin.display;
 
 import org.apache.thrift.TException;
 import org.apache.zeppelin.interpreter.InterpreterContext;
+import org.apache.zeppelin.notebook.display.AngularObject;
+import org.apache.zeppelin.notebook.display.AngularObjectListener;
+import org.apache.zeppelin.notebook.display.AngularObjectWatcher;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -115,11 +118,11 @@ public class AngularObjectTest {
           }
         });
 
-    ao.addWatcher(new AngularObjectWatcher(null) {
-      @Override
-      public void watch(Object oldObject, Object newObject, InterpreterContext context) {
-        onWatch.incrementAndGet();
-      }
+    ao.addWatcher(new AngularObjectWatcher() {
+      //@Override
+      //public void watch(Object oldObject, Object newObject, InterpreterContext context) {
+      //  onWatch.incrementAndGet();
+      //}
     });
 
     assertEquals(0, onWatch.get());

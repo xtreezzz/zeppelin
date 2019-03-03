@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zeppelin.display.angular.paragraphscope
+package org.apache.zeppelin.notebook.display.angular.paragraphscope
 
-import org.apache.zeppelin.display.AngularObject
-import org.apache.zeppelin.display.angular.AbstractAngularModel
+import org.apache.zeppelin.notebook.display.AngularObject
+import org.apache.zeppelin.notebook.display.angular.AbstractAngularModel
 
 /**
   * Represents ng-model in paragraph scope
   */
 class AngularModel(name: String)
-  extends org.apache.zeppelin.display.angular.AbstractAngularModel(name) {
+  extends org.apache.zeppelin.notebook.display.angular.AbstractAngularModel(name) {
 
   def this(name: String, newValue: Any) = {
     this(name)
