@@ -132,13 +132,17 @@ public abstract class Job<T> {
   }
 
   //TODO(SAN) 'synchronized' fix problem with running paragraph. Need to understand more.
-  public synchronized void setStatus(Status status) {
-    if (this.status == status) {
-      return;
+  public void setStatus(Status status) {
+    Status before = null;
+    Status after = null;
+    synchronized (this) {
+      if (this.status == status) {
+        return;
+      }
+      before = this.status;
+      after = status;
+      this.status = status;
     }
-    Status before = this.status;
-    Status after = status;
-    this.status = status;
     if (listener != null && before != null && before != after) {
       listener.onStatusChange(this, before, after);
     }

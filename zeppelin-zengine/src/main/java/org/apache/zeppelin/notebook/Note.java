@@ -172,7 +172,7 @@ public class Note implements JsonSerializable {
 
   private void clearUserParagraphs(boolean isPersonalized) {
     if (!isPersonalized) {
-      for (Paragraph p : paragraphs) {
+      for (Paragraph p : getParagraphs()) {
         p.clearUserParagraphs();
       }
     }
@@ -401,22 +401,27 @@ public class Note implements JsonSerializable {
   public Paragraph removeParagraph(String user, String paragraphId) {
     removeAllAngularObjectInParagraph(user, paragraphId);
     interpreterSettingManager.removeResourcesBelongsToParagraph(getId(), paragraphId);
+    Paragraph removed = null;
     synchronized (paragraphs) {
       Iterator<Paragraph> i = paragraphs.iterator();
       while (i.hasNext()) {
         Paragraph p = i.next();
         if (p.getId().equals(paragraphId)) {
           i.remove();
-          try {
-            fireParagraphRemoveEvent(p);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-          return p;
+          removed = p;
+          break;
         }
       }
     }
-    return null;
+
+    if(removed != null) {
+      try {
+        fireParagraphRemoveEvent(removed);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    return removed;
   }
 
   public void clearParagraphOutputFields(Paragraph p) {
@@ -519,12 +524,11 @@ public class Note implements JsonSerializable {
   }
 
   public boolean isLastParagraph(String paragraphId) {
-    if (!paragraphs.isEmpty()) {
-      synchronized (paragraphs) {
-        if (paragraphId.equals(paragraphs.get(paragraphs.size() - 1).getId())) {
+    final List<Paragraph> paragraphList = getParagraphs();
+    if (!paragraphList.isEmpty()) {
+        if (paragraphId.equals(paragraphList.get(paragraphList.size() - 1).getId())) {
           return true;
         }
-      }
       return false;
     }
     /** because empty list, cannot remove nothing right? */
@@ -532,50 +536,46 @@ public class Note implements JsonSerializable {
   }
 
   public int getParagraphCount() {
-    return paragraphs.size();
+    final List<Paragraph> paragraphList = getParagraphs();
+    return paragraphList.size();
   }
 
   public Paragraph getParagraph(String paragraphId) {
-    synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
+      for (Paragraph p : getParagraphs()) {
         if (p.getId().equals(paragraphId)) {
           return p;
         }
       }
-    }
+
     return null;
   }
 
   public Paragraph getParagraph(int index) {
-    return paragraphs.get(index);
+    final List<Paragraph> paragraphList = getParagraphs();
+    return paragraphList.get(index);
   }
 
   public Paragraph getLastParagraph() {
-    synchronized (paragraphs) {
-      return paragraphs.get(paragraphs.size() - 1);
-    }
+      final List<Paragraph> paragraphList = getParagraphs();
+      return paragraphList.get(paragraphList.size() - 1);
   }
 
   public List<Map<String, String>> generateParagraphsInfo() {
     List<Map<String, String>> paragraphsInfo = new LinkedList<>();
-    synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
+      for (Paragraph p : getParagraphs()) {
         Map<String, String> info = populateParagraphInfo(p);
         paragraphsInfo.add(info);
       }
-    }
     return paragraphsInfo;
   }
 
   public Map<String, String> generateSingleParagraphInfo(String paragraphId) {
-    synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
+      for (Paragraph p : getParagraphs()) {
         if (p.getId().equals(paragraphId)) {
           return populateParagraphInfo(p);
         }
       }
       return new HashMap<>();
-    }
   }
 
   private Map<String, String> populateParagraphInfo(Paragraph p) {
@@ -627,7 +627,7 @@ public class Note implements JsonSerializable {
 
     noteExecutor.execute(() -> {
       try {
-        for (Paragraph p : paragraphs) {
+        for (Paragraph p : getParagraphs()) {
           if (!p.isEnabled()) {
             continue;
           }
@@ -671,14 +671,12 @@ public class Note implements JsonSerializable {
    * Return true if there is a running or pending paragraph
    */
   boolean haveRunningOrPendingParagraphs() {
-    synchronized (paragraphs) {
-      for (Paragraph p : paragraphs) {
+      for (Paragraph p : getParagraphs()) {
         Status status = p.getStatus();
         if (status.isRunning() || status.isPending()) {
           return true;
         }
       }
-    }
 
     return false;
   }
@@ -817,15 +815,19 @@ public class Note implements JsonSerializable {
     this.info = info;
   }
 
-  public synchronized void setRunning(boolean runStatus) {
-    Map<String, Object> infoMap = getInfo();
-    this.executionAborted.set(false);
-    boolean oldStatus = (boolean) infoMap.getOrDefault("isRunning", false);
-    if (oldStatus != runStatus) {
-      infoMap.put("isRunning", runStatus);
-      if (paragraphJobListener != null) {
-        paragraphJobListener.noteRunningStatusChange(this.id, runStatus);
+  public void setRunning(boolean runStatus) {
+    boolean fireListener = false;
+    synchronized (this) {
+      Map<String, Object> infoMap = getInfo();
+      this.executionAborted.set(false);
+      boolean oldStatus = (boolean) infoMap.getOrDefault("isRunning", false);
+      if (oldStatus != runStatus) {
+        infoMap.put("isRunning", runStatus);
+        fireListener = true;
       }
+    }
+    if(fireListener && paragraphJobListener != null) {
+      paragraphJobListener.noteRunningStatusChange(this.id, runStatus);
     }
   }
 
