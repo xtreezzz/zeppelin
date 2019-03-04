@@ -499,10 +499,29 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     if (interpreter == null) {
       return true;
     }
-    try {
-      interpreter.cancel(getInterpreterContext(null));
-    } catch (InterpreterException e) {
-      throw new RuntimeException(e);
+
+    Scheduler scheduler = interpreter.getScheduler();
+    if (scheduler != null) {
+      Job job = scheduler.getJob(getId());
+      if (job != null) {
+        if(job.isRunning()) {
+          try {
+            interpreter.cancel(getInterpreterContext(null));
+          } catch (InterpreterException e) {
+            throw new RuntimeException(e);
+          }
+        } else {
+          scheduler.cancel(getId());
+        }
+      }
+    }
+
+    if(scheduler == null) {
+      try {
+        interpreter.cancel(getInterpreterContext(null));
+      } catch (InterpreterException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     return true;
