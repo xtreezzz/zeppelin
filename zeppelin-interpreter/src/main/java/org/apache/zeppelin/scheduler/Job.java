@@ -229,8 +229,11 @@ public abstract class Job<T> {
 
   protected abstract boolean jobAbort();
 
-  public synchronized void abort() {
-    aborted.set(jobAbort());
+  public void abort() {
+    final boolean aborted = jobAbort();
+    synchronized (this) {
+      this.aborted.set(aborted);
+    }
   }
 
   public synchronized boolean isAborted() {
