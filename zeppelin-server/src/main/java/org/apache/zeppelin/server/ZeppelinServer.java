@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,6 +34,8 @@ import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.conf.ZeppelinConfiguration.ConfVars;
+import org.apache.zeppelin.deadlock.DeadlockDetector;
+import org.apache.zeppelin.deadlock.DeadlockLoggerHandler;
 import org.apache.zeppelin.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.helium.ApplicationEventListener;
 import org.apache.zeppelin.helium.Helium;
@@ -277,6 +280,10 @@ public class ZeppelinServer extends ResourceConfig {
     if (!conf.isRecoveryEnabled()) {
       sharedServiceLocator.getService(InterpreterSettingManager.class).close();
     }
+
+    DeadlockDetector deadlockDetector =
+            new DeadlockDetector(new DeadlockLoggerHandler(), 60, TimeUnit.SECONDS);
+    deadlockDetector.start();
   }
 
   private static Server setupJettyServer(ZeppelinConfiguration conf) {
