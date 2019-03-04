@@ -225,7 +225,7 @@ public class Note implements Serializable {
   @Override
   public String toString() {
     if (this.path != null) {
-      return this.path + this.name;
+      return this.path;
     } else {
       return "/" + this.name;
     }

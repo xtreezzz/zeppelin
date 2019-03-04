@@ -173,18 +173,17 @@ public class NoteHandler extends AbstractHandler {
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String noteName = fromMessage.safeGetType("name", LOG);
+    String notePath = fromMessage.safeGetType("name", LOG);
+    if (!notePath.startsWith(File.separator)) {
+      notePath = File.separator + notePath;
+    }
     final String defaultInterpreterGroup = fromMessage.getType("defaultInterpreterGroup", LOG) == null
             ? fromMessage.safeGetType("defaultInterpreterGroup", LOG)
             : zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
 
     try {
-      final Note note = new Note(
-              noteName.substring(noteName.lastIndexOf("/") + 1),
-              File.separator + noteName.substring(0, noteName.lastIndexOf("/")) + File.separator,
-              defaultInterpreterGroup
-              //serviceContext.getAutheInfo());
-      );
+      String noteName = notePath.substring(notePath.lastIndexOf(File.separator) + 1);
+      final Note note = new Note(noteName, notePath, defaultInterpreterGroup);
 
       // it's an empty note. so add one paragraph
       //note.addParagraph(serviceContext.getAutheInfo());
