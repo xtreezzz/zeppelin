@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Proxy for Interpreter instance that runs on separate process
@@ -64,8 +65,8 @@ public class RemoteInterpreter extends Interpreter {
   private FormType formType;
 
   private RemoteInterpreterProcess interpreterProcess;
-  private volatile boolean isOpened = false;
-  private volatile boolean isCreated = false;
+  private volatile AtomicBoolean isOpened = new AtomicBoolean(false);
+  private volatile AtomicBoolean isCreated = new AtomicBoolean(false);
 
   private LifecycleManager lifecycleManager;
 
@@ -85,12 +86,12 @@ public class RemoteInterpreter extends Interpreter {
   }
 
   public boolean isOpened() {
-    return isOpened;
+    return isOpened.get();
   }
 
   @VisibleForTesting
   public void setOpened(boolean opened) {
-    isOpened = opened;
+    isOpened.set(opened);
   }
 
   @Override
@@ -118,7 +119,7 @@ public class RemoteInterpreter extends Interpreter {
   @Override
   public void open() throws InterpreterException {
     synchronized (this) {
-      if (!isOpened) {
+      if (!isOpened.get()) {
         // create all the interpreters of the same session first, then Open the internal interpreter
         // of this RemoteInterpreter.
         // The why we we create all the interpreter of the session is because some interpreter
@@ -151,7 +152,7 @@ public class RemoteInterpreter extends Interpreter {
             return null;
           }
         });
-        isOpened = true;
+        isOpened.set(true);
         this.lifecycleManager.onInterpreterUse(this.getInterpreterGroup(), sessionId);
       }
     }
@@ -159,7 +160,7 @@ public class RemoteInterpreter extends Interpreter {
 
   private void internal_create() throws IOException {
     synchronized (this) {
-      if (!isCreated) {
+      if (!isCreated.get()) {
         this.interpreterProcess = getOrCreateInterpreterProcess();
         interpreterProcess.callRemoteFunction(new RemoteInterpreterProcess.RemoteFunction<Void>() {
           @Override
@@ -170,7 +171,7 @@ public class RemoteInterpreter extends Interpreter {
             return null;
           }
         });
-        isCreated = true;
+        isCreated.set(true);
       }
     }
   }
@@ -178,7 +179,7 @@ public class RemoteInterpreter extends Interpreter {
 
   @Override
   public void close() throws InterpreterException {
-    if (isOpened) {
+    if (isOpened.get()) {
       RemoteInterpreterProcess interpreterProcess = null;
       try {
         interpreterProcess = getOrCreateInterpreterProcess();
@@ -192,7 +193,7 @@ public class RemoteInterpreter extends Interpreter {
           return null;
         }
       });
-      isOpened = false;
+      isOpened.set(false);
       this.lifecycleManager.onInterpreterUse(this.getInterpreterGroup(), sessionId);
     } else {
       LOGGER.warn("close is called when RemoterInterpreter is not opened for " + className);
@@ -253,12 +254,11 @@ public class RemoteInterpreter extends Interpreter {
           }
         }
     );
-
   }
 
   @Override
   public void cancel(final InterpreterContext context) throws InterpreterException {
-    if (!isOpened) {
+    if (!isOpened.get()) {
       LOGGER.warn("Cancel is called when RemoterInterpreter is not opened for " + className);
       return;
     }
@@ -286,7 +286,7 @@ public class RemoteInterpreter extends Interpreter {
 
     // it is possible to call getFormType before it is opened
     synchronized (this) {
-      if (!isOpened) {
+      if (!isOpened.get()) {
         open();
       }
     }
@@ -311,7 +311,7 @@ public class RemoteInterpreter extends Interpreter {
 
   @Override
   public int getProgress(final InterpreterContext context) throws InterpreterException {
-    if (!isOpened) {
+    if (!isOpened.get()) {
       LOGGER.warn("getProgress is called when RemoterInterpreter is not opened for " + className);
       return 0;
     }
@@ -336,7 +336,7 @@ public class RemoteInterpreter extends Interpreter {
   public List<InterpreterCompletion> completion(final String buf, final int cursor,
                                                 final InterpreterContext interpreterContext)
       throws InterpreterException {
-    if (!isOpened) {
+    if (!isOpened.get()) {
       open();
     }
     RemoteInterpreterProcess interpreterProcess = null;
@@ -357,7 +357,7 @@ public class RemoteInterpreter extends Interpreter {
   }
 
   public String getStatus(final String jobId) {
-    if (!isOpened) {
+    if (!isOpened.get()) {
       LOGGER.warn("getStatus is called when RemoteInterpreter is not opened for " + className);
       return Job.Status.UNKNOWN.name();
     }
