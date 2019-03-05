@@ -526,15 +526,18 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     if (config) {
       $scope.note.config = config;
     }
-    websocketMsgSrv.updateNote($scope.note.id, $scope.note.name, $scope.note.config);
+    websocketMsgSrv.updateNote($scope.note.id, $scope.note.path, $scope.note.config);
   };
 
   /** Update the note name */
   $scope.updateNoteName = function(newName) {
     const trimmedNewName = newName.trim();
     if (trimmedNewName.length > 0 && $scope.note.name !== trimmedNewName) {
+      let newPath = $scope.note.path.substr(0, $scope.note.path.length - $scope.note.name.length);
+      newPath = newPath + trimmedNewName;
       $scope.note.name = trimmedNewName;
-      websocketMsgSrv.renameNote($scope.note.id, $scope.note.name, true);
+      $scope.note.path = newPath;
+      websocketMsgSrv.updateNote($scope.note.id, newPath, $scope.note.noteCronConfiguration);
     }
   };
 
@@ -621,11 +624,12 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     }
   });
 
-  $scope.$on('updateNote', function(event, name, config, info) {
-    /** update Note name */
-    if (name !== $scope.note.name) {
-      console.log('change note name to : %o', $scope.note.name);
-      $scope.note.name = name;
+  $scope.$on('updateNote', function(event, path, config, info) {
+    /** update Note name and path */
+    if (path !== $scope.note.path) {
+      console.log('change note path to : %o', $scope.note.path);
+      $scope.note.path = path;
+      $scope.note.name = path.substring(path.lastIndexOf('/') + 1);
     }
     $scope.note.config = config;
     $scope.note.info = info;

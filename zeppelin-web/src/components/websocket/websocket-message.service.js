@@ -23,11 +23,11 @@ function WebsocketMessageService($rootScope, websocketEvents) {
       websocketEvents.sendNewEvent({op: 'GET_HOME_NOTE'});
     },
 
-    createNotebook: function(noteName, defaultInterpreterGroup) {
+    createNotebook: function(notePath, defaultInterpreterGroup) {
       websocketEvents.sendNewEvent({
         op: 'NEW_NOTE',
         data: {
-          name: noteName,
+          path: notePath,
           defaultInterpreterGroup: defaultInterpreterGroup,
         },
       });
@@ -81,16 +81,12 @@ function WebsocketMessageService($rootScope, websocketEvents) {
       websocketEvents.sendNewEvent({op: 'GET_NOTE', data: {id: noteId}});
     },
 
-    updateNote: function(noteId, noteName, noteConfig) {
-      websocketEvents.sendNewEvent({op: 'NOTE_UPDATE', data: {id: noteId, name: noteName, config: noteConfig}});
+    updateNote: function(noteId, notePath, noteConfig) {
+      websocketEvents.sendNewEvent({op: 'NOTE_UPDATE', data: {id: noteId, path: notePath, config: noteConfig}});
     },
 
     updatePersonalizedMode: function(noteId, modeValue) {
       websocketEvents.sendNewEvent({op: 'UPDATE_PERSONALIZED_MODE', data: {id: noteId, personalized: modeValue}});
-    },
-
-    renameNote: function(noteId, noteName, relative) {
-      websocketEvents.sendNewEvent({op: 'NOTE_RENAME', data: {id: noteId, name: noteName, relative: relative}});
     },
 
     renameFolder: function(folderId, folderPath) {

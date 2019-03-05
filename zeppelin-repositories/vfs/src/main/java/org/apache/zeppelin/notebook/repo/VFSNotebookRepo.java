@@ -108,7 +108,7 @@ public class VFSNotebookRepo implements NotebookRepo {
           try {
             String noteId = getNoteId(noteFileName);
             String notePath = getNotePath(rootNotebookFolder, noteFileName);
-            noteInfos.put(getNoteId(child.getName().getPath()), new NoteInfo(noteId, notePath));
+            noteInfos.put(noteId, new NoteInfo(noteId, notePath));
           } catch (IOException e) {
             LOGGER.warn(e.getMessage());
           }

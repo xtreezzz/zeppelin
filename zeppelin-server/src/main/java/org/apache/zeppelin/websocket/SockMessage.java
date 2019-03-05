@@ -48,6 +48,7 @@ public class SockMessage {
 
   public <T> T getType(final String key, final Logger LOG) {
     try {
+      //TODO(SAN) стирание типов
       return (T) data.get(key);
     } catch (final ClassCastException e) {
       LOG.error("Failed to get " + key + " from message (Invalid type). " , e);
@@ -55,9 +56,15 @@ public class SockMessage {
     }
   }
 
+  public Object getOrDefault(final String key, final Object defaultValue) {
+    Object value = data.get(key);
+    return value != null ? value : defaultValue;
+  }
+
   public <T> T safeGetType(final String key, final Logger LOG) {
     T result = null;
     try {
+      //TODO(SAN) стирание типов
       result = (T) data.get(key);
     } catch (final ClassCastException e) {
       LOG.error("Failed to get " + key + " from message (Invalid type). " , e);

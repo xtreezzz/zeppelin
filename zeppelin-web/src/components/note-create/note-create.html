@@ -13,7 +13,7 @@ limitations under the License.
 -->
 <div id="noteCreateModal" class="modal fade" role="dialog"
      modalvisible previsiblecallback="noteCreateCtrl.preVisible"
-     targetinput="noteName" tabindex="-1">
+     targetinput="notePath" tabindex="-1">
   <div class="modal-dialog">
 
     <!-- modal content-->
@@ -30,10 +30,10 @@ limitations under the License.
         <div class="form-group">
           <!-- note name -->
           <div>
-            <label for="noteName">Note Name</label>
+            <label for="notePath">Note Name</label>
             <input placeholder="Insert Note Name" type="text"
                    class="form-control note-name-create-input"
-                   id="noteName" ng-model="note.notename"
+                   id="notePath" ng-model="note.path"
                    ng-enter="noteCreateCtrl.handleNameEnter()" />
           </div>
           <!-- default interpreter -->

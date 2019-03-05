@@ -186,7 +186,16 @@ public class ZeppelinNoteRepository {
   }
 
   public Note updateNote(final Note note) {
-    return null;
+    try {
+      NoteInfo repoNoteInfo = repo.list().get(note.getId());
+      if (!repoNoteInfo.getPath().equals(note.getPath())) {
+        repo.move(note.getId(), repoNoteInfo.getPath(), note.getPath());
+      }
+      repo.save(note);
+    } catch (Exception e) {
+      throw new IllegalStateException("Error while update Note", e);
+    }
+    return note;
   }
 
   public boolean removeNote(final String noteId) {

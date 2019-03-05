@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.notebook;
 
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -52,6 +53,14 @@ public class NoteCronConfiguration {
     this.cronExpression = cronExpression;
     this.cronExecutingUser = cronExecutingUser;
     this.cronExecutingRoles = cronExecutingRoles;
+  }
+
+  public NoteCronConfiguration(Map config) {
+    this.isCronEnabled = (boolean) config.get("isCronEnabled");
+    this.releaseResourceFlag = (boolean) config.get("releaseResourceFlag");
+    this.cronExpression = (String) config.get("cronExpression");
+    this.cronExecutingUser = (String) config.get("cronExecutingUser");
+    this.cronExecutingRoles = (String) config.get("cronExecutingRoles");
   }
 
   public boolean isCronEnabled() {

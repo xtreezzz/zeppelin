@@ -208,9 +208,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
         case NOTE_UPDATE:
           noteService.updateNote(session, messagereceived);
           break;
-        case NOTE_RENAME:
-          noteService.renameNote(session, messagereceived);
-          break;
         case FOLDER_RENAME:
           noteService.renameFolder(messagereceived);
           break;

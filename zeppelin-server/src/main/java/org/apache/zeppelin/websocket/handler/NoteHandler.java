@@ -113,18 +113,10 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    final String name = fromMessage.safeGetType("name", LOG);
-    final NoteCronConfiguration config = fromMessage.safeGetType("config", LOG);
+    final String path = fromMessage.safeGetType("path", LOG);
+    final NoteCronConfiguration config =  new NoteCronConfiguration(fromMessage.safeGetType("config", LOG));
 
-    //TODO(egorklimov) fix cron logic
-    if (!note.getNoteCronConfiguration().isCronEnabled()) {
-      //??????????????????
-      // было - config.remove("cron"), т.е. из конфига выкидывается cronExpression, но вся остальная
-      // инфа остается, wtf, вохможно это сделано чтобы вдруг не включился крон, но сохранился
-      // флаг personalized mode
-    }
-
-    note.setName(name);
+    note.setPath(path);
     note.setNoteCronConfiguration(config);
     //if (!note.getNoteCronConfiguration().equals(config)) {
     //  zeppelinRepository.refreshCron(note.getId());
@@ -133,28 +125,10 @@ public class NoteHandler extends AbstractHandler {
     zeppelinNoteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
-            .put("name", name)
+            .put("path", path)
             .put("config", config)
-            .put("info", note.isRunning());
+            .put("runningStatus", note.isRunning());
     connectionManager.broadcast(note.getId(), message);
-
-    broadcastNoteList(serviceContext.getUserAndRoles());
-  }
-
-
-  @ZeppelinApi
-  public void renameNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
-    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
-    final String name = fromMessage.safeGetType("name", LOG);
-    final boolean isRelativePath = fromMessage.getType("relative", LOG) != null && (Boolean) fromMessage.getType("relative", LOG);
-
-    note.setPath(name.substring(0, name.lastIndexOf("/")));
-    note.setName(name.substring(name.lastIndexOf("/") + 1));
-    zeppelinNoteRepository.updateNote(note);
-
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
@@ -173,7 +147,7 @@ public class NoteHandler extends AbstractHandler {
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    String notePath = fromMessage.safeGetType("name", LOG);
+    String notePath = fromMessage.safeGetType("path", LOG);
     if (!notePath.startsWith(File.separator)) {
       notePath = File.separator + notePath;
     }

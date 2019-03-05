@@ -24,7 +24,7 @@ limitations under the License.
     <a ng-if="!node.isTrash" style="text-decoration: none;">
       <i style="margin-left: 10px;"
          class="fa fa-pencil notebook-list-btn" ng-show="showNoteButton"
-         ng-click="node.path ? renameNote(node.id, node.path) : renameNote(node.id, node.name)"
+         ng-click="updateNote(node.id, node.path)"
          tooltip-placement="bottom" uib-tooltip="Rename note">
       </i>
     </a>

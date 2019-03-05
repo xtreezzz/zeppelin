@@ -19,6 +19,7 @@ package org.apache.zeppelin.notebook;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.io.File;
 import org.apache.zeppelin.notebook.display.AngularObject;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.notebook.display.Input;
@@ -46,7 +47,8 @@ public class Note implements Serializable {
 
 
   private String id;
-  private String name = "";
+  private String name;
+  private String path;
   private String defaultInterpreterGroup;
 
   /**
@@ -111,9 +113,6 @@ public class Note implements Serializable {
   private final Set<String> runners;
   private final Set<String> writers;
 
-  private transient String path;
-
-
   public Note(final String name, final String path, final String defaultInterpreterGroup) {
     this.id = IdHashes.generateId();
     this.name = name;
@@ -142,10 +141,6 @@ public class Note implements Serializable {
 
   public String getName() {
     return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   public String getDefaultInterpreterGroup() {
@@ -215,6 +210,7 @@ public class Note implements Serializable {
 
   public void setPath(String path) {
     this.path = path;
+    this.name = path.substring(path.lastIndexOf(File.separator) + 1);
   }
 
   public boolean isTrashed() {
