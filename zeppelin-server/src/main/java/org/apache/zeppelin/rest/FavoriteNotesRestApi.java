@@ -121,7 +121,7 @@ public class FavoriteNotesRestApi {
   }
 
   @ZeppelinApi
-  @GetMapping(value = "get_notes_ids", produces = "application/json")
+  @GetMapping(value = "/get_notes_ids", produces = "application/json")
   public ResponseEntity getNotesIds(@RequestParam("username") String username) {
     try {
       HashMap<String, Set> idsMap = new HashMap<>(2);

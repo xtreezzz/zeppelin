@@ -180,7 +180,7 @@ public class InterpreterSettingManager {
     File file = new File(conf.getConfigFSDir() + FILENAME);
     InterpreterInfoSaving infoSaving = null;
     try {
-      String json = IOUtils.toString(new FileInputStream(file), "UTF-16");
+      String json = IOUtils.toString(new FileInputStream(file));
       LOGGER.info("Load Interpreter Setting from file: " + file);
       JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
       infoSaving = InterpreterInfoSaving.fromJson(json);
@@ -284,7 +284,7 @@ public class InterpreterSettingManager {
       directory.mkdirs();
       tempFile = File.createTempFile(file.getName(), null, directory);
       FileOutputStream out = new FileOutputStream(tempFile);
-      IOUtils.write(info.toJson(), out, "UTF-16");
+      IOUtils.write(info.toJson(), out );
       out.close();
       FileSystem defaultFileSystem = FileSystems.getDefault();
       Path tempFilePath = defaultFileSystem.getPath(tempFile.getCanonicalPath());

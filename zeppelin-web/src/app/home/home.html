@@ -20,7 +20,7 @@ limitations under the License.
       <h1 class="box-heading" id="welcome">
         Welcome to Zeppelin!
       </h1>
-      Zeppelin is web-based zeppelinRepository that enables interactive data analytics.<br/>
+      Zeppelin is web-based notebook that enables interactive data analytics.<br/>
       You can make beautiful data-driven, interactive, collaborative document with SQL, code and even more!<br/>
 
       <div class="row">
@@ -37,20 +37,20 @@ limitations under the License.
             <h5><a href="" data-toggle="modal" data-target="#noteImportModal" style="text-decoration: none;">
               <i style="font-size: 15px;" class="fa fa-upload"></i> Import note</a></h5>
             <h5 ng-controller="NoteCreateCtrl as noteCreateCtrl"><a href="" data-toggle="modal" data-target="#noteCreateModal" style="text-decoration: none;" ng-click="noteCreateCtrl.getInterpreterSettings()">
-              <i style="font-size: 15px;" class="icon-zeppelinRepository"></i> Create new note</a></h5>
-            <ul id="zeppelinRepository-names">
+              <i style="font-size: 15px;" class="icon-notebook"></i> Create new note</a></h5>
+            <ul id="notebook-names">
               <li class="filter-names" ng-include="'components/note-name-filter/note-name-filter.html'"></li>
               <li ng-repeat="note in home.notes.list | filter:query.q track by $index">
                 <i style="font-size: 10px;" class="icon-doc"></i>
-                <a style="text-decoration: none;" href="#/zeppelinRepository/{{note.id}}">{{noteName(note)}}</a>
+                <a style="text-decoration: none;" href="#/notebook/{{note.id}}">{{noteName(note)}}</a>
               </li>
               <div ng-if="!query.q || query.q === ''" infinite-scroll="loadMoreNotes()">
                 <li ng-repeat="node in home.notes.root.children | limitTo:home.numberOfNotesDisplayed track by $index"
-                    ng-include src="'app/home/zeppelinRepository-template.html'" ng-class="note_folder_renderer"></li>
+                    ng-include src="'app/home/notebook-template.html'" ng-class="note_folder_renderer"></li>
               </div>
               <div ng-if="query.q" infinite-scroll="loadMoreNotes()">
                 <li ng-repeat="node in home.notes.flatList | filter:query.q | orderBy:home.arrayOrderingSrv.noteFlatListOrdering | limitTo:home.numberOfNotesDisplayed track by $index"
-                    ng-include src="'app/home/zeppelinRepository-template.html'" ng-class="note_folder_renderer"></li>
+                    ng-include src="'app/home/notebook-template.html'" ng-class="note_folder_renderer"></li>
              </div>
             </ul>
           </div>
@@ -59,7 +59,7 @@ limitations under the License.
             <h4>Favorite Notes</h4>
             <ul>
               <li style="color: #0b93d5; list-style: none" ng-repeat="note in home.favoriteNotes">
-                <a style="text-decoration: none;" href="#/zeppelinRepository/{{note.id}}">
+                <a style="text-decoration: none;" href="#/notebook/{{note.id}}">
                   <i style="font-size: 10px" class="icon-doc"></i>
                   {{note.name}}
                 </a>
@@ -74,7 +74,7 @@ limitations under the License.
             <h4>Recent Notes</h4>
             <ul>
               <li style="color: #0b93d5; list-style: none" ng-repeat="note in home.recentNotes">
-                <a style="text-decoration: none;" href="#/zeppelinRepository/{{note.id}}">
+                <a style="text-decoration: none;" href="#/notebook/{{note.id}}">
                   <i style="font-size: 10px" class="icon-doc"></i>
                   {{note.name}}
                 </a>
@@ -104,7 +104,7 @@ limitations under the License.
   </div>
 
 
-  <!-- Load zeppelinRepository -->
+  <!-- Load notebook -->
   <div ng-show="home.notebookHome" id="{{currentParagraph.id}}_paragraphColumn_main"
        ng-repeat="currentParagraph in home.note.paragraphs"
        ng-controller="ParagraphCtrl"
@@ -113,7 +113,7 @@ limitations under the License.
        style="margin: 0; padding: 0;">
     <div id="{{currentParagraph.id}}_paragraphColumn"
          ng-if="currentParagraph.results"
-         ng-include src="'app/zeppelinRepository/paragraph/paragraph.html'"
+         ng-include src="'app/notebook/paragraph/paragraph.html'"
          ng-class="{'paragraph-space box paragraph-margin': !asIframe, 'focused': paragraphFocused}"
          ng-hide="currentParagraph.config.tableHide && home.viewOnly">
     </div>
