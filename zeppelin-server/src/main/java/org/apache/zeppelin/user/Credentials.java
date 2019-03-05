@@ -54,10 +54,6 @@ public class Credentials {
   /**
    * Wrapper fro user credentials. It can load credentials from a file if credentialsPath is
    * supplied, and will encrypt the file if an encryptKey is supplied.
-   *
-   * @param credentialsPersist
-   * @param credentialsPath
-   * @param encryptKey
    */
   @Autowired
   public Credentials(ZeppelinConfiguration conf) {
