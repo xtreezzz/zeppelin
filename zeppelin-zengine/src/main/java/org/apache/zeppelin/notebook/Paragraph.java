@@ -513,6 +513,9 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
         } else {
           scheduler.cancel(getId());
         }
+      } else {
+        setStatus(Status.ABORT);
+        this.getNote().setRunning(false);
       }
     }
 
@@ -520,7 +523,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       try {
         interpreter.cancel(getInterpreterContext(null));
       } catch (InterpreterException e) {
-        throw new RuntimeException(e);
+        LOGGER.error("Error while aborting paragraph", e);
       }
     }
 
