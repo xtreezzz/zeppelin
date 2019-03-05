@@ -93,7 +93,7 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
    * Close all interpreter instances in this session
    * @param sessionId
    */
-  public synchronized void close(String sessionId) {
+  public void close(String sessionId) {
     LOGGER.info("Close Session: " + sessionId + " for interpreter setting: " +
             interpreterSetting.getName());
     close(sessions.remove(sessionId));
