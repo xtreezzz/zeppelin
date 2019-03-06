@@ -219,7 +219,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   };
 
   $scope.isTrash = function(note) {
-    return note ? note.name.split('/')[0] === TRASH_FOLDER_ID : false;
+    return note ? note.path.split('/')[1] === TRASH_FOLDER_ID : false;
   };
 
   $scope.switchFavoriteStatus = function(noteId) {

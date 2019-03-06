@@ -211,12 +211,9 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
-    //String destNotePath = "/" + NoteManager.TRASH_FOLDER + note.getPath();
-    //if (zeppelinRepository.containsNote(destNotePath)) {
-    //  final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    //  destNotePath = destNotePath + " " + formatter.format(LocalDateTime.now());
-   // }
-    //zeppelinRepository.moveNote(note.getId(), destNotePath);
+    //TODO(SAN) вынести потом '~Trash' куда-нибудь
+    note.setPath("/" + "~Trash" + note.getPath());
+    zeppelinNoteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
   }

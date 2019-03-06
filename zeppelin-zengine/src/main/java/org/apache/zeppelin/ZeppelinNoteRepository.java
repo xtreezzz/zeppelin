@@ -199,6 +199,12 @@ public class ZeppelinNoteRepository {
   }
 
   public boolean removeNote(final String noteId) {
+    try {
+      Note note = getNote(noteId);
+      repo.remove(note.getId(), note.getPath());
+    } catch (IOException e) {
+      throw new IllegalStateException("Error while delete Note", e);
+    }
     return true;
   }
 
