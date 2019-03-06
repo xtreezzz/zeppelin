@@ -115,7 +115,8 @@ public class ConnectionManager {
     if (collaborativeStatusNew) {
       final HashSet<String> userList = new HashSet<>();
       for (final WebSocketSession noteSocket : socketList) {
-        userList.add(noteSocket.getPrincipal().getName());
+        //TODO(SAN) NPE(noteSocket.getPrincipal()) if open note in two tabs
+        //userList.add(noteSocket.getPrincipal().getName());
       }
       message.put("users", userList);
     }
