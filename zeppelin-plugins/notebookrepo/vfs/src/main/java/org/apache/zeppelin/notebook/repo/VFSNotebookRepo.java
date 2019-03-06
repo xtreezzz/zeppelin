@@ -118,32 +118,47 @@ public class VFSNotebookRepo implements NotebookRepo {
             String notePath = getNotePath(rootNotebookFolder, noteFileName);
             noteInfos.put(getNoteId(child.getName().getPath()), new NoteInfo(noteId, notePath));
           } catch (IOException e) {
-            LOGGER.warn(e.getMessage());
+            LOGGER.warn(e.getMessage(), e);
           }
         }  else {
           LOGGER.debug("Unrecognized note file: {}", noteFileName);
         }
       }
     }
+    LOGGER.info("Processed - {} notes", noteInfos.size());
     return noteInfos;
   }
 
-  @Override
-  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
-    FileObject noteFile = rootNotebookFileObject.resolveFile(buildNoteFileName(noteId, notePath),
-        NameScope.DESCENDENT);
+  private Note loadNoteFromJson(FileObject noteFile) throws IOException {
     String json = IOUtils.toString(noteFile.getContent().getInputStream(),
         conf.getString(ConfVars.ZEPPELIN_ENCODING));
     Note note = Note.fromJson(json);
-    // setPath here just for testing, because actually NoteManager will setPath
-    note.setPath(notePath);
     return note;
   }
 
   @Override
+  public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
+    Note result = null;
+    try {
+      result = loadNoteFromJson(rootNotebookFileObject.resolveFile(
+          buildNoteFileName(noteId, notePath),
+          NameScope.DESCENDENT)
+      );
+    } catch (IOException e) {
+      result = loadNoteFromJson(rootNotebookFileObject.resolveFile(
+          buildNoteFileNameWithoutPrefix(noteId, notePath),
+          NameScope.DESCENDENT)
+      );
+    }
+    // setPath here just for testing, because actually NoteManager will setPath
+    result.setPath(notePath);
+    return result;
+  }
+
+  @Override
   public synchronized void save(Note note, AuthenticationInfo subject) throws IOException {
-    LOGGER.info("Saving note " + note.getId() + " to " + buildNoteFileName(note));
-    // write to tmp file first, then rename it to the {note_name}_{note_id}.zpln
+    LOGGER.info("Saving note {} to {}", note.getId(), buildNoteFileName(note));
+    // write to tmp file first, then rename it to the _{note_name}_{note_id}.zpln
     FileObject noteJson = rootNotebookFileObject.resolveFile(
         buildNoteTempFileName(note), NameScope.DESCENDENT);
     OutputStream out = null;
@@ -157,6 +172,24 @@ public class VFSNotebookRepo implements NotebookRepo {
     }
     noteJson.moveTo(rootNotebookFileObject.resolveFile(
         buildNoteFileName(note), NameScope.DESCENDENT));
+
+    cleanOldFile(note.getId(), note.getPath());
+  }
+
+  private void cleanOldFile(final String id, final String path) {
+    try {
+      FileObject oldNote = rootNotebookFileObject.resolveFile(
+          buildNoteFileNameWithoutPrefix(id, path),
+          NameScope.DESCENDENT
+      );
+      LOGGER.info("Trying to delete old file - {}", oldNote);
+      if (oldNote.exists()) {
+        LOGGER.info("Deleting old file - {}", oldNote);
+        oldNote.delete(Selectors.SELECT_SELF);
+      }
+    } catch (IOException e) {
+      LOGGER.error("Failed to delete old file for note[id={}, path={}]", id, path, e);
+    }
   }
 
   @Override
@@ -170,6 +203,7 @@ public class VFSNotebookRepo implements NotebookRepo {
     // create parent folder first, otherwise move operation will fail
     destFileObject.getParent().createFolder();
     fileObject.moveTo(destFileObject);
+    cleanOldFile(noteId, notePath);
   }
 
   @Override

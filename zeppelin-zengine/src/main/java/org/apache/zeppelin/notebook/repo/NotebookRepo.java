@@ -141,15 +141,26 @@ public interface NotebookRepo {
     if (!notePath.startsWith("/")) {
       throw new IOException("Invalid notePath: " + notePath);
     }
-    return (notePath + "_" + noteId + ".zpln").substring(1);
+    int pos = notePath.lastIndexOf('/');
+    String path = notePath.substring(0, pos + 1) + "_" + notePath.substring(pos + 1);
+    return (path + "_" + noteId + ".zpln").substring(1);
   }
 
   default String buildNoteFileName(Note note) throws IOException {
     return buildNoteFileName(note.getId(), note.getPath());
   }
 
+  default String buildNoteFileNameWithoutPrefix(String noteId, String notePath) throws IOException {
+    if (!notePath.startsWith("/")) {
+      throw new IOException("Invalid notePath: " + notePath);
+    }
+    return (notePath + "_" + noteId + ".zpln").substring(1);
+  }
+
   default String buildNoteTempFileName(Note note) {
-    return (note.getPath() + "_" + note.getId() + ".tmp").substring(1);
+    int pos = note.getPath().lastIndexOf('/');
+    String path = note.getPath().substring(0, pos + 1) + "_" + note.getPath().substring(pos + 1);
+    return (path + "_" + note.getId() + ".tmp").substring(1);
   }
 
   default String getNoteId(String noteFileName) throws IOException {
@@ -168,12 +179,17 @@ public interface NotebookRepo {
 
   default String getNotePath(String rootNoteFolder, String noteFileName)
       throws IOException {
-    int index = noteFileName.lastIndexOf("_");
+    int index = noteFileName.lastIndexOf('_');
     if (index == -1) {
       throw new IOException(
           "Invalid note name, no '_' in note name: " + noteFileName);
     }
     try {
+      String relativeNoteFileName = noteFileName.substring(rootNoteFolder.length(), index);
+      int prefix = relativeNoteFileName.indexOf('_');
+      if (prefix != -1 && prefix == relativeNoteFileName.lastIndexOf('/') + 1) {
+        return  relativeNoteFileName.substring(0, prefix) + relativeNoteFileName.substring(prefix + 1);
+      }
       return noteFileName.substring(rootNoteFolder.length(), index);
     } catch (StringIndexOutOfBoundsException e) {
       throw new IOException("Invalid note name: " + noteFileName);
