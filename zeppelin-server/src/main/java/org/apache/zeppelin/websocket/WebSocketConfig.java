@@ -35,6 +35,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
   }
 
   public void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
-    registry.addHandler(websocketDispatcher, "/ws");
+    registry.addHandler(websocketDispatcher, "/ws").setAllowedOrigins("*");
   }
 }
