@@ -42,8 +42,6 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,7 +58,6 @@ import java.util.concurrent.TimeUnit;
  * new IndexReader every time. Index is thread-safe, as re-uses single IndexWriter, which is
  * thread-safe.
  */
-@Component
 public class LuceneSearch extends SearchService {
   private static final Logger logger = LoggerFactory.getLogger(LuceneSearch.class);
 
@@ -76,7 +73,6 @@ public class LuceneSearch extends SearchService {
   private IndexWriterConfig indexWriterConfig;
   private IndexWriter indexWriter;
 
-  @Autowired
   public LuceneSearch(ZeppelinConfiguration zeppelinConfiguration) {
     super("LuceneSearch-Thread");
     this.zeppelinConfiguration = zeppelinConfiguration;

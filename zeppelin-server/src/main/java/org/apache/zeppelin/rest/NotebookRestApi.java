@@ -32,7 +32,6 @@ import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
 import org.apache.zeppelin.rest.message.*;
-import org.apache.zeppelin.search.SearchService;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.JobManagerService;
 import org.apache.zeppelin.service.SecurityService;
@@ -62,7 +61,7 @@ public class NotebookRestApi extends AbstractRestApi {
   private static final Gson gson = new Gson();
 
   private final ZeppelinConfiguration zConf;
-  private final SearchService noteSearchService;
+  //private final SearchService noteSearchService;
   private final JobManagerService jobManagerService;
   private final SecurityService securityService;
   private final ConnectionManager connectionManager;
@@ -70,7 +69,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
   @Autowired
   public NotebookRestApi(
-          final SearchService search,
+          //final SearchService search,
           final ZeppelinConfiguration zConf,
           @Qualifier("NoSecurityService") final SecurityService securityService,
           final JobManagerService jobManagerService,
@@ -78,7 +77,7 @@ public class NotebookRestApi extends AbstractRestApi {
           final ZeppelinNoteRepository zeppelinNoteRepository) {
     super(securityService);
     this.jobManagerService = jobManagerService;
-    this.noteSearchService = search;
+    //this.noteSearchService = search;
     this.zConf = zConf;
     this.securityService = securityService;
     this.connectionManager = connectionManager;
@@ -1007,7 +1006,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final HashSet<String> userAndRoles = new HashSet<>();
     userAndRoles.add(principal);
     userAndRoles.addAll(roles);
-    final List<Map<String, String>> notesFound = noteSearchService.query(queryTerm);
+   /* final List<Map<String, String>> notesFound = noteSearchService.query(queryTerm);
     for (int i = 0; i < notesFound.size(); i++) {
       final String[] ids = notesFound.get(i).get("id").split("/", 2);
       final String noteId = ids[0];
@@ -1020,6 +1019,8 @@ public class NotebookRestApi extends AbstractRestApi {
       //}
     }
     LOG.info("{} notes found", notesFound.size());
+    */
+    final List<Map<String, String>> notesFound = new ArrayList<>();
     return new JsonResponse(HttpStatus.OK, notesFound).build();
   }
 

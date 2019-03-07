@@ -17,6 +17,7 @@
 package org.apache.zeppelin.search;
 
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteEventAsyncListener;
 import org.apache.zeppelin.notebook.Paragraph;
 
 import java.io.IOException;

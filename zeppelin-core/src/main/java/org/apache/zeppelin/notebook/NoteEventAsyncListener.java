@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.search;
-
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteEventListener;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.scheduler.Job;
+package org.apache.zeppelin.notebook;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -87,10 +82,6 @@ public abstract class NoteEventAsyncListener implements NoteEventListener {
     eventsQueue.add(new ParagraphUpdateEvent(p));
   }
 
-  //@Override
-  public void onParagraphStatusChange(Paragraph p, Job.Status status) {
-    eventsQueue.add(new ParagraphStatusChangeEvent(p));
-  }
 
   class EventHandlingThread extends Thread {
 
