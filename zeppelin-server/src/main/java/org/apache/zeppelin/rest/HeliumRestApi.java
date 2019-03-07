@@ -17,14 +17,8 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.ZeppelinNoteRepository;
-import org.apache.zeppelin.helium.Helium;
-import org.apache.zeppelin.helium.HeliumPackage;
-import org.apache.zeppelin.helium.HeliumPackageSearchResult;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;
@@ -35,11 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Helium Rest Api.
  */
@@ -48,13 +37,14 @@ import java.util.Map;
 public class HeliumRestApi {
   Logger logger = LoggerFactory.getLogger(HeliumRestApi.class);
 
-  private final Helium helium;
+  //private final Helium helium;
   private final Gson gson = new Gson();
   private final ZeppelinNoteRepository zeppelinNoteRepository;
 
   @Autowired
-  public HeliumRestApi(final Helium helium, ZeppelinNoteRepository zeppelinNoteRepository) {
-    this.helium = helium;
+  public HeliumRestApi(//final Helium helium,
+                       ZeppelinNoteRepository zeppelinNoteRepository) {
+    //this.helium = helium;
     this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
@@ -64,7 +54,8 @@ public class HeliumRestApi {
   @GetMapping(value = "/package", produces = "application/json")
   public ResponseEntity getAllPackageInfo() {
     try {
-      return new JsonResponse(HttpStatus.OK, "", helium.getAllPackageInfo()).build();
+      //return new JsonResponse(HttpStatus.OK, "", helium.getAllPackageInfo()).build();
+      return null;
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -77,7 +68,8 @@ public class HeliumRestApi {
   @GetMapping(value = "/enabledPackage", produces = "application/json")
   public ResponseEntity getAllEnabledPackageInfo() {
     try {
-      return new JsonResponse(HttpStatus.OK, "", helium.getAllEnabledPackages()).build();
+      //return new JsonResponse(HttpStatus.OK, "", helium.getAllEnabledPackages()).build();
+      return null;
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -95,7 +87,8 @@ public class HeliumRestApi {
     }
 
     try {
-      return new JsonResponse(HttpStatus.OK, "", helium.getSinglePackageInfo(packageName)).build();
+      //return new JsonResponse(HttpStatus.OK, "", helium.getSinglePackageInfo(packageName)).build();
+      return null;
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -116,7 +109,8 @@ public class HeliumRestApi {
               .build();
     }
     try {
-      return new JsonResponse(HttpStatus.OK, "", helium.suggestApp(paragraph)).build();
+      //return new JsonResponse(HttpStatus.OK, "", helium.suggestApp(paragraph)).build();
+      return null;
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -137,10 +131,11 @@ public class HeliumRestApi {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
               .build();
     }
-    final HeliumPackage pkg = HeliumPackage.fromJson(heliumPackage);
+    //final HeliumPackage pkg = HeliumPackage.fromJson(heliumPackage);
     try {
-      return new JsonResponse(HttpStatus.OK, "",
-              helium.getApplicationFactory().loadAndRun(pkg, paragraph)).build();
+      //return new JsonResponse(HttpStatus.OK, "",
+      //        helium.getApplicationFactory().loadAndRun(pkg, paragraph)).build();
+      return null;
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -156,7 +151,7 @@ public class HeliumRestApi {
               "Can't get bundle due to empty package name").build();
     }
 
-    HeliumPackageSearchResult psr = null;
+    /*HeliumPackageSearchResult psr = null;
     final List<HeliumPackageSearchResult> enabledPackages = helium.getAllEnabledPackages();
     for (final HeliumPackageSearchResult e : enabledPackages) {
       if (e.getPkg().getName().equals(packageName)) {
@@ -181,6 +176,7 @@ public class HeliumRestApi {
         final String stringified = FileUtils.readFileToString(bundle);
         return new JsonResponse(HttpStatus.OK, stringified).build();
       }
+
     } catch (final Exception e) {
       logger.error(e.getMessage(), e);
       // returning error will prevent zeppelin front-end render any notebook.
@@ -188,10 +184,13 @@ public class HeliumRestApi {
       // so it's better return ok instead of any error.
       return new JsonResponse(HttpStatus.OK, "ERROR: " + e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @PostMapping(value = "/enable/{packageName}", produces = "application/json")
   public ResponseEntity enablePackage(@PathVariable("packageName") final String packageName, final String artifact) {
+    /*
     try {
       if (helium.enable(packageName, artifact)) {
         return new JsonResponse(HttpStatus.OK).build();
@@ -202,10 +201,13 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @PostMapping(value = "/disable/{packageName}", produces = "application/json")
   public ResponseEntity disablePackage(@PathVariable("packageName") final String packageName) {
+    /*
     try {
       if (helium.disable(packageName)) {
         return new JsonResponse(HttpStatus.OK).build();
@@ -216,6 +218,8 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @GetMapping(value = "/spell/config/{packageName}", produces = "application/json")
@@ -224,6 +228,7 @@ public class HeliumRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST, "packageName is empty").build();
     }
 
+    /*
     try {
       final Map<String, Map<String, Object>> config =
               helium.getSpellConfig(packageName);
@@ -238,10 +243,13 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @GetMapping(value = "/config", produces = "application/json")
   public ResponseEntity getAllPackageConfigs() {
+    /*
     try {
       final Map<String, Map<String, Object>> config = helium.getAllPackageConfig();
       return new JsonResponse(HttpStatus.OK, config).build();
@@ -249,6 +257,8 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @GetMapping(value = "/config/{packageName}/{artifact}", produces = "application/json")
@@ -260,6 +270,7 @@ public class HeliumRestApi {
       ).build();
     }
 
+    /*
     try {
       final Map<String, Map<String, Object>> config =
               helium.getPackageConfig(packageName, artifact);
@@ -274,6 +285,8 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @PostMapping(value = "/config/{packageName}/{artifact}", produces = "application/json")
@@ -285,6 +298,7 @@ public class HeliumRestApi {
       ).build();
     }
 
+    /*
     try {
       final Map<String, Object> packageConfig
               = gson.fromJson(rawConfig, new TypeToken<Map<String, Object>>() {}.getType());
@@ -296,10 +310,13 @@ public class HeliumRestApi {
     } catch (final IOException | RuntimeException e) {
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @GetMapping(value = "/order/visualization", produces = "application/json")
   public ResponseEntity getVisualizationPackageOrder() {
+    /*
     try {
       final List<String> order = helium.getVisualizationPackageOrder();
       return new JsonResponse(HttpStatus.OK, order).build();
@@ -307,10 +324,13 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 
   @PostMapping(value = "/order/visualization", produces = "application/json")
   public ResponseEntity setVisualizationPackageOrder(final String orderedPackageNameList) {
+    /*
     final List<String> orderedList = gson.fromJson(
             orderedPackageNameList, new TypeToken<List<String>>() {
             }.getType());
@@ -321,5 +341,7 @@ public class HeliumRestApi {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
+    */
+    return null;
   }
 }

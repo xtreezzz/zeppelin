@@ -73,8 +73,9 @@ public class SparkSqlInterpreter extends Interpreter {
     sc.setJobGroup(Utils.buildJobGroupId(context), Utils.buildJobDesc(context), false);
 
     try {
-      String effectiveSQL = Boolean.parseBoolean(getProperty("zeppelin.spark.sql.interpolation")) ?
-          interpolate(st, context.getResourcePool()) : st;
+      //String effectiveSQL = Boolean.parseBoolean(getProperty("zeppelin.spark.sql.interpolation")) ?
+      //    interpolate(st, context.getResourcePool()) : st;
+      String effectiveSQL = st;
       Method method = sqlc.getClass().getMethod("sql", String.class);
       String msg = sparkInterpreter.getZeppelinContext().showData(
           method.invoke(sqlc, effectiveSQL));

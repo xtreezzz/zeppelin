@@ -28,16 +28,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.helium.ApplicationEventListener;
+import org.apache.zeppelin.interpreterV2.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLaunchContext;
 import org.apache.zeppelin.interpreter.launcher.InterpreterLauncher;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
+import org.apache.zeppelin.interpreterV2.server.InterpreterProcessServer;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
 import org.apache.zeppelin.plugin.PluginManager;
+import org.apache.zeppelin.utils.IdHashes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +51,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static org.apache.zeppelin.util.IdHashes.generateId;
 
 /**
  * Represent one InterpreterSetting in the interpreter setting page
@@ -113,7 +114,7 @@ public class InterpreterSetting {
   // launcher in future when we have other launcher implementation. e.g. third party launcher
   // service like livy
   private transient InterpreterLauncher launcher;
-  private transient RemoteInterpreterEventServer interpreterEventServer;
+  private transient InterpreterProcessServer interpreterEventServer;
   ///////////////////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -192,7 +193,7 @@ public class InterpreterSetting {
       return this;
     }
 
-    public Builder setRemoteInterpreterEventServer(RemoteInterpreterEventServer interpreterEventServer) {
+    public Builder setRemoteInterpreterEventServer(InterpreterProcessServer interpreterEventServer) {
       interpreterSetting.interpreterEventServer = interpreterEventServer;
       return this;
     }
@@ -223,7 +224,7 @@ public class InterpreterSetting {
 
   public InterpreterSetting() {
     ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    this.id = generateId();
+    this.id = IdHashes.generateId();
     interpreterGroupReadLock = lock.readLock();
     interpreterGroupWriteLock = lock.writeLock();
   }
@@ -307,7 +308,7 @@ public class InterpreterSetting {
   }
 
   public InterpreterSetting setInterpreterEventServer(
-      RemoteInterpreterEventServer interpreterEventServer) {
+          InterpreterProcessServer interpreterEventServer) {
     this.interpreterEventServer = interpreterEventServer;
     return this;
   }

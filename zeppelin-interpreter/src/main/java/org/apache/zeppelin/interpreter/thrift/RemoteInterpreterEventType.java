@@ -30,8 +30,6 @@ public enum RemoteInterpreterEventType implements org.apache.thrift.TEnum {
   ANGULAR_OBJECT_UPDATE(3),
   ANGULAR_OBJECT_REMOVE(4),
   RUN_INTERPRETER_CONTEXT_RUNNER(5),
-  RESOURCE_POOL_GET_ALL(6),
-  RESOURCE_GET(7),
   OUTPUT_APPEND(8),
   OUTPUT_UPDATE(9),
   OUTPUT_UPDATE_ALL(10),
@@ -39,7 +37,6 @@ public enum RemoteInterpreterEventType implements org.apache.thrift.TEnum {
   APP_STATUS_UPDATE(12),
   META_INFOS(13),
   REMOTE_ZEPPELIN_SERVER_RESOURCE(14),
-  RESOURCE_INVOKE_METHOD(15),
   PARA_INFOS(16);
 
   private final int value;
@@ -71,10 +68,6 @@ public enum RemoteInterpreterEventType implements org.apache.thrift.TEnum {
         return ANGULAR_OBJECT_REMOVE;
       case 5:
         return RUN_INTERPRETER_CONTEXT_RUNNER;
-      case 6:
-        return RESOURCE_POOL_GET_ALL;
-      case 7:
-        return RESOURCE_GET;
       case 8:
         return OUTPUT_APPEND;
       case 9:
@@ -89,8 +82,6 @@ public enum RemoteInterpreterEventType implements org.apache.thrift.TEnum {
         return META_INFOS;
       case 14:
         return REMOTE_ZEPPELIN_SERVER_RESOURCE;
-      case 15:
-        return RESOURCE_INVOKE_METHOD;
       case 16:
         return PARA_INFOS;
       default:

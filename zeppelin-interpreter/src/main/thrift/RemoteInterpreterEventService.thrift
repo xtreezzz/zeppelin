@@ -103,8 +103,4 @@ service RemoteInterpreterEventService {
   void removeAngularObject(1: string intpGroupId, 2: string noteId, 3: string paragraphId, 4: string name);
 
   void sendParagraphInfo(1: string intpGroupId, 2: string json);
-
-  list<string> getAllResources(1: string intpGroupId);
-  binary getResource(1: string resourceIdJson);
-  binary invokeMethod(1: string intpGroupId, 2: string invokeMethodJson);
 }

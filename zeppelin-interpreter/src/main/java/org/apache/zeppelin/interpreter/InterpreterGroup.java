@@ -18,7 +18,6 @@
 package org.apache.zeppelin.interpreter;
 
 import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
-import org.apache.zeppelin.resource.ResourcePool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,6 @@ public class InterpreterGroup {
   protected Map<String, List<Interpreter>> sessions = new ConcurrentHashMap();
   private AngularObjectRegistry angularObjectRegistry;
   private InterpreterHookRegistry hookRegistry;
-  private ResourcePool resourcePool;
   private boolean angularRegistryPushed = false;
 
   /**
@@ -123,13 +121,6 @@ public class InterpreterGroup {
     return sessions.size();
   }
 
-  public void setResourcePool(ResourcePool resourcePool) {
-    this.resourcePool = resourcePool;
-  }
-
-  public ResourcePool getResourcePool() {
-    return resourcePool;
-  }
 
   public boolean isAngularRegistryPushed() {
     return angularRegistryPushed;

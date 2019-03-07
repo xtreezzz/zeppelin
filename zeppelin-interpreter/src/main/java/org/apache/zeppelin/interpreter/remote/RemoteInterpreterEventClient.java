@@ -23,12 +23,9 @@ import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.interpreter.thrift.*;
 import org.apache.zeppelin.notebook.display.AngularObject;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
-import org.apache.zeppelin.resource.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +34,7 @@ import java.util.Map;
  * This class is used to communicate with ZeppelinServer via thrift.
  * All the methods are synchronized because thrift client is not thread safe.
  */
-public class RemoteInterpreterEventClient implements ResourcePoolConnector,
-        AngularObjectRegistryListener {
+public class RemoteInterpreterEventClient implements AngularObjectRegistryListener {
   private final Logger LOGGER = LoggerFactory.getLogger(RemoteInterpreterEventClient.class);
   private final Gson gson = new Gson();
 
@@ -53,145 +49,6 @@ public class RemoteInterpreterEventClient implements ResourcePoolConnector,
     this.intpGroupId = intpGroupId;
   }
 
-  /**
-   * Get all resources except for specific resourcePool
-   *
-   * @return
-   */
-  @Override
-  public synchronized ResourceSet getAllResources() {
-    try {
-      List<String> resources = intpEventServiceClient.getAllResources(intpGroupId);
-      ResourceSet resourceSet = new ResourceSet();
-      for (String res : resources) {
-        RemoteResource resource = RemoteResource.fromJson(res);
-        resource.setResourcePoolConnector(this);
-        resourceSet.add(resource);
-      }
-      return resourceSet;
-    } catch (TException e) {
-      LOGGER.warn("Fail to getAllResources", e);
-      return null;
-    }
-  }
-
-  @Override
-  public synchronized Object readResource(ResourceId resourceId) {
-    try {
-      ByteBuffer buffer = intpEventServiceClient.getResource(resourceId.toJson());
-      Object o = Resource.deserializeObject(buffer);
-      return o;
-    } catch (TException | IOException | ClassNotFoundException e) {
-      LOGGER.warn("Failt to readResource: " + resourceId, e);
-      return null;
-    }
-  }
-
-  /**
-   * Invoke method and save result in resourcePool as another resource
-   *
-   * @param resourceId
-   * @param methodName
-   * @param paramTypes
-   * @param params
-   * @return
-   */
-  @Override
-  public synchronized Object invokeMethod(
-      ResourceId resourceId,
-      String methodName,
-      Class[] paramTypes,
-      Object[] params) {
-    LOGGER.debug("Request Invoke method {} of Resource {}", methodName, resourceId.getName());
-
-    return null;
-    //    InvokeResourceMethodEventMessage invokeMethod = new InvokeResourceMethodEventMessage(
-    //        resourceId,
-    //        methodName,
-    //        paramTypes,
-    //        params,
-    //        null);
-    //
-    //    synchronized (getInvokeResponse) {
-    //      // wait for previous response consumed
-    //      while (getInvokeResponse.containsKey(invokeMethod)) {
-    //        try {
-    //          getInvokeResponse.wait();
-    //        } catch (InterruptedException e) {
-    //          LOGGER.warn(e.getMessage(), e);
-    //        }
-    //      }
-    //      // send request
-    //      sendEvent(new RemoteInterpreterEvent(
-    //          RemoteInterpreterEventType.RESOURCE_INVOKE_METHOD,
-    //          invokeMethod.toJson()));
-    //      // wait for response
-    //      while (!getInvokeResponse.containsKey(invokeMethod)) {
-    //        try {
-    //          getInvokeResponse.wait();
-    //        } catch (InterruptedException e) {
-    //          LOGGER.warn(e.getMessage(), e);
-    //        }
-    //      }
-    //      Object o = getInvokeResponse.remove(invokeMethod);
-    //      getInvokeResponse.notifyAll();
-    //      return o;
-    //    }
-  }
-
-  /**
-   * Invoke method and save result in resourcePool as another resource
-   *
-   * @param resourceId
-   * @param methodName
-   * @param paramTypes
-   * @param params
-   * @param returnResourceName
-   * @return
-   */
-  @Override
-  public synchronized Resource invokeMethod(
-      ResourceId resourceId,
-      String methodName,
-      Class[] paramTypes,
-      Object[] params,
-      String returnResourceName) {
-    LOGGER.debug("Request Invoke method {} of Resource {}", methodName, resourceId.getName());
-
-    return null;
-    //    InvokeResourceMethodEventMessage invokeMethod = new InvokeResourceMethodEventMessage(
-    //        resourceId,
-    //        methodName,
-    //        paramTypes,
-    //        params,
-    //        returnResourceName);
-    //
-    //    synchronized (getInvokeResponse) {
-    //      // wait for previous response consumed
-    //      while (getInvokeResponse.containsKey(invokeMethod)) {
-    //        try {
-    //          getInvokeResponse.wait();
-    //        } catch (InterruptedException e) {
-    //          LOGGER.warn(e.getMessage(), e);
-    //        }
-    //      }
-    //      // send request
-    //      sendEvent(new RemoteInterpreterEvent(
-    //          RemoteInterpreterEventType.RESOURCE_INVOKE_METHOD,
-    //          invokeMethod.toJson()));
-    //      // wait for response
-    //      while (!getInvokeResponse.containsKey(invokeMethod)) {
-    //        try {
-    //          getInvokeResponse.wait();
-    //        } catch (InterruptedException e) {
-    //          LOGGER.warn(e.getMessage(), e);
-    //        }
-    //      }
-    //      Resource o = (Resource) getInvokeResponse.remove(invokeMethod);
-    //      getInvokeResponse.notifyAll();
-    //      return o;
-    //    }
-  }
 
   public synchronized void onInterpreterOutputAppend(
       String noteId, String paragraphId, int outputIndex, String output) {

@@ -50,8 +50,6 @@ enum RemoteInterpreterEventType {
   ANGULAR_OBJECT_UPDATE = 3,
   ANGULAR_OBJECT_REMOVE = 4,
   RUN_INTERPRETER_CONTEXT_RUNNER = 5,
-  RESOURCE_POOL_GET_ALL = 6,
-  RESOURCE_GET = 7
   OUTPUT_APPEND = 8,
   OUTPUT_UPDATE = 9,
   OUTPUT_UPDATE_ALL = 10,
@@ -59,7 +57,6 @@ enum RemoteInterpreterEventType {
   APP_STATUS_UPDATE = 12,
   META_INFOS = 13,
   REMOTE_ZEPPELIN_SERVER_RESOURCE = 14,
-  RESOURCE_INVOKE_METHOD = 15,
   PARA_INFOS = 16
 }
 
@@ -103,23 +100,10 @@ service RemoteInterpreterService {
 
   string getStatus(1: string sessionId, 2:string jobId);
 
-  list<string> resourcePoolGetAll();
-  // get value of resource
-  binary resourceGet(1: string sessionId, 2: string paragraphId, 3: string resourceName);
-  // remove resource
-  bool resourceRemove(1: string sessionId, 2: string paragraphId, 3:string resourceName);
-  // invoke method on resource
-  binary resourceInvokeMethod(1: string sessionId, 2: string paragraphId, 3:string resourceName, 4:string invokeMessage);
-
   void angularObjectUpdate(1: string name, 2: string sessionId, 3: string paragraphId, 4: string object);
   void angularObjectAdd(1: string name, 2: string sessionId, 3: string paragraphId, 4: string object);
   void angularObjectRemove(1: string name, 2: string sessionId, 3: string paragraphId);
   void angularRegistryPush(1: string registry);
-
-  RemoteApplicationResult loadApplication(1: string applicationInstanceId, 2: string packageInfo, 3: string sessionId, 4: string paragraphId);
-  RemoteApplicationResult unloadApplication(1: string applicationInstanceId);
-  RemoteApplicationResult runApplication(1: string applicationInstanceId);
-
 }
 
 

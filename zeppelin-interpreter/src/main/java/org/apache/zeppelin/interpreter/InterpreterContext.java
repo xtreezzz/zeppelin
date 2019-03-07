@@ -20,7 +20,6 @@ package org.apache.zeppelin.interpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterEventClient;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.user.AuthenticationInfo;
 
 import java.util.HashMap;
@@ -57,7 +56,6 @@ public class InterpreterContext {
   private GUI gui = new GUI();
   private GUI noteGui = new GUI();
   private AngularObjectRegistry angularObjectRegistry;
-  private ResourcePool resourcePool;
   private String interpreterClassName;
   private Map<String, Integer> progressMap;
   private Map<String, String> localProperties = new HashMap<>();
@@ -98,10 +96,6 @@ public class InterpreterContext {
       return this;
     }
 
-    public Builder setResourcePool(ResourcePool resourcePool) {
-      context.resourcePool = resourcePool;
-      return this;
-    }
 
     public Builder setReplName(String replName) {
       context.replName = replName;
@@ -221,9 +215,6 @@ public class InterpreterContext {
     return angularObjectRegistry;
   }
 
-  public ResourcePool getResourcePool() {
-    return resourcePool;
-  }
 
   public String getInterpreterClassName() {
     return interpreterClassName;

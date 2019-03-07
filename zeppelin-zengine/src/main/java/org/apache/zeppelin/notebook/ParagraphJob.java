@@ -19,7 +19,6 @@ package org.apache.zeppelin.notebook;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.zeppelin.helium.HeliumPackage;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.user.AuthenticationInfo;
@@ -199,26 +198,5 @@ public class ParagraphJob {
 
   public void setReturn(final InterpreterResult value, final Throwable t) {
     throw new NotImplementedException("Result should be updated by InterpreterResultService");
-  }
-
-  private String getApplicationId(final HeliumPackage pkg) {
-    throw new NotImplementedException("Helium properties should be obtained by HeliumService");
-  }
-
-  public ApplicationState createOrGetApplicationState(final HeliumPackage pkg) {
-    //    synchronized (paragraph) {
-    //      for (ApplicationState as : paragraph.getApps()) {
-    //        //TODO(egorklimov): fix this, equals always false
-    //        if (as.equals(pkg)) {
-    //          return as;
-    //        }
-    //      }
-    //
-    //      String appId = getApplicationId(pkg);
-    //      ApplicationState appState = new ApplicationState(appId, pkg);
-    //      paragraph.addApplicationState(appState);
-    //      return appState;
-    //    }
-    throw new NotImplementedException("HeliumService is not implemented yet");
   }
 }

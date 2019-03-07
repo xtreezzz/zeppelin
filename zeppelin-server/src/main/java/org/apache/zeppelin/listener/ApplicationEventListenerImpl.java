@@ -17,8 +17,7 @@
 
 package org.apache.zeppelin.listener;
 
-import org.apache.zeppelin.helium.ApplicationEventListener;
-import org.apache.zeppelin.helium.HeliumPackage;
+import org.apache.zeppelin.interpreterV2.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -74,18 +73,6 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
     connectionManager.broadcast(noteId, msg);
   }
 
-  @Override
-  public void onLoad(final String noteId,
-                     final String paragraphId,
-                     final String appId,
-                     final HeliumPackage pkg) {
-    final SockMessage msg = new SockMessage(Operation.APP_LOAD)
-            .put("noteId", noteId)
-            .put("paragraphId", paragraphId)
-            .put("appId", appId)
-            .put("pkg", pkg);
-    connectionManager.broadcast(noteId, msg);
-  }
 
   @Override
   public void onStatusChange(final String noteId,

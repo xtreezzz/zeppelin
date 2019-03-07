@@ -15,30 +15,13 @@
 package ru.tinkoff.zeppelin.jdbc;
 
 import com.mockrunner.jdbc.BasicJDBCTestCaseAdapter;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.resource.LocalResourcePool;
-import org.apache.zeppelin.resource.ResourcePool;
-import org.apache.zeppelin.user.AuthenticationInfo;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.util.Properties;
-
-import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
 
 /**
  * JDBC interpreter Z-variable interpolation unit tests.
  */
 public class JDBCInterpreterInterpolationTest extends BasicJDBCTestCaseAdapter {
 
+  /*
   private static String jdbcConnection;
   private InterpreterContext interpreterContext;
   private ResourcePool resourcePool;
@@ -180,5 +163,7 @@ public class JDBCInterpreterInterpolationTest extends BasicJDBCTestCaseAdapter {
     assertEquals("ID\tNAME\nkey\tkeyboard\nmou\tmouse\n", 
                  interpreterResult.message().get(0).getData());
   }
+
+  */
 
 }

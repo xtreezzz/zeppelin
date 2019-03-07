@@ -17,18 +17,9 @@
 
 package org.apache.zeppelin.interpreter;
 
-import org.apache.zeppelin.resource.LocalResourcePool;
-import org.apache.zeppelin.resource.ResourcePool;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Properties;
-
-import static org.junit.Assert.assertTrue;
-
 public class ZeppCtxtVariableTest {
 
+  /*
   public static class TestInterpreter extends Interpreter {
 
     TestInterpreter(Properties property) {
@@ -200,5 +191,7 @@ public class ZeppCtxtVariableTest {
     String result = interpreter.interpolate("Paired } end an escaped sequence", resourcePool);
     assertTrue("Random braces - four", "Paired } end an escaped sequence".equals(result));
   }
+
+  */
 
 }

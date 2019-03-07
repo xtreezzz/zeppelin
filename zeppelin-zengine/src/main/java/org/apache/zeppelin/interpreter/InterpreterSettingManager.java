@@ -34,19 +34,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.helium.ApplicationEventListener;
+import org.apache.zeppelin.interpreterV2.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.Interpreter.RegisteredInterpreter;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
-import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
-import org.apache.zeppelin.interpreter.thrift.RemoteInterpreterService;
+import org.apache.zeppelin.interpreterV2.server.InterpreterProcessServer;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistryListener;
-import org.apache.zeppelin.resource.Resource;
-import org.apache.zeppelin.resource.ResourcePool;
-import org.apache.zeppelin.resource.ResourceSet;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.slf4j.Logger;
@@ -112,7 +108,7 @@ public class InterpreterSettingManager {
 
   @Lazy
   @Autowired
-  private RemoteInterpreterEventServer interpreterEventServer;
+  private InterpreterProcessServer interpreterEventServer;
 
   @Lazy
   @Autowired
@@ -140,7 +136,7 @@ public class InterpreterSettingManager {
 
     this.appEventListener = appEventListener;
 
-    this.interpreterEventServer = new RemoteInterpreterEventServer(conf, this);
+    this.interpreterEventServer = new InterpreterProcessServer(conf, this);
     this.interpreterEventServer.start();
     init();
   }
@@ -497,107 +493,6 @@ public class InterpreterSettingManager {
     return interpreterGroups;
   }
 
-  //TODO(zjffdu) move Resource related api to ResourceManager
-  public ResourceSet getAllResources() {
-    return getAllResourcesExcept(null);
-  }
-
-  private ResourceSet getAllResourcesExcept(String interpreterGroupExcludsion) {
-    ResourceSet resourceSet = new ResourceSet();
-    for (ManagedInterpreterGroup intpGroup : getAllInterpreterGroup()) {
-      if (interpreterGroupExcludsion != null &&
-          intpGroup.getId().equals(interpreterGroupExcludsion)) {
-        continue;
-      }
-
-      RemoteInterpreterProcess remoteInterpreterProcess = intpGroup.getRemoteInterpreterProcess();
-      if (remoteInterpreterProcess == null) {
-        ResourcePool localPool = intpGroup.getResourcePool();
-        if (localPool != null) {
-          resourceSet.addAll(localPool.getAll());
-        }
-      } else if (remoteInterpreterProcess.isRunning()) {
-        List<String> resourceList = remoteInterpreterProcess.callRemoteFunction(
-            new RemoteInterpreterProcess.RemoteFunction<List<String>>() {
-              @Override
-              public List<String> call(RemoteInterpreterService.Client client) throws Exception {
-                return client.resourcePoolGetAll();
-              }
-            });
-        if (resourceList != null) {
-          for (String res : resourceList) {
-            resourceSet.add(Resource.fromJson(res));
-          }
-        }
-      }
-    }
-    return resourceSet;
-  }
-
-
-  public void removeResourcesBelongsToParagraph(String noteId, String paragraphId) {
-    for (ManagedInterpreterGroup intpGroup : getAllInterpreterGroup()) {
-      ResourceSet resourceSet = new ResourceSet();
-      RemoteInterpreterProcess remoteInterpreterProcess = intpGroup.getRemoteInterpreterProcess();
-      if (remoteInterpreterProcess == null) {
-        ResourcePool localPool = intpGroup.getResourcePool();
-        if (localPool != null) {
-          resourceSet.addAll(localPool.getAll());
-        }
-        if (noteId != null) {
-          resourceSet = resourceSet.filterByNoteId(noteId);
-        }
-        if (paragraphId != null) {
-          resourceSet = resourceSet.filterByParagraphId(paragraphId);
-        }
-
-        for (Resource r : resourceSet) {
-          localPool.remove(
-              r.getResourceId().getNoteId(),
-              r.getResourceId().getParagraphId(),
-              r.getResourceId().getName());
-        }
-      } else if (remoteInterpreterProcess.isRunning()) {
-        List<String> resourceList = remoteInterpreterProcess.callRemoteFunction(
-            new RemoteInterpreterProcess.RemoteFunction<List<String>>() {
-              @Override
-              public List<String> call(RemoteInterpreterService.Client client) throws Exception {
-                return client.resourcePoolGetAll();
-              }
-            });
-        for (String res : resourceList) {
-          resourceSet.add(Resource.fromJson(res));
-        }
-
-        if (noteId != null) {
-          resourceSet = resourceSet.filterByNoteId(noteId);
-        }
-        if (paragraphId != null) {
-          resourceSet = resourceSet.filterByParagraphId(paragraphId);
-        }
-
-        for (final Resource r : resourceSet) {
-          remoteInterpreterProcess.callRemoteFunction(
-              new RemoteInterpreterProcess.RemoteFunction<Void>() {
-
-                @Override
-                public Void call(RemoteInterpreterService.Client client) throws Exception {
-                  client.resourceRemove(
-                      r.getResourceId().getNoteId(),
-                      r.getResourceId().getParagraphId(),
-                      r.getResourceId().getName());
-                  return null;
-                }
-              });
-        }
-      }
-    }
-  }
-
-  public void removeResourcesBelongsToNote(String noteId) {
-    removeResourcesBelongsToParagraph(noteId, null);
-  }
-
   /**
    * Overwrite dependency jar under local-repository/{interpreterId} if jar file in original path is
    * changed
@@ -927,7 +822,5 @@ public class InterpreterSettingManager {
         }
       }
     }
-
-    removeResourcesBelongsToNote(note.getId());
   }
 }

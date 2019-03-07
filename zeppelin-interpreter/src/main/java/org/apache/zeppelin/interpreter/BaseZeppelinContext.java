@@ -25,9 +25,6 @@ import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.notebook.display.AngularObjectWatcher;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.notebook.display.ui.OptionInput;
-import org.apache.zeppelin.resource.Resource;
-import org.apache.zeppelin.resource.ResourcePool;
-import org.apache.zeppelin.resource.ResourceSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -781,69 +778,5 @@ public abstract class BaseZeppelinContext {
   public void unregisterNoteHook(String noteId, String event, String replName) {
     String className = getClassNameFromReplName(replName);
     hooks.unregister(noteId, className, event);
-  }
-
-
-  /**
-   * Add object into resource pool
-   *
-   * @param name
-   * @param value
-   */
-  @ZeppelinApi
-  public void put(String name, Object value) {
-    ResourcePool resourcePool = interpreterContext.getResourcePool();
-    resourcePool.put(name, value);
-  }
-
-  /**
-   * Get object from resource pool
-   * Search local process first and then the other processes
-   *
-   * @param name
-   * @return null if resource not found
-   */
-  @ZeppelinApi
-  public Object get(String name) {
-    ResourcePool resourcePool = interpreterContext.getResourcePool();
-    Resource resource = resourcePool.get(name);
-    if (resource != null) {
-      return resource.get();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Remove object from resourcePool
-   *
-   * @param name
-   */
-  @ZeppelinApi
-  public void remove(String name) {
-    ResourcePool resourcePool = interpreterContext.getResourcePool();
-    resourcePool.remove(name);
-  }
-
-  /**
-   * Check if resource pool has the object
-   *
-   * @param name
-   * @return
-   */
-  @ZeppelinApi
-  public boolean containsKey(String name) {
-    ResourcePool resourcePool = interpreterContext.getResourcePool();
-    Resource resource = resourcePool.get(name);
-    return resource != null;
-  }
-
-  /**
-   * Get all resources
-   */
-  @ZeppelinApi
-  public ResourceSet getAll() {
-    ResourcePool resourcePool = interpreterContext.getResourcePool();
-    return resourcePool.getAll();
   }
 }

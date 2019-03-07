@@ -23,8 +23,6 @@ import org.apache.commons.lang.reflect.FieldUtils;
 import org.apache.zeppelin.annotation.Experimental;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.resource.Resource;
-import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.slf4j.Logger;
@@ -32,13 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 /**
  * Interface for interpreters.
@@ -81,6 +73,7 @@ public abstract class Interpreter {
     return null;
   }
 
+  /*
   protected String interpolate(String cmd, ResourcePool resourcePool) {
     Pattern zVariablePattern = Pattern.compile("([^{}]*)([{]+[^{}]*[}]+)(.*)", Pattern.DOTALL);
     StringBuilder sb = new StringBuilder();
@@ -109,6 +102,7 @@ public abstract class Interpreter {
     sb.append(st);
     return sb.toString();
   }
+*/
 
   /**
    * Run code and return result, in synchronous way.

@@ -80,6 +80,7 @@
 
     <module>zeppelin-dependency</module>
       <module>zeppelin-core</module>
+    <module>zeppelin-helium</module>
   </modules>
 
   <properties>

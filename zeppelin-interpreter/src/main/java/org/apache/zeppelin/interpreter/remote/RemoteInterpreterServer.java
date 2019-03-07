@@ -28,8 +28,6 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.helium.*;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreter.InterpreterHookRegistry.HookType;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
@@ -37,7 +35,6 @@ import org.apache.zeppelin.interpreter.thrift.*;
 import org.apache.zeppelin.notebook.display.AngularObject;
 import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.resource.*;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.scheduler.JobListener;
@@ -51,9 +48,7 @@ import sun.misc.SignalHandler;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -71,8 +66,6 @@ public class RemoteInterpreterServer extends Thread
   private InterpreterGroup interpreterGroup;
   private AngularObjectRegistry angularObjectRegistry;
   private InterpreterHookRegistry hookRegistry;
-  private DistributedResourcePool resourcePool;
-  private ApplicationLoader appLoader;
   private Gson gson = new Gson();
 
   private String intpEventServerHost;
@@ -82,12 +75,6 @@ public class RemoteInterpreterServer extends Thread
   RemoteInterpreterEventService.Client intpEventServiceClient;
 
   RemoteInterpreterEventClient intpEventClient;
-  private DependencyResolver depLoader;
-
-  private final Map<String, RunningApplication> runningApplications =
-          Collections.synchronizedMap(new HashMap<String, RunningApplication>());
-
-  private Map<String, Object> remoteWorksResponsePool;
 
   private final long DEFAULT_SHUTDOWN_TIMEOUT = 2000;
 
@@ -139,9 +126,7 @@ public class RemoteInterpreterServer extends Thread
       this.host = RemoteInterpreterUtils.findAvailableHostAddress();
       logger.info("Launching ThriftServer at " + this.host + ":" + this.port);
     }
-    server = new TThreadPoolServer(
-            new TThreadPoolServer.Args(serverTransport).processor(processor));
-    remoteWorksResponsePool = Collections.synchronizedMap(new HashMap<String, Object>());
+    server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
   }
 
   @Override
@@ -272,20 +257,14 @@ public class RemoteInterpreterServer extends Thread
       interpreterGroup = new InterpreterGroup(interpreterGroupId);
       angularObjectRegistry = new AngularObjectRegistry(interpreterGroup.getId(), intpEventClient);
       hookRegistry = new InterpreterHookRegistry();
-      resourcePool = new DistributedResourcePool(interpreterGroup.getId(), intpEventClient);
       interpreterGroup.setInterpreterHookRegistry(hookRegistry);
       interpreterGroup.setAngularObjectRegistry(angularObjectRegistry);
-      interpreterGroup.setResourcePool(resourcePool);
       intpEventClient.setIntpGroupId(interpreterGroupId);
 
       String localRepoPath = properties.get("zeppelin.interpreter.localRepo");
       if (properties.containsKey("zeppelin.interpreter.output.limit")) {
-        InterpreterOutput.limit = Integer.parseInt(
-                properties.get("zeppelin.interpreter.output.limit"));
+        InterpreterOutput.limit = Integer.parseInt(properties.get("zeppelin.interpreter.output.limit"));
       }
-
-      depLoader = new DependencyResolver(localRepoPath);
-      appLoader = new ApplicationLoader(resourcePool, depLoader);
     }
 
     try {
@@ -312,10 +291,6 @@ public class RemoteInterpreterServer extends Thread
 
   protected InterpreterGroup getInterpreterGroup() {
     return interpreterGroup;
-  }
-
-  protected ResourcePool getResourcePool() {
-    return resourcePool;
   }
 
   protected RemoteInterpreterEventClient getIntpEventClient() {
@@ -367,23 +342,6 @@ public class RemoteInterpreterServer extends Thread
 
   @Override
   public void close(String sessionId, String className) throws TException {
-    // unload all applications
-    for (String appId : runningApplications.keySet()) {
-      RunningApplication appInfo = runningApplications.get(appId);
-
-      // see NoteInterpreterLoader.SHARED_SESSION
-      if (appInfo.noteId.equals(sessionId) || sessionId.equals("shared_session")) {
-        try {
-          logger.info("Unload App {} ", appInfo.pkg.getName());
-          appInfo.app.unload();
-          // see ApplicationState.Status.UNLOADED
-          intpEventClient.onAppStatusUpdate(appInfo.noteId, appInfo.paragraphId, appId, "UNLOADED");
-        } catch (ApplicationException e) {
-          logger.error(e.getMessage(), e);
-        }
-      }
-    }
-
     // close interpreters
     List<Interpreter> interpreters;
     synchronized (interpreterGroup) {
@@ -589,16 +547,16 @@ public class RemoteInterpreterServer extends Thread
           }
         }
         // put result into resource pool
-        if (resultMessages.size() > 0) {
-          int lastMessageIndex = resultMessages.size() - 1;
-          if (resultMessages.get(lastMessageIndex).getType() == InterpreterResult.Type.TABLE) {
-            context.getResourcePool().put(
-                    context.getNoteId(),
-                    context.getParagraphId(),
-                    WellKnownResourceName.ZeppelinTableResult.toString(),
-                    resultMessages.get(lastMessageIndex));
-          }
-        }
+        //if (resultMessages.size() > 0) {
+        //int lastMessageIndex = resultMessages.size() - 1;
+        //  if (resultMessages.get(lastMessageIndex).getType() == InterpreterResult.Type.TABLE) {
+        //    context.getResourcePool().put(
+        //            context.getNoteId(),
+        //            context.getParagraphId(),
+        //            WellKnownResourceName.ZeppelinTableResult.toString(),
+        //            resultMessages.get(lastMessageIndex));
+        //  }
+        //}
         return new InterpreterResult(result.code(), resultMessages);
       } finally {
         Thread.currentThread().setContextClassLoader(currentThreadContextClassloader);
@@ -705,7 +663,6 @@ public class RemoteInterpreterServer extends Thread
                     }.getType()))
             .setNoteGUI(GUI.fromJson(ric.getNoteGui()))
             .setAngularObjectRegistry(interpreterGroup.getAngularObjectRegistry())
-            .setResourcePool(interpreterGroup.getResourcePool())
             .setInterpreterOut(output)
             .setIntpEventClient(intpEventClient)
             .setProgressMap(progressMap)
@@ -894,116 +851,6 @@ public class RemoteInterpreterServer extends Thread
   }
 
   @Override
-  public List<String> resourcePoolGetAll() throws TException {
-    logger.debug("Request resourcePoolGetAll from ZeppelinServer");
-    List<String> result = new LinkedList<>();
-
-    if (resourcePool == null) {
-      return result;
-    }
-
-    ResourceSet resourceSet = resourcePool.getAll(false);
-    for (Resource r : resourceSet) {
-      result.add(r.toJson());
-    }
-
-    return result;
-  }
-
-  @Override
-  public boolean resourceRemove(String noteId, String paragraphId, String resourceName)
-          throws TException {
-    Resource resource = resourcePool.remove(noteId, paragraphId, resourceName);
-    return resource != null;
-  }
-
-  @Override
-  public ByteBuffer resourceGet(String noteId, String paragraphId, String resourceName)
-          throws TException {
-    logger.debug("Request resourceGet {} from ZeppelinServer", resourceName);
-    Resource resource = resourcePool.get(noteId, paragraphId, resourceName, false);
-
-    if (resource == null || resource.get() == null || !resource.isSerializable()) {
-      return ByteBuffer.allocate(0);
-    } else {
-      try {
-        return Resource.serializeObject(resource.get());
-      } catch (IOException e) {
-        logger.error(e.getMessage(), e);
-        return ByteBuffer.allocate(0);
-      }
-    }
-  }
-
-  @Override
-  public ByteBuffer resourceInvokeMethod(
-          String noteId, String paragraphId, String resourceName, String invokeMessage) {
-    InvokeResourceMethodEventMessage message =
-            InvokeResourceMethodEventMessage.fromJson(invokeMessage);
-
-    Resource resource = resourcePool.get(noteId, paragraphId, resourceName, false);
-    if (resource == null || resource.get() == null) {
-      return ByteBuffer.allocate(0);
-    } else {
-      try {
-        Object o = resource.get();
-        Method method = o.getClass().getMethod(
-                message.methodName,
-                message.getParamTypes());
-        Object ret = method.invoke(o, message.params);
-        if (message.shouldPutResultIntoResourcePool()) {
-          // if return resource name is specified,
-          // then put result into resource pool
-          // and return empty byte buffer
-          resourcePool.put(
-                  noteId,
-                  paragraphId,
-                  message.returnResourceName,
-                  ret);
-          return ByteBuffer.allocate(0);
-        } else {
-          // if return resource name is not specified,
-          // then return serialized result
-          ByteBuffer serialized = Resource.serializeObject(ret);
-          if (serialized == null) {
-            return ByteBuffer.allocate(0);
-          } else {
-            return serialized;
-          }
-        }
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        return ByteBuffer.allocate(0);
-      }
-    }
-  }
-
-  //  /**
-  //   * Get payload of resource from remote
-  //   *
-  //   * @param invokeResourceMethodEventMessage json serialized InvokeResourcemethodEventMessage
-  //   * @param object                           java serialized of the object
-  //   * @throws TException
-  //   */
-  //  @Override
-  //  public void resourceResponseInvokeMethod(
-  //      String invokeResourceMethodEventMessage, ByteBuffer object) throws TException {
-  //    InvokeResourceMethodEventMessage message =
-  //        InvokeResourceMethodEventMessage.fromJson(invokeResourceMethodEventMessage);
-  //
-  //    if (message.shouldPutResultIntoResourcePool()) {
-  //      Resource resource = resourcePool.get(
-  //          message.resourceId.getNoteId(),
-  //          message.resourceId.getParagraphId(),
-  //          message.returnResourceName,
-  //          true);
-  //      eventClient.putResponseInvokeMethod(message, resource);
-  //    } else {
-  //      eventClient.putResponseInvokeMethod(message, object);
-  //    }
-  //  }
-
-  @Override
   public void angularRegistryPush(String registryAsString) throws TException {
     try {
       Map<String, Map<String, AngularObject>> deserializedRegistry = gson
@@ -1015,147 +862,4 @@ public class RemoteInterpreterServer extends Thread
       logger.info("Exception in RemoteInterpreterServer while angularRegistryPush, nolock", e);
     }
   }
-
-  protected InterpreterOutput createAppOutput(final String noteId,
-                                              final String paragraphId,
-                                              final String appId) {
-    return new InterpreterOutput(new InterpreterOutputListener() {
-      @Override
-      public void onUpdateAll(InterpreterOutput out) {
-
-      }
-
-      @Override
-      public void onAppend(int index, InterpreterResultMessageOutput out, byte[] line) {
-        intpEventClient.onAppOutputAppend(noteId, paragraphId, index, appId, new String(line));
-      }
-
-      @Override
-      public void onUpdate(int index, InterpreterResultMessageOutput out) {
-        try {
-          intpEventClient.onAppOutputUpdate(noteId, paragraphId, index, appId,
-                  out.getType(), new String(out.toByteArray()));
-        } catch (IOException e) {
-          logger.error(e.getMessage(), e);
-        }
-      }
-    });
-
-  }
-
-  private ApplicationContext getApplicationContext(
-          HeliumPackage packageInfo, String noteId, String paragraphId, String applicationInstanceId) {
-    InterpreterOutput out = createAppOutput(noteId, paragraphId, applicationInstanceId);
-    return new ApplicationContext(
-            noteId,
-            paragraphId,
-            applicationInstanceId,
-            new HeliumAppAngularObjectRegistry(angularObjectRegistry, noteId, applicationInstanceId),
-            out);
-  }
-
-  @Override
-  public RemoteApplicationResult loadApplication(
-          String applicationInstanceId, String packageInfo, String noteId, String paragraphId)
-          throws TException {
-    if (runningApplications.containsKey(applicationInstanceId)) {
-      logger.warn("Application instance {} is already running");
-      return new RemoteApplicationResult(true, "");
-    }
-    HeliumPackage pkgInfo = HeliumPackage.fromJson(packageInfo);
-    ApplicationContext context = getApplicationContext(
-            pkgInfo, noteId, paragraphId, applicationInstanceId);
-    try {
-      Application app = null;
-      logger.info(
-              "Loading application {}({}), artifact={}, className={} into note={}, paragraph={}",
-              pkgInfo.getName(),
-              applicationInstanceId,
-              pkgInfo.getArtifact(),
-              pkgInfo.getClassName(),
-              noteId,
-              paragraphId);
-      app = appLoader.load(pkgInfo, context);
-      runningApplications.put(
-              applicationInstanceId,
-              new RunningApplication(pkgInfo, app, noteId, paragraphId));
-      return new RemoteApplicationResult(true, "");
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      return new RemoteApplicationResult(false, e.getMessage());
-    }
-  }
-
-  @Override
-  public RemoteApplicationResult unloadApplication(String applicationInstanceId)
-          throws TException {
-    RunningApplication runningApplication = runningApplications.remove(applicationInstanceId);
-    if (runningApplication != null) {
-      try {
-        logger.info("Unloading application {}", applicationInstanceId);
-        runningApplication.app.unload();
-      } catch (ApplicationException e) {
-        logger.error(e.getMessage(), e);
-        return new RemoteApplicationResult(false, e.getMessage());
-      }
-    }
-    return new RemoteApplicationResult(true, "");
-  }
-
-  @Override
-  public RemoteApplicationResult runApplication(String applicationInstanceId)
-          throws TException {
-    logger.info("run application {}", applicationInstanceId);
-
-    RunningApplication runningApp = runningApplications.get(applicationInstanceId);
-    if (runningApp == null) {
-      logger.error("Application instance {} not exists", applicationInstanceId);
-      return new RemoteApplicationResult(false, "Application instance does not exists");
-    } else {
-      ApplicationContext context = runningApp.app.context();
-      try {
-        context.out.clear();
-        context.out.setType(InterpreterResult.Type.ANGULAR);
-        ResourceSet resource = appLoader.findRequiredResourceSet(
-                runningApp.pkg.getResources(),
-                context.getNoteId(),
-                context.getParagraphId());
-        for (Resource res : resource) {
-          System.err.println("Resource " + res.get());
-        }
-        runningApp.app.run(resource);
-        context.out.flush();
-        InterpreterResultMessageOutput out = context.out.getOutputAt(0);
-        intpEventClient.onAppOutputUpdate(
-                context.getNoteId(),
-                context.getParagraphId(),
-                0,
-                applicationInstanceId,
-                out.getType(),
-                new String(out.toByteArray()));
-        return new RemoteApplicationResult(true, "");
-      } catch (ApplicationException | IOException e) {
-        return new RemoteApplicationResult(false, e.getMessage());
-      }
-    }
-  }
-
-  private static class RunningApplication {
-    public final Application app;
-    public final HeliumPackage pkg;
-    public final String noteId;
-    public final String paragraphId;
-
-    RunningApplication(HeliumPackage pkg,
-                       Application app,
-                       String noteId,
-                       String paragraphId) {
-      this.app = app;
-      this.pkg = pkg;
-      this.noteId = noteId;
-      this.paragraphId = paragraphId;
-    }
-  }
-
-  ;
 }

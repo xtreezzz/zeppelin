@@ -48,7 +48,8 @@ public class SparkInterpreter extends AbstractSparkInterpreter {
     if (Boolean.parseBoolean(properties.getProperty("zeppelin.spark.useNew", "false"))) {
       delegation = new NewSparkInterpreter(properties);
     } else {
-      delegation = new OldSparkInterpreter(properties);
+      //delegation = new OldSparkInterpreter(properties);
+      delegation = new NewSparkInterpreter(properties);
     }
     delegation.setParentSparkInterpreter(this);
   }
