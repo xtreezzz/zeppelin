@@ -411,7 +411,7 @@ public class RemoteInterpreterServer extends Thread
           appInfo.app.unload();
           // see ApplicationState.Status.UNLOADED
           intpEventClient.onAppStatusUpdate(appInfo.noteId, appInfo.paragraphId, appId, "UNLOADED");
-        } catch (ApplicationException e) {
+        } catch (Exception e) {
           logger.error(e.getMessage(), e);
         }
       }
@@ -429,7 +429,7 @@ public class RemoteInterpreterServer extends Thread
         if (inp.getClassName().equals(className)) {
           try {
             inp.close();
-          } catch (InterpreterException e) {
+          } catch (Exception e) {
             logger.warn("Fail to close interpreter", e);
           }
           it.remove();
@@ -665,7 +665,7 @@ public class RemoteInterpreterServer extends Thread
     } else {
       try {
         intp.cancel(convert(interpreterContext, null));
-      } catch (InterpreterException e) {
+      } catch (Exception e) {
         throw new TException("Fail to cancel", e);
       }
     }
@@ -686,7 +686,7 @@ public class RemoteInterpreterServer extends Thread
       }
       try {
         return intp.getProgress(convert(interpreterContext, null));
-      } catch (InterpreterException e) {
+      } catch (Exception e) {
         throw new TException("Fail to getProgress", e);
       }
     }
@@ -698,8 +698,8 @@ public class RemoteInterpreterServer extends Thread
     Interpreter intp = getInterpreter(sessionId, className);
     try {
       return intp.getFormType().toString();
-    } catch (InterpreterException e) {
-      throw new TException(e);
+    } catch (Exception e) {
+      throw new TException("Fail to getFormType", e);
     }
   }
 
@@ -713,7 +713,7 @@ public class RemoteInterpreterServer extends Thread
     Interpreter intp = getInterpreter(sessionId, className);
     try {
       return intp.completion(buf, cursor, convert(remoteInterpreterContext, null));
-    } catch (InterpreterException e) {
+    } catch (Exception e) {
       throw new TException("Fail to get completion", e);
     }
   }

@@ -627,7 +627,7 @@ public class Note implements JsonSerializable {
 
     noteExecutor.execute(() -> {
       try {
-        for (Paragraph p : getParagraphs()) {
+        for (Paragraph p : paragraphs) {
           if (!p.isEnabled()) {
             continue;
           }
