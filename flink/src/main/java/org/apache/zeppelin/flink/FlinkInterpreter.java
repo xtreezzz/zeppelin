@@ -83,8 +83,7 @@ public class FlinkInterpreter extends Interpreter {
   @Override
   public List<InterpreterCompletion> completion(String buf,
                                                 int cursor,
-                                                InterpreterContext interpreterContext)
-      throws InterpreterException {
+                                                InterpreterContext interpreterContext) {
     return innerIntp.completion(buf, cursor, interpreterContext);
   }
 
