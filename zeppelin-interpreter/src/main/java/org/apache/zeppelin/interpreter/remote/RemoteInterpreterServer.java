@@ -708,13 +708,13 @@ public class RemoteInterpreterServer extends Thread
                                                 String className,
                                                 String buf,
                                                 int cursor,
-                                                RemoteInterpreterContext remoteInterpreterContext)
-      throws TException {
-    Interpreter intp = getInterpreter(sessionId, className);
+                                                RemoteInterpreterContext remoteInterpreterContext) {
     try {
+      Interpreter intp = getInterpreter(sessionId, className);
       return intp.completion(buf, cursor, convert(remoteInterpreterContext, null));
     } catch (Exception e) {
-      throw new TException("Fail to get completion", e);
+      logger.error("Failed to get completion", e);
+      return Collections.emptyList();
     }
   }
 

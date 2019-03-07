@@ -20,6 +20,7 @@ package org.apache.zeppelin.interpreter.remote;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.util.Collections;
 import org.apache.thrift.TException;
 import org.apache.zeppelin.conf.ZeppelinConfiguration;
 import org.apache.zeppelin.display.AngularObject;
@@ -46,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -334,16 +334,16 @@ public class RemoteInterpreter extends Interpreter {
 
   @Override
   public List<InterpreterCompletion> completion(final String buf, final int cursor,
-                                                final InterpreterContext interpreterContext)
-      throws InterpreterException {
-    if (!isOpened.get()) {
-      open();
-    }
+                                                final InterpreterContext interpreterContext) {
     RemoteInterpreterProcess interpreterProcess = null;
     try {
+      if (!isOpened.get()) {
+        open();
+      }
       interpreterProcess = getOrCreateInterpreterProcess();
-    } catch (IOException e) {
-      throw new InterpreterException(e);
+    } catch (IOException | InterpreterException e) {
+      LOGGER.error("Failed to get completion", e);
+      return Collections.emptyList();
     }
     this.lifecycleManager.onInterpreterUse(this.getInterpreterGroup(), sessionId);
     return interpreterProcess.callRemoteFunction(

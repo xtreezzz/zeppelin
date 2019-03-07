@@ -833,7 +833,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) throws InterpreterException {
+      InterpreterContext interpreterContext) {
     List<InterpreterCompletion> candidates = new ArrayList<>();
     String propertyKey = getPropertyKey(interpreterContext);
     String sqlCompleterKey =
@@ -843,7 +843,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     Connection connection = null;
     try {
       connection = getConnection(propertyKey, interpreterContext);
-    } catch (ClassNotFoundException | SQLException | IOException e) {
+    } catch (ClassNotFoundException | SQLException | IOException | InterpreterException e) {
       logger.warn("SQLCompleter will created without use connection", e);
     }
 

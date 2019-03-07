@@ -324,7 +324,8 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
 
     try {
       return this.interpreter.completion(this.scriptText, cursor, interpreterContext);
-    } catch (InterpreterException e) {
+    } catch (Exception e) {
+      // catch just for safety
       LOGGER.warn("Fail to get completion", e);
       return new ArrayList<>();
     }

@@ -81,8 +81,7 @@ public class SparkInterpreter extends AbstractSparkInterpreter {
   @Override
   public List<InterpreterCompletion> completion(String buf,
                                                 int cursor,
-                                                InterpreterContext interpreterContext)
-      throws InterpreterException {
+                                                InterpreterContext interpreterContext) {
     return delegation.completion(buf, cursor, interpreterContext);
   }
 

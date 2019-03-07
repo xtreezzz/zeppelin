@@ -18,6 +18,7 @@
 package org.apache.zeppelin.interpreter;
 
 
+import java.util.Collections;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.reflect.FieldUtils;
 import org.apache.zeppelin.annotation.Experimental;
@@ -155,8 +156,8 @@ public abstract class Interpreter {
    */
   @ZeppelinApi
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) throws InterpreterException {
-    return null;
+      InterpreterContext interpreterContext) {
+    return Collections.emptyList();
   }
 
   /**

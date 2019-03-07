@@ -460,8 +460,7 @@ public class PythonInterpreter extends Interpreter implements ExecuteResultHandl
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext)
-      throws InterpreterException {
+                                                InterpreterContext interpreterContext) {
     if (iPythonInterpreter != null) {
       return iPythonInterpreter.completion(buf, cursor, interpreterContext);
     }

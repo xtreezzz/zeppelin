@@ -151,8 +151,7 @@ public class UniverseInterpreter extends Interpreter {
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext)
-      throws InterpreterException {
+                                                InterpreterContext interpreterContext) {
     List<InterpreterCompletion> candidates = new ArrayList<>();
 
     try {

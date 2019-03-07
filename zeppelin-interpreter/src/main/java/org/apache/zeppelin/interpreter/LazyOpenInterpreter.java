@@ -18,6 +18,7 @@
 package org.apache.zeppelin.interpreter;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -133,10 +134,14 @@ public class LazyOpenInterpreter
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) throws InterpreterException {
-    open();
-    List completion = intp.completion(buf, cursor, interpreterContext);
-    return completion;
+      InterpreterContext interpreterContext) {
+    try {
+      open();
+    } catch (InterpreterException e) {
+      logger.error("Completion failed", e);
+      return Collections.emptyList();
+    }
+    return intp.completion(buf, cursor, interpreterContext);
   }
 
   @Override
