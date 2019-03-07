@@ -20,8 +20,6 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-import org.apache.zeppelin.common.JsonSerializable;
-
 /**
  * NewNoteRequest rest api request message.
  */

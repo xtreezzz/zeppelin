@@ -179,7 +179,7 @@ public class InterpreterSettingManager {
       String json = IOUtils.toString(new FileInputStream(file));
       LOGGER.info("Load Interpreter Setting from file: " + file);
       JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
-      infoSaving = InterpreterInfoSaving.fromJson(json);
+      infoSaving = new Gson().fromJson(json, InterpreterInfoSaving.class);
       for (InterpreterSetting interpreterSetting : infoSaving.interpreterSettings.values()) {
         interpreterSetting.convertPermissionsFromUsersToOwners(
             jsonObject.getAsJsonObject("interpreterSettings")
@@ -280,7 +280,7 @@ public class InterpreterSettingManager {
       directory.mkdirs();
       tempFile = File.createTempFile(file.getName(), null, directory);
       FileOutputStream out = new FileOutputStream(tempFile);
-      IOUtils.write(info.toJson(), out );
+      IOUtils.write(new Gson().toJson(info), out );
       out.close();
       FileSystem defaultFileSystem = FileSystems.getDefault();
       Path tempFilePath = defaultFileSystem.getPath(tempFile.getCanonicalPath());

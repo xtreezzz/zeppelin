@@ -656,7 +656,7 @@ public class RemoteInterpreterServer extends Thread
             .setParagraphTitle(ric.getParagraphTitle())
             .setParagraphText(ric.getParagraphText())
             .setLocalProperties(ric.getLocalProperties())
-            .setAuthenticationInfo(AuthenticationInfo.fromJson(ric.getAuthenticationInfo()))
+            .setAuthenticationInfo(new Gson().fromJson(ric.getAuthenticationInfo(), AuthenticationInfo.class))
             .setGUI(GUI.fromJson(ric.getGui()))
             .setConfig(gson.fromJson(ric.getConfig(),
                     new TypeToken<Map<String, Object>>() {

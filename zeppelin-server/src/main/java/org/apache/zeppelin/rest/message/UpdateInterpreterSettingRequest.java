@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.zeppelin.common.JsonSerializable;
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.InterpreterProperty;

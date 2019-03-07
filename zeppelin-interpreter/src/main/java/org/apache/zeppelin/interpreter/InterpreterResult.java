@@ -18,7 +18,6 @@
 package org.apache.zeppelin.interpreter;
 
 import com.google.gson.Gson;
-import org.apache.zeppelin.common.JsonSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ import java.util.List;
 /**
  * Interpreter result template.
  */
-public class InterpreterResult implements Serializable, JsonSerializable {
+public class InterpreterResult implements Serializable {
   transient Logger logger = LoggerFactory.getLogger(InterpreterResult.class);
   private static final Gson gson = new Gson();
 
@@ -113,13 +112,6 @@ public class InterpreterResult implements Serializable, JsonSerializable {
     return msg;
   }
 
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static InterpreterResult fromJson(String json) {
-    return gson.fromJson(json, InterpreterResult.class);
-  }
 
   public String toString() {
     StringBuilder sb = new StringBuilder();

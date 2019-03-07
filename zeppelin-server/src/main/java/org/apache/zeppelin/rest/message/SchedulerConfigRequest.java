@@ -19,7 +19,7 @@ package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
 import java.util.Objects;
-import org.apache.zeppelin.common.JsonSerializable;
+
 import org.apache.zeppelin.rest.AdminRestApi;
 
 /**

@@ -20,8 +20,6 @@ import com.google.gson.Gson;
 
 import java.util.HashMap;
 
-import org.apache.zeppelin.common.JsonSerializable;
-
 /**
  * NewParagraphRequest rest api request message
  * <p>

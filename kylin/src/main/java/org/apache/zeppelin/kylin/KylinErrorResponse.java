@@ -18,14 +18,11 @@
 package org.apache.zeppelin.kylin;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import org.apache.zeppelin.common.JsonSerializable;
 
 /**
  * class for Kylin Error Response.
  */
-class KylinErrorResponse implements JsonSerializable {
-  private static final Gson gson = new Gson();
+class KylinErrorResponse {
 
   private String stacktrace;
   private String exception;
@@ -48,15 +45,4 @@ class KylinErrorResponse implements JsonSerializable {
     return exception;
   }
 
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static KylinErrorResponse fromJson(String json) {
-    try {
-      return gson.fromJson(json, KylinErrorResponse.class);
-    } catch (JsonSyntaxException ex) {
-      return null;
-    }
-  }
 }

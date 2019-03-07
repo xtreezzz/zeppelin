@@ -18,8 +18,6 @@ package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
 
-import org.apache.zeppelin.common.JsonSerializable;
-
 /**
  * CronRequest rest api request message.
  */

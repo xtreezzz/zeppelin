@@ -20,8 +20,6 @@ import com.google.gson.Gson;
 
 import java.util.Map;
 
-import org.apache.zeppelin.common.JsonSerializable;
-
 /**
  * RunParagraphWithParametersRequest rest api request message.
  */

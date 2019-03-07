@@ -137,7 +137,7 @@ public class Credentials {
         json = encryptor.decrypt(json);
       }
 
-      CredentialsInfoSaving info = CredentialsInfoSaving.fromJson(json);
+      CredentialsInfoSaving info = new Gson().fromJson(json, CredentialsInfoSaving.class);
       this.credentialsMap = info.credentialsMap;
     } catch (IOException e) {
       LOG.error("Error loading credentials file", e);

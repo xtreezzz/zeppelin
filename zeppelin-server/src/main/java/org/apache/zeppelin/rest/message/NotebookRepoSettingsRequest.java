@@ -23,8 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import java.util.Collections;
 import java.util.Map;
 
-import org.apache.zeppelin.common.JsonSerializable;
-
 /**
  * Represent payload of a notebook repository settings.
  */

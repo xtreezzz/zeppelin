@@ -22,7 +22,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.IOUtils;
-import org.apache.zeppelin.common.JsonSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.repository.RemoteRepository;
@@ -42,7 +41,7 @@ import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 /**
  *
  */
-public class InterpreterInfoSaving implements JsonSerializable {
+public class InterpreterInfoSaving {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterInfoSaving.class);
   private static final Gson gson =  new GsonBuilder().setPrettyPrinting().create();
@@ -56,7 +55,7 @@ public class InterpreterInfoSaving implements JsonSerializable {
     try (BufferedReader json = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
       JsonParser jsonParser = new JsonParser();
       JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-      infoSaving = InterpreterInfoSaving.fromJson(jsonObject.toString());
+      infoSaving = new Gson().fromJson(jsonObject.toString(), InterpreterInfoSaving.class);
 
       if (infoSaving != null && infoSaving.interpreterSettings != null) {
         for (InterpreterSetting interpreterSetting : infoSaving.interpreterSettings.values()) {
@@ -81,14 +80,6 @@ public class InterpreterInfoSaving implements JsonSerializable {
       };
     }
     LOGGER.info("Save Interpreter Settings to " + file);
-    IOUtils.write(this.toJson(), new FileOutputStream(file.toFile()));
-  }
-
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static InterpreterInfoSaving fromJson(String json) {
-    return gson.fromJson(json, InterpreterInfoSaving.class);
+    IOUtils.write(new Gson().toJson(this), new FileOutputStream(file.toFile()));
   }
 }

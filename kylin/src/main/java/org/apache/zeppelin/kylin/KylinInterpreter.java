@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.kylin;
 
+import com.google.gson.Gson;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -177,7 +178,7 @@ public class KylinInterpreter extends Interpreter {
         StringBuilder errorMessage = new StringBuilder("Failed : HTTP error code " + code + " .");
         logger.error("Failed to execute query: " + result);
 
-        KylinErrorResponse kylinErrorResponse = KylinErrorResponse.fromJson(result);
+        KylinErrorResponse kylinErrorResponse = new Gson().fromJson(result, KylinErrorResponse.class);
         if (kylinErrorResponse == null) {
           logger.error("Cannot get json from string: " + result);
           // when code is 401, the response is html, not json

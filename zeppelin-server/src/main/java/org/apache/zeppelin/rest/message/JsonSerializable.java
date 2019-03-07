@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.common;
+package org.apache.zeppelin.rest.message;
 
 /**
  * Interface for class that can be serialized to json

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.common.JsonSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,7 @@ import com.google.gson.Gson;
 /***
  *
  */
-public class AuthenticationInfo implements JsonSerializable {
+public class AuthenticationInfo {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationInfo.class);
   private static final Gson gson = new Gson();
 
@@ -120,14 +119,5 @@ public class AuthenticationInfo implements JsonSerializable {
   public boolean isAnonymous() {
     return ANONYMOUS.equals(this) || "anonymous".equalsIgnoreCase(this.getUser())
         || StringUtils.isEmpty(this.getUser());
-  }
-
-  @Override
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static AuthenticationInfo fromJson(String json) {
-    return gson.fromJson(json, AuthenticationInfo.class);
   }
 }
