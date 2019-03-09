@@ -787,6 +787,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.commitParagraph(paragraph);
   };
 
+  $scope.setCompletionWidth = function() {
+    if ($rootScope.completionLineWidth && $rootScope.completionLineWidth !== -1 && $scope.editor
+    && $scope.editor.completer && $scope.editor.completer.popup) {
+      let newWidth = $rootScope.completionLineWidth + 150 + 'px';
+      if ($scope.editor.completer.popup.container.style.width !== newWidth) {
+        $scope.editor.completer.popup.container.style.width = newWidth;
+        $scope.editor.completer.popup.resize();
+      }
+    }
+  };
+
   $scope.beautifySqlCode = function() {
     if ($scope.paragraph.config.editorSetting.language !== 'sql') {
       return;
@@ -794,7 +805,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.editor.focus();
     let paragraphText = $scope.editor.getValue();
     let regResult = /^(\s*%.+?\s)?([\s\S]*)$/gm.exec(paragraphText);
-    let interpreterRow = regResult[1] ? regResult[1] : '';
+    let interpreterRow = regResult[1] ? regResult[1] + '\n' : '';
     let script = regResult[2];
     let formattedText = interpreterRow + sqlFormatter.format(script, {maxCharacterPerLine: 128});
     $scope.editor.setValue(formattedText);
@@ -973,6 +984,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       $scope.$on('completionListLength', function(event, data) {
         completionListLength = data;
+        $scope.setCompletionWidth();
       });
 
       $scope.$on('callCompletion', function(event, data) {
@@ -1019,7 +1031,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           $scope.$on('completionList', function(event, data) {
             let computeCaption = function(value, meta) {
               let metaLength = meta !== undefined ? meta.length : 0;
-              let length = 42;
+              let length = 200;
               let whitespaceLength = 3;
               let ellipses = '...';
               let maxLengthCaption = length - metaLength - whitespaceLength - ellipses.length;
@@ -1041,11 +1053,15 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
             };
             if (data) {
               let completions = [];
+              $rootScope.completionLineWidth = -1;
               for (let c in data) {
                 if (data.hasOwnProperty(c)) {
                   let v = data[c];
                   if (v.meta !== undefined && v.meta === 'keyword' && defaultKeywords.has(v.value.trim())) {
                     continue;
+                  }
+                  if (v.name !== undefined && getTextWidth(v.name + ' ' + v.meta) > $rootScope.completionLineWidth) {
+                    $rootScope.completionLineWidth = getTextWidth(v.name + ' ' + v.meta);
                   }
                   completions.push({
                     name: v.name,
@@ -1617,6 +1633,24 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       }
     }
   });
+
+  /**
+   * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+   *
+   * @param {String} text The text to be rendered.
+   * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+   *
+   * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+   */
+  function getTextWidth(text) {
+    let font = $scope.paragraph.config.fontSize / 0.75 + 'px monaco';
+    // re-use canvas object for better performance
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+    context.font = font;
+    let metrics = context.measureText(text);
+    return Math.floor(metrics.width);
+  }
 
   /**
    * @returns {boolean} true if updated is needed
