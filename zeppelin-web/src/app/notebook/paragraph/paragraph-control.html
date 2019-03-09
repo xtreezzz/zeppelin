@@ -223,6 +223,15 @@ limitations under the License.
           </a>
         </li>
         <li>
+          <a ng-click="enableCompletionOnSpace(paragraph)"
+             ng-if="paragraph.config.editorSetting.language === 'sql'">
+              <span ng-if="paragraph.config.spaceCompletion == true" class="fa fa-toggle-on shortcut-icon" style="color:green"></span>
+              <span ng-if="paragraph.config.spaceCompletion != true" class="fa fa-toggle-off shortcut-icon"></span>
+              <span class="shortcut-keys">Ctrl+Space</span>
+            Enable live completion
+          </a>
+        </li>
+        <li>
           <!-- remove paragraph -->
           <a ng-click="removeParagraph(paragraph)" ng-if="note.paragraphs.length > 1" ng-class="{'item-disable' : isNoteRunning}">
             <span class="fa fa-times shortcut-icon"></span>

@@ -372,21 +372,21 @@ table.table-shortcut {
   font-size: 12px;
 }
 
-.ace_iconable_table:first-child::before{
+.ace_iconable_table:first-child::before {
   color: #04dd07;
   content: '\f0ce  '; /* font-awesome icon */
   font-family: FontAwesome;
   font-size: 12px;
 }
 
-.ace_iconable_view:first-child::before{
+.ace_iconable_view:first-child::before {
   color: #506032;
   content: '\f06e  '; /* font-awesome icon */
   font-family: FontAwesome;
   font-size: 12px;
 }
 
-.ace_iconable_schema:first-child::before{
+.ace_iconable_schema:first-child::before {
   color: #3304dd;
   content: '\f1c0  '; /* font-awesome icon */
   font-family: FontAwesome;

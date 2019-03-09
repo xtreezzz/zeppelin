@@ -742,6 +742,29 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     commitParagraph(paragraph);
   };
 
+  $scope.enableCompletionOnSpace = function() {
+    if ($scope.paragraph.config.editorSetting.language !== 'sql') {
+      return;
+    }
+    if ($scope.paragraph.config.spaceCompletion !== undefined) {
+      $scope.paragraph.config.spaceCompletion = !$scope.paragraph.config.spaceCompletion;
+    } else {
+      $scope.paragraph.config.spaceCompletion = true;
+    }
+  };
+
+  $scope.setCompletionWidth = function() {
+    if (isTjdbcConfigured() && $rootScope.completionLineWidth
+    && $rootScope.completionLineWidth !== -1 && $scope.editor
+    && $scope.editor.completer && $scope.editor.completer.popup) {
+      let newWidth = $rootScope.completionLineWidth + 150 + 'px';
+      if ($scope.editor.completer.popup.container.style.width !== newWidth) {
+        $scope.editor.completer.popup.container.style.width = newWidth;
+        $scope.editor.completer.popup.resize();
+      }
+    }
+  };
+
   $scope.beautifySqlCode = function() {
     if ($scope.paragraph.config.editorSetting.language !== 'sql') {
       return;
@@ -749,7 +772,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.editor.focus();
     let paragraphText = $scope.editor.getValue();
     let regResult = /^(\s*%.+?\s)?([\s\S]*)$/gm.exec(paragraphText);
-    let interpreterRow = regResult[1] ? regResult[1] : '';
+    let interpreterRow = regResult[1] ? regResult[1] + '\n' : '';
     let script = regResult[2];
     let formattedText = interpreterRow + sqlFormatter.format(script, {maxCharacterPerLine: 128});
     $scope.editor.setValue(formattedText);
@@ -831,6 +854,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       $scope.$on('completionListLength', function(event, data) {
         completionListLength = data;
+        $scope.setCompletionWidth();
       });
 
       $scope.$on('callCompletion', function(event, data) {
@@ -867,7 +891,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           $scope.$on('completionList', function(event, data) {
             let computeCaption = function(value, meta) {
               let metaLength = meta !== undefined ? meta.length : 0;
-              let length = 42;
+              let length = 200;
               let whitespaceLength = 3;
               let ellipses = '...';
               let maxLengthCaption = length - metaLength - whitespaceLength - ellipses.length;
@@ -876,7 +900,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               }
               return value;
             };
-            let computeScore = function(meta) {
+            let computeScore = function(meta, name) {
               if (meta === 'column') {
                 return 900;
               } else if (meta === 'view') {
@@ -886,23 +910,31 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               } else if (meta === 'schema') {
                 return 500;
               } else {
+                if (name === 'select' || name === 'from' || name === '*' || name === 'where'
+                || name === 'join' || name === 'inner' || name === 'left' || name === 'on') {
+                  return 1000;
+                }
                 return 300;
               }
             };
             if (data.completions) {
               let completions = [];
+              $rootScope.completionLineWidth = -1;
               for (let c in data.completions) {
                 if (data.completions.hasOwnProperty(c)) {
                   let v = data.completions[c];
                   if (v.meta !== undefined && v.meta === 'keyword' && defaultKeywords.has(v.value.trim())) {
                     continue;
                   }
+                  if (v.name !== undefined && getTextWidth(v.name + ' ' + v.meta) > $rootScope.completionLineWidth) {
+                    $rootScope.completionLineWidth = getTextWidth(v.name + ' ' + v.meta);
+                  }
                   completions.push({
                     name: v.name,
                     value: v.value,
                     meta: v.meta,
                     caption: computeCaption(v.name, v.meta),
-                    score: computeScore(v.meta),
+                    score: computeScore(v.meta, v.name),
                     className: v.meta ? 'iconable_' + v.meta : '',
                     description: v.description,
                   });
@@ -960,10 +992,10 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
 
-      // autocomplete on '.'
+      // autocomplete on '.' in tjdbc and on ' ' if it is enabled
       $scope.editor.commands.on('afterExec', function(e, t) {
-        if (e.command.name === 'insertstring' && (e.args === '.' || e.args === ' ')
-        && isTjdbcConfigured()) {
+        if (e.command.name === 'insertstring'
+        && (e.args === '.' && isTjdbcConfigured() || e.args === ' ' && $scope.paragraph.config.spaceCompletion)) {
           // var all = e.editor.completers;
           // e.editor.completers = [remoteCompleter];
           e.editor.execCommand('startAutocomplete');
@@ -1523,6 +1555,24 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   });
 
   /**
+   * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+   *
+   * @param {String} text The text to be rendered.
+   * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+   *
+   * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+   */
+  function getTextWidth(text) {
+    let font = $scope.paragraph.config.fontSize / 0.75 + 'px monaco';
+    // re-use canvas object for better performance
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
+    context.font = font;
+    let metrics = context.measureText(text);
+    return Math.floor(metrics.width);
+  }
+
+  /**
    * @return {boolean} true if current interpreter is tjdbc
    */
   function isTjdbcConfigured() {
@@ -1801,6 +1851,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.goToSingleParagraph();
       } else if (keyEvent.ctrlKey && keyCode === 66) { // Ctrl + b
         $scope.beautifySqlCode();
+      } else if (keyEvent.ctrlKey && keyCode === 32) { // Ctrl + Space
+        $scope.enableCompletionOnSpace();
+      } else if (keyEvent.ctrlKey && keyCode === 13) { // Ctrl + Enter
+        ace.config.loadModule('ace/ext/language_tools', function() {
+          $scope.editor.insertSnippet('\n');
+        });
       } else if (keyEvent.ctrlKey && keyEvent.altKey && keyCode === 70) { // Ctrl + f
         $scope.$emit('toggleSearchBox');
       } else {

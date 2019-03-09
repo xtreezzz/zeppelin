@@ -746,7 +746,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       }
     } catch (Exception e) {
       logger.error("Cannot run " + sql, e);
-      String errorMsg = ExceptionUtils.getStackTrace(e);
+      String errorMsg = e.getMessage();
       interpreterResult.add(errorMsg);
       return new InterpreterResult(Code.ERROR, interpreterResult.message());
     } finally {
@@ -854,7 +854,13 @@ public class JDBCInterpreter extends KerberosInterpreter {
     } catch (Exception e) {
       logger.error("Completion failed", e);
     }
-
+    logger.info("Completion cadidates - {}", candidates);
+    candidates.add(new InterpreterCompletion(
+        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9",
+        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9",
+        "tinkoff-keyword",
+        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9")
+    );
     return candidates;
   }
 
