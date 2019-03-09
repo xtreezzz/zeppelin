@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
@@ -69,6 +70,8 @@ public class SqlCompleter {
    * Contains description of each database entity. Key - full name of entity.
    */
   private static Map<String, String> databaseEntityDescription = new HashMap<>();
+
+  private static boolean loadMeta = true;
 
   private int ttlInSeconds;
 
@@ -239,9 +242,12 @@ public class SqlCompleter {
     }
   }
 
-  private static Set<String> getSqlKeywordsCompletions(String statement) {
-    Set<String> completions = new TreeSet<>();
-
+  private static boolean getSqlKeywordsCompletions(Set<String> completions, String statement) {
+    boolean loadMeta = false;
+    if (statement.trim().endsWith(".") || statement.trim().endsWith("=")
+        || statement.trim().endsWith("where") || statement.trim().endsWith("from")) {
+      loadMeta = true;
+    }
     StringBuilder myBuf = new StringBuilder();
     SelectDeParser selectDeparser = new SelectDeParser();
     selectDeparser.setBuffer(myBuf);
@@ -254,11 +260,16 @@ public class SqlCompleter {
       List<String> statements = Arrays.asList(statement.split(";"));
       statement = statements.get(statements.size() - 1);
 
-      net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
+      Statement parseExpression = CCJSqlParserUtil.parse(statement);
       parseExpression.accept(statementDeParser);
-      completions.addAll(
-          Arrays.asList("from", "where", "select", "join", "left", "right", "inner", "outer", "on")
-      );
+
+      // Remove keywords used in last inner select statement from keyword list
+      List<String> innerSelects = Arrays.asList(statement.split("\\("));
+      List<String> words = Arrays.asList(innerSelects.get(innerSelects.size() - 1).split(" "));
+      List<String> keywords = Arrays.asList("from", "where", "select", "join", "left", "right",
+          "inner", "outer", "on", "and", "or");
+      keywords.removeAll(words);
+      completions.addAll(keywords);
     } catch (JSQLParserException e) {
       if (e.getCause().toString().contains("Was expecting one of:")) {
         List<String> expected = Arrays.asList(e.getCause().toString()
@@ -267,13 +278,20 @@ public class SqlCompleter {
         for (String expectedValue : expected) {
           expectedValue =
               expectedValue.trim().replace("\"", "").toLowerCase();
-          if (!expectedValue.startsWith("<")) {
+
+          if (expectedValue.equalsIgnoreCase("<S_IDENTIFIER>")) {
+            loadMeta = true;
+          }
+          if (!expectedValue.startsWith("<") && !expectedValue.startsWith("{")) {
             completions.add(expectedValue);
           }
         }
+        if (completions.contains("*")) {
+          completions.add("from");
+        }
       }
     }
-    return completions;
+    return loadMeta;
   }
 
   private SqlStatement getStatementParameters(String buffer, int cursor) {
@@ -310,7 +328,8 @@ public class SqlCompleter {
   void createOrUpdateFromConnection(Connection connection, String schemaFiltersString,
                                     String buffer, int cursor) {
     // get statement completion
-    Set<String> keywords = getSqlKeywordsCompletions(buffer);
+    Set<String> keywords = new TreeSet<>();
+    loadMeta = getSqlKeywordsCompletions(keywords, buffer);
     initKeywords(keywords);
     logger.info("Keyword completer initialized with {} keywords", keywords.size());
 
@@ -338,6 +357,10 @@ public class SqlCompleter {
             schemas.addAll(catalogs);
           }
 
+          if (!loadMeta) {
+            schemas.clear();
+          }
+
           initSchemas(schemas);
           logger.info("Schema completer initialized with " + schemas.size() + " schemas");
         }
@@ -347,7 +370,9 @@ public class SqlCompleter {
 
         if (tablesCompleterInDefaultSchema == null || tablesCompleterInDefaultSchema.isExpired()) {
           Set<String> tables = new HashSet<>();
-          fillTableNames(defaultSchema, databaseMetaData, tables);
+          if (loadMeta) {
+            fillTableNames(defaultSchema, databaseMetaData, tables);
+          }
           initTables(defaultSchema, tables);
         }
 
@@ -356,7 +381,9 @@ public class SqlCompleter {
 
         if (viewsCompleterInDefaultSchema == null || viewsCompleterInDefaultSchema.isExpired()) {
           Set<String> views = new HashSet<>();
-          fillViewsNames(defaultSchema, databaseMetaData, views);
+          if (loadMeta) {
+            fillViewsNames(defaultSchema, databaseMetaData, views);
+          }
           initViews(defaultSchema, views);
         }
 
@@ -367,7 +394,9 @@ public class SqlCompleter {
           CachedCompleter tablesCompleter = tablesCompleters.get(schema);
           if (tablesCompleter == null || tablesCompleter.isExpired()) {
             Set<String> tables = new HashSet<>();
-            fillTableNames(schema, databaseMetaData, tables);
+            if (loadMeta) {
+              fillTableNames(schema, databaseMetaData, tables);
+            }
             initTables(schema, tables);
             logger.info("Tables completer for schema " + schema + " initialized with "
                 + tables.size() + " tables");
@@ -375,7 +404,9 @@ public class SqlCompleter {
           CachedCompleter viewsCompleter = viewsCompleters.get(schema);
           if (viewsCompleter == null || viewsCompleter.isExpired()) {
             Set<String> views = new HashSet<>();
-            fillViewsNames(schema, databaseMetaData, views);
+            if (loadMeta) {
+              fillViewsNames(schema, databaseMetaData, views);
+            }
             initViews(schema, views);
             logger.info("Views completer for schema " + schema + " initialized with "
                 + views.size() + " views");
@@ -387,8 +418,11 @@ public class SqlCompleter {
           if (columnsCompleter == null || columnsCompleter.isExpired()) {
             int pointPos = schemaTable.indexOf('.');
             Set<String> columns = new HashSet<>();
-            fillColumnNames(schemaTable.substring(0, pointPos), schemaTable.substring(pointPos + 1),
-                databaseMetaData, columns);
+            if (loadMeta) {
+              fillColumnNames(schemaTable.substring(0, pointPos),
+                  schemaTable.substring(pointPos + 1),
+                  databaseMetaData, columns);
+            }
             initColumns(schemaTable, columns);
             logger.info("Completer for schemaTable " + schemaTable + " initialized with "
                 + columns.size() + " columns.");
@@ -440,6 +474,9 @@ public class SqlCompleter {
    * @return -1 in case of no candidates found, 0 otherwise
    */
   private int completeKeyword(String buffer, int cursor, List<CharSequence> candidates) {
+    if (keywordCompleter == null || keywordCompleter.getCompleter() == null) {
+      return -1;
+    }
     return keywordCompleter.getCompleter().complete(buffer, cursor, candidates);
   }
 
@@ -449,6 +486,9 @@ public class SqlCompleter {
    * @return -1 in case of no candidates found, 0 otherwise
    */
   private int completeSchema(String buffer, int cursor, List<CharSequence> candidates) {
+    if (schemasCompleter == null || schemasCompleter.getCompleter() == null) {
+      return -1;
+    }
     return schemasCompleter.getCompleter().complete(buffer, cursor, candidates);
   }
 
@@ -460,7 +500,7 @@ public class SqlCompleter {
   private int completeTable(String schema, String buffer, int cursor,
                             List<CharSequence> candidates) {
     // Wrong schema
-    if (schema == null || !tablesCompleters.containsKey(schema)) {
+    if (schema == null || tablesCompleters == null || !tablesCompleters.containsKey(schema)) {
       return -1;
     } else {
       return tablesCompleters.get(schema).getCompleter().complete(buffer, cursor, candidates);
@@ -475,7 +515,7 @@ public class SqlCompleter {
   private int completeView(String schema, String buffer, int cursor,
       List<CharSequence> candidates) {
     // Wrong schema
-    if (schema == null || !viewsCompleters.containsKey(schema)) {
+    if (schema == null || viewsCompleters == null || !viewsCompleters.containsKey(schema)) {
       return -1;
     } else {
       return viewsCompleters.get(schema).getCompleter().complete(buffer, cursor, candidates);
@@ -490,7 +530,8 @@ public class SqlCompleter {
   private int completeColumn(String schema, String table, String buffer, int cursor,
                              List<CharSequence> candidates) {
     // Wrong schema or wrong table
-    if (schema == null || table == null || !columnsCompleters.containsKey(schema + "." + table)) {
+    if (schema == null || table == null || columnsCompleters == null ||
+        !columnsCompleters.containsKey(schema + "." + table)) {
       return -1;
     } else {
       return columnsCompleters.get(schema + "." + table).getCompleter()
@@ -518,38 +559,34 @@ public class SqlCompleter {
         buffer = "";
       }
 
-      int allColumnsRes = 0;
-      List<CharSequence> columnCandidates = new ArrayList<>();
-      for (String schemaTable : sqlStatement.getActiveSchemaTables()) {
-        int pointPos = schemaTable.indexOf('.');
-        int columnRes = completeColumn(schemaTable.substring(0, pointPos),
-            schemaTable.substring(pointPos + 1), buffer, cursorPosition, columnCandidates);
-        addCompletions(candidates, columnCandidates, CompletionType.column.name());
-        allColumnsRes = allColumnsRes + columnRes;
-      }
-
-      List<CharSequence> tableInDefaultSchemaCandidates = new ArrayList<>();
-      int tableRes = completeTable(defaultSchema, buffer, cursorPosition,
-          tableInDefaultSchemaCandidates);
-      addCompletions(candidates, tableInDefaultSchemaCandidates, CompletionType.table.name());
-
-      List<CharSequence> viewInDefaultSchemaCandidates = new ArrayList<>();
-      int viewRes = completeView(defaultSchema, buffer, cursorPosition,
-          viewInDefaultSchemaCandidates);
-      addCompletions(candidates, viewInDefaultSchemaCandidates, CompletionType.view.name());
-
-      List<CharSequence> schemaCandidates = new ArrayList<>();
-      int schemaRes = completeSchema(buffer, cursorPosition, schemaCandidates);
-      addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
-
       List<CharSequence> keywordsCandidates = new ArrayList<>();
-      int keywordsRes = completeKeyword(buffer, cursorPosition, keywordsCandidates);
+      completeKeyword(buffer, cursorPosition, keywordsCandidates);
       addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name()
           + "-tinkoff");
-      logger.info("Complete for buffer with {}", keywordsCandidates);
 
-      logger.debug("Complete for buffer with " + keywordsRes + schemaRes
-          + tableRes + allColumnsRes + viewRes + "candidates");
+      if (loadMeta) {
+        int allColumnsRes = 0;
+        List<CharSequence> columnCandidates = new ArrayList<>();
+        for (String schemaTable : sqlStatement.getActiveSchemaTables()) {
+          int pointPos = schemaTable.indexOf('.');
+          int columnRes = completeColumn(schemaTable.substring(0, pointPos),
+              schemaTable.substring(pointPos + 1), buffer, cursorPosition, columnCandidates);
+          addCompletions(candidates, columnCandidates, CompletionType.column.name());
+          allColumnsRes = allColumnsRes + columnRes;
+        }
+
+        List<CharSequence> tableInDefaultSchemaCandidates = new ArrayList<>();
+        completeTable(defaultSchema, buffer, cursorPosition, tableInDefaultSchemaCandidates);
+        addCompletions(candidates, tableInDefaultSchemaCandidates, CompletionType.table.name());
+
+        List<CharSequence> viewInDefaultSchemaCandidates = new ArrayList<>();
+        completeView(defaultSchema, buffer, cursorPosition, viewInDefaultSchemaCandidates);
+        addCompletions(candidates, viewInDefaultSchemaCandidates, CompletionType.view.name());
+
+        List<CharSequence> schemaCandidates = new ArrayList<>();
+        completeSchema(buffer, cursorPosition, schemaCandidates);
+        addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
+      }
     } else {
       String table = sqlStatement.getTable();
       String column = sqlStatement.getColumn();
