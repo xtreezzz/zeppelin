@@ -257,7 +257,8 @@ public class SqlCompleter {
       net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
       parseExpression.accept(statementDeParser);
       completions.addAll(
-          Arrays.asList("from", "where", "select", "join", "left", "right", "inner", "outer", "on")
+          Arrays.asList("from", "where", "select", "join", "left", "right", "inner", "outer", "on",
+              "and", "or")
       );
     } catch (JSQLParserException e) {
       if (e.getCause().toString().contains("Was expecting one of:")) {
@@ -267,10 +268,13 @@ public class SqlCompleter {
         for (String expectedValue : expected) {
           expectedValue =
               expectedValue.trim().replace("\"", "").toLowerCase();
-          if (!expectedValue.startsWith("<")) {
+          if (!expectedValue.startsWith("<") && !expectedValue.startsWith("{")) {
             completions.add(expectedValue);
           }
         }
+      }
+      if (completions.contains("*")) {
+        completions.add("from");
       }
     }
     return completions;

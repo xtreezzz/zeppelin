@@ -911,8 +911,11 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                 return 500;
               } else {
                 if (name === 'select' || name === 'from' || name === '*' || name === 'where'
-                || name === 'join' || name === 'inner' || name === 'left' || name === 'on') {
+                || name === 'join') {
                   return 1000;
+                }
+                if (name === 'left' || name === 'right' || name === 'on' || name === 'inner') {
+                  return 950;
                 }
                 return 300;
               }

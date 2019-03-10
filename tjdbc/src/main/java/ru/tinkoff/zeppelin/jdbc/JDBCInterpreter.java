@@ -854,13 +854,10 @@ public class JDBCInterpreter extends KerberosInterpreter {
     } catch (Exception e) {
       logger.error("Completion failed", e);
     }
-    logger.info("Completion cadidates - {}", candidates);
-    candidates.add(new InterpreterCompletion(
-        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9",
-        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9",
-        "tinkoff-keyword",
-        "prod_ifrs9mart_prts.discount_allocation_d_a_1_prt_discount_allocation_d_a_1_prt_9")
-    );
+    // remove duplicates
+    Set<InterpreterCompletion> filtered = new HashSet<>(candidates);
+    candidates.clear();
+    candidates.addAll(filtered);
     return candidates;
   }
 
