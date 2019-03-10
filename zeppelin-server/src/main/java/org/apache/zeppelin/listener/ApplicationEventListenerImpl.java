@@ -17,7 +17,6 @@
 
 package org.apache.zeppelin.listener;
 
-import org.apache.zeppelin.interpreterV2.ApplicationEventListener;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -26,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component(value = "ApplicationEventListenerImpl")
-public class ApplicationEventListenerImpl implements ApplicationEventListener {
+public class ApplicationEventListenerImpl {
 
   private final ConnectionManager connectionManager;
 
@@ -38,7 +37,6 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
   /**
    * When application append output.
    */
-  @Override
   public void onOutputAppend(final String noteId,
                              final String paragraphId,
                              final int index,
@@ -56,7 +54,6 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
   /**
    * When application update output.
    */
-  @Override
   public void onOutputUpdated(final String noteId,
                               final String paragraphId,
                               final int index,
@@ -74,7 +71,6 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
   }
 
 
-  @Override
   public void onStatusChange(final String noteId,
                              final String paragraphId,
                              final String appId,

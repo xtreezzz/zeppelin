@@ -19,6 +19,7 @@ package org.apache.zeppelin.notebook.display;
 
 import com.google.gson.Gson;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +31,7 @@ import java.util.Objects;
  *
  * @param <T>
  */
-public class AngularObject<T> {
+public class AngularObject<T> implements Serializable {
   private static final Gson gson = new Gson();
 
   private String name;

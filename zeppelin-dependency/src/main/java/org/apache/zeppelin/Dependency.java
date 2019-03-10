@@ -17,13 +17,14 @@
 
 package org.apache.zeppelin;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  *
  */
-public class Dependency {
+public class Dependency implements Serializable {
   private String groupArtifactVersion;
   private boolean local = false;
   private List<String> exclusions;

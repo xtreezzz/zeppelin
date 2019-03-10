@@ -256,7 +256,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           // getInterpreterBindings(session, messagereceived);
           break;
         case EDITOR_SETTING:
-          settingsService.getEditorSetting(session, messagereceived);
+          //settingsService.getEditorSetting(session, messagereceived);
           break;
         case GET_INTERPRETER_SETTINGS:
           settingsService.getInterpreterSettings(session);

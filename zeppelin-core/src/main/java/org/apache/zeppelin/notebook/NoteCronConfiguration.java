@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.notebook;
 
+import java.io.Serializable;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -27,7 +28,7 @@ import org.quartz.CronExpression;
 /**
  * Paragraph cron configuration.
  */
-public class NoteCronConfiguration {
+public class NoteCronConfiguration implements Serializable {
 
   private boolean isCronEnabled;
   // Should CronJob release resources after execution?

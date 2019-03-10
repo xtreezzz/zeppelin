@@ -18,13 +18,12 @@
 package org.apache.zeppelin.interpreter;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.zeppelin.interpreter.remote.RemoteInterpreter;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 import java.util.Properties;
 
 public class SessionConfInterpreter extends ConfInterpreter {
@@ -34,7 +33,7 @@ public class SessionConfInterpreter extends ConfInterpreter {
   public SessionConfInterpreter(Properties properties,
                                 String sessionId,
                                 String interpreterGroupId,
-                                InterpreterSetting interpreterSetting) {
+                                InterpreterSettingV2 interpreterSetting) {
     super(properties, sessionId, interpreterGroupId, interpreterSetting);
   }
 
@@ -48,19 +47,20 @@ public class SessionConfInterpreter extends ConfInterpreter {
       finalProperties.putAll(updatedProperties);
       LOGGER.debug("Properties for Session: " + sessionId + ": " + finalProperties);
 
-      List<Interpreter> interpreters =
-          interpreterSetting.getInterpreterGroup(interpreterGroupId).get(sessionId);
-      for (Interpreter intp : interpreters) {
-        // only check the RemoteInterpreter, ConfInterpreter itself will be ignored here.
-        if (intp instanceof RemoteInterpreter) {
-          RemoteInterpreter remoteInterpreter = (RemoteInterpreter) intp;
-          if (remoteInterpreter.isOpened()) {
-            return new InterpreterResult(InterpreterResult.Code.ERROR,
-                "Can not change interpreter session properties after this session is started");
-          }
-          remoteInterpreter.setProperties(finalProperties);
-        }
-      }
+      //FIXME
+      //      List<Interpreter> interpreters =
+      //          interpreterSetting.getInterpreterGroup(interpreterGroupId).get(sessionId);
+      //      for (Interpreter intp : interpreters) {
+      //        // only check the RemoteInterpreter, ConfInterpreter itself will be ignored here.
+      //        if (intp instanceof RemoteInterpreter) {
+      //          RemoteInterpreter remoteInterpreter = (RemoteInterpreter) intp;
+      //          if (remoteInterpreter.isOpened()) {
+      //            return new InterpreterResult(InterpreterResult.Code.ERROR,
+      //                "Can not change interpreter session properties after this session is started");
+      //          }
+      //          remoteInterpreter.setProperties(finalProperties);
+      //        }
+      //      }
       return new InterpreterResult(InterpreterResult.Code.SUCCESS);
     } catch (IOException e) {
       LOGGER.error("Fail to update interpreter setting", e);

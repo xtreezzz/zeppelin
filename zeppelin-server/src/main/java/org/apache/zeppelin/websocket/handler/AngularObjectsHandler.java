@@ -20,13 +20,11 @@ package org.apache.zeppelin.websocket.handler;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.AngularObject;
-import org.apache.zeppelin.notebook.display.AngularObjectRegistry;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -37,19 +35,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class AngularObjectsHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AngularObjectsHandler.class);
-  private final InterpreterSettingManager interpreterSettingManager;
+  private final InterpreterSettingRepository interpreterSettingRepository;
 
   public AngularObjectsHandler(final ConnectionManager connectionManager,
                                final ZeppelinNoteRepository zeppelinNoteRepository,
-                               final InterpreterSettingManager interpreterSettingManager) {
+                               final InterpreterSettingRepository interpreterSettingRepository) {
     super(connectionManager, zeppelinNoteRepository);
-    this.interpreterSettingManager = interpreterSettingManager;
+    this.interpreterSettingRepository = interpreterSettingRepository;
   }
 
   /**
@@ -57,64 +54,64 @@ public class AngularObjectsHandler extends AbstractHandler {
    */
   //TODO(KOT) check logic
   public void angularObjectUpdated(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    //    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    //
+    //    final String noteId = fromMessage.safeGetType("noteId", LOG);
+    //    final String paragraphId = fromMessage.safeGetType("paragraphId", LOG);
+    //    final String interpreterGroupId = fromMessage.safeGetType("interpreterGroupId", LOG);
+    //    final String varName = fromMessage.safeGetType("name", LOG);
+    //    final Object varValue = fromMessage.safeGetType("value", LOG);
+    //
+    //    final String user = serviceContext.getAutheInfo().getUser();
+    //    AngularObject ao = null;
+    //    boolean global = false;
+    //    // propagate change to (Remote) AngularObjectRegistry
+    //    final Note note = zeppelinNoteRepository.getNote(noteId);
+    //    if (note != null) {
+    //      final List<InterpreterSettingV2> settings = interpreterSettingRepository.getInterpreterSettings(note.getId());
+    //      for (final InterpreterSetting setting : settings) {
+    //        if (setting.getInterpreterGroup(user, note.getId()) == null) {
+    //          continue;
+    //        }
+    //        if (interpreterGroupId.equals(setting.getInterpreterGroup(user, note.getId()).getId())) {
+    //          final AngularObjectRegistry angularObjectRegistry =
+    //                  setting.getInterpreterGroup(user, note.getId()).getAngularObjectRegistry();
+    //
+    //          // first trying to get local registry
+    //          ao = angularObjectRegistry.get(varName, noteId, paragraphId);
+    //          if (ao == null) {
+    //            // then try notebook scope registry
+    //            ao = angularObjectRegistry.get(varName, noteId, null);
+    //            if (ao == null) {
+    //              // then try global scope registry
+    //              ao = angularObjectRegistry.get(varName, null, null);
+    //              if (ao == null) {
+    //                //LOGGER.warn("Object {} is not binded", varName);
+    //              } else {
+    //                // path from client -> server
+    //                ao.set(varValue, false);
+    //                global = true;
+    //              }
+    //            } else {
+    //              // path from client -> server
+    //              ao.set(varValue, false);
+    //              global = false;
+    //            }
+    //          } else {
+    //            ao.set(varValue, false);
+    //            global = false;
+    //          }
+    //          break;
+    //        }
+    //      }
+    //    }
 
-    final String noteId = fromMessage.safeGetType("noteId", LOG);
-    final String paragraphId = fromMessage.safeGetType("paragraphId", LOG);
-    final String interpreterGroupId = fromMessage.safeGetType("interpreterGroupId", LOG);
-    final String varName = fromMessage.safeGetType("name", LOG);
-    final Object varValue = fromMessage.safeGetType("value", LOG);
-
-    final String user = serviceContext.getAutheInfo().getUser();
-    AngularObject ao = null;
-    boolean global = false;
-    // propagate change to (Remote) AngularObjectRegistry
-    final Note note = zeppelinNoteRepository.getNote(noteId);
-    if (note != null) {
-      final List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(note.getId());
-      for (final InterpreterSetting setting : settings) {
-        if (setting.getInterpreterGroup(user, note.getId()) == null) {
-          continue;
-        }
-        if (interpreterGroupId.equals(setting.getInterpreterGroup(user, note.getId()).getId())) {
-          final AngularObjectRegistry angularObjectRegistry =
-                  setting.getInterpreterGroup(user, note.getId()).getAngularObjectRegistry();
-
-          // first trying to get local registry
-          ao = angularObjectRegistry.get(varName, noteId, paragraphId);
-          if (ao == null) {
-            // then try notebook scope registry
-            ao = angularObjectRegistry.get(varName, noteId, null);
-            if (ao == null) {
-              // then try global scope registry
-              ao = angularObjectRegistry.get(varName, null, null);
-              if (ao == null) {
-                //LOGGER.warn("Object {} is not binded", varName);
-              } else {
-                // path from client -> server
-                ao.set(varValue, false);
-                global = true;
-              }
-            } else {
-              // path from client -> server
-              ao.set(varValue, false);
-              global = false;
-            }
-          } else {
-            ao.set(varValue, false);
-            global = false;
-          }
-          break;
-        }
-      }
-    }
-
-    final SockMessage message = new SockMessage(Operation.ANGULAR_OBJECT_UPDATE)
-            .put("angularObject", ao)
-            .put("interpreterGroupId", interpreterGroupId)
-            .put("noteId", noteId)
-            .put("paragraphId", ao.getParagraphId());
-    connectionManager.broadcast(noteId, message);
+    //    final SockMessage message = new SockMessage(Operation.ANGULAR_OBJECT_UPDATE)
+    //            .put("angularObject", ao)
+    //            .put("interpreterGroupId", interpreterGroupId)
+    //            .put("noteId", noteId)
+    //            .put("paragraphId", ao.getParagraphId());
+    //    connectionManager.broadcast(noteId, message);
   }
 
 
@@ -198,26 +195,26 @@ public class AngularObjectsHandler extends AbstractHandler {
   }
 
   public void sendAllAngularObjects(final Note note, final String user, final WebSocketSession conn) throws IOException {
-
-    final List<InterpreterSetting> settings = interpreterSettingManager.getInterpreterSettings(note.getId());
-    if (settings == null || settings.size() == 0) {
-      return;
-    }
-
-    for (final InterpreterSetting intpSetting : settings) {
-      if (intpSetting.getInterpreterGroup(user, note.getId()) == null) {
-        continue;
-      }
-      final AngularObjectRegistry registry = intpSetting.getInterpreterGroup(user, note.getId()).getAngularObjectRegistry();
-
-      for (final AngularObject object : registry.getAllWithGlobal(note.getId())) {
-        final SockMessage message = new SockMessage(Operation.ANGULAR_OBJECT_UPDATE)
-                .put("angularObject", object)
-                .put("interpreterGroupId", intpSetting.getInterpreterGroup(user, note.getId()).getId())
-                .put("noteId", note.getId())
-                .put("paragraphId", object.getParagraphId());
-        conn.sendMessage(message.toSend());
-      }
-    }
+    //
+    //    final List<InterpreterSetting> settings = interpreterSettingRepository.getInterpreterSettings(note.getId());
+    //    if (settings == null || settings.size() == 0) {
+    //      return;
+    //    }
+    //
+    //    for (final InterpreterSetting intpSetting : settings) {
+    //      if (intpSetting.getInterpreterGroup(user, note.getId()) == null) {
+    //        continue;
+    //      }
+    //      final AngularObjectRegistry registry = intpSetting.getInterpreterGroup(user, note.getId()).getAngularObjectRegistry();
+    //
+    //      for (final AngularObject object : registry.getAllWithGlobal(note.getId())) {
+    //        final SockMessage message = new SockMessage(Operation.ANGULAR_OBJECT_UPDATE)
+    //                .put("angularObject", object)
+    //                .put("interpreterGroupId", intpSetting.getInterpreterGroup(user, note.getId()).getId())
+    //                .put("noteId", note.getId())
+    //                .put("paragraphId", object.getParagraphId());
+    //        conn.sendMessage(message.toSend());
+    //      }
+    //    }
   }
 }

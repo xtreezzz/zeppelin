@@ -20,10 +20,12 @@ package org.apache.zeppelin.interpreter;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcess;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
@@ -37,7 +39,7 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagedInterpreterGroup.class);
 
-  private InterpreterSetting interpreterSetting;
+  private InterpreterSettingV2 interpreterSetting;
   private RemoteInterpreterProcess remoteInterpreterProcess; // attached remote interpreter process
 
   /**
@@ -45,12 +47,12 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
    * @param id
    * @param interpreterSetting
    */
-  ManagedInterpreterGroup(String id, InterpreterSetting interpreterSetting) {
+  ManagedInterpreterGroup(String id, InterpreterSettingV2 interpreterSetting) {
     super(id);
     this.interpreterSetting = interpreterSetting;
   }
 
-  public InterpreterSetting getInterpreterSetting() {
+  public InterpreterSettingV2 getInterpreterSetting() {
     return interpreterSetting;
   }
 
@@ -59,8 +61,9 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
       throws IOException {
     if (remoteInterpreterProcess == null) {
       LOGGER.info("Create InterpreterProcess for InterpreterGroup: " + getId());
-      remoteInterpreterProcess = interpreterSetting.createInterpreterProcess(id, userName,
-          properties);
+      remoteInterpreterProcess = null;
+      //FIXME
+      //interpreterSetting.createInterpreterProcess(id, userName, properties);
       remoteInterpreterProcess.start(userName);
     }
     return remoteInterpreterProcess;
@@ -96,7 +99,8 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
     //TODO(zjffdu) whether close InterpreterGroup if there's no session left in Zeppelin Server
     if (sessions.isEmpty() && interpreterSetting != null) {
       LOGGER.info("Remove this InterpreterGroup: {} as all the sessions are closed", id);
-      interpreterSetting.removeInterpreterGroup(id);
+      //FIXME
+      //interpreterSetting.removeInterpreterGroup(id);
       if (remoteInterpreterProcess != null) {
         LOGGER.info("Kill RemoteInterpreterProcess");
         remoteInterpreterProcess.stop();
@@ -153,13 +157,15 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
     if (sessions.containsKey(sessionId)) {
       return sessions.get(sessionId);
     } else {
-      List<Interpreter> interpreters = interpreterSetting.createInterpreters(user, id, sessionId);
-      for (Interpreter interpreter : interpreters) {
-        interpreter.setInterpreterGroup(this);
-      }
-      LOGGER.info("Create Session: {} in InterpreterGroup: {} for user: {}", sessionId, id, user);
-      sessions.put(sessionId, interpreters);
-      return interpreters;
+      //FIXME
+      //      List<Interpreter> interpreters = interpreterSetting.createInterpreters(user, id, sessionId);
+      //      for (Interpreter interpreter : interpreters) {
+      //        interpreter.setInterpreterGroup(this);
+      //      }
+      //      LOGGER.info("Create Session: {} in InterpreterGroup: {} for user: {}", sessionId, id, user);
+      //      sessions.put(sessionId, interpreters);
+      //      return interpreters;
+      return Collections.emptyList();
     }
   }
 

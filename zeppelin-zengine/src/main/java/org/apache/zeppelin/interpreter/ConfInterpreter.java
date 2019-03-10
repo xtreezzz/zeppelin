@@ -18,6 +18,7 @@
 package org.apache.zeppelin.interpreter;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +36,13 @@ public class ConfInterpreter extends Interpreter {
 
   protected String sessionId;
   protected String interpreterGroupId;
-  protected InterpreterSetting interpreterSetting;
+  protected InterpreterSettingV2 interpreterSetting;
 
 
   public ConfInterpreter(Properties properties,
                          String sessionId,
                          String interpreterGroupId,
-                         InterpreterSetting interpreterSetting) {
+                         InterpreterSettingV2 interpreterSetting) {
     super(properties);
     this.sessionId = sessionId;
     this.interpreterGroupId = interpreterGroupId;
@@ -70,7 +71,8 @@ public class ConfInterpreter extends Interpreter {
       finalProperties.putAll(newProperties);
       LOGGER.debug("Properties for InterpreterGroup: " + interpreterGroupId + " is "
           + finalProperties);
-      interpreterSetting.setInterpreterGroupProperties(interpreterGroupId, finalProperties);
+      //FIXME
+      //interpreterSetting.setInterpreterGroupProperties(interpreterGroupId, finalProperties);
       return new InterpreterResult(InterpreterResult.Code.SUCCESS);
     } catch (IOException e) {
       LOGGER.error("Fail to update interpreter setting", e);

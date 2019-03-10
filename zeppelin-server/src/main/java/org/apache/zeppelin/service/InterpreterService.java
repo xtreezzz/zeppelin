@@ -21,11 +21,12 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jline.internal.Preconditions;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
@@ -63,15 +64,16 @@ public class InterpreterService {
               .build());
 
   private final ZeppelinConfiguration conf;
-  private final InterpreterSettingManager interpreterSettingManager;
+  //FIXME
+  private final InterpreterSettingRepository interpreterSettingRepository;
   private final ZeppelinNoteRepository zeppelinNoteRepository;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
-                            final InterpreterSettingManager interpreterSettingManager,
+                            final InterpreterSettingRepository interpreterSettingRepository,
                             final ZeppelinNoteRepository zeppelinNoteRepository) {
     this.conf = conf;
-    this.interpreterSettingManager = interpreterSettingManager;
+    this.interpreterSettingRepository = interpreterSettingRepository;
     this.zeppelinNoteRepository = zeppelinNoteRepository;
   }
 
@@ -146,7 +148,8 @@ public class InterpreterService {
       }
 
       dependencyResolver.load(request.getArtifact(), interpreterDir.toFile());
-      interpreterSettingManager.refreshInterpreterTemplates();
+      //FIXME
+      //interpreterSettingRepository.refreshInterpreterTemplates();
       LOG.info(
           "Finish downloading a dependency {} into {}",
           request.getName(),
@@ -191,22 +194,24 @@ public class InterpreterService {
   /**
    * Extract paragraph's interpreter info with paragraph data.
    */
+  //FIXME
   private Map<String, String> extractParagraphInfo(final Paragraph paragraph) {
     //try {
       final ManagedInterpreterGroup process = null ;//(ManagedInterpreterGroup) paragraph
               //.getBindedInterpreter().getInterpreterGroup();
       // add all info about binded interpreter
-      final Map<String, String> info = interpreterSettingManager.extractProcessInfo(process);
+      //final Map<String, String> info = interpreterSettingRepository.extractProcessInfo(process);
       // add paragraph info
       //info.put("interpreterText", paragraph.getIntpText());
-      info.put("noteName", paragraph.getNote().getName());
-      info.put("noteId", paragraph.getNote().getId());
-      info.put("id", paragraph.getId());
-      info.put("user", paragraph.getUser());
-      return info;
+      //      info.put("noteName", paragraph.getNote().getName());
+      //      info.put("noteId", paragraph.getNote().getId());
+      //      info.put("id", paragraph.getId());
+      //      info.put("user", paragraph.getUser());
+      //      return info;
     //} catch (InterpreterNotFoundException e) {
     //  LOG.error("Failed to get binded interpreter for paragraph {}", paragraph, e);
      // return new HashMap<>();
     //}
+    throw new NotImplementedException("Process info removed from InterpreterSettingManager");
   }
 }

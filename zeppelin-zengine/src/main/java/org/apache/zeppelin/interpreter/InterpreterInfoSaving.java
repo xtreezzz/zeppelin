@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.IOUtils;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.repository.RemoteRepository;
@@ -46,7 +47,7 @@ public class InterpreterInfoSaving {
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterInfoSaving.class);
   private static final Gson gson =  new GsonBuilder().setPrettyPrinting().create();
 
-  public Map<String, InterpreterSetting> interpreterSettings = new HashMap<>();
+  public Map<String, InterpreterSettingV2> interpreterSettings = new HashMap<>();
   public List<RemoteRepository> interpreterRepositories = new ArrayList<>();
 
   public static InterpreterInfoSaving loadFromFile(Path file) throws IOException {
@@ -56,14 +57,6 @@ public class InterpreterInfoSaving {
       JsonParser jsonParser = new JsonParser();
       JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
       infoSaving = new Gson().fromJson(jsonObject.toString(), InterpreterInfoSaving.class);
-
-      if (infoSaving != null && infoSaving.interpreterSettings != null) {
-        for (InterpreterSetting interpreterSetting : infoSaving.interpreterSettings.values()) {
-          interpreterSetting.convertPermissionsFromUsersToOwners(
-              jsonObject.getAsJsonObject("interpreterSettings")
-                  .getAsJsonObject(interpreterSetting.getId()));
-        }
-      }
     }
     return infoSaving == null ? new InterpreterInfoSaving() : infoSaving;
   }
@@ -77,9 +70,9 @@ public class InterpreterInfoSaving {
       } catch (UnsupportedOperationException e) {
         // File system does not support Posix file permissions (likely windows) - continue anyway.
         LOGGER.warn("unable to setPosixFilePermissions on '{}'.", file);
-      };
+      }
     }
-    LOGGER.info("Save Interpreter Settings to " + file);
-    IOUtils.write(new Gson().toJson(this), new FileOutputStream(file.toFile()));
+    LOGGER.info("Save Interpreter Settings to {}", file);
+    IOUtils.write(new Gson().toJson(this), new FileOutputStream(file.toFile()), "UTF-8");
   }
 }

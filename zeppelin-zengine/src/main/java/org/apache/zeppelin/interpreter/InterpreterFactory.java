@@ -17,15 +17,14 @@
 
 package org.apache.zeppelin.interpreter;
 
-import com.google.common.base.Preconditions;
-import javax.inject.Inject;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * //TODO(zjffdu) considering to move to InterpreterSettingManager
@@ -37,13 +36,14 @@ import java.util.List;
 public class InterpreterFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterFactory.class);
 
-  private final InterpreterSettingManager interpreterSettingManager;
+  private final InterpreterSettingRepository interpreterSettingRepository;
 
   @Autowired
-  public InterpreterFactory(InterpreterSettingManager interpreterSettingManager) {
-    this.interpreterSettingManager = interpreterSettingManager;
+  public InterpreterFactory(InterpreterSettingRepository interpreterSettingRepository) {
+    this.interpreterSettingRepository = interpreterSettingRepository;
   }
 
+  //FIXME
   public Interpreter getInterpreter(String user,
                                     String noteId,
                                     String replName,
@@ -52,43 +52,46 @@ public class InterpreterFactory {
 
     if (StringUtils.isBlank(replName)) {
       // Get the default interpreter of the defaultInterpreterSetting
-      InterpreterSetting defaultSetting =
-          interpreterSettingManager.getByName(defaultInterpreterSetting);
-      return defaultSetting.getDefaultInterpreter(user, noteId);
+      InterpreterSettingV2 defaultSetting =
+          interpreterSettingRepository.get(defaultInterpreterSetting);
+      //FIXME
+      //return defaultSetting.getDefaultInterpreter(user, noteId);
+      throw new NotImplementedException("Interpreter removed from InterpreterSetting");
     }
 
-    String[] replNameSplits = replName.split("\\.");
-    if (replNameSplits.length == 2) {
-      String group = replNameSplits[0];
-      String name = replNameSplits[1];
-      InterpreterSetting setting = interpreterSettingManager.getByName(group);
-      if (null != setting) {
-        Interpreter interpreter = setting.getInterpreter(user, noteId, name);
-        if (null != interpreter) {
-          return interpreter;
-        }
-        throw new InterpreterNotFoundException("No such interpreter: " + replName);
-      }
-      throw new InterpreterNotFoundException("No interpreter setting named: " + group);
-
-    } else if (replNameSplits.length == 1){
-      // first assume group is omitted
-      InterpreterSetting setting =
-          interpreterSettingManager.getByName(defaultInterpreterSetting);
-      if (setting != null) {
-        Interpreter interpreter = setting.getInterpreter(user, noteId, replName);
-        if (null != interpreter) {
-          return interpreter;
-        }
-      }
-
-      // then assume interpreter name is omitted
-      setting = interpreterSettingManager.getByName(replName);
-      if (null != setting) {
-        return setting.getDefaultInterpreter(user, noteId);
-      }
-    }
-
-    throw new InterpreterNotFoundException("No such interpreter: " + replName);
+    //    String[] replNameSplits = replName.split("\\.");
+    //    if (replNameSplits.length == 2) {
+    //      String group = replNameSplits[0];
+    //      String name = replNameSplits[1];
+    //      InterpreterSetting setting = interpreterSettingRepository.getByName(group);
+    //      if (null != setting) {
+    //        Interpreter interpreter = setting.getInterpreter(user, noteId, name);
+    //        if (null != interpreter) {
+    //          return interpreter;
+    //        }
+    //        throw new InterpreterNotFoundException("No such interpreter: " + replName);
+    //      }
+    //      throw new InterpreterNotFoundException("No interpreter setting named: " + group);
+    //
+    //    } else if (replNameSplits.length == 1){
+    //      // first assume group is omitted
+    //      InterpreterSetting setting =
+    //          interpreterSettingRepository.getByName(defaultInterpreterSetting);
+    //      if (setting != null) {
+    //        Interpreter interpreter = setting.getInterpreter(user, noteId, replName);
+    //        if (null != interpreter) {
+    //          return interpreter;
+    //        }
+    //      }
+    //
+    //      // then assume interpreter name is omitted
+    //      setting = interpreterSettingRepository.getByName(replName);
+    //      if (null != setting) {
+    //        return setting.getDefaultInterpreter(user, noteId);
+    //      }
+    //    }
+    //
+    //    throw new InterpreterNotFoundException("No such interpreter: " + replName);
+    throw new NotImplementedException("Interpreter removed from InterpreterSetting");
   }
 }

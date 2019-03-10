@@ -47,7 +47,7 @@ public class InterpreterGroup {
 
   protected String id;
   // sessionId --> interpreters
-  protected Map<String, List<Interpreter>> sessions = new ConcurrentHashMap();
+  public Map<String, List<Interpreter>> sessions = new ConcurrentHashMap();
   private AngularObjectRegistry angularObjectRegistry;
   private InterpreterHookRegistry hookRegistry;
   private boolean angularRegistryPushed = false;

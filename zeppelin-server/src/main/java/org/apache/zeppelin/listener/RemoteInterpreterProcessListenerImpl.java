@@ -19,9 +19,9 @@ package org.apache.zeppelin.listener;
 
 import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterSetting;
-import org.apache.zeppelin.interpreter.InterpreterSettingManager;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterProcessListener;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -40,14 +40,15 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
 
   private final ConnectionManager connectionManager;
   private final ZeppelinNoteRepository zeppelinNoteRepository;
-  private final InterpreterSettingManager interpreterSettingManager;
+  //FIXME
+  private final InterpreterSettingRepository interpreterSettingRepository;
 
   public RemoteInterpreterProcessListenerImpl(final ConnectionManager connectionManager,
                                               final ZeppelinNoteRepository zeppelinNoteRepository,
-                                              final InterpreterSettingManager interpreterSettingManager) {
+                                              final InterpreterSettingRepository interpreterSettingRepository) {
     this.connectionManager = connectionManager;
     this.zeppelinNoteRepository = zeppelinNoteRepository;
-    this.interpreterSettingManager = interpreterSettingManager;
+    this.interpreterSettingRepository = interpreterSettingRepository;
   }
 
   /**
@@ -111,7 +112,7 @@ public class RemoteInterpreterProcessListenerImpl implements RemoteInterpreterPr
     if (note != null) {
       final Paragraph paragraph = note.getParagraph(paragraphId);
       if (paragraph != null) {
-        final InterpreterSetting setting = interpreterSettingManager.get(interpreterSettingId);
+        final InterpreterSettingV2 setting = interpreterSettingRepository.get(interpreterSettingId);
         final String label = metaInfos.get("label");
         final String tooltip = metaInfos.get("tooltip");
         final List<String> keysToRemove = Arrays.asList("noteId", "paraId", "label", "tooltip");

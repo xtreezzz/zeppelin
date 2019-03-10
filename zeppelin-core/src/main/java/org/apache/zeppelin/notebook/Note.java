@@ -60,51 +60,12 @@ public class Note implements Serializable {
   private final List<Paragraph> paragraphs;
 
   /**
-   *
-   * TODO(egorklimov): переложить ZeppelinConfiguration в zeppelin-core
-   * ZeppelinConfiguration - не должен быть компонентом, просто класс с контсруктором
-   * в Zeppelin Server сделать бин и инжектить его в контекст как бин
-   * Везде где ZeppelinConfiguration заводим enum
-   * в get передаем enum (параметр) доставать стринг
-   * Упростить getter'ы чтобы туда передавался enum
-   * zeppelin-core
-   *
-   * Убрать Gson везде
-   * Убрать метод toJson везде
-   * где нужен json new Gson.toJson()
-   * Делаем ЯВНУЮ сериализацию!
-   *
-   * Cron в отдельный сервис
-   * CronJob - расписание шедуллера, id ноута и параграфа и контекст
-   * внутри примитивы и строки
-   * никаких. Нельзя кидать в thread Note и Paragraph, только id
-   *
-   * OLD - в пекло, нужно все выпилить
-   *
-   * Если ноут нужен - загруси его через NoteManager
-   *
-   * runNote, runParagraph - удалить
-   *
-   * ApplicationState и InterpreterResult отпиливать от ноута и параграфа
-   *
-   * Сервисы по загрузке InterpreterResult, personalizedMode
-   *
-   * NotebookService
-   *  #clon
-   *  #move
-   *  #clone убрать
-   *  #Вызов заккоментить и кидать NotImplementedException
-   */
-
-  /**
    * see https://issues.apache.org/jira/browse/ZEPPELIN-25
    */
   private final Map<String, List<AngularObject>> angularObjects;
 
   private boolean isRunning = false;
 
-  // При сериализации и десериадизации может быть проблема
-  // перетащить в конструктор, поставить falce по дефолту
   private NoteCronConfiguration noteCronConfiguration;
 
   /********************************** user permissions info *************************************/
@@ -228,8 +189,7 @@ public class Note implements Serializable {
   }
 
   public static Note fromJson(final String json) {
-    Note note = gson.fromJson(json, Note.class);
-    return note;
+    return gson.fromJson(json, Note.class);
   }
 
   @Override

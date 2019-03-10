@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.interpreter;
 
+import java.io.Serializable;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 
 import java.util.ArrayList;
@@ -25,10 +26,10 @@ import java.util.List;
 /**
  *
  */
-public class InterpreterOption {
-  public static final transient String SHARED = "shared";
-  public static final transient String SCOPED = "scoped";
-  public static final transient String ISOLATED = "isolated";
+public class InterpreterOption implements Serializable {
+  public static final String SHARED = "shared";
+  public static final String SCOPED = "scoped";
+  public static final String ISOLATED = "isolated";
   private static ZeppelinConfiguration conf =  ZeppelinConfiguration.create();
 
   // always set it as true, keep this field just for backward compatibility
@@ -36,12 +37,12 @@ public class InterpreterOption {
   String host = null;
   int port = -1;
 
-  String perNote;
-  String perUser;
+  private String perNote;
+  private String perUser;
 
-  boolean isExistingProcess;
-  boolean setPermission;
-  List<String> owners;
+  public boolean isExistingProcess;
+  private boolean setPermission;
+  public List<String> owners;
   boolean isUserImpersonate;
 
   public boolean isExistingProcess() {

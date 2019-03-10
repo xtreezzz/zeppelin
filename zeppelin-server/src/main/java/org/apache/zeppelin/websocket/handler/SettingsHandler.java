@@ -19,6 +19,8 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.*;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ConfigurationService;
@@ -42,18 +44,18 @@ public class SettingsHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SettingsHandler.class);
 
   private final ConfigurationService configurationService;
-  private final InterpreterSettingManager interpreterSettingManager;
+  private final InterpreterSettingRepository interpreterSettingRepository;
   private final InterpreterFactory interpreterFactory;
 
   @Autowired
   public SettingsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService,
-                         final InterpreterSettingManager interpreterSettingManager,
+                         final InterpreterSettingRepository interpreterSettingRepository,
                          final InterpreterFactory interpreterFactory) {
     super(connectionManager, zeppelinNoteRepository);
     this.configurationService = configurationService;
-    this.interpreterSettingManager = interpreterSettingManager;
+    this.interpreterSettingRepository = interpreterSettingRepository;
     this.interpreterFactory = interpreterFactory;
   }
 
@@ -66,36 +68,37 @@ public class SettingsHandler extends AbstractHandler {
     conn.sendMessage(message.toSend());
   }
 
+  //FIXME
   public void getEditorSetting(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromSockMessage);
-
-    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.ANY, serviceContext, conn);
-    final Paragraph p = safeLoadParagraph("paragraphId", fromSockMessage, note);
-
-    final String replName = fromSockMessage.safeGetType("magic", LOG);
-
-    try {
-      final Interpreter intp = interpreterFactory.getInterpreter(
-              serviceContext.getAutheInfo().getUser(),
-              note.getId(),
-              replName,
-              note.getDefaultInterpreterGroup());
-      final Map<String, Object> settings = interpreterSettingManager.
-              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getId(), replName);
-
-      final SockMessage message = new SockMessage(Operation.EDITOR_SETTING)
-              .put("paragraphId", p.getId())
-              .put("editor", settings);
-      conn.sendMessage(message.toSend());
-
-    } catch (final InterpreterNotFoundException e) {
-      LOG.warn(new IOException("Fail to find interpreter", e).getMessage());
-    }
+    //    final ServiceContext serviceContext = getServiceContext(fromSockMessage);
+    //
+    //    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.ANY, serviceContext, conn);
+    //    final Paragraph p = safeLoadParagraph("paragraphId", fromSockMessage, note);
+    //
+    //    final String replName = fromSockMessage.safeGetType("magic", LOG);
+    //
+    //    try {
+    //      final Interpreter intp = interpreterFactory.getInterpreter(
+    //              serviceContext.getAutheInfo().getUser(),
+    //              note.getId(),
+    //              replName,
+    //              note.getDefaultInterpreterGroup());
+    //      final Map<String, Object> settings = interpreterSettingRepository.
+    //              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getId(), replName);
+    //
+    //      final SockMessage message = new SockMessage(Operation.EDITOR_SETTING)
+    //              .put("paragraphId", p.getId())
+    //              .put("editor", settings);
+    //      conn.sendMessage(message.toSend());
+    //
+    //    } catch (final InterpreterNotFoundException e) {
+    //      LOG.warn(new IOException("Fail to find interpreter", e).getMessage());
+    //    }
   }
 
 
   public void getInterpreterSettings(final WebSocketSession conn) throws IOException {
-    final List<InterpreterSetting> availableSettings = interpreterSettingManager.get();
+    final List<InterpreterSettingV2> availableSettings = interpreterSettingRepository.get();
     final SockMessage message = new SockMessage(Operation.INTERPRETER_SETTINGS)
             .put("interpreterSettings", availableSettings);
     conn.sendMessage(message.toSend());

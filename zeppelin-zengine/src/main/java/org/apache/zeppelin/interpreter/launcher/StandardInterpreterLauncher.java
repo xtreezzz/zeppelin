@@ -18,10 +18,10 @@
 
 package org.apache.zeppelin.interpreter.launcher;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.InterpreterOption;
 import org.apache.zeppelin.interpreter.InterpreterRunner;
-import org.apache.zeppelin.interpreterV2.InterpreterProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterRunningProcess;
 import org.apache.zeppelin.interpreter.remote.RemoteInterpreterUtils;
 import org.slf4j.Logger;
@@ -42,6 +42,7 @@ public class StandardInterpreterLauncher extends InterpreterLauncher {
     super(zConf);
   }
 
+  //FIXME
   @Override
   public InterpreterClient launch(InterpreterLaunchContext context) throws IOException {
     LOGGER.info("Launching Interpreter: " + context.getInterpreterSettingGroup());
@@ -62,12 +63,13 @@ public class StandardInterpreterLauncher extends InterpreterLauncher {
       // create new remote process
       String localRepoPath = zConf.getInterpreterLocalRepoPath() + "/"
           + context.getInterpreterSettingId();
-      return new InterpreterProcess(
-          runner != null ? runner.getPath() : zConf.getInterpreterRemoteRunnerPath(),
-          context.getZeppelinServerRPCPort(), context.getZeppelinServerHost(), zConf.getInterpreterPortRange(),
-          zConf.getInterpreterDir() + "/" + groupName, localRepoPath,
-          buildEnvFromProperties(context), connectTimeout, name,
-          context.getInterpreterGroupId(), option.isUserImpersonate());
+//      return new InterpreterProcess(
+//          runner != null ? runner.getPath() : zConf.getInterpreterRemoteRunnerPath(),
+//          context.getZeppelinServerRPCPort(), context.getZeppelinServerHost(), zConf.getInterpreterPortRange(),
+//          zConf.getInterpreterDir() + "/" + groupName, localRepoPath,
+//          buildEnvFromProperties(context), connectTimeout, name,
+//          context.getInterpreterGroupId(), option.isUserImpersonate());
+      throw new NotImplementedException("Interpreter execution not implemented");
     }
   }
 
