@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.internal.StringMap;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +42,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -105,8 +105,7 @@ public class InterpreterSettingRepository {
   private String defaultInterpreterGroup;
 
   @Autowired
-  public InterpreterSettingRepository(final ZeppelinConfiguration zeppelinConfiguration)
-      throws IOException {
+  public InterpreterSettingRepository(final ZeppelinConfiguration zeppelinConfiguration) {
     this(zeppelinConfiguration, new InterpreterOption());
   }
 
@@ -131,7 +130,7 @@ public class InterpreterSettingRepository {
   }
 
 
-  //---------------------- API -------------------------
+  //----------------------------- API -----------------------------
   public InterpreterSettingV2 get(String id) {
     return interpreterSettings.get(id);
   }
@@ -453,17 +452,17 @@ public class InterpreterSettingRepository {
    * {@code Map<String, InterpreterProperty>}
    */
   private Map<String, InterpreterProperty> convertInterpreterProperties(Object properties) {
-    if (properties != null && properties instanceof StringMap) {
+    if (properties instanceof Properties) {
       Map<String, InterpreterProperty> newProperties = new HashMap<>();
-      StringMap p = (StringMap) properties;
-      for (Object o : p.entrySet()) {
-        Map.Entry entry = (Map.Entry) o;
-        if (!(entry.getValue() instanceof StringMap)) {
+      Properties p = (Properties) properties;
+      for (String key : p.stringPropertyNames()) {
+        Object entry = p.get(key);
+        if (!(entry instanceof Properties)) {
           InterpreterProperty newProperty = new InterpreterProperty(
-              entry.getKey().toString(),
-              entry.getValue(),
+              key,
+              entry,
               InterpreterPropertyType.STRING.getValue());
-          newProperties.put(entry.getKey().toString(), newProperty);
+          newProperties.put(key, newProperty);
         } else {
           // already converted
           return new HashMap<>((Map<String, InterpreterProperty>) properties);
@@ -479,8 +478,8 @@ public class InterpreterSettingRepository {
         Object value = dProperties.get(key);
         if (value instanceof InterpreterProperty) {
           return new HashMap<>((Map<String, InterpreterProperty>) properties);
-        } else if (value instanceof StringMap) {
-          StringMap stringMap = (StringMap) value;
+        } else if (value instanceof Properties) {
+          Properties stringMap = (Properties) value;
           InterpreterProperty newProperty = new InterpreterProperty(
               key,
               stringMap.get("value"),
