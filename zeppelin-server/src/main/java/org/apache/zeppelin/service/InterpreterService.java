@@ -23,7 +23,7 @@ import jline.internal.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;

@@ -18,7 +18,7 @@
 package org.apache.zeppelin.listener;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterResultMessage;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.ParagraphJobListener;

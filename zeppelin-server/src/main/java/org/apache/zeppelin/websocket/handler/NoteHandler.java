@@ -19,7 +19,7 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.NoteCronConfiguration;

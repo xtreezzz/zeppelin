@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin;
+package org.apache.zeppelin.repositories;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class ZeppelinNoteRepository {
+public class ZeppelinNoteRepository implements NoteRepository{
 
   private static final Logger LOG = LoggerFactory.getLogger(ZeppelinNoteRepository.class);
 
@@ -149,6 +149,7 @@ public class ZeppelinNoteRepository {
   }
 
 
+  @Override
   public Note getNote(final String noteId) {
     try {
       final Map<String, NoteInfo> notes = repo.list();
@@ -163,10 +164,12 @@ public class ZeppelinNoteRepository {
     }
   }
 
+  @Override
   public List<Note> getAllNotes() {
     return new ArrayList<>();
   }
 
+  @Override
   public List<NoteInfo> getNotesInfo() {
     try {
       return new ArrayList<>(repo.list().values());
@@ -175,7 +178,7 @@ public class ZeppelinNoteRepository {
     }
   }
 
-
+  @Override
   public Note persistNote(final Note note) {
     try {
       repo.save(note);
@@ -185,6 +188,7 @@ public class ZeppelinNoteRepository {
     return note;
   }
 
+  @Override
   public Note updateNote(final Note note) {
     try {
       NoteInfo repoNoteInfo = repo.list().get(note.getId());
@@ -198,6 +202,7 @@ public class ZeppelinNoteRepository {
     return note;
   }
 
+  @Override
   public boolean removeNote(final String noteId) {
     try {
       Note note = getNote(noteId);

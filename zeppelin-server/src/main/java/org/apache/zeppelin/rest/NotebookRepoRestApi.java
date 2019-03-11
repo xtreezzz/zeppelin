@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;

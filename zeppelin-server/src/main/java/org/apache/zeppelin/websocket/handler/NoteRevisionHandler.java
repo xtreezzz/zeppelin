@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;

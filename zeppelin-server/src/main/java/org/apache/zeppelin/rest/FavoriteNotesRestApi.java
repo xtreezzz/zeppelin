@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import org.apache.shiro.SecurityUtils;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -144,7 +144,7 @@ public class FavoriteNotesRestApi {
   }
 
   @ZeppelinApi
-  @GetMapping(value = "/set_note_status", produces = "application/json")
+//  @GetMapping(value = "/set_note_status", produces = "application/json")
   public ResponseEntity setNoteStatus(@RequestParam("username") String username,
                                       @RequestParam("note_id") String noteId,
                                       @RequestParam("note_type") String noteType,

@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;

@@ -18,7 +18,7 @@ package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;

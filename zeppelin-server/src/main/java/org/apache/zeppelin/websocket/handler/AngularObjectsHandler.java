@@ -18,7 +18,7 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.zeppelin.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.remote.RemoteAngularObjectRegistry;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
