@@ -539,7 +539,8 @@ public class NotebookServer extends WebSocketServlet
     connectionManager.multicastToUser(subject.getUser(),
         new Message(OP.NOTES_INFO).put("notes", notesInfo));
     //to others afterwards
-    connectionManager.broadcastNoteListExcept(notesInfo, subject);
+    //ZP-39
+    //connectionManager.broadcastNoteListExcept(notesInfo, subject);
   }
 
   public void listNotesInfo(NotebookSocket conn, Message message) throws IOException {
@@ -565,7 +566,8 @@ public class NotebookServer extends WebSocketServlet
             connectionManager.multicastToUser(context.getAutheInfo().getUser(),
                 new Message(OP.NOTES_INFO).put("notes", notesInfo));
             //to others afterwards
-            connectionManager.broadcastNoteListExcept(notesInfo, context.getAutheInfo());
+            //ZP-39
+            //connectionManager.broadcastNoteListExcept(notesInfo, context.getAutheInfo());
           }
         });
   }
