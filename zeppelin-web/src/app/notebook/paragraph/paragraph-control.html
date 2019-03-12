@@ -232,6 +232,14 @@ limitations under the License.
           </a>
         </li>
         <li>
+          <a ng-click="enableContextCompletion(paragraph)"
+             ng-if="paragraph.config.editorSetting.language === 'sql'">
+              <span ng-if="paragraph.config.contextCompletion == true" class="fa fa-toggle-on shortcut-icon" style="color:green"></span>
+              <span ng-if="paragraph.config.contextCompletion != true" class="fa fa-toggle-off shortcut-icon"></span>
+            Enable context completion
+          </a>
+        </li>
+        <li>
           <!-- remove paragraph -->
           <a ng-click="removeParagraph(paragraph)" ng-if="note.paragraphs.length > 1" ng-class="{'item-disable' : isNoteRunning}">
             <span class="fa fa-times shortcut-icon"></span>

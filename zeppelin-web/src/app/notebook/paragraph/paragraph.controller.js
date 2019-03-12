@@ -742,6 +742,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     commitParagraph(paragraph);
   };
 
+  $scope.enableContextCompletion = function() {
+    if ($scope.paragraph.config.editorSetting.language !== 'sql') {
+      return;
+    }
+    if ($scope.paragraph.config.contextCompletion !== undefined) {
+      $scope.paragraph.config.contextCompletion = !$scope.paragraph.config.contextCompletion;
+    } else {
+      $scope.paragraph.config.contextCompletion = true;
+    }
+  };
+
   $scope.enableCompletionOnSpace = function() {
     if ($scope.paragraph.config.editorSetting.language !== 'sql') {
       return;
@@ -1135,10 +1146,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
+      if ($scope.paragraph.config.contextCompletion !== undefined) {
+        $scope.editor.setOptions({
+          enableLiveAutocompletion: $scope.paragraph.config.contextCompletion,
+        });
+      }
       let isTjdbc = isTjdbcConfigured();
-      $scope.editor.setOptions({
-        enableLiveAutocompletion: isTjdbc,
-      });
       if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
       }
