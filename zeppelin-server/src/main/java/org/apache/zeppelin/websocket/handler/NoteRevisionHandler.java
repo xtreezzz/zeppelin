@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;
@@ -41,8 +41,8 @@ public class NoteRevisionHandler extends AbstractHandler {
 
   @Autowired
   public NoteRevisionHandler(final ConnectionManager connectionManager,
-                             final ZeppelinNoteRepository zeppelinNoteRepository) {
-    super(connectionManager, zeppelinNoteRepository);
+                             final FileSystemNoteRepository fileSystemNoteRepository) {
+    super(connectionManager, fileSystemNoteRepository);
   }
 
   public void checkpointNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {

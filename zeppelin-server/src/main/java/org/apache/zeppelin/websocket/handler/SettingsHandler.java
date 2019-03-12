@@ -17,9 +17,12 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -29,10 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 @Component
 public class SettingsHandler extends AbstractHandler {
@@ -44,7 +43,7 @@ public class SettingsHandler extends AbstractHandler {
   //private final InterpreterFactory interpreterFactory;
 
   @Autowired
-  public SettingsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
+  public SettingsHandler(FileSystemNoteRepository zeppelinNoteRepository,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService,
                          final InterpreterSettingRepository interpreterSettingRepository) {
@@ -57,7 +56,7 @@ public class SettingsHandler extends AbstractHandler {
 
   public void sendAllConfigurations(final WebSocketSession conn) throws IOException {
     final Map<String, String> properties = configurationService.getAllProperties();
-    properties.put("isRevisionSupported", String.valueOf(zeppelinNoteRepository.isRevisionSupported()));
+//    properties.put("isRevisionSupported", String.valueOf(noteRepository.isRevisionSupported()));
 
     final SockMessage message = new SockMessage(Operation.CONFIGURATIONS_INFO)
             .put("configurations", properties);

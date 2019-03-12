@@ -18,7 +18,7 @@ package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;
@@ -39,13 +39,13 @@ public class HeliumRestApi {
 
   //private final Helium helium;
   private final Gson gson = new Gson();
-  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final FileSystemNoteRepository fileSystemNoteRepository;
 
   @Autowired
   public HeliumRestApi(//final Helium helium,
-                       ZeppelinNoteRepository zeppelinNoteRepository) {
+                       FileSystemNoteRepository fileSystemNoteRepository) {
     //this.helium = helium;
-    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.fileSystemNoteRepository = fileSystemNoteRepository;
   }
 
   /**
@@ -98,7 +98,7 @@ public class HeliumRestApi {
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
-    final Note note = zeppelinNoteRepository.getNote(noteId);
+    final Note note = fileSystemNoteRepository.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
@@ -121,7 +121,7 @@ public class HeliumRestApi {
   @PostMapping(value = "/load/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity load(@PathVariable("noteId") final String noteId,
                              @PathVariable("paragraphId") final String paragraphId, final String heliumPackage) {
-    final Note note = zeppelinNoteRepository.getNote(noteId);
+    final Note note = fileSystemNoteRepository.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }

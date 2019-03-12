@@ -25,15 +25,15 @@ public class RemoteInterpreterProcessListenerImpl {
 // implements RemoteInterpreterProcessListener {
 //
 //  private final ConnectionManager connectionManager;
-//  private final ZeppelinNoteRepository zeppelinNoteRepository;
+//  private final FileSystemNoteRepository fileSystemNoteRepository;
 //  //FIXME
 //  private final InterpreterSettingRepository interpreterSettingRepository;
 //
 //  public RemoteInterpreterProcessListenerImpl(final ConnectionManager connectionManager,
-//                                              final ZeppelinNoteRepository zeppelinNoteRepository,
+//                                              final FileSystemNoteRepository fileSystemNoteRepository,
 //                                              final InterpreterSettingRepository interpreterSettingRepository) {
 //    this.connectionManager = connectionManager;
-//    this.zeppelinNoteRepository = zeppelinNoteRepository;
+//    this.fileSystemNoteRepository = fileSystemNoteRepository;
 //    this.interpreterSettingRepository = interpreterSettingRepository;
 //  }
 //
@@ -69,7 +69,7 @@ public class RemoteInterpreterProcessListenerImpl {
 //            .put("index", index)
 //            .put("type", type)
 //            .put("data", output);
-//    final Note note = zeppelinNoteRepository.getNote(noteId);
+//    final Note note = fileSystemNoteRepository.getNote(noteId);
 //
 //    connectionManager.broadcast(noteId, msg);
 //  }
@@ -80,7 +80,7 @@ public class RemoteInterpreterProcessListenerImpl {
 //  @Override
 //  public void onOutputClear(final String noteId,
 //                            final String paragraphId) {
-//    final Note note = zeppelinNoteRepository.getNote(noteId);
+//    final Note note = fileSystemNoteRepository.getNote(noteId);
 //
 //    //note.clearParagraphOutput(paragraphId);
 //    final Paragraph paragraph = note.getParagraph(paragraphId);
@@ -94,7 +94,7 @@ public class RemoteInterpreterProcessListenerImpl {
 //                                  final String paragraphId,
 //                                  final String interpreterSettingId,
 //                                  final Map<String, String> metaInfos) {
-//    final Note note = zeppelinNoteRepository.getNote(noteId);
+//    final Note note = fileSystemNoteRepository.getNote(noteId);
 //    if (note != null) {
 //      final Paragraph paragraph = note.getParagraph(paragraphId);
 //      if (paragraph != null) {
@@ -123,7 +123,7 @@ public class RemoteInterpreterProcessListenerImpl {
 //                            final List<Integer> paragraphIndices,
 //                            final List<String> paragraphIds,
 //                            final String curParagraphId) throws IOException {
-//    final Note note = zeppelinNoteRepository.getNote(noteId);
+//    final Note note = fileSystemNoteRepository.getNote(noteId);
 //    final List<String> toBeRunParagraphIds = new ArrayList<>();
 //    if (note == null) {
 //      throw new IOException("Not existed noteId: " + noteId);

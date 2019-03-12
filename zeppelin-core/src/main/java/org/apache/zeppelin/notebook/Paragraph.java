@@ -36,7 +36,7 @@ public class Paragraph implements Serializable {
   //  * Убрал InterpreterResult - надо сделать сервис по загрузке
   //  * Убрал ApplicationState - надо сделать сервис по загрузке
 
-  private final String id;
+  private String id;
   private String title;
   private String text;
   private String user;
@@ -61,6 +61,10 @@ public class Paragraph implements Serializable {
 
   public String getId() {
     return id;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
   }
 
   public String getTitle() {

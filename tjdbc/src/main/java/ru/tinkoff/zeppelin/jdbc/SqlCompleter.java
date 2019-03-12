@@ -10,7 +10,6 @@ import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.zeppelin.jdbc.completer.CachedCompleter;
@@ -419,87 +418,87 @@ public class SqlCompleter {
   /**
    * Fill candidates for statement.
    */
-  void fillCandidates(String statement, int cursor, List<InterpreterCompletion> candidates) {
-    SqlStatement sqlStatement = getStatementParameters(statement, cursor);
+//  void fillCandidates(String statement, int cursor, List<InterpreterCompletion> candidates) {
+//    SqlStatement sqlStatement = getStatementParameters(statement, cursor);
+//
+//    logger.debug("Complete with buffer = " + statement + ", cursor = " + cursor);
+//
+//
+//    String schema = sqlStatement.getSchema();
+//    int cursorPosition = sqlStatement.getCursorPosition();
+//
+//    if (schema == null) {   // process all
+//      final String buffer;
+//      if (cursorPosition > 0) {
+//        buffer = sqlStatement.getCursorString();
+//      } else {
+//        buffer = "";
+//      }
+//
+//      int allColumnsRes = 0;
+//      List<CharSequence> columnCandidates = new ArrayList<>();
+//      for (String schemaTable : sqlStatement.getActiveSchemaTables()) {
+//        int pointPos = schemaTable.indexOf('.');
+//        int columnRes = completeColumn(schemaTable.substring(0, pointPos),
+//            schemaTable.substring(pointPos + 1), buffer, cursorPosition, columnCandidates);
+//        addCompletions(candidates, columnCandidates, CompletionType.column.name());
+//        allColumnsRes = allColumnsRes + columnRes;
+//      }
+//
+//      List<CharSequence> tableInDefaultSchemaCandidates = new ArrayList<>();
+//      int tableRes = completeTable(defaultSchema, buffer, cursorPosition,
+//          tableInDefaultSchemaCandidates);
+//      addCompletions(candidates, tableInDefaultSchemaCandidates, CompletionType.table.name());
+//
+//      List<CharSequence> schemaCandidates = new ArrayList<>();
+//      int schemaRes = completeSchema(buffer, cursorPosition, schemaCandidates);
+//      addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
+//
+//      List<CharSequence> keywordsCandidates = new ArrayList<>();
+//      int keywordsRes = completeKeyword(buffer, cursorPosition, keywordsCandidates);
+//      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name()
+//          + "-tinkoff");
+//      logger.info("Complete for buffer with {}", keywordsCandidates);
+//
+//      logger.debug("Complete for buffer with " + keywordsRes + schemaRes
+//          + tableRes + allColumnsRes + "candidates");
+//    } else {
+//      String table = sqlStatement.getTable();
+//      String column = sqlStatement.getColumn();
+//      if (column == null) {
+//        List<CharSequence> tableCandidates = new ArrayList<>();
+//        int tableRes = completeTable(schema, table, cursorPosition, tableCandidates);
+//        addCompletions(candidates, tableCandidates, CompletionType.table.name());
+//        logger.debug("Complete for tables with " + tableRes + "candidates");
+//      } else { // process schema.table and alias case
+//        List<CharSequence> columnCandidates = new ArrayList<>();
+//        int columnRes = completeColumn(schema, table, column, cursorPosition, columnCandidates);
+//        addCompletions(candidates, columnCandidates, CompletionType.column.name());
+//        logger.debug("Complete for tables with " + columnRes + "candidates");
+//      }
+//    }
+//  }
 
-    logger.debug("Complete with buffer = " + statement + ", cursor = " + cursor);
-
-
-    String schema = sqlStatement.getSchema();
-    int cursorPosition = sqlStatement.getCursorPosition();
-
-    if (schema == null) {   // process all
-      final String buffer;
-      if (cursorPosition > 0) {
-        buffer = sqlStatement.getCursorString();
-      } else {
-        buffer = "";
-      }
-
-      int allColumnsRes = 0;
-      List<CharSequence> columnCandidates = new ArrayList<>();
-      for (String schemaTable : sqlStatement.getActiveSchemaTables()) {
-        int pointPos = schemaTable.indexOf('.');
-        int columnRes = completeColumn(schemaTable.substring(0, pointPos),
-            schemaTable.substring(pointPos + 1), buffer, cursorPosition, columnCandidates);
-        addCompletions(candidates, columnCandidates, CompletionType.column.name());
-        allColumnsRes = allColumnsRes + columnRes;
-      }
-
-      List<CharSequence> tableInDefaultSchemaCandidates = new ArrayList<>();
-      int tableRes = completeTable(defaultSchema, buffer, cursorPosition,
-          tableInDefaultSchemaCandidates);
-      addCompletions(candidates, tableInDefaultSchemaCandidates, CompletionType.table.name());
-
-      List<CharSequence> schemaCandidates = new ArrayList<>();
-      int schemaRes = completeSchema(buffer, cursorPosition, schemaCandidates);
-      addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
-
-      List<CharSequence> keywordsCandidates = new ArrayList<>();
-      int keywordsRes = completeKeyword(buffer, cursorPosition, keywordsCandidates);
-      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name()
-          + "-tinkoff");
-      logger.info("Complete for buffer with {}", keywordsCandidates);
-
-      logger.debug("Complete for buffer with " + keywordsRes + schemaRes
-          + tableRes + allColumnsRes + "candidates");
-    } else {
-      String table = sqlStatement.getTable();
-      String column = sqlStatement.getColumn();
-      if (column == null) {
-        List<CharSequence> tableCandidates = new ArrayList<>();
-        int tableRes = completeTable(schema, table, cursorPosition, tableCandidates);
-        addCompletions(candidates, tableCandidates, CompletionType.table.name());
-        logger.debug("Complete for tables with " + tableRes + "candidates");
-      } else { // process schema.table and alias case
-        List<CharSequence> columnCandidates = new ArrayList<>();
-        int columnRes = completeColumn(schema, table, column, cursorPosition, columnCandidates);
-        addCompletions(candidates, columnCandidates, CompletionType.column.name());
-        logger.debug("Complete for tables with " + columnRes + "candidates");
-      }
-    }
-  }
-
-  private void addCompletions(List<InterpreterCompletion> interpreterCompletions,
-                              List<CharSequence> candidates, String meta) {
-    for (CharSequence candidate : candidates) {
-      String description = candidate.toString();
-      // check candidate meta for description
-      if (meta.equals(CompletionType.column.name())
-          || meta.equals(CompletionType.schema.name())
-          || meta.equals(CompletionType.table.name())) {
-        description = databaseEntityDescription.get(candidate.toString());
-        if (description == null || description.equals("")) {
-          description = candidate.toString();
-        }
-      }
-
-      List<String> path = Arrays.asList(candidate.toString().split("\\."));
-      if (!path.isEmpty()) {
-        candidate = path.get(path.size() - 1);
-      }
-      interpreterCompletions.add(
-          new InterpreterCompletion(candidate.toString(), candidate.toString(), meta, description));
-    }
-  }
+//  private void addCompletions(List<InterpreterCompletion> interpreterCompletions,
+//                              List<CharSequence> candidates, String meta) {
+//    for (CharSequence candidate : candidates) {
+//      String description = candidate.toString();
+//      // check candidate meta for description
+//      if (meta.equals(CompletionType.column.name())
+//          || meta.equals(CompletionType.schema.name())
+//          || meta.equals(CompletionType.table.name())) {
+//        description = databaseEntityDescription.get(candidate.toString());
+//        if (description == null || description.equals("")) {
+//          description = candidate.toString();
+//        }
+//      }
+//
+//      List<String> path = Arrays.asList(candidate.toString().split("\\."));
+//      if (!path.isEmpty()) {
+//        candidate = path.get(path.size() - 1);
+//      }
+//      interpreterCompletions.add(
+//          new InterpreterCompletion(candidate.toString(), candidate.toString(), meta, description));
+//    }
+//  }
 }

@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
@@ -40,9 +40,9 @@ public class NoteFormsHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteFormsHandler.class);
 
   @Autowired
-  public NoteFormsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
+  public NoteFormsHandler(final FileSystemNoteRepository fileSystemNoteRepository,
                           final ConnectionManager connectionManager) {
-    super(connectionManager, zeppelinNoteRepository);
+    super(connectionManager, fileSystemNoteRepository);
   }
 
   @ZeppelinApi
@@ -55,7 +55,7 @@ public class NoteFormsHandler extends AbstractHandler {
     //TODO(KOT): wrong field
     note.getGuiConfiguration().setParams(noteParams);
 
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     broadcastNoteForms(note);
   }
 
@@ -68,7 +68,7 @@ public class NoteFormsHandler extends AbstractHandler {
 
     note.getGuiConfiguration().getForms().remove(formName);
     note.getGuiConfiguration().getParams().remove(formName);
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     broadcastNoteForms(note);
   }

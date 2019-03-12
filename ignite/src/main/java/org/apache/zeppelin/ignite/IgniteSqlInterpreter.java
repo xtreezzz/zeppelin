@@ -20,7 +20,6 @@ import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterException;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,9 +168,9 @@ public class IgniteSqlInterpreter extends Interpreter {
   }
 
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) {
-    return new LinkedList<>();
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) {
+//    return new LinkedList<>();
+//  }
 }

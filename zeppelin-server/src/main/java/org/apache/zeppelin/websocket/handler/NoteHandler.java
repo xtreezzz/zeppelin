@@ -17,6 +17,11 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
@@ -26,7 +31,7 @@ import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.NoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -34,14 +39,9 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 
 @Component
@@ -52,10 +52,11 @@ public class NoteHandler extends AbstractHandler {
   private final ZeppelinConfiguration zeppelinConfiguration;
 
   @Autowired
-  public NoteHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
+//  FileSystemNoteRepository DatabaseNoteRepository
+  public NoteHandler(@Qualifier("DatabaseNoteRepository") final NoteRepository noteRepository,
                      final ConnectionManager connectionManager,
                      final ZeppelinConfiguration zeppelinConfiguration) {
-    super(connectionManager, zeppelinNoteRepository);
+    super(connectionManager, noteRepository);
     this.zeppelinConfiguration = zeppelinConfiguration;
   }
 
@@ -63,7 +64,7 @@ public class NoteHandler extends AbstractHandler {
   public void listNotesInfo(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(serviceContext.getUserAndRoles());
     conn.sendMessage(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo).toSend());
   }
@@ -79,7 +80,7 @@ public class NoteHandler extends AbstractHandler {
     final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
     checkPermission(noteId, Permission.READER, serviceContext);
-    final Note note = zeppelinNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     if (note != null) {
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
@@ -117,7 +118,7 @@ public class NoteHandler extends AbstractHandler {
     //  zeppelinRepository.refreshCron(note.getId());
     //}
 
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
             .put("path", path)
@@ -131,7 +132,7 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
-    zeppelinNoteRepository.removeNote(note.getId());
+    noteRepository.removeNote(note.getId());
     //zeppelinRepository.removeNote(note.getId(), serviceContext.getAutheInfo());
     connectionManager.removeNoteSubscribers(note.getId());
     broadcastNoteList(serviceContext.getUserAndRoles());
@@ -151,15 +152,14 @@ public class NoteHandler extends AbstractHandler {
             : zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
 
     try {
-      String noteName = notePath.substring(notePath.lastIndexOf(File.separator) + 1);
-      final Note note = new Note(noteName, notePath, defaultInterpreterGroup);
+      final Note note = new Note(notePath, defaultInterpreterGroup);
 
       // it's an empty note. so add one paragraph
       //note.addParagraph(serviceContext.getAutheInfo());
       final Paragraph paragraph = new Paragraph("", "", serviceContext.getAutheInfo().getUser(), new GUI());
       note.getParagraphs().add(paragraph);
 
-      zeppelinNoteRepository.persistNote(note);
+      noteRepository.persistNote(note);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
       publishNote(note, conn, serviceContext);
@@ -208,7 +208,7 @@ public class NoteHandler extends AbstractHandler {
 
     //TODO(SAN) вынести потом '~Trash' куда-нибудь
     note.setPath("/" + "~Trash" + note.getPath());
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
@@ -287,7 +287,7 @@ public class NoteHandler extends AbstractHandler {
     final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
     //try {
       //zeppelinRepository.removeFolder(folderPath);
-      final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+      final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
       //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(serviceContext.getUserAndRoles());
       for (final NoteInfo noteInfo : notesInfo) {
         connectionManager.removeNoteSubscribers(noteInfo.getId());
@@ -338,7 +338,7 @@ public class NoteHandler extends AbstractHandler {
   }
 
   private void broadcastNoteList(final Set<String> userAndRoles) {
-    final List<NoteInfo> notesInfo = zeppelinNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(userAndRoles);
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
   }

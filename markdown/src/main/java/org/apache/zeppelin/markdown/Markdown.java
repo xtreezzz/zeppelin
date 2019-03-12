@@ -20,7 +20,6 @@ package org.apache.zeppelin.markdown;
 import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,9 +110,9 @@ public class Markdown extends Interpreter {
     return 0;
   }
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) {
-    return null;
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) {
+//    return null;
+//  }
 }

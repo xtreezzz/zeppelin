@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
@@ -48,15 +48,15 @@ import java.util.Collections;
 public class NotebookRepoRestApi extends AbstractRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRepoRestApi.class);
 
-  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final FileSystemNoteRepository fileSystemNoteRepository;
   private final ConnectionManager connectionManager;
 
   @Autowired
-  public NotebookRepoRestApi(final ZeppelinNoteRepository zeppelinNoteRepository,
+  public NotebookRepoRestApi(final FileSystemNoteRepository fileSystemNoteRepository,
                              @Qualifier("NoSecurityService") final SecurityService securityService,
                              final ConnectionManager connectionManager) {
     super(securityService);
-    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.fileSystemNoteRepository = fileSystemNoteRepository;
     this.connectionManager = connectionManager;
   }
 

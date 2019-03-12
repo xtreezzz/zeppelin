@@ -20,10 +20,12 @@ package org.apache.zeppelin.websocket.handler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.Input;
+import org.apache.zeppelin.repositories.NoteRepository;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
@@ -35,9 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public abstract class AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
@@ -48,11 +47,11 @@ public abstract class AbstractHandler {
           .registerTypeAdapterFactory(Input.TypeAdapterFactory).create();
 
   protected final ConnectionManager connectionManager;
-  protected final ZeppelinNoteRepository zeppelinNoteRepository;
+  protected final NoteRepository noteRepository;
 
-  public AbstractHandler(final ConnectionManager connectionManager, final ZeppelinNoteRepository zeppelinNoteRepository) {
+  public AbstractHandler(final ConnectionManager connectionManager, final NoteRepository zeppelinNoteRepository) {
     this.connectionManager = connectionManager;
-    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.noteRepository = zeppelinNoteRepository;
   }
 
   protected ServiceContext getServiceContext(final SockMessage message) {
@@ -80,7 +79,7 @@ public abstract class AbstractHandler {
             : message.safeGetType(paramName, LOG);
 
     checkPermission(noteId, permission, serviceContext);
-    final Note note = zeppelinNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     if (note == null) {
       throw new NoteNotFoundException(noteId);
     }
@@ -110,7 +109,7 @@ public abstract class AbstractHandler {
   protected void checkPermission(final String noteId,
                                  final Permission permission,
                                  final ServiceContext context) {
-    Note target = zeppelinNoteRepository.getNote(noteId);
+    Note target = noteRepository.getNote(noteId);
     if (permission == Permission.ANY || target == null) {
       return;
     }

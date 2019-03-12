@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
@@ -37,8 +37,8 @@ public class CompletionHandler extends AbstractHandler {
   @Autowired
   public CompletionHandler(final ConnectionManager connectionManager,
                            //final InterpreterFactory interpreterFactory,
-                           final ZeppelinNoteRepository zeppelinNoteRepository) {
-    super(connectionManager, zeppelinNoteRepository);
+                           final FileSystemNoteRepository fileSystemNoteRepository) {
+    super(connectionManager, fileSystemNoteRepository);
     //this.interpreterFactory = interpreterFactory;
   }
 

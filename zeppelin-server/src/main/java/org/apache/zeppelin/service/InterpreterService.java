@@ -23,11 +23,11 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.DependencyResolver;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,15 +65,15 @@ public class InterpreterService {
   private final ZeppelinConfiguration conf;
   //FIXME
   private final InterpreterSettingRepository interpreterSettingRepository;
-  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final FileSystemNoteRepository fileSystemNoteRepository;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
                             final InterpreterSettingRepository interpreterSettingRepository,
-                            final ZeppelinNoteRepository zeppelinNoteRepository) {
+                            final FileSystemNoteRepository fileSystemNoteRepository) {
     this.conf = conf;
     this.interpreterSettingRepository = interpreterSettingRepository;
-    this.zeppelinNoteRepository = zeppelinNoteRepository;
+    this.fileSystemNoteRepository = fileSystemNoteRepository;
   }
 
   public void installInterpreter(
@@ -182,7 +182,7 @@ public class InterpreterService {
    * Extract info about running interpreters with additional paragraph info.
    */
   public List<Map<String, String>> getRunningInterpretersParagraphInfo() {
-    return zeppelinNoteRepository.getAllNotes().stream()
+    return fileSystemNoteRepository.getAllNotes().stream()
             .map(Note::getParagraphs)
             .flatMap(Collection::stream)
             //.filter(Paragraph::isRunning)

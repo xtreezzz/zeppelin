@@ -31,7 +31,6 @@ import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterException;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.apache.zeppelin.jdbc.security.JDBCSecurityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -834,30 +833,30 @@ public class JDBCInterpreter extends Interpreter {
   }
 
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) throws InterpreterException {
-    List<InterpreterCompletion> candidates = new ArrayList<>();
-    String propertyKey = getPropertyKey(interpreterContext);
-    String sqlCompleterKey =
-        String.format("%s.%s", ""/*interpreterContext.getAuthenticationInfo().getUser()*/, propertyKey);
-    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
-
-    Connection connection = null;
-    try {
-      if (interpreterContext != null) {
-        connection = getConnection(propertyKey, interpreterContext);
-      }
-    } catch (ClassNotFoundException | SQLException | IOException e) {
-      logger.warn("SQLCompleter will created without use connection");
-    }
-
-    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
-    sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
-    sqlCompleter.complete(buf, cursor, candidates);
-
-    return candidates;
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) throws InterpreterException {
+//    List<InterpreterCompletion> candidates = new ArrayList<>();
+//    String propertyKey = getPropertyKey(interpreterContext);
+//    String sqlCompleterKey =
+//        String.format("%s.%s", ""/*interpreterContext.getAuthenticationInfo().getUser()*/, propertyKey);
+//    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
+//
+//    Connection connection = null;
+//    try {
+//      if (interpreterContext != null) {
+//        connection = getConnection(propertyKey, interpreterContext);
+//      }
+//    } catch (ClassNotFoundException | SQLException | IOException e) {
+//      logger.warn("SQLCompleter will created without use connection");
+//    }
+//
+//    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
+//    sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
+//    sqlCompleter.complete(buf, cursor, candidates);
+//
+//    return candidates;
+//  }
 
   public int getMaxResult() {
     return maxLineResults;

@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -32,8 +32,8 @@ import java.io.IOException;
 public class RunnerHandler extends AbstractHandler {
 
   @Autowired
-  public RunnerHandler(final ConnectionManager connectionManager, final ZeppelinNoteRepository zeppelinNoteRepository) {
-    super(connectionManager, zeppelinNoteRepository);
+  public RunnerHandler(final ConnectionManager connectionManager, final FileSystemNoteRepository fileSystemNoteRepository) {
+    super(connectionManager, fileSystemNoteRepository);
   }
 
   public void stopNoteExecution(final WebSocketSession conn,

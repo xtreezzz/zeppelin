@@ -68,6 +68,11 @@ public class Note implements Serializable {
   private final Set<String> runners;
   private final Set<String> writers;
 
+  public Note(final String path, final String defaultInterpreterGroup) {
+    this(null, path, defaultInterpreterGroup);
+    this.name = path.substring(path.lastIndexOf(File.separator) + 1);
+  }
+
   public Note(final String name, final String path, final String defaultInterpreterGroup) {
     this.id = IdHashes.generateId();
     this.name = name;

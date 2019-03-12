@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -153,11 +151,11 @@ public class ShellInterpreter extends Interpreter {
   }
 
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) {
-    return null;
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) {
+//    return null;
+//  }
 
 //  @Override
 //  protected boolean runKerberosLogin() {

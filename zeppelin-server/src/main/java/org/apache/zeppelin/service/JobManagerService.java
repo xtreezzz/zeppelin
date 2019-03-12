@@ -18,7 +18,7 @@
 package org.apache.zeppelin.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
@@ -38,16 +38,16 @@ public class JobManagerService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JobManagerService.class);
 
-  private final ZeppelinNoteRepository zeppelinNoteRepository;
+  private final FileSystemNoteRepository fileSystemNoteRepository;
 
   @Autowired
-  public JobManagerService(final ZeppelinNoteRepository zeppelinNoteRepository) {
-    this.zeppelinNoteRepository = zeppelinNoteRepository;
+  public JobManagerService(final FileSystemNoteRepository fileSystemNoteRepository) {
+    this.fileSystemNoteRepository = fileSystemNoteRepository;
   }
 
   public List<NoteJobInfo> getNoteJobInfo(final String noteId) {
     final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
-    final Note jobNote = zeppelinNoteRepository.getNote(noteId);
+    final Note jobNote = fileSystemNoteRepository.getNote(noteId);
     notesJobInfo.add(new NoteJobInfo(jobNote));
     return notesJobInfo;
   }
@@ -56,7 +56,7 @@ public class JobManagerService {
    * Get all NoteJobInfo after lastUpdateServerUnixTime
    */
   public List<NoteJobInfo> getNoteJobInfoByUnixTime(final long lastUpdateServerUnixTime) {
-    final List<Note> notes = zeppelinNoteRepository.getAllNotes();
+    final List<Note> notes = fileSystemNoteRepository.getAllNotes();
     final List<NoteJobInfo> notesJobInfo = new ArrayList<>();
     for (final Note note : notes) {
       final NoteJobInfo noteJobInfo = new NoteJobInfo(note);

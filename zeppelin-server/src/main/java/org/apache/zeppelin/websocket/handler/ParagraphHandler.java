@@ -19,7 +19,7 @@ package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
@@ -48,9 +48,9 @@ public class ParagraphHandler extends AbstractHandler {
   private final Boolean collaborativeModeEnable;
 
   @Autowired
-  public ParagraphHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
+  public ParagraphHandler(final FileSystemNoteRepository fileSystemNoteRepository,
                           final ConnectionManager connectionManager) {
-    super(connectionManager, zeppelinNoteRepository);
+    super(connectionManager, fileSystemNoteRepository);
     this.collaborativeModeEnable = ZeppelinConfiguration
             .create()
             .isZeppelinNotebookCollaborativeModeEnable();
@@ -71,7 +71,7 @@ public class ParagraphHandler extends AbstractHandler {
     p.setTitle(title);
     p.setText(text);
 
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
@@ -95,7 +95,7 @@ public class ParagraphHandler extends AbstractHandler {
     paragraphText = (String) dmp.patchApply(patches, paragraphText)[0];
 
     p.setText(paragraphText);
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PATCH_PARAGRAPH)
             .put("patch", patchText)
@@ -111,7 +111,7 @@ public class ParagraphHandler extends AbstractHandler {
 
     note.getParagraphs().removeIf(paragraph -> paragraph.getId().equals(p.getId()));
 
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_REMOVED)
             .put("id", p.getId());
@@ -140,7 +140,7 @@ public class ParagraphHandler extends AbstractHandler {
     }
 
     //note.moveParagraph(p.getId(), index);
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", p.getId())
@@ -162,7 +162,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Paragraph p = new Paragraph("", "", serviceContext.getAutheInfo().getUser(), new GUI());
     note.getParagraphs().add(index, p);
 
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", p).put("index", index));
     return p.getId();
   }

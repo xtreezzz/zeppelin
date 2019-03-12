@@ -31,6 +31,7 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -43,9 +44,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class ZeppelinNoteRepository implements NoteRepository{
+@Qualifier("FileSystemNoteRepository")
+public class FileSystemNoteRepository implements NoteRepository{
 
-  private static final Logger LOG = LoggerFactory.getLogger(ZeppelinNoteRepository.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileSystemNoteRepository.class);
 
   private static final String defaultStorage = "org.apache.zeppelin.notebook.repo.GitNotebookRepo";
 
@@ -54,7 +56,7 @@ public class ZeppelinNoteRepository implements NoteRepository{
 
 
   @Autowired
-  public ZeppelinNoteRepository(final ZeppelinConfiguration conf) {
+  public FileSystemNoteRepository(final ZeppelinConfiguration conf) {
     this.conf = conf;
   }
 

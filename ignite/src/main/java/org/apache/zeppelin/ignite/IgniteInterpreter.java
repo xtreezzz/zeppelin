@@ -24,7 +24,6 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Console;
@@ -322,9 +321,9 @@ public class IgniteInterpreter extends Interpreter {
     return 0;
   }
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) {
-    return new LinkedList<>();
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) {
+//    return new LinkedList<>();
+//  }
 }

@@ -17,14 +17,11 @@
 
 package org.apache.zeppelin.angular;
 
+import java.util.LinkedList;
+import java.util.Properties;
 import org.apache.zeppelin.interpreter.core.Interpreter;
 import org.apache.zeppelin.interpreter.core.InterpreterContext;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
 
 /**
  *
@@ -62,9 +59,9 @@ public class AngularInterpreter extends Interpreter {
     return 0;
   }
 
-  @Override
-  public List<InterpreterCompletion> completion(String buf, int cursor,
-                                                InterpreterContext interpreterContext) {
-    return new LinkedList<>();
-  }
+//  @Override
+//  public List<InterpreterCompletion> completion(String buf, int cursor,
+//                                                InterpreterContext interpreterContext) {
+//    return new LinkedList<>();
+//  }
 }

@@ -18,14 +18,11 @@
 package org.apache.zeppelin.interpreter.core;
 
 
+import java.net.URL;
+import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URL;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Interface for interpreters.
@@ -134,9 +131,9 @@ public abstract class Interpreter {
    * @param interpreterContext
    * @return list of possible completion. Return empty list if there're nothing to return.
    */
-  public List<InterpreterCompletion> completion(String buf, int cursor, InterpreterContext interpreterContext) throws InterpreterException {
-    return null;
-  }
+//  public List<InterpreterCompletion> completion(String buf, int cursor, InterpreterContext interpreterContext) throws InterpreterException {
+//    return null;
+//  }
 
   public static Logger logger = LoggerFactory.getLogger(Interpreter.class);
   private URL[] classloaderUrls;

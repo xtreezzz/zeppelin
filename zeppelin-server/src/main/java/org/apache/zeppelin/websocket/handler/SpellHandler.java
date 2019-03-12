@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
+import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
@@ -42,9 +42,9 @@ public class SpellHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SpellHandler.class);
 
   @Autowired
-  public SpellHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
+  public SpellHandler(final FileSystemNoteRepository fileSystemNoteRepository,
                       final ConnectionManager connectionManager) {
-    super(connectionManager, zeppelinNoteRepository);
+    super(connectionManager, fileSystemNoteRepository);
   }
 
   //TODO(KOT): check "noteId"
@@ -73,7 +73,7 @@ public class SpellHandler extends AbstractHandler {
     p.setUpdated(LocalDateTime.parse(dateFinished, formatter));
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
-    zeppelinNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
   }
 

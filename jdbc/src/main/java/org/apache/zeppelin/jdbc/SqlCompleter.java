@@ -8,7 +8,6 @@ import jline.console.completer.ArgumentCompleter.ArgumentList;
 import jline.console.completer.ArgumentCompleter.WhitespaceArgumentDelimiter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.apache.zeppelin.jdbc.completer.CachedCompleter;
 import org.apache.zeppelin.jdbc.completer.CompletionType;
 import org.apache.zeppelin.jdbc.completer.StringsCompleter;
@@ -73,29 +72,29 @@ public class SqlCompleter {
     this.ttlInSeconds = ttlInSeconds;
   }
 
-  public int complete(String buffer, int cursor, List<InterpreterCompletion> candidates) {
-    logger.debug("Complete with buffer = " + buffer + ", cursor = " + cursor);
-
-    // The delimiter breaks the buffer into separate words (arguments), separated by the
-    // white spaces.
-    ArgumentList argumentList = sqlDelimiter.delimit(buffer, cursor);
-
-    Pattern whitespaceEndPatter = Pattern.compile("\\s$");
-    String cursorArgument = null;
-    int argumentPosition;
-    if (buffer.length() == 0 || whitespaceEndPatter.matcher(buffer).find()) {
-      argumentPosition = buffer.length() - 1;
-    } else {
-      cursorArgument = argumentList.getCursorArgument();
-      argumentPosition = argumentList.getArgumentPosition();
-    }
-
-    int complete = completeName(cursorArgument, argumentPosition, candidates,
-            findAliasesInSQL(argumentList.getArguments()));
-
-    logger.debug("complete:" + complete + ", size:" + candidates.size());
-    return complete;
-  }
+//  public int complete(String buffer, int cursor, List<InterpreterCompletion> candidates) {
+//    logger.debug("Complete with buffer = " + buffer + ", cursor = " + cursor);
+//
+//    // The delimiter breaks the buffer into separate words (arguments), separated by the
+//    // white spaces.
+//    ArgumentList argumentList = sqlDelimiter.delimit(buffer, cursor);
+//
+//    Pattern whitespaceEndPatter = Pattern.compile("\\s$");
+//    String cursorArgument = null;
+//    int argumentPosition;
+//    if (buffer.length() == 0 || whitespaceEndPatter.matcher(buffer).find()) {
+//      argumentPosition = buffer.length() - 1;
+//    } else {
+//      cursorArgument = argumentList.getCursorArgument();
+//      argumentPosition = argumentList.getArgumentPosition();
+//    }
+//
+//    int complete = completeName(cursorArgument, argumentPosition, candidates,
+//            findAliasesInSQL(argumentList.getArguments()));
+//
+//    logger.debug("complete:" + complete + ", size:" + candidates.size());
+//    return complete;
+//  }
 
   /**
    * Return list of schema names within the database.
@@ -433,68 +432,68 @@ public class SqlCompleter {
    * @param aliases for every alias contains table name in format schema_name.table_name
    * @return -1 in case of no candidates found, 0 otherwise
    */
-  public int completeName(String buffer, int cursor, List<InterpreterCompletion> candidates,
-                          Map<String, String> aliases) {
-    CursorArgument cursorArgument = parseCursorArgument(buffer, cursor);
-
-    // find schema and table name if they are
-    String schema;
-    String table;
-    String column;
-
-    if (cursorArgument.getSchema() == null) {             // process all
-      List<CharSequence> keywordsCandidates = new ArrayList();
-      List<CharSequence> schemaCandidates = new ArrayList<>();
-      int keywordsRes = completeKeyword(buffer, cursor, keywordsCandidates);
-      int schemaRes = completeSchema(buffer, cursor, schemaCandidates);
-      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name());
-      addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
-      return NumberUtils.max(new int[]{keywordsRes, schemaRes});
-    } else {
-      schema = cursorArgument.getSchema();
-      if (aliases.containsKey(schema)) {  // process alias case
-        String alias = aliases.get(schema);
-        int pointPos = alias.indexOf('.');
-        schema = alias.substring(0, pointPos);
-        table = alias.substring(pointPos + 1);
-        column = cursorArgument.getColumn();
-        List<CharSequence> columnCandidates = new ArrayList();
-        int columnRes = completeColumn(schema, table, column, cursorArgument.getCursorPosition(),
-            columnCandidates);
-        addCompletions(candidates, columnCandidates, CompletionType.column.name());
-        // process schema.table case
-      } else if (cursorArgument.getTable() != null && cursorArgument.getColumn() == null) {
-        List<CharSequence> tableCandidates = new ArrayList();
-        table = cursorArgument.getTable();
-        int tableRes = completeTable(schema, table, cursorArgument.getCursorPosition(),
-            tableCandidates);
-        addCompletions(candidates, tableCandidates, CompletionType.table.name());
-        return tableRes;
-      } else {
-        List<CharSequence> columnCandidates = new ArrayList();
-        table = cursorArgument.getTable();
-        column = cursorArgument.getColumn();
-        int columnRes = completeColumn(schema, table, column, cursorArgument.getCursorPosition(),
-            columnCandidates);
-        addCompletions(candidates, columnCandidates, CompletionType.column.name());
-      }
-    }
-
-    return -1;
-  }
+//  public int completeName(String buffer, int cursor, List<InterpreterCompletion> candidates,
+//                          Map<String, String> aliases) {
+//    CursorArgument cursorArgument = parseCursorArgument(buffer, cursor);
+//
+//    // find schema and table name if they are
+//    String schema;
+//    String table;
+//    String column;
+//
+//    if (cursorArgument.getSchema() == null) {             // process all
+//      List<CharSequence> keywordsCandidates = new ArrayList();
+//      List<CharSequence> schemaCandidates = new ArrayList<>();
+//      int keywordsRes = completeKeyword(buffer, cursor, keywordsCandidates);
+//      int schemaRes = completeSchema(buffer, cursor, schemaCandidates);
+//      addCompletions(candidates, keywordsCandidates, CompletionType.keyword.name());
+//      addCompletions(candidates, schemaCandidates, CompletionType.schema.name());
+//      return NumberUtils.max(new int[]{keywordsRes, schemaRes});
+//    } else {
+//      schema = cursorArgument.getSchema();
+//      if (aliases.containsKey(schema)) {  // process alias case
+//        String alias = aliases.get(schema);
+//        int pointPos = alias.indexOf('.');
+//        schema = alias.substring(0, pointPos);
+//        table = alias.substring(pointPos + 1);
+//        column = cursorArgument.getColumn();
+//        List<CharSequence> columnCandidates = new ArrayList();
+//        int columnRes = completeColumn(schema, table, column, cursorArgument.getCursorPosition(),
+//            columnCandidates);
+//        addCompletions(candidates, columnCandidates, CompletionType.column.name());
+//        // process schema.table case
+//      } else if (cursorArgument.getTable() != null && cursorArgument.getColumn() == null) {
+//        List<CharSequence> tableCandidates = new ArrayList();
+//        table = cursorArgument.getTable();
+//        int tableRes = completeTable(schema, table, cursorArgument.getCursorPosition(),
+//            tableCandidates);
+//        addCompletions(candidates, tableCandidates, CompletionType.table.name());
+//        return tableRes;
+//      } else {
+//        List<CharSequence> columnCandidates = new ArrayList();
+//        table = cursorArgument.getTable();
+//        column = cursorArgument.getColumn();
+//        int columnRes = completeColumn(schema, table, column, cursorArgument.getCursorPosition(),
+//            columnCandidates);
+//        addCompletions(candidates, columnCandidates, CompletionType.column.name());
+//      }
+//    }
+//
+//    return -1;
+//  }
 
   // test purpose only
   WhitespaceArgumentDelimiter getSqlDelimiter() {
     return this.sqlDelimiter;
   }
 
-  private void addCompletions(List<InterpreterCompletion> interpreterCompletions,
-      List<CharSequence> candidates, String meta) {
-    for (CharSequence candidate : candidates) {
-      interpreterCompletions.add(new InterpreterCompletion(candidate.toString(),
-          candidate.toString(), meta, StringUtils.EMPTY));
-    }
-  }
+//  private void addCompletions(List<InterpreterCompletion> interpreterCompletions,
+//      List<CharSequence> candidates, String meta) {
+//    for (CharSequence candidate : candidates) {
+//      interpreterCompletions.add(new InterpreterCompletion(candidate.toString(),
+//          candidate.toString(), meta, StringUtils.EMPTY));
+//    }
+//  }
 
   private CursorArgument parseCursorArgument(String buffer, int cursor) {
     CursorArgument result = new CursorArgument();

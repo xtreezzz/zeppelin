@@ -259,7 +259,7 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
     });
   };
 
-  const p = this.getAllEnabledPackages()
+  /*const p = this.getAllEnabledPackages()
     .then((enabledPackageSearchResults) => {
       const promises = enabledPackageSearchResults.map((packageSearchResult) => {
         const pkgName = packageSearchResult.pkg.name;
@@ -298,7 +298,7 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
         visualizationBundles.push(b);
       }
     });
-  });
+  });*/
 
   this.init = function() {
     this.getVisualizationPackageOrder();

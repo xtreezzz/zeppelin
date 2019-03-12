@@ -400,26 +400,26 @@ public class InterpreterSettingRepository {
 
   //----------------------------- SAVING -----------------------------
   public void saveToFile() {
-    InterpreterInfoSaving info = new InterpreterInfoSaving();
-    info.interpreterSettings = Maps.newHashMap(interpreterSettings);
-    info.interpreterRepositories = interpreterRepositories;
-
-    File file = new File(conf.getConfigFSDir() + FILENAME);
-    boolean isFileCreated = file.getParentFile().mkdirs();
-    LOGGER.info("Interpreter settings file {} created - {}", file.getParent(), isFileCreated);
-    try {
-      File tempFile = File.createTempFile(file.getName(), null, file.getParentFile());
-      try (FileOutputStream out = new FileOutputStream(tempFile)) {
-        IOUtils.write(new Gson().toJson(info), out, "UTF-16");
-        Files.copy(tempFile.toPath(), file.toPath());
-      } catch (IOException e) {
-        LOGGER.error("Error saving interpreter settings", e);
-      } finally {
-        Files.delete(tempFile.toPath());
-      }
-    } catch (IOException e) {
-      LOGGER.error("Error saving interpreter settings", e);
-    }
+//    InterpreterInfoSaving info = new InterpreterInfoSaving();
+//    info.interpreterSettings = Maps.newHashMap(interpreterSettings);
+//    info.interpreterRepositories = interpreterRepositories;
+//
+//    File file = new File(conf.getConfigFSDir() + FILENAME);
+//    boolean isFileCreated = file.getParentFile().mkdirs();
+//    LOGGER.info("Interpreter settings file {} created - {}", file.getParent(), isFileCreated);
+//    try {
+//      File tempFile = File.createTempFile(file.getName(), null, file.getParentFile());
+//      try (FileOutputStream out = new FileOutputStream(tempFile)) {
+//        IOUtils.write(new Gson().toJson(info), out, "UTF-16");
+//        Files.copy(tempFile.toPath(), file.toPath());
+//      } catch (IOException e) {
+//        LOGGER.error("Error saving interpreter settings", e);
+//      } finally {
+//        Files.delete(tempFile.toPath());
+//      }
+//    } catch (IOException e) {
+//      LOGGER.error("Error saving interpreter settings", e);
+//    }
   }
 
   //----------------------------- UTIL -----------------------------
