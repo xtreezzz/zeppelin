@@ -140,11 +140,13 @@ public class VFSNotebookRepo implements NotebookRepo {
   public Note get(String noteId, String notePath, AuthenticationInfo subject) throws IOException {
     Note result = null;
     try {
+      // try to load note by path in new format (note name starts with '_')
       result = loadNoteFromJson(rootNotebookFileObject.resolveFile(
           buildNoteFileName(noteId, notePath),
           NameScope.DESCENDENT)
       );
     } catch (IOException e) {
+      // otherwise load note in old format, if path is incorrect exception will be thrown
       result = loadNoteFromJson(rootNotebookFileObject.resolveFile(
           buildNoteFileNameWithoutPrefix(noteId, notePath),
           NameScope.DESCENDENT)

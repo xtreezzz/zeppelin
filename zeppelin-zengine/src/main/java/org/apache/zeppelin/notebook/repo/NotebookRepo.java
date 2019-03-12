@@ -26,11 +26,14 @@ import org.apache.zeppelin.user.AuthenticationInfo;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Notebook repository (persistence layer) abstraction
  */
 public interface NotebookRepo {
+  static final Logger LOGGER = LoggerFactory.getLogger(NotebookRepo.class);
 
   void init(ZeppelinConfiguration zConf) throws IOException;
 
@@ -185,11 +188,21 @@ public interface NotebookRepo {
           "Invalid note name, no '_' in note name: " + noteFileName);
     }
     try {
-      String relativeNoteFileName = noteFileName.substring(rootNoteFolder.length(), index);
-      int prefix = relativeNoteFileName.indexOf('_');
-      if (prefix != -1 && prefix == relativeNoteFileName.lastIndexOf('/') + 1) {
-        return  relativeNoteFileName.substring(0, prefix) + relativeNoteFileName.substring(prefix + 1);
+      // If note saved in new format (with '_' prefix) method should return path without '_'
+      // get full_path_to_note {NOTEBOOK_DIR}/{FULL_PATH_TO_NOTE}_{id}.zpln
+      String fullNotePath = noteFileName.substring(rootNoteFolder.length(), index);
+      // get the filename from path_to_note
+      String noteName = fullNotePath.substring(fullNotePath.lastIndexOf('/') + 1);
+      // get the index of first '_' in the name
+      int prefix = noteName.indexOf('_');
+      // note name should start with '_' in new format
+      if (prefix == 0) {
+        // construct path: {CURRENT_NOTE_DIR} + {NOTE_NAME}
+        String noteDir =
+            fullNotePath.substring(0, fullNotePath.lastIndexOf('/') + 1);
+        return noteDir + noteName.substring(1);
       }
+      // otherwise note saved in old format without prefix
       return noteFileName.substring(rootNoteFolder.length(), index);
     } catch (StringIndexOutOfBoundsException e) {
       throw new IOException("Invalid note name: " + noteFileName);
