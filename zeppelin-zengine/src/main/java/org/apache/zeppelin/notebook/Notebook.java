@@ -586,8 +586,8 @@ public class Notebook {
     public void execute(JobExecutionContext context) throws JobExecutionException {
       String noteId = context.getJobDetail().getJobDataMap().getString("noteId");
       Note note = notebook.getNote(noteId);
-      LOGGER.info("[CRON]: Job started on cron:\n\tJobExecutionContext context={}\n\tnote={}",
-          context, note);
+      LOGGER.debug("[CRON]: Job started on cron:\n\tJobExecutionContext context={}\n\tnote={}",
+          context, note.getPath());
       if (note.haveRunningOrPendingParagraphs()) {
         LOGGER.warn("execution of the cron job is skipped because there is a running or pending " +
             "paragraph (note id: {})", noteId);
@@ -599,11 +599,11 @@ public class Notebook {
         return;
       }
 
-      LOGGER.info("[CRON]: note could be executed - note before running - {}", note.toJson());
+      LOGGER.debug("[CRON]: note {} could be executed", note.getId());
 
       runNote(note);
 
-      LOGGER.info("[CRON]: runNote(note) finished - note after running - {}", note.toJson());
+      LOGGER.debug("[CRON]: runNote(note={}) finished", note.getId());
 
       boolean releaseResource = false;
       String cronExecutingUser = null;
@@ -623,17 +623,17 @@ public class Notebook {
       releaseResource = true;
 
       if (releaseResource) {
-        LOGGER.info("[CRON]: releaseResource = TRUE, shutting down the interpreter");
+        LOGGER.debug("[CRON]: releaseResource = TRUE, shutting down the interpreter");
         for (InterpreterSetting setting : notebook.getInterpreterSettingManager()
             .getInterpreterSettings(note.getId())) {
           try {
             notebook.getInterpreterSettingManager().restart(setting.getId(), noteId,
                     cronExecutingUser != null ? cronExecutingUser : "anonymous");
-            LOGGER.info("[CRON]: interpreter restart called successfully for interpterSettins - {}",
+            LOGGER.debug("[CRON]: interpreter restart called successfully for interpterSettins - {}",
                 setting.getId());
           } catch (InterpreterException e) {
             LOGGER.error("Fail to restart interpreter: " + setting.getId(), e);
-            LOGGER.info("[CRON]: interpreter restart failed");
+            LOGGER.debug("[CRON]: interpreter restart failed");
           }
         }
       }
@@ -650,7 +650,7 @@ public class Notebook {
           StringUtils.isEmpty(cronExecutingRoles) ? null : cronExecutingRoles,
           null);
       note.runAllParagraphs(authenticationInfo, true);
-      LOGGER.info("[CRON]: note.runAllParagraphs() called in runNote(note)");
+      LOGGER.debug("[CRON]: note.runAllParagraphs() called in runNote(note)");
     }
   }
 

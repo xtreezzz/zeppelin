@@ -26,14 +26,11 @@ import org.apache.zeppelin.user.AuthenticationInfo;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Notebook repository (persistence layer) abstraction
  */
 public interface NotebookRepo {
-  static final Logger LOGGER = LoggerFactory.getLogger(NotebookRepo.class);
 
   void init(ZeppelinConfiguration zConf) throws IOException;
 
