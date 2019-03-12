@@ -19,6 +19,7 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.repositories.NoteRepository;
 import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -27,6 +28,7 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -41,8 +43,8 @@ public class NoteRevisionHandler extends AbstractHandler {
 
   @Autowired
   public NoteRevisionHandler(final ConnectionManager connectionManager,
-                             final FileSystemNoteRepository fileSystemNoteRepository) {
-    super(connectionManager, fileSystemNoteRepository);
+      @Qualifier("DatabaseNoteRepository") final NoteRepository noteRepository) {
+    super(connectionManager, noteRepository);
   }
 
   public void checkpointNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {

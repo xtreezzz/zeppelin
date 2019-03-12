@@ -23,6 +23,8 @@ public class DatabaseStorage {
   @Autowired
   private JdbcTemplate jdbcTemplate;
 
+  private static final Gson gson = new Gson();
+
   private static final String GET_ALL_NOTES = "SELECT * FROM notes;";
   private static final String GET_NOTE = "SELECT * FROM notes WHERE id = ?;";
   private static final String INSERT_NOTE = "INSERT INTO notes(id, path, default_interpreter_group) VALUES (?, ?, ?);";
@@ -104,29 +106,31 @@ public class DatabaseStorage {
     final String title = resultSet.getString("title");
     final String text = resultSet.getString("text");
     final String user = resultSet.getString("username");
-    final String created = resultSet.getString("created");
-    final String updated = resultSet.getString("updated");
+    final LocalDateTime created = gson.fromJson(resultSet.getString("created"), LocalDateTime.class);
+    final LocalDateTime updated = gson.fromJson(resultSet.getString("updated"), LocalDateTime.class);
     final String settingsJson = resultSet.getString("settings");
 
     final GUI settings = new Gson().fromJson(settingsJson, GUI.class);
 
     final Paragraph paragraph = new Paragraph(title, text, user, settings);
     paragraph.setId(id);
-    paragraph.setCreated(LocalDateTime.parse(created, paragraphDateFormatter));
-    paragraph.setUpdated(LocalDateTime.parse(updated, paragraphDateFormatter));
+    paragraph.setCreated(created);
+    paragraph.setUpdated(updated);
 
     return paragraph;
   }
 
   private void saveParagraph(final Paragraph p, final String noteId) {
-    final String settingsJson = new Gson().toJson(p.getSettings());
+    final String settingsJson = gson.toJson(p.getSettings());
+    final String createdJson = gson.toJson(p.getCreated());
+    final String updatedJson = gson.toJson(p.getUpdated());
 
     final boolean paragraphMissing = jdbcTemplate.update(
         UPDATE_PARAGRAPH,
         p.getTitle(),
         p.getText(),
         p.getUser(),
-        paragraphDateFormatter.format(p.getUpdated()),
+        updatedJson,
         settingsJson,
         p.getId()
     ) == 0;
@@ -139,8 +143,8 @@ public class DatabaseStorage {
           p.getTitle(),
           p.getText(),
           p.getUser(),
-          paragraphDateFormatter.format(p.getCreated()),
-          paragraphDateFormatter.format(p.getUpdated()),
+          createdJson,
+          updatedJson,
           settingsJson
       );
     }

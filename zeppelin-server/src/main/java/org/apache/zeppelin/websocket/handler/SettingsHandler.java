@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import org.apache.zeppelin.repositories.NoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -30,6 +30,7 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -43,7 +44,8 @@ public class SettingsHandler extends AbstractHandler {
   //private final InterpreterFactory interpreterFactory;
 
   @Autowired
-  public SettingsHandler(FileSystemNoteRepository zeppelinNoteRepository,
+  //  FileSystemNoteRepository DatabaseNoteRepository
+  public SettingsHandler(@Qualifier("DatabaseNoteRepository") NoteRepository zeppelinNoteRepository,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService,
                          final InterpreterSettingRepository interpreterSettingRepository) {

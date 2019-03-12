@@ -49,9 +49,9 @@ public abstract class AbstractHandler {
   protected final ConnectionManager connectionManager;
   protected final NoteRepository noteRepository;
 
-  public AbstractHandler(final ConnectionManager connectionManager, final NoteRepository zeppelinNoteRepository) {
+  public AbstractHandler(final ConnectionManager connectionManager, final NoteRepository noteRepository) {
     this.connectionManager = connectionManager;
-    this.noteRepository = zeppelinNoteRepository;
+    this.noteRepository = noteRepository;
   }
 
   protected ServiceContext getServiceContext(final SockMessage message) {

@@ -20,4 +20,4 @@ CREATE TABLE paragraphs
 
 -- Test
 insert into notes(id, path, default_interpreter_group)
-values ('2E71ZWF5H', 'Super Note 3000', 'python');
+values ('2E71ZWF5H', '/Super Note 3000', 'python');
