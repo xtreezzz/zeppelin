@@ -19,22 +19,14 @@ package org.apache.zeppelin.interpreterV2.configuration;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.zeppelin.Dependency;
-import org.apache.zeppelin.interpreter.InterpreterInfo;
-import org.apache.zeppelin.interpreter.InterpreterOption;
-import org.apache.zeppelin.interpreter.InterpreterProperty;
-import org.apache.zeppelin.interpreter.InterpreterRunner;
 import org.apache.zeppelin.utils.IdHashes;
+
+import java.io.Serializable;
+import java.util.*;
 
 
 /**
@@ -109,9 +101,6 @@ public class InterpreterSettingV2 implements Serializable {
   private final List<Dependency> dependencies;
   private InterpreterOption option;
 
-  //TODO(egorklimov): always null?
-  @SerializedName("runner")
-  private InterpreterRunner interpreterRunner;
 
   public InterpreterSettingV2() {
     this.id = IdHashes.generateId();
@@ -124,14 +113,13 @@ public class InterpreterSettingV2 implements Serializable {
   //TODO(egorklimov) download dependencies?
   public InterpreterSettingV2(String id, String name, String group, Object properties,
       List<InterpreterInfo> interpreterInfos, List<Dependency> dependencies,
-      InterpreterOption option, InterpreterRunner interpreterRunner) {
+      InterpreterOption option) {
     this.id = id;
     this.name = name;
     this.group = group;
     this.interpreterInfos = interpreterInfos;
     this.dependencies = dependencies;
     this.option = option;
-    this.interpreterRunner = interpreterRunner;
     this.status = Status.READY;
 
     this.properties = new HashMap<>();
@@ -227,13 +215,6 @@ public class InterpreterSettingV2 implements Serializable {
     this.interpreterInfos.addAll(interpreterInfos);
   }
 
-  public InterpreterRunner getInterpreterRunner() {
-    return interpreterRunner;
-  }
-
-  public void setInterpreterRunner(InterpreterRunner interpreterRunner) {
-    this.interpreterRunner = interpreterRunner;
-  }
 
   @Override
   public String toString() {
@@ -247,7 +228,6 @@ public class InterpreterSettingV2 implements Serializable {
         .append("interpreterInfos", interpreterInfos)
         .append("dependencies", dependencies)
         .append("option", option)
-        .append("interpreterRunner", interpreterRunner)
         .toString();
   }
 
@@ -273,7 +253,6 @@ public class InterpreterSettingV2 implements Serializable {
         .append(interpreterInfos, that.interpreterInfos)
         .append(dependencies, that.dependencies)
         .append(option, that.option)
-        .append(interpreterRunner, that.interpreterRunner)
         .isEquals();
   }
 
@@ -289,7 +268,6 @@ public class InterpreterSettingV2 implements Serializable {
         .append(interpreterInfos)
         .append(dependencies)
         .append(option)
-        .append(interpreterRunner)
         .toHashCode();
   }
 }

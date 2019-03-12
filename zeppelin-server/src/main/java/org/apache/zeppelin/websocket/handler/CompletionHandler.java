@@ -17,15 +17,8 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import com.google.common.collect.Lists;
 import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
-import org.apache.zeppelin.interpreter.InterpreterFactory;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
-import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,60 +27,59 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class CompletionHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(CompletionHandler.class);
-  private InterpreterFactory interpreterFactory;
+  //private InterpreterFactory interpreterFactory;
 
   @Autowired
   public CompletionHandler(final ConnectionManager connectionManager,
-                           final InterpreterFactory interpreterFactory,
+                           //final InterpreterFactory interpreterFactory,
                            final ZeppelinNoteRepository zeppelinNoteRepository) {
     super(connectionManager, zeppelinNoteRepository);
-    this.interpreterFactory = interpreterFactory;
+    //this.interpreterFactory = interpreterFactory;
   }
 
 
   public void completion(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
-
-    final String buffer = fromMessage.safeGetType("buf", LOG);
-    final Integer cursor = fromMessage.safeGetType("cursor", LOG);
-
-
-    final List<InterpreterCompletion> completions = Lists.newArrayList();
-    /*
-    try {
-      final Interpreter interpreter =
-              interpreterFactory.getInterpreter(
-                      serviceContext.getAutheInfo().getUser(),
-                      note.getId(),
-                      p.getIntpText(),
-                      note.getDefaultInterpreterGroup()
-              );
-
-      p.setAuthenticationInfo(serviceContext.getAutheInfo());
-      p.setText(buffer);
-
-      final int resultCursor = calculateCursorPosition(p.getScriptText(), buffer, cursor);
-      InterpreterContext interpreterContext = p.getInterpreterContext(null);
-
-      completions.addAll(interpreter.completion(p.getScriptText(), resultCursor, interpreterContext));
-
-    } catch (final InterpreterException e) {
-      // SKIP
-    }*/
-
-    final SockMessage message = new SockMessage(Operation.COMPLETION_LIST)
-            .put("id", p.getId())
-            .put("completions", completions);
-    conn.sendMessage(message.toSend());
+//    final ServiceContext serviceContext = getServiceContext(fromMessage);
+//
+//    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+//    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
+//
+//    final String buffer = fromMessage.safeGetType("buf", LOG);
+//    final Integer cursor = fromMessage.safeGetType("cursor", LOG);
+//
+//
+//    final List<InterpreterCompletion> completions = Lists.newArrayList();
+//    /*
+//    try {
+//      final Interpreter interpreter =
+//              interpreterFactory.getInterpreter(
+//                      serviceContext.getAutheInfo().getUser(),
+//                      note.getId(),
+//                      p.getIntpText(),
+//                      note.getDefaultInterpreterGroup()
+//              );
+//
+//      p.setAuthenticationInfo(serviceContext.getAutheInfo());
+//      p.setText(buffer);
+//
+//      final int resultCursor = calculateCursorPosition(p.getScriptText(), buffer, cursor);
+//      InterpreterContext interpreterContext = p.getInterpreterContext(null);
+//
+//      completions.addAll(interpreter.completion(p.getScriptText(), resultCursor, interpreterContext));
+//
+//    } catch (final InterpreterException e) {
+//      // SKIP
+//    }*/
+//
+//    final SockMessage message = new SockMessage(Operation.COMPLETION_LIST)
+//            .put("id", p.getId())
+//            .put("completions", completions);
+//    conn.sendMessage(message.toSend());
   }
 
   public int calculateCursorPosition(String scriptText, String buffer, int cursor) {

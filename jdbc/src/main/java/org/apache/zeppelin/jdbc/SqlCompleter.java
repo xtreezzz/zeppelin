@@ -4,8 +4,11 @@ package org.apache.zeppelin.jdbc;
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
 
+import jline.console.completer.ArgumentCompleter.ArgumentList;
+import jline.console.completer.ArgumentCompleter.WhitespaceArgumentDelimiter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.apache.zeppelin.jdbc.completer.CachedCompleter;
 import org.apache.zeppelin.jdbc.completer.CompletionType;
 import org.apache.zeppelin.jdbc.completer.StringsCompleter;
@@ -19,21 +22,9 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import jline.console.completer.ArgumentCompleter.ArgumentList;
-import jline.console.completer.ArgumentCompleter.WhitespaceArgumentDelimiter;
-
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 
 /**
  * SQL auto complete functionality for the JdbcInterpreter.

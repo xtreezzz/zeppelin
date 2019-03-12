@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.zeppelin.Dependency;
-import org.apache.zeppelin.interpreter.InterpreterOption;
-import org.apache.zeppelin.interpreter.InterpreterProperty;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
 
 /**
  * NewInterpreterSetting REST API request message.

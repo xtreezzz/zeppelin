@@ -21,21 +21,12 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.zeppelin.interpreter.core.Interpreter;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintWriter;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import scala.Console;
 import scala.Some;
 import scala.collection.JavaConversions;
@@ -45,14 +36,12 @@ import scala.tools.nsc.interpreter.Results.Result;
 import scala.tools.nsc.settings.MutableSettings.BooleanSetting;
 import scala.tools.nsc.settings.MutableSettings.PathSetting;
 
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.InterpreterUtils;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
 
 /**
  * Apache Ignite interpreter (http://ignite.incubator.apache.org/).
@@ -116,13 +105,13 @@ public class IgniteInterpreter extends Interpreter {
     }
 
     pathSettings.v_$eq(sb.toString());
-    settings.scala$tools$nsc$settings$ScalaSettings$_setter_$classpath_$eq(pathSettings);
+    //settings.scala$tools$nsc$settings$ScalaSettings$_setter_$classpath_$eq(pathSettings);
 
     settings.explicitParentLoader_$eq(new Some<>(Thread.currentThread().getContextClassLoader()));
 
     BooleanSetting b = (BooleanSetting) settings.usejavacp();
     b.v_$eq(true);
-    settings.scala$tools$nsc$settings$StandardScalaSettings$_setter_$usejavacp_$eq(b);
+    //settings.scala$tools$nsc$settings$StandardScalaSettings$_setter_$usejavacp_$eq(b);
 
     out = new ByteArrayOutputStream();
     imain = new IMain(settings, new PrintWriter(out));
@@ -256,7 +245,7 @@ public class IgniteInterpreter extends Interpreter {
     }
 
     if (line == null || line.trim().length() == 0) {
-      return new InterpreterResult(Code.SUCCESS);
+      return new InterpreterResult(InterpreterResult.Code.SUCCESS);
     }
 
     return interpret(line.split("\n"));
@@ -273,7 +262,7 @@ public class IgniteInterpreter extends Interpreter {
 
     Console.setOut(out);
     out.reset();
-    Code code = null;
+    InterpreterResult.Code code = null;
 
     String incomplete = "";
     for (int l = 0; l < linesToRun.length; l++) {
@@ -292,34 +281,34 @@ public class IgniteInterpreter extends Interpreter {
         code = getResultCode(imain.interpret(incomplete + s));
       } catch (Exception e) {
         logger.info("Interpreter exception", e);
-        return new InterpreterResult(Code.ERROR, InterpreterUtils.getMostRelevantMessage(e));
+        return new InterpreterResult(InterpreterResult.Code.ERROR, "" /*InterpreterUtils.getMostRelevantMessage(e)*/);
       } finally {
         Thread.currentThread().setContextClassLoader(contextClassLoader);
       }
 
-      if (code == Code.ERROR) {
+      if (code == InterpreterResult.Code.ERROR) {
         return new InterpreterResult(code, out.toString());
-      } else if (code == Code.INCOMPLETE) {
+      } else if (code == InterpreterResult.Code.INCOMPLETE) {
         incomplete += s + '\n';
       } else {
         incomplete = "";
       }
     }
 
-    if (code == Code.INCOMPLETE) {
+    if (code == InterpreterResult.Code.INCOMPLETE) {
       return new InterpreterResult(code, "Incomplete expression");
     } else {
       return new InterpreterResult(code, out.toString());
     }
   }
 
-  private Code getResultCode(Result res) {
+  private InterpreterResult.Code getResultCode(Result res) {
     if (res instanceof scala.tools.nsc.interpreter.Results.Success$) {
-      return Code.SUCCESS;
+      return InterpreterResult.Code.SUCCESS;
     } else if (res instanceof scala.tools.nsc.interpreter.Results.Incomplete$) {
-      return Code.INCOMPLETE;
+      return InterpreterResult.Code.INCOMPLETE;
     } else {
-      return Code.ERROR;
+      return InterpreterResult.Code.ERROR;
     }
   }
 
@@ -335,13 +324,7 @@ public class IgniteInterpreter extends Interpreter {
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) {
+                                                InterpreterContext interpreterContext) {
     return new LinkedList<>();
-  }
-
-  @Override
-  public Scheduler getScheduler() {
-    return SchedulerFactory.singleton().createOrGetFIFOScheduler(
-            IgniteInterpreter.class.getName() + this.hashCode());
   }
 }

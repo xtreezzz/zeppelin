@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.zeppelin.user.UsernamePassword;
-
 /**
  * UserConfigurations for JDBC impersonation.
  */
@@ -66,10 +64,10 @@ public class JDBCUserConfigurations {
     propertiesMap.get(propertyKey).remove("password");
   }
 
-  public void setUserProperty(String propertyKey, UsernamePassword usernamePassword) {
-    propertiesMap.get(propertyKey).setProperty("user", usernamePassword.getUsername());
-    propertiesMap.get(propertyKey).setProperty("password", usernamePassword.getPassword());
-  }
+//  public void setUserProperty(String propertyKey, UsernamePassword usernamePassword) {
+//    propertiesMap.get(propertyKey).setProperty("user", usernamePassword.getUsername());
+//    propertiesMap.get(propertyKey).setProperty("password", usernamePassword.getPassword());
+//  }
 
   public void saveStatement(String key, Statement statement) throws SQLException {
     paragraphIdStatementMap.put(key, statement);

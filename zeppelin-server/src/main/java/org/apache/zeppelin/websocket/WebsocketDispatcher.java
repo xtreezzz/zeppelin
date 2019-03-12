@@ -42,20 +42,18 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   private final NoteHandler noteService;
   private final NoteRevisionHandler noteRevisionService;
   private final NoteFormsHandler noteFormsService;
-  private final AngularObjectsHandler angularObjectsHandler;
   private final SpellHandler spellHandler;
   private final RunnerHandler runnerHandler;
   private final CompletionHandler completionHandler;
   private final ConnectionManager sessionectionManager;
 
   @Autowired
-  public WebsocketDispatcher(final SettingsHandler settingsService, final ParagraphHandler paragraphService, final NoteHandler noteService, final NoteRevisionHandler noteRevisionService, final NoteFormsHandler noteFormsService, final AngularObjectsHandler angularObjectsHandler, final SpellHandler spellHandler, final RunnerHandler runnerHandler, final CompletionHandler completionHandler, final ConnectionManager sessionectionManager) {
+  public WebsocketDispatcher(final SettingsHandler settingsService, final ParagraphHandler paragraphService, final NoteHandler noteService, final NoteRevisionHandler noteRevisionService, final NoteFormsHandler noteFormsService,  final SpellHandler spellHandler, final RunnerHandler runnerHandler, final CompletionHandler completionHandler, final ConnectionManager sessionectionManager) {
     this.settingsService = settingsService;
     this.paragraphService = paragraphService;
     this.noteService = noteService;
     this.noteRevisionService = noteRevisionService;
     this.noteFormsService = noteFormsService;
-    this.angularObjectsHandler = angularObjectsHandler;
     this.spellHandler = spellHandler;
     this.runnerHandler = runnerHandler;
     this.completionHandler = completionHandler;
@@ -219,15 +217,15 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case PING:
           break; //do nothing
-        case ANGULAR_OBJECT_UPDATED:
-          angularObjectsHandler.angularObjectUpdated(session, messagereceived);
-          break;
-        case ANGULAR_OBJECT_CLIENT_BIND:
-          angularObjectsHandler.angularObjectClientBind(session, messagereceived);
-          break;
-        case ANGULAR_OBJECT_CLIENT_UNBIND:
-          angularObjectsHandler.angularObjectClientUnbind(session, messagereceived);
-          break;
+//        case ANGULAR_OBJECT_UPDATED:
+//          angularObjectsHandler.angularObjectUpdated(session, messagereceived);
+//          break;
+//        case ANGULAR_OBJECT_CLIENT_BIND:
+//          angularObjectsHandler.angularObjectClientBind(session, messagereceived);
+//          break;
+//        case ANGULAR_OBJECT_CLIENT_UNBIND:
+//          angularObjectsHandler.angularObjectClientUnbind(session, messagereceived);
+//          break;
         case LIST_CONFIGURATIONS:
           settingsService.sendAllConfigurations(session);
           break;

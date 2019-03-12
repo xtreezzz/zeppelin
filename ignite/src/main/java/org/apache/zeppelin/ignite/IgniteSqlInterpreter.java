@@ -16,27 +16,18 @@
  */
 package org.apache.zeppelin.ignite;
 
+import org.apache.zeppelin.interpreter.core.Interpreter;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterException;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
 
 /**
  * Apache Ignite SQL interpreter (http://ignite.incubator.apache.org/).
@@ -109,7 +100,7 @@ public class IgniteSqlInterpreter extends Interpreter {
   @Override
   public InterpreterResult interpret(String st, InterpreterContext context) {
     if (connEx != null) {
-      return new InterpreterResult(Code.ERROR, connEx.getMessage());
+      return new InterpreterResult(InterpreterResult.Code.ERROR, connEx.getMessage());
     }
 
     StringBuilder msg = new StringBuilder("%table ");
@@ -150,7 +141,7 @@ public class IgniteSqlInterpreter extends Interpreter {
       curStmt = null;
     }
 
-    return new InterpreterResult(Code.SUCCESS, msg.toString());
+    return new InterpreterResult(InterpreterResult.Code.SUCCESS, msg.toString());
   }
 
   @Override
@@ -177,15 +168,10 @@ public class IgniteSqlInterpreter extends Interpreter {
     return 0;
   }
 
-  @Override
-  public Scheduler getScheduler() {
-    return SchedulerFactory.singleton().createOrGetFIFOScheduler(
-            IgniteSqlInterpreter.class.getName() + this.hashCode());
-  }
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) {
+                                                InterpreterContext interpreterContext) {
     return new LinkedList<>();
   }
 }

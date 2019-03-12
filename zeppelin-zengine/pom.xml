@@ -51,13 +51,19 @@
 
     <dependency>
       <groupId>org.apache.zeppelin</groupId>
-      <artifactId>zeppelin-interpreter</artifactId>
+      <artifactId>zeppelin-interpreter-core</artifactId>
       <version>0.9.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.zeppelin</groupId>
       <artifactId>zeppelin-core</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>zeppelin-dependency</artifactId>
       <version>0.9.0-SNAPSHOT</version>
     </dependency>
 

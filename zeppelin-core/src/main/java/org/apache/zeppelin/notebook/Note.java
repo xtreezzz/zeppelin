@@ -20,7 +20,6 @@ package org.apache.zeppelin.notebook;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
-import org.apache.zeppelin.notebook.display.AngularObject;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.notebook.display.Input;
 import org.apache.zeppelin.utils.IdHashes;
@@ -59,11 +58,6 @@ public class Note implements Serializable {
 
   private final List<Paragraph> paragraphs;
 
-  /**
-   * see https://issues.apache.org/jira/browse/ZEPPELIN-25
-   */
-  private final Map<String, List<AngularObject>> angularObjects;
-
   private boolean isRunning = false;
 
   private NoteCronConfiguration noteCronConfiguration;
@@ -78,7 +72,6 @@ public class Note implements Serializable {
     this.id = IdHashes.generateId();
     this.name = name;
     this.path = path;
-    this.angularObjects = new HashMap<>();
     this.defaultInterpreterGroup = defaultInterpreterGroup;
 
     this.guiConfiguration = new GUI();
@@ -127,10 +120,6 @@ public class Note implements Serializable {
 
   public List<Paragraph> getParagraphs() {
     return paragraphs;
-  }
-
-  public Map<String, List<AngularObject>> getAngularObjects() {
-    return angularObjects;
   }
 
   public boolean isRunning() {
@@ -211,10 +200,6 @@ public class Note implements Serializable {
     if (id != null ? !id.equals(note.id) : note.id != null) {
       return false;
     }
-    if (angularObjects != null ?
-        !angularObjects.equals(note.angularObjects) : note.angularObjects != null) {
-      return false;
-    }
     if (noteCronConfiguration != null ? !noteCronConfiguration.equals(note.noteCronConfiguration) : note.noteCronConfiguration != null) {
       return false;
     }
@@ -226,7 +211,6 @@ public class Note implements Serializable {
   public int hashCode() {
     int result = paragraphs != null ? paragraphs.hashCode() : 0;
     result = 31 * result + (id != null ? id.hashCode() : 0);
-    result = 31 * result + (angularObjects != null ? angularObjects.hashCode() : 0);
     result = 31 * result + (noteCronConfiguration != null ? noteCronConfiguration.hashCode() : 0);
     return result;
   }

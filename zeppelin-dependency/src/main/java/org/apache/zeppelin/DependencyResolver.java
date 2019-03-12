@@ -60,8 +60,7 @@ public class DependencyResolver extends AbstractDependencyResolver {
     super(localRepoPath);
   }
 
-  public List<File> load(String artifact)
-      throws RepositoryException, IOException {
+  public List<File> load(String artifact) throws RepositoryException, IOException {
     return load(artifact, new LinkedList<String>());
   }
 
@@ -87,8 +86,7 @@ public class DependencyResolver extends AbstractDependencyResolver {
     return load(artifact, new LinkedList<String>(), destPath);
   }
 
-  public List<File> load(String artifact, Collection<String> excludes, File destPath)
-      throws RepositoryException, IOException {
+  public List<File> load(String artifact, Collection<String> excludes, File destPath) throws RepositoryException, IOException {
     List<File> libs = new LinkedList<>();
 
     if (StringUtils.isNotBlank(artifact)) {

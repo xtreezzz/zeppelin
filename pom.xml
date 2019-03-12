@@ -54,8 +54,8 @@
   <modules>
     <module>zeppelin-interpreter</module>
     <module>zeppelin-zengine</module>
-    <module>zeppelin-display</module>
-    <module>spark</module>
+    <!-- <module>zeppelin-display</module> -->
+    <!-- <module>spark</module>  -->
     <module>markdown</module>
     <module>angular</module>
     <module>shell</module>
@@ -84,6 +84,8 @@
     <module>zeppelin-search</module>
     <module>zeppelin-migrations</module>
     <module>zeppelin-repository</module>
+
+    <module>zeppelin-interpreter-core</module>
   </modules>
 
   <properties>

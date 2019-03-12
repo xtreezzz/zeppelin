@@ -17,7 +17,7 @@ package org.apache.zeppelin.jdbc;
 import com.google.common.base.Joiner;
 import jline.console.completer.ArgumentCompleter;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.apache.zeppelin.jdbc.completer.CompletionType;
 import org.junit.Assert;
 import org.junit.Before;

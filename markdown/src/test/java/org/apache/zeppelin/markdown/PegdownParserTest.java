@@ -17,11 +17,7 @@
 
 package org.apache.zeppelin.markdown;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
-import static org.apache.zeppelin.markdown.PegdownParser.wrapWithMarkdownClassDiv;
-
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
@@ -34,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import org.apache.zeppelin.interpreter.InterpreterResult;
+import static org.apache.zeppelin.markdown.PegdownParser.wrapWithMarkdownClassDiv;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class PegdownParserTest {
   Logger logger = LoggerFactory.getLogger(PegdownParserTest.class);

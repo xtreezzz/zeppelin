@@ -19,14 +19,14 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -49,16 +49,13 @@ public class NoteHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoteHandler.class);
 
-  private final AngularObjectsHandler angularObjectsService;
   private final ZeppelinConfiguration zeppelinConfiguration;
 
   @Autowired
   public NoteHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                      final ConnectionManager connectionManager,
-                     final AngularObjectsHandler angularObjectsService,
                      final ZeppelinConfiguration zeppelinConfiguration) {
     super(connectionManager, zeppelinNoteRepository);
-    this.angularObjectsService = angularObjectsService;
     this.zeppelinConfiguration = zeppelinConfiguration;
   }
 
@@ -86,7 +83,6 @@ public class NoteHandler extends AbstractHandler {
     if (note != null) {
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
-      angularObjectsService.sendAllAngularObjects(note, serviceContext.getAutheInfo().getUser(), conn);
     } else {
       connectionManager.removeSubscribersFromAllNote(conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", null).toSend());
@@ -105,7 +101,6 @@ public class NoteHandler extends AbstractHandler {
 
     connectionManager.addSubscriberToNode(resultNote.getId(), conn);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
-    angularObjectsService.sendAllAngularObjects(note, serviceContext.getAutheInfo().getUser(), conn);
   }
 
   //TODO(egorklimov) check passing personalized mode flag

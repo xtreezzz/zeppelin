@@ -21,8 +21,11 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.interpreter.core.Interpreter;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +37,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.KerberosInterpreter;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
-
 /**
  * Shell interpreter for Zeppelin.
  */
-public class ShellInterpreter extends KerberosInterpreter {
+public class ShellInterpreter extends Interpreter {
   private static final Logger LOGGER = LoggerFactory.getLogger(ShellInterpreter.class);
 
   private static final String TIMEOUT_PROPERTY = "shell.command.timeout.millisecs";
@@ -63,14 +57,12 @@ public class ShellInterpreter extends KerberosInterpreter {
 
   @Override
   public void open() {
-    super.open();
     LOGGER.info("Command timeout property: {}", getProperty(TIMEOUT_PROPERTY));
     executors = new ConcurrentHashMap<>();
   }
 
   @Override
   public void close() {
-    super.close();
     for (String executorKey : executors.keySet()) {
       DefaultExecutor executor = executors.remove(executorKey);
       if (executor != null) {
@@ -104,8 +96,7 @@ public class ShellInterpreter extends KerberosInterpreter {
 
     try {
       DefaultExecutor executor = new DefaultExecutor();
-      executor.setStreamHandler(new PumpStreamHandler(
-          contextInterpreter.out, contextInterpreter.out));
+      //executor.setStreamHandler(new PumpStreamHandler(contextInterpreter.out, contextInterpreter.out));
 
       executor.setWatchdog(new ExecuteWatchdog(
           Long.valueOf(getProperty(TIMEOUT_PROPERTY, defaultTimeoutProperty))));
@@ -117,14 +108,14 @@ public class ShellInterpreter extends KerberosInterpreter {
       int exitVal = executor.execute(cmdLine);
       LOGGER.info("Paragraph " + contextInterpreter.getParagraphId() 
           + " return with exit value: " + exitVal);
-      return new InterpreterResult(Code.SUCCESS, outStream.toString());
+      return new InterpreterResult(InterpreterResult.Code.SUCCESS, outStream.toString());
     } catch (ExecuteException e) {
       int exitValue = e.getExitValue();
       LOGGER.error("Can not run " + cmd, e);
-      Code code = Code.ERROR;
+      InterpreterResult.Code code = InterpreterResult.Code.ERROR;
       String message = outStream.toString();
       if (exitValue == 143) {
-        code = Code.INCOMPLETE;
+        code = InterpreterResult.Code.INCOMPLETE;
         message += "Paragraph received a SIGTERM\n";
         LOGGER.info("The paragraph " + contextInterpreter.getParagraphId()
             + " stopped executing: " + message);
@@ -133,7 +124,7 @@ public class ShellInterpreter extends KerberosInterpreter {
       return new InterpreterResult(code, message);
     } catch (IOException e) {
       LOGGER.error("Can not run " + cmd, e);
-      return new InterpreterResult(Code.ERROR, e.getMessage());
+      return new InterpreterResult(InterpreterResult.Code.ERROR, e.getMessage());
     } finally {
       executors.remove(contextInterpreter.getParagraphId());
     }
@@ -161,53 +152,48 @@ public class ShellInterpreter extends KerberosInterpreter {
     return 0;
   }
 
-  @Override
-  public Scheduler getScheduler() {
-    return SchedulerFactory.singleton().createOrGetParallelScheduler(
-        ShellInterpreter.class.getName() + this.hashCode(), 10);
-  }
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) {
+                                                InterpreterContext interpreterContext) {
     return null;
   }
 
-  @Override
-  protected boolean runKerberosLogin() {
-    try {
-      createSecureConfiguration();
-      return true;
-    } catch (Exception e) {
-      LOGGER.error("Unable to run kinit for zeppelin", e);
-    }
-    return false;
-  }
+//  @Override
+//  protected boolean runKerberosLogin() {
+//    try {
+//      createSecureConfiguration();
+//      return true;
+//    } catch (Exception e) {
+//      LOGGER.error("Unable to run kinit for zeppelin", e);
+//    }
+//    return false;
+//  }
+//
+//  public void createSecureConfiguration() throws InterpreterException {
+//    Properties properties = getProperties();
+//    CommandLine cmdLine = CommandLine.parse(shell);
+//    cmdLine.addArgument("-c", false);
+//    String kinitCommand = String.format("kinit -k -t %s %s",
+//        properties.getProperty("zeppelin.shell.keytab.location"),
+//        properties.getProperty("zeppelin.shell.principal"));
+//    cmdLine.addArgument(kinitCommand, false);
+//    DefaultExecutor executor = new DefaultExecutor();
+//    try {
+//      executor.execute(cmdLine);
+//    } catch (Exception e) {
+//      LOGGER.error("Unable to run kinit for zeppelin user " + kinitCommand, e);
+//      throw new InterpreterException(e);
+//    }
+//  }
 
-  public void createSecureConfiguration() throws InterpreterException {
-    Properties properties = getProperties();
-    CommandLine cmdLine = CommandLine.parse(shell);
-    cmdLine.addArgument("-c", false);
-    String kinitCommand = String.format("kinit -k -t %s %s",
-        properties.getProperty("zeppelin.shell.keytab.location"),
-        properties.getProperty("zeppelin.shell.principal"));
-    cmdLine.addArgument(kinitCommand, false);
-    DefaultExecutor executor = new DefaultExecutor();
-    try {
-      executor.execute(cmdLine);
-    } catch (Exception e) {
-      LOGGER.error("Unable to run kinit for zeppelin user " + kinitCommand, e);
-      throw new InterpreterException(e);
-    }
-  }
-
-  @Override
-  protected boolean isKerboseEnabled() {
-    if (!StringUtils.isAnyEmpty(getProperty("zeppelin.shell.auth.type")) && getProperty(
-        "zeppelin.shell.auth.type").equalsIgnoreCase("kerberos")) {
-      return true;
-    }
-    return false;
-  }
+//  @Override
+//  protected boolean isKerboseEnabled() {
+//    if (!StringUtils.isAnyEmpty(getProperty("zeppelin.shell.auth.type")) && getProperty(
+//        "zeppelin.shell.auth.type").equalsIgnoreCase("kerberos")) {
+//      return true;
+//    }
+//    return false;
+//  }
 
 }

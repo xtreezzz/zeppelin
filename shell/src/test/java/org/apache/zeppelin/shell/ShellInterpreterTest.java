@@ -17,18 +17,16 @@
 
 package org.apache.zeppelin.shell;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Properties;
 
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ShellInterpreterTest {
 
@@ -71,7 +69,7 @@ public class ShellInterpreterTest {
     } else {
       result = shell.interpret("invalid_command\nls", context);
     }
-    assertEquals(Code.SUCCESS, result.code());
+    assertEquals(InterpreterResult.Code.SUCCESS, result.code());
     assertTrue(shell.executors.isEmpty());
   }
 
@@ -83,7 +81,7 @@ public class ShellInterpreterTest {
       result = shell.interpret("sleep 4", context);
     }
 
-    assertEquals(Code.INCOMPLETE, result.code());
+    assertEquals(InterpreterResult.Code.INCOMPLETE, result.code());
     assertTrue(result.message().get(0).getData().contains("Paragraph received a SIGTERM"));
   }
 }

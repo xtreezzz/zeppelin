@@ -17,14 +17,10 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
-import org.apache.zeppelin.interpreter.*;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
-import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -45,18 +41,18 @@ public class SettingsHandler extends AbstractHandler {
 
   private final ConfigurationService configurationService;
   private final InterpreterSettingRepository interpreterSettingRepository;
-  private final InterpreterFactory interpreterFactory;
+  //private final InterpreterFactory interpreterFactory;
 
   @Autowired
   public SettingsHandler(final ZeppelinNoteRepository zeppelinNoteRepository,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService,
-                         final InterpreterSettingRepository interpreterSettingRepository,
-                         final InterpreterFactory interpreterFactory) {
+                         final InterpreterSettingRepository interpreterSettingRepository) {
+                         //final InterpreterFactory interpreterFactory) {
     super(connectionManager, zeppelinNoteRepository);
     this.configurationService = configurationService;
     this.interpreterSettingRepository = interpreterSettingRepository;
-    this.interpreterFactory = interpreterFactory;
+    //this.interpreterFactory = interpreterFactory;
   }
 
   public void sendAllConfigurations(final WebSocketSession conn) throws IOException {

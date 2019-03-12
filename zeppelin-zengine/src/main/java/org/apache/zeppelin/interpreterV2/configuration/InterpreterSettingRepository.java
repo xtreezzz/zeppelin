@@ -22,12 +22,19 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.Dependency;
+import org.apache.zeppelin.DependencyResolver;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonatype.aether.repository.RemoteRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,32 +43,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.Dependency;
-import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreter.DefaultInterpreterProperty;
-import org.apache.zeppelin.interpreter.Interpreter.RegisteredInterpreter;
-import org.apache.zeppelin.interpreter.InterpreterInfo;
-import org.apache.zeppelin.interpreter.InterpreterInfoSaving;
-import org.apache.zeppelin.interpreter.InterpreterOption;
-import org.apache.zeppelin.interpreter.InterpreterProperty;
-import org.apache.zeppelin.interpreter.InterpreterPropertyType;
-import org.apache.zeppelin.interpreter.InterpreterRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonatype.aether.repository.RemoteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.util.*;
 
 /**
  * InterpreterSettingManager - создать InterpreterSettingRepository который умеет загружать
@@ -120,7 +102,11 @@ public class InterpreterSettingRepository {
     this.defaultInterpreterGroup =
         conf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
 
-    init();
+    try {
+      init();
+    } catch (final Exception e) {
+      LOGGER.error("FAIL" , e);
+    }
   }
 
   private void init() {
@@ -170,8 +156,7 @@ public class InterpreterSettingRepository {
     }
 
     List<InterpreterInfo> infos = interpreterSettingTemplates.get(group).getInterpreterInfos();
-    InterpreterRunner runner = interpreterSettingTemplates.get(group).getInterpreterRunner();
-    InterpreterSettingV2 setting = new InterpreterSettingV2(name, name, group, p, infos, dependencies, option, runner);
+    InterpreterSettingV2 setting = new InterpreterSettingV2(name, name, group, p, infos, dependencies, option);
     interpreterSettings.put(setting.getId(), setting);
     saveToFile();
     return setting;
@@ -252,13 +237,11 @@ public class InterpreterSettingRepository {
     List<InterpreterInfo> interpreterInfos = new ArrayList<>();
     InterpreterOption option = defaultOption;
     String group = null;
-    InterpreterRunner runner = null;
     for (RegisteredInterpreter registeredInterpreter : registeredInterpreters) {
       InterpreterInfo interpreterInfo =
           new InterpreterInfo(registeredInterpreter.getClassName(), registeredInterpreter.getName(),
               registeredInterpreter.isDefaultInterpreter(), registeredInterpreter.getEditor());
       group = registeredInterpreter.getGroup();
-      runner = registeredInterpreter.getRunner();
       // use defaultOption if it is not specified in interpreter-setting.json
       if (registeredInterpreter.getOption() != null) {
         option = registeredInterpreter.getOption();
@@ -267,7 +250,7 @@ public class InterpreterSettingRepository {
       interpreterInfos.add(interpreterInfo);
     }
     InterpreterSettingV2 interpreterSettingTemplate = new InterpreterSettingV2(
-        group, group, group, properties, interpreterInfos, new ArrayList<>(), option, runner);
+        group, group, group, properties, interpreterInfos, new ArrayList<>(), option);
 
     String key = interpreterSettingTemplate.getName();
     if(override || !interpreterSettingTemplates.containsKey(key)) {
@@ -345,8 +328,7 @@ public class InterpreterSettingRepository {
             interpreterSettingTemplate.getId(), interpreterSettingTemplate.getName(),
             interpreterSettingTemplate.getGroup(), interpreterSettingTemplate.getProperties(),
             interpreterSettingTemplate.getInterpreterInfos(),
-            interpreterSettingTemplate.getDependencies(), interpreterSettingTemplate.getOption(),
-            interpreterSettingTemplate.getInterpreterRunner());
+            interpreterSettingTemplate.getDependencies(), interpreterSettingTemplate.getOption());
         //TODO(egorklimov): shebang <=> group?
         interpreterSettings.put(interpreterSetting.getId(), interpreterSetting);
       }
@@ -383,8 +365,6 @@ public class InterpreterSettingRepository {
         // merge InterpreterInfo
         savedInterpreterSetting.setInterpreterInfos(
             interpreterSettingTemplate.getInterpreterInfos());
-        savedInterpreterSetting.setInterpreterRunner(
-            interpreterSettingTemplate.getInterpreterRunner());
       } else {
         LOGGER.warn("No InterpreterSetting Template found for InterpreterSetting: {}, but it is "
             + "found in interpreter.json, it would be skipped.", savedInterpreterSetting.getGroup());

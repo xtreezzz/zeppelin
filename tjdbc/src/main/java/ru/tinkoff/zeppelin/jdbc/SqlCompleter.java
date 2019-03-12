@@ -3,33 +3,25 @@ package ru.tinkoff.zeppelin.jdbc;
 /*
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
-import java.util.HashSet;
+
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.zeppelin.jdbc.completer.CachedCompleter;
+import ru.tinkoff.zeppelin.jdbc.completer.CompletionType;
+import ru.tinkoff.zeppelin.jdbc.completer.StringsCompleter;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import ru.tinkoff.zeppelin.jdbc.completer.CachedCompleter;
-import ru.tinkoff.zeppelin.jdbc.completer.CompletionType;
-import ru.tinkoff.zeppelin.jdbc.completer.StringsCompleter;
+import java.util.*;
 
 /**
  * SQL auto complete functionality for the JdbcInterpreter.

@@ -21,8 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -31,18 +29,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.spark.repl.SparkILoop;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterGroup;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.WrappedInterpreter;
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.spark.dep.SparkDependencyContext;
@@ -336,20 +329,5 @@ public class DepInterpreter extends Interpreter {
       }
     }
     return paths;
-  }
-
-  @Override
-  public Scheduler getScheduler() {
-    try {
-      SparkInterpreter sparkInterpreter =
-          getInterpreterInTheSameSessionByClassName(SparkInterpreter.class, false);
-      if (sparkInterpreter != null) {
-        return sparkInterpreter.getScheduler();
-      } else {
-        return null;
-      }
-    } catch (InterpreterException e) {
-      return null;
-    }
   }
 }

@@ -17,22 +17,16 @@
 
 package org.apache.zeppelin.service;
 
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
 import org.apache.log4j.LogManager;
 import org.apache.zeppelin.rest.message.LoggerRequest;
-import org.quartz.SchedulerConfigException;
-import org.springframework.stereotype.Component;
 import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
-import org.apache.zeppelin.scheduler.pool.DynamicThreadPool;
 import org.quartz.SchedulerException;
 import org.quartz.impl.SchedulerRepository;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * This class handles all of business logic of {@link org.apache.zeppelin.rest.AdminRestApi}.
@@ -103,15 +97,15 @@ public class AdminService {
   }
 
   public void setSchedulerThreadPoolSize(final String schedulerId, final Integer size) {
-    try {
-      final DynamicThreadPool threadPool = DynamicThreadPool.getInstance(schedulerId);
-      if (threadPool == null) {
-        throw new IllegalArgumentException("Dynamic pool is not configured or scheduler is wrong, "
-                + "check setting for scheduler: " + schedulerId);
-      }
-      threadPool.setThreadCount(size);
-    } catch (final SchedulerConfigException e) {
-      throw new IllegalStateException(e);
-    }
+//    try {
+//      final DynamicThreadPool threadPool = DynamicThreadPool.getInstance(schedulerId);
+//      if (threadPool == null) {
+//        throw new IllegalArgumentException("Dynamic pool is not configured or scheduler is wrong, "
+//                + "check setting for scheduler: " + schedulerId);
+//      }
+//      threadPool.setThreadCount(size);
+//    } catch (final SchedulerConfigException e) {
+//      throw new IllegalStateException(e);
+//    }
   }
 }

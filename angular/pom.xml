@@ -39,7 +39,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.zeppelin</groupId>
-      <artifactId>zeppelin-interpreter</artifactId>
+      <artifactId>zeppelin-interpreter-core</artifactId>
       <version>0.9.0-SNAPSHOT</version>
     </dependency>
   </dependencies>

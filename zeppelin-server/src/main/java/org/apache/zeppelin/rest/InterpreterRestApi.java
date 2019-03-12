@@ -19,8 +19,7 @@ package org.apache.zeppelin.rest;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.interpreter.InterpreterPropertyType;
-import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterPropertyType;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
 import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;

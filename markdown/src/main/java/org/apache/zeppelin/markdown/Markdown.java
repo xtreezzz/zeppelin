@@ -17,20 +17,15 @@
 
 package org.apache.zeppelin.markdown;
 
+import org.apache.zeppelin.interpreter.core.Interpreter;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.zeppelin.interpreter.Interpreter;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.InterpreterUtils;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
 
 /**
  * MarkdownInterpreter interpreter for Zeppelin.
@@ -96,10 +91,10 @@ public class Markdown extends Interpreter {
       html = parser.render(markdownText);
     } catch (RuntimeException e) {
       LOGGER.error("Exception in MarkdownInterpreter while interpret ", e);
-      return new InterpreterResult(Code.ERROR, InterpreterUtils.getMostRelevantMessage(e));
+      return new InterpreterResult(InterpreterResult.Code.ERROR, "" /*InterpreterUtils.getMostRelevantMessage(e)*/);
     }
 
-    return new InterpreterResult(Code.SUCCESS, "%html " + html);
+    return new InterpreterResult(InterpreterResult.Code.SUCCESS, "%html " + html);
   }
 
   @Override
@@ -117,14 +112,8 @@ public class Markdown extends Interpreter {
   }
 
   @Override
-  public Scheduler getScheduler() {
-    return SchedulerFactory.singleton()
-        .createOrGetParallelScheduler(Markdown.class.getName() + this.hashCode(), 5);
-  }
-
-  @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) {
+                                                InterpreterContext interpreterContext) {
     return null;
   }
 }

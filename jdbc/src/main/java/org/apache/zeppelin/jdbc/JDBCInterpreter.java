@@ -14,11 +14,6 @@
  */
 package org.apache.zeppelin.jdbc;
 
-import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
-
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
@@ -32,41 +27,25 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.alias.CredentialProvider;
 import org.apache.hadoop.security.alias.CredentialProviderFactory;
+import org.apache.zeppelin.interpreter.core.Interpreter;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterException;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.InterpreterCompletion;
+import org.apache.zeppelin.jdbc.security.JDBCSecurityImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.KerberosInterpreter;
-import org.apache.zeppelin.interpreter.ResultMessages;
-import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
-import org.apache.zeppelin.jdbc.security.JDBCSecurityImpl;
-import org.apache.zeppelin.scheduler.Scheduler;
-import org.apache.zeppelin.scheduler.SchedulerFactory;
-import org.apache.zeppelin.user.UserCredentials;
-import org.apache.zeppelin.user.UsernamePassword;
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
 
 /**
  * JDBC interpreter for Zeppelin. This interpreter can also be used for accessing HAWQ,
@@ -90,7 +69,7 @@ import org.apache.zeppelin.user.UsernamePassword;
  * }
  * </p>
  */
-public class JDBCInterpreter extends KerberosInterpreter {
+public class JDBCInterpreter extends Interpreter {
   private Logger logger = LoggerFactory.getLogger(JDBCInterpreter.class);
 
   static final String INTERPRETER_NAME = "jdbc";
@@ -153,21 +132,21 @@ public class JDBCInterpreter extends KerberosInterpreter {
     maxLineResults = MAX_LINE_DEFAULT;
   }
 
-  @Override
-  protected boolean runKerberosLogin() {
-    try {
-      if (UserGroupInformation.isLoginKeytabBased()) {
-        UserGroupInformation.getLoginUser().reloginFromKeytab();
-        return true;
-      } else if (UserGroupInformation.isLoginTicketBased()) {
-        UserGroupInformation.getLoginUser().reloginFromTicketCache();
-        return true;
-      }
-    } catch (Exception e) {
-      logger.error("Unable to run kinit for zeppelin", e);
-    }
-    return false;
-  }
+//  @Override
+//  protected boolean runKerberosLogin() {
+//    try {
+//      if (UserGroupInformation.isLoginKeytabBased()) {
+//        UserGroupInformation.getLoginUser().reloginFromKeytab();
+//        return true;
+//      } else if (UserGroupInformation.isLoginTicketBased()) {
+//        UserGroupInformation.getLoginUser().reloginFromTicketCache();
+//        return true;
+//      }
+//    } catch (Exception e) {
+//      logger.error("Unable to run kinit for zeppelin", e);
+//    }
+//    return false;
+//  }
 
   public HashMap<String, Properties> getPropertiesMap() {
     return basePropretiesMap;
@@ -175,7 +154,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   @Override
   public void open() {
-    super.open();
     for (String propertyKey : properties.stringPropertyNames()) {
       logger.debug("propertyKey: {}", propertyKey);
       String[] keyValue = propertyKey.split("\\.", 2);
@@ -307,7 +285,6 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   @Override
   public void close() {
-    super.close();
     try {
       initStatementMap();
       initConnectionPoolMap();
@@ -338,14 +315,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
         basePropretiesMap.get(propertyKey).containsKey(PASSWORD_KEY);
   }
 
-  private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
-                                               String replName) {
-    UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
-    if (uc != null) {
-      return uc.getUsernamePassword(replName);
-    }
-    return null;
-  }
+//  private UsernamePassword getUsernamePassword(InterpreterContext interpreterContext,
+//                                               String replName) {
+//    UserCredentials uc = interpreterContext.getAuthenticationInfo().getUserCredentials();
+//    if (uc != null) {
+//      return uc.getUsernamePassword(replName);
+//    }
+//    return null;
+//  }
 
   public JDBCUserConfigurations getJDBCConfiguration(String user) {
     JDBCUserConfigurations jdbcUserConfigurations = jdbcUserConfigurationsMap.get(user);
@@ -368,7 +345,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   private void setUserProperty(String propertyKey, InterpreterContext interpreterContext)
       throws SQLException, IOException, InterpreterException {
 
-    String user = interpreterContext.getAuthenticationInfo().getUser();
+    String user = ""; //interpreterContext.getAuthenticationInfo().getUser();
 
     JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
     if (basePropretiesMap.get(propertyKey).containsKey(USER_KEY) &&
@@ -384,13 +361,13 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
     jdbcUserConfigurations.cleanUserProperty(propertyKey);
 
-    UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
-            getEntityName(interpreterContext.getReplName()));
-    if (usernamePassword != null) {
-      jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
-    } else {
-      closeDBPool(user, propertyKey);
-    }
+//    UsernamePassword usernamePassword = getUsernamePassword(interpreterContext,
+//            getEntityName(interpreterContext.getReplName()));
+//    if (usernamePassword != null) {
+//      jdbcUserConfigurations.setUserProperty(propertyKey, usernamePassword);
+//    } else {
+//      closeDBPool(user, propertyKey);
+//    }
   }
 
   private void createConnectionPool(String url, String user, String propertyKey,
@@ -425,7 +402,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
 
   public Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
       throws ClassNotFoundException, SQLException, InterpreterException, IOException {
-    final String user =  interpreterContext.getAuthenticationInfo().getUser();
+    final String user =  ""; //interpreterContext.getAuthenticationInfo().getUser();
     Connection connection;
     if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
       return null;
@@ -662,7 +639,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       String precode = getProperty(String.format("%s.precode", propertyKey));
       if (StringUtils.isNotBlank(precode)) {
         interpreterResult = executeSql(propertyKey, precode, interpreterContext);
-        if (interpreterResult.code() != Code.SUCCESS) {
+        if (interpreterResult.code() != InterpreterResult.Code.SUCCESS) {
           break;
         }
       }
@@ -677,7 +654,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     Statement statement;
     ResultSet resultSet = null;
     String paragraphId = interpreterContext.getParagraphId();
-    String user = interpreterContext.getAuthenticationInfo().getUser();
+    String user = "";//interpreterContext.getAuthenticationInfo().getUser();
 
     boolean splitQuery = false;
     String splitQueryProperty = getProperty(String.format("%s.%s", propertyKey, SPLIT_QURIES_KEY));
@@ -696,10 +673,10 @@ public class JDBCInterpreter extends KerberosInterpreter {
         logger.error("Cannot close DBPool for user, propertyKey: " + user + propertyKey, e1);
       }
       interpreterResult.add(errorMsg);
-      return new InterpreterResult(Code.ERROR, interpreterResult.message());
+      return new InterpreterResult(InterpreterResult.Code.ERROR, interpreterResult.message());
     }
     if (connection == null) {
-      return new InterpreterResult(Code.ERROR, "Prefix not found.");
+      return new InterpreterResult(InterpreterResult.Code.ERROR, "Prefix not found.");
     }
 
     try {
@@ -719,7 +696,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
         statement.setMaxRows(maxRows);
 
         if (statement == null) {
-          return new InterpreterResult(Code.ERROR, "Prefix not found.");
+          return new InterpreterResult(InterpreterResult.Code.ERROR, "Prefix not found.");
         }
 
         try {
@@ -752,7 +729,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
                   !containsIgnoreCase(sqlToExecute, EXPLAIN_PREDICATE), isComplete);
               interpreterResult.add(results);
               if (!isComplete.booleanValue()) {
-                interpreterResult.add(ResultMessages.getExceedsLimitRowsMessage(getMaxResult(),
+                interpreterResult.add(InterpreterResult.Message.getExceedsLimitRowsMessage(getMaxResult(),
                     String.format("%s.%s", COMMON_KEY, MAX_LINE_KEY)));
               }
             }
@@ -780,7 +757,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       logger.error("Cannot run " + sql, e);
       String errorMsg = ExceptionUtils.getStackTrace(e);
       interpreterResult.add(errorMsg);
-      return new InterpreterResult(Code.ERROR, interpreterResult.message());
+      return new InterpreterResult(InterpreterResult.Code.ERROR, interpreterResult.message());
     } finally {
       //In case user ran an insert/update/upsert statement
       if (connection != null) {
@@ -822,13 +799,13 @@ public class JDBCInterpreter extends KerberosInterpreter {
   public void cancel(InterpreterContext context) {
     logger.info("Cancel current query statement.");
     String paragraphId = context.getParagraphId();
-    JDBCUserConfigurations jdbcUserConfigurations =
-            getJDBCConfiguration(context.getAuthenticationInfo().getUser());
-    try {
-      jdbcUserConfigurations.cancelStatement(paragraphId);
-    } catch (SQLException e) {
-      logger.error("Error while cancelling...", e);
-    }
+//    JDBCUserConfigurations jdbcUserConfigurations =
+//            getJDBCConfiguration(context.getAuthenticationInfo().getUser());
+//    try {
+//      jdbcUserConfigurations.cancelStatement(paragraphId);
+//    } catch (SQLException e) {
+//      logger.error("Error while cancelling...", e);
+//    }
   }
 
   public String getPropertyKey(InterpreterContext interpreterContext) {
@@ -856,22 +833,14 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return 0;
   }
 
-  @Override
-  public Scheduler getScheduler() {
-    String schedulerName = JDBCInterpreter.class.getName() + this.hashCode();
-    return isConcurrentExecution() ?
-            SchedulerFactory.singleton().createOrGetParallelScheduler(schedulerName,
-                getMaxConcurrentConnection())
-            : SchedulerFactory.singleton().createOrGetFIFOScheduler(schedulerName);
-  }
 
   @Override
   public List<InterpreterCompletion> completion(String buf, int cursor,
-      InterpreterContext interpreterContext) throws InterpreterException {
+                                                InterpreterContext interpreterContext) throws InterpreterException {
     List<InterpreterCompletion> candidates = new ArrayList<>();
     String propertyKey = getPropertyKey(interpreterContext);
     String sqlCompleterKey =
-        String.format("%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
+        String.format("%s.%s", ""/*interpreterContext.getAuthenticationInfo().getUser()*/, propertyKey);
     SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
 
     Connection connection = null;

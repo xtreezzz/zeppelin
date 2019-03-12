@@ -17,15 +17,10 @@
 
 package org.apache.zeppelin.kylin;
 
-import static org.junit.Assert.assertEquals;
-
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.AbstractHttpMessage;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +32,7 @@ import java.io.OutputStream;
 import java.util.Locale;
 import java.util.Properties;
 
-import org.apache.zeppelin.interpreter.InterpreterResult;
+import static org.junit.Assert.assertEquals;
 
 public class KylinInterpreterTest {
   static final Properties KYLIN_PROPERTIES = new Properties();

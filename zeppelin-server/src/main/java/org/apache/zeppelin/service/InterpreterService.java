@@ -17,18 +17,17 @@
 
 package org.apache.zeppelin.service;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import jline.internal.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreter.ManagedInterpreterGroup;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.repositories.ZeppelinNoteRepository;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,7 +196,7 @@ public class InterpreterService {
   //FIXME
   private Map<String, String> extractParagraphInfo(final Paragraph paragraph) {
     //try {
-      final ManagedInterpreterGroup process = null ;//(ManagedInterpreterGroup) paragraph
+      //final ManagedInterpreterGroup process = null ;//(ManagedInterpreterGroup) paragraph
               //.getBindedInterpreter().getInterpreterGroup();
       // add all info about binded interpreter
       //final Map<String, String> info = interpreterSettingRepository.extractProcessInfo(process);

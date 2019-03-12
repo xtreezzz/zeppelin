@@ -20,7 +20,6 @@ package org.apache.zeppelin.listener;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteEventListener;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.service.JobManagerService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.slf4j.Logger;
@@ -85,12 +84,6 @@ public class NoteEventListenerImpl implements NoteEventListener {
   @Override
   public void onNoteUpdate(final Note note) {
 
-  }
-
-  //@Override
-  public void onParagraphStatusChange(final Paragraph p, final Job.Status status) {
-    final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(p.getNote().getId());
-    broadcastSuccessResponse(notesJobInfo);
   }
 
   private void broadcastSuccessResponse(final List<JobManagerService.NoteJobInfo> notesJobInfo) {

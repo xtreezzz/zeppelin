@@ -23,7 +23,7 @@ import org.apache.spark.SparkContext
 import org.apache.zeppelin.annotation.ZeppelinApi
 import org.apache.zeppelin.notebook.display.AngularObjectWatcher
 import org.apache.zeppelin.notebook.display.ui.OptionInput.ParamOption
-import org.apache.zeppelin.interpreter.{BaseZeppelinContext, InterpreterContext, InterpreterHookRegistry}
+import org.apache.zeppelin.interpreter.{BaseZeppelinContext, InterpreterHookRegistry}
 
 import scala.collection.{JavaConversions, Seq}
 

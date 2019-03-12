@@ -17,7 +17,7 @@
 
 package org.apache.zeppelin.ignite;
 
-import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 
 /**
  * Apache Ignite interpreter utils.

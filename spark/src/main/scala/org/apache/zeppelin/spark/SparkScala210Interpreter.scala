@@ -25,7 +25,6 @@ import org.apache.spark.repl.SparkILoop
 import org.apache.spark.repl.SparkILoop._
 import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion
 import org.apache.zeppelin.interpreter.util.InterpreterOutputStream
-import org.apache.zeppelin.interpreter.{InterpreterContext, InterpreterResult}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.tools.nsc.Settings

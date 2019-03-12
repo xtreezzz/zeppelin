@@ -23,11 +23,9 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
-import org.apache.zeppelin.interpreter.InterpreterContext;
-import org.apache.zeppelin.interpreter.InterpreterException;
-import org.apache.zeppelin.interpreter.InterpreterResult;
-import org.apache.zeppelin.interpreter.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.InterpreterResult.Type;
+import org.apache.zeppelin.interpreter.core.InterpreterContext;
+import org.apache.zeppelin.interpreter.core.InterpreterException;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,8 +91,8 @@ public class IgniteSqlInterpreterTest {
     InterpreterResult result = intp.interpret("select name, age from person where age > 10",
             INTP_CONTEXT);
 
-    assertEquals(Code.SUCCESS, result.code());
-    assertEquals(Type.TABLE, result.message().get(0).getType());
+    assertEquals(InterpreterResult.Code.SUCCESS, result.code());
+    assertEquals(InterpreterResult.Type.TABLE, result.message().get(0).getType());
     assertEquals("NAME\tAGE\nsun\t100\nmoon\t50\n", result.message().get(0).getData());
   }
 
@@ -102,6 +100,6 @@ public class IgniteSqlInterpreterTest {
   public void testInvalidSql() throws Exception {
     InterpreterResult result = intp.interpret("select * hrom person", INTP_CONTEXT);
 
-    assertEquals(Code.ERROR, result.code());
+    assertEquals(InterpreterResult.Code.ERROR, result.code());
   }
 }
