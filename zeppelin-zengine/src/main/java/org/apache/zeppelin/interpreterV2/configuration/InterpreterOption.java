@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.interpreterV2.configuration;
 
+import java.io.Serializable;
 import java.util.StringJoiner;
 import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
@@ -24,7 +25,7 @@ import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
 /**
  * Full interpreter settings on interpreter page.
  */
-public class InterpreterOption {
+public class InterpreterOption implements Serializable {
   private static final String SHARED = "shared";
   private static final String SCOPED = "scoped";
   private static final String ISOLATED = "isolated";

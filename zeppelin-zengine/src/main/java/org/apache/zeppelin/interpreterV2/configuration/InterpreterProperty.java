@@ -17,10 +17,15 @@
 
 package org.apache.zeppelin.interpreterV2.configuration;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Property for registered interpreter
  */
-public class InterpreterProperty {
+public class InterpreterProperty implements Serializable {
 
   /**
    * Types of interpreter properties
@@ -125,6 +130,10 @@ public class InterpreterProperty {
   public boolean equals(Object o) {
     if (o == null) return false;
     return this.toString().equals(o.toString());
+  }
+
+  public static List<String> getTypes() {
+    return Arrays.stream(Type.values()).map(Type::getValue).collect(Collectors.toList());
   }
 
   public Object getValue() {

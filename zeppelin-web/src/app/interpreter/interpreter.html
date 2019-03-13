@@ -87,22 +87,22 @@ limitations under the License.
 </div>
 
 <div interpreter-item class="box width-full"
-     ng-repeat="setting in interpreterSettings | orderBy: 'name' | filter: {name:searchInterpreter}" >
-  <div id="{{setting.name | lowercase}}">
+     ng-repeat="setting in interpreterSettings | orderBy: 'interpreterName' | filter: {interpreterName:searchInterpreter}" >
+  <div id="{{setting.interpreterName | lowercase}}">
     <div class="row interpreter">
 
       <div class="col-md-12">
-        <h3 class="interpreter-title">{{setting.name}}
+        <h3 class="interpreter-title">{{setting.interpreterName}}
           <small>
-            <span style="display:inline-block" ng-repeat="interpreter in setting.interpreterGroup"
-                  title="{{interpreter.class}}">
+            <span style="display:inline-block" ng-repeat="interpreter in setting.config"
+                  title="{{interpreter.className}}">
               <span ng-show="!$first">, </span>
-              %<span ng-show="!$parent.$first || $first">{{setting.name}}</span
+              <span ng-show="!$parent.$first || $first">{{setting.shebang}}</span
               ><span ng-show="(!$parent.$first || $first) && !$first">.</span
-              ><span ng-show="!$first">{{interpreter.name}}</span>
+              ><span ng-show="!$first">{{interpreter.customInterpreterName}}</span>
             </span>
           </small>
-
+        <!--
           <small ng-switch="setting.status">
             <small ng-switch-when="READY">
               <i style="color: green; margin-right: 3px;" class="fa fa-circle"
@@ -121,7 +121,7 @@ limitations under the License.
               </i>
             </small>
           </small>
-
+        -->
         </h3>
         <span style="float:right" ng-show="!valueform.$visible" >
           <button class="btn btn-default btn-xs"
@@ -383,10 +383,10 @@ limitations under the License.
     </div>
 
     <div class="row interpreter" style="margin-top:20px !important">
-      <div ng-show="_.isEmpty(setting.properties) && _.isEmpty(setting.dependencies) && !valueform.$visible" class="col-md-12 gray40-message">
+      <div ng-show="_.isEmpty(setting.config.properties) && !valueform.$visible" class="col-md-12 gray40-message">
         <em>Currently there are no properties and dependencies set for this interpreter</em>
       </div>
-      <div class="col-md-12" ng-show="!_.isEmpty(setting.properties) || valueform.$visible">
+      <div class="col-md-12" ng-show="!_.isEmpty(setting.config.properties) || valueform.$visible">
         <h5>Properties</h5>
         <table class="table table-striped">
           <thead>
@@ -396,32 +396,32 @@ limitations under the License.
               <th style="width:20%" ng-if="valueform.$visible">action</th>
             </tr>
           </thead>
-          <tr ng-repeat="key in setting.properties | sortByKey" >
+          <tr ng-repeat="key in setting.config.properties | sortByKey" >
             <td style="vertical-align: middle;">{{key}}</td>
             <td style="vertical-align: middle;">
-              <span ng-if="setting.properties[key].type === 'textarea'"
-                    editable-textarea="setting.properties[key].value" e-form="valueform" e-msd-elastic>
-                 {{setting.properties[key].value | breakFilter}}
+              <span ng-if="setting.config.properties[key].type === 'textarea'"
+                    editable-textarea="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
+                 {{setting.config.properties[key].value | breakFilter}}
               </span>
-              <span ng-if="setting.properties[key].type === 'string'"
-                    editable-text="setting.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.properties[key].value}}
+              <span ng-if="setting.config.properties[key].type === 'string'"
+                    editable-text="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].value}}
               </span>
-              <span ng-if="setting.properties[key].type === 'number'"
-                    editable-text="setting.properties[key].value" e-widget-number e-form="valueform" e-msd-elastic>
-                {{setting.properties[key].value}}
+              <span ng-if="setting.config.properties[key].type === 'number'"
+                    editable-text="setting.config.properties[key].value" e-widget-number e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].value}}
               </span>
-              <span ng-if="setting.properties[key].type === 'url'"
-                    editable-text="setting.properties[key].value" e-form="valueform" e-msd-elastic>
-                <a ng-href="{{setting.properties[key].value}}">{{setting.properties[key].value}}</a>
+              <span ng-if="setting.config.properties[key].type === 'url'"
+                    editable-text="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
+                <a ng-href="{{setting.config.properties[key].value}}">{{setting.config.properties[key].value}}</a>
               </span>
-              <span ng-if="setting.properties[key].type === 'password'"
-                    editable-password="setting.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.properties[key].value ? '***' : ''}}
+              <span ng-if="setting.config.properties[key].type === 'password'"
+                    editable-password="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].value ? '***' : ''}}
               </span>
-              <span ng-if="setting.properties[key].type === 'checkbox'"
-                    editable-checkbox="setting.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.properties[key].value}}
+              <span ng-if="setting.config.properties[key].type === 'checkbox'"
+                    editable-checkbox="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].value}}
               </span>
             </td>
             <td style="vertical-align: middle;" ng-if="valueform.$visible">

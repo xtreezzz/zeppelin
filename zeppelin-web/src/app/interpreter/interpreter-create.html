@@ -19,15 +19,21 @@ limitations under the License.
         <h4>Create new interpreter</h4>
 
         <div class="form-group" style="width:200px">
-          <b>Interpreter Name</b>
+          <b>Name:</b>
           <input id="newInterpreterSettingName" input pu-elastic-input
-                 pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.name" />
+                 pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.customInterpreterName" />
         </div>
 
-        <b>Interpreter group</b>
+        <div class="form-group" style="width:200px">
+          <b>Shebang:</b>
+          <input id="newInterpreterSettingShebang" input pu-elastic-input
+                 pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.shebang" />
+        </div>
+
+        <b>Interpreter:</b>
         <div class="form-group"
              style="width:180px">
-          <select class="form-control input-sm" ng-model="newInterpreterSetting.group"
+          <select class="form-control input-sm" ng-model="newInterpreterSetting.interpreterName"
                   ng-change="newInterpreterGroupChange()">
             <option ng-repeat="availableInterpreter in availableInterpreters | unique: 'interpreterName'| orderBy: 'interpreterName'" value="{{availableInterpreter.interpreterName}}">
               {{availableInterpreter.interpreterName}}
@@ -213,23 +219,23 @@ limitations under the License.
             <div class="checkbox remove-margin-top-bottom">
           <span class="input-group" style="line-height:30px;">
             <label>
-              <input type="checkbox" style="width:20px" id="isExistingProcess" ng-model="newInterpreterSetting.option.isExistingProcess"/>
+              <input type="checkbox" style="width:20px" id="isExistingProcess" ng-model="newInterpreterSetting.remoteProcess.isEnabled"/>
               Connect to existing process
             </label>
           </span>
             </div>
           </div>
         </div>
-        <div class="row interpreter" ng-show="newInterpreterSetting.option.isExistingProcess" >
+        <div class="row interpreter" ng-show="newInterpreterSetting.remoteProcess.isEnabled" >
           <div class="col-md-12">
             <b>Host</b>
             <input id="newInterpreterSettingHost" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.option.host"/>
+                   pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.remoteProcess.host"/>
           </div>
           <div class="col-md-12">
             <b>Port</b>
             <input id="newInterpreterSettingPort" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.option.port"/>
+                   pu-elastic-input-minwidth="180px" ng-model="newInterpreterSetting.remoteProcess.port"/>
           </div>
         </div>
         <div class="row interpreter">
@@ -237,7 +243,7 @@ limitations under the License.
             <div class="checkbox remove-margin-top-bottom">
           <span class="input-group" style="line-height:30px;">
             <label>
-              <input type="checkbox" style="width:20px !important" id="idShowPermission" ng-click="togglePermissions('newInterpreter')" ng-model="newInterpreterSetting.option.setPermission"/>
+              <input type="checkbox" style="width:20px !important" id="idShowPermission" ng-click="togglePermissions('newInterpreter')" ng-model="newInterpreterSetting.permissions.isEnabled"/>
                Set permission
             </label>
           </span>
@@ -249,7 +255,7 @@ limitations under the License.
         <div class="row interpreter">
           <div class="col-md-12">
             <!-- permissions -->
-            <div ng-show="newInterpreterSetting.option.setPermission" class="permissionsForm">
+            <div ng-show="newInterpreterSetting.permissions.isEnabled" class="permissionsForm">
               <div>
                 <p>
                   Enter comma separated users and groups in the fields. <br />
@@ -258,7 +264,7 @@ limitations under the License.
                 <div>
                   <span class="owners">Owners </span>
                   <select id="newInterpreterOwners" class="form-control" multiple="multiple">
-                    <option ng-repeat="owner in newInterpreterSetting.option.owners" selected="selected">{{owner}}</option>
+                    <option ng-repeat="owner in newInterpreterSetting.permissions.owners" selected="selected">{{owner}}</option>
                   </select>
                 </div>
               </div>
@@ -325,6 +331,7 @@ limitations under the License.
           </table>
         </div>
 
+        <!--
         <div>
           <h5>Dependencies</h5>
           <table class="table table-striped properties">
@@ -334,43 +341,9 @@ limitations under the License.
               <th>action</th>
             </tr>
 
-            <tr ng-repeat="dep in newInterpreterSetting.dependencies">
-              <td>
-                <input ng-model="dep.groupArtifactVersion" style="width:100%" />
-              </td>
-              <td>
-                <textarea msd-elastic ng-model="dep.exclusions"
-                          ng-list
-                          placeholder="(Optional) comma separated groupId:artifactId list">
-                </textarea>
-              </td>
-              <td>
-                <button class="btn btn-default btn-sm fa fa-remove"
-                     ng-click="removeInterpreterDependency(dep.groupArtifactVersion)">
-                </button>
-              </td>
-            </tr>
-
-            <tr>
-              <td>
-                <input ng-model="newInterpreterSetting.depArtifact"
-                       placeholder="groupId:artifactId:version or local file path"
-                       style="width: 100%" />
-              </td>
-              <td>
-                <textarea msd-elastic ng-model="newInterpreterSetting.depExclude"
-                          ng-list
-                          placeholder="(Optional) comma separated groupId:artifactId list">
-                </textarea>
-              </td>
-              <td>
-                <button class="btn btn-default btn-sm fa fa-plus" ng-click="addNewInterpreterDependency()">
-                </button>
-              </td>
-            </tr>
           </table>
         </div>
-
+        -->
         <span class="btn btn-primary" ng-click="addNewInterpreterSetting()">
           Save
         </span>

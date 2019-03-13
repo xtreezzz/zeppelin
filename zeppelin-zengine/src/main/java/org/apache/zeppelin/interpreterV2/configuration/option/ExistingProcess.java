@@ -1,5 +1,6 @@
 package org.apache.zeppelin.interpreterV2.configuration.option;
 
+import java.io.Serializable;
 import java.util.StringJoiner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -7,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 /**
  *  Option 'Connect to existing process' on interpreter configuration page.
  */
-public class ExistingProcess {
+public class ExistingProcess implements Serializable {
   private String host;
   private int port;
   private boolean isEnabled;

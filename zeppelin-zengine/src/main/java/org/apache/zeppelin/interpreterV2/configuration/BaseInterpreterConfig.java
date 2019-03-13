@@ -1,12 +1,14 @@
 package org.apache.zeppelin.interpreterV2.configuration;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Represent default interpreter setting.
  */
-public class BaseInterpreterConfig {
+public class BaseInterpreterConfig implements Serializable {
 
   private String group;
   private String name;
@@ -48,4 +50,14 @@ public class BaseInterpreterConfig {
     return getGroup() + "." + getName();
   }
 
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "{", "}")
+        .add("group='" + group + "'")
+        .add("name='" + name + "'")
+        .add("className='" + className + "'")
+        .add("properties=" + properties)
+        .add("editor=" + editor)
+        .toString();
+  }
 }

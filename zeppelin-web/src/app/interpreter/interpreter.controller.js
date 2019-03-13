@@ -191,11 +191,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   $scope.setPerNoteOption = function(settingId, sessionOption) {
     let option;
     if (settingId === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = setting;
     }
 
     if (sessionOption === 'isolated') {
@@ -225,11 +225,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   $scope.setPerUserOption = function(settingId, sessionOption) {
     let option;
     if (settingId === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = setting;
     }
 
     if (sessionOption === 'isolated') {
@@ -250,11 +250,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   $scope.getPerNoteOption = function(settingId) {
     let option;
     if (settingId === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = setting;
     }
 
     if (option.perNote === 'scoped') {
@@ -294,11 +294,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
 
     let option;
     if (settingId === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = setting;
     }
 
     let perNote = option.perNote;
@@ -330,11 +330,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   $scope.setInterpreterRunningOption = function(settingId, isPerNoteMode, isPerUserMode) {
     let option;
     if (settingId === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = setting;
     }
     option.perNote = isPerNoteMode;
     option.perUser = isPerUserMode;
@@ -443,8 +443,9 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   };
 
   $scope.newInterpreterGroupChange = function() {
-    let el = _.pluck(_.filter($scope.availableInterpreters, {'name': $scope.newInterpreterSetting.group}),
-      'properties');
+    let el = _.pluck(_.filter($scope.availableInterpreters, {'interpreterName':
+    $scope.newInterpreterSetting.interpreterName}),
+      'config.properties');
     let properties = {};
     for (let i = 0; i < el.length; i++) {
       let intpInfo = el[i];
@@ -485,17 +486,20 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
 
   $scope.addNewInterpreterSetting = function() {
     // user input validation on interpreter creation
-    if (!$scope.newInterpreterSetting.name ||
-      !$scope.newInterpreterSetting.name.trim() || !$scope.newInterpreterSetting.group) {
+    if (!$scope.newInterpreterSetting.customInterpreterName
+    || !$scope.newInterpreterSetting.customInterpreterName.trim()
+    || !$scope.newInterpreterSetting.interpreterName
+    || !$scope.newInterpreterSetting.shebang
+    || !$scope.newInterpreterSetting.shebang.trim()) {
       BootstrapDialog.alert({
         closable: true,
         title: 'Add interpreter',
-        message: 'Please fill in interpreter name and choose a group',
+        message: 'Please fill in interpreter name and shebang and choose a interpreter',
       });
       return;
     }
 
-    if ($scope.newInterpreterSetting.name.indexOf('.') >= 0) {
+    if ($scope.newInterpreterSetting.customInterpreterName.indexOf('.') >= 0) {
       BootstrapDialog.alert({
         closable: true,
         title: 'Add interpreter',
@@ -504,11 +508,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       return;
     }
 
-    if (_.findIndex($scope.interpreterSettings, {'name': $scope.newInterpreterSetting.name}) >= 0) {
+    if (_.findIndex($scope.interpreterSettings, {'shebang': $scope.newInterpreterSetting.shebang}) >= 0) {
       BootstrapDialog.alert({
         closable: true,
         title: 'Add interpreter',
-        message: 'Name ' + _.escape($scope.newInterpreterSetting.name) + ' already exists',
+        message: 'Shebang ' + _.escape($scope.newInterpreterSetting.shebang) + ' already exists',
       });
       return;
     }
@@ -520,10 +524,10 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
     if (newSetting.depArtifact !== '' || newSetting.depArtifact) {
       $scope.addNewInterpreterDependency();
     }
-    if (newSetting.option.setPermission === undefined) {
-      newSetting.option.setPermission = false;
+    if (newSetting.permissions.isEnabled === undefined) {
+      newSetting.permissions.isEnabled = false;
     }
-    newSetting.option.owners = angular.element('#newInterpreterOwners').val();
+    newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
 
     let request = angular.copy($scope.newInterpreterSetting);
 

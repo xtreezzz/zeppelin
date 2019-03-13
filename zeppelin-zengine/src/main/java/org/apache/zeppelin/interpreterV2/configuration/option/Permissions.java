@@ -1,6 +1,7 @@
 package org.apache.zeppelin.interpreterV2.configuration.option;
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -9,7 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 /**
  * Option 'permission' on interpreter configuration page.
  */
-public class Permissions {
+public class Permissions implements Serializable {
   private final List<String> owners;
   private boolean isEnabled;
 

@@ -17,6 +17,9 @@
 
 package org.apache.zeppelin.rest;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
@@ -24,6 +27,7 @@ import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
+import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
@@ -81,7 +85,9 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
-    return new JsonResponse(HttpStatus.OK, "", markdownOption.getConfig().getProperties()).build();
+    List<InterpreterOption> settings = new ArrayList<>();
+    settings.add(markdownOption);
+    return new JsonResponse<>(HttpStatus.OK, "", settings).build();
   }
 
   /**
@@ -93,13 +99,13 @@ public class InterpreterRestApi {
     try {
       final InterpreterOption setting = markdownOption;
       if (setting == null) {
-        return new JsonResponse(HttpStatus.NOT_FOUND).build();
+        return new JsonResponse<>(HttpStatus.NOT_FOUND).build();
       } else {
-        return new JsonResponse(HttpStatus.OK, "", setting.getConfig().getProperties()).build();
+        return new JsonResponse<>(HttpStatus.OK, "", setting).build();
       }
     } catch (final NullPointerException e) {
       logger.error("Exception in InterpreterRestApi while creating ", e);
-      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -112,25 +118,15 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(final String message) {
-    //FIXME
-    //    try {
-    //      final NewInterpreterSettingRequest request =
-    //          NewInterpreterSettingRequest.fromJson(message);
-    //      if (request == null) {
-    //        return new JsonResponse(HttpStatus.BAD_REQUEST).build();
-    //      }
-    //
-    //      final InterpreterSettingV2 interpreterSetting = interpreterSettingRepository
-    //          .createNewSetting(request.getName(), request.getGroup(), request.getDependencies(),
-    //              request.getOption(), request.getProperties());
-    //      logger.info("new setting created with {}", interpreterSetting.getId());
-    //      return new JsonResponse(HttpStatus.OK, "", interpreterSetting).build();
-    //    } catch (final IOException e) {
-    //      logger.error("Exception in InterpreterRestApi while creating ", e);
-    //      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
-    //          .build();
-    //    }
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    final NewInterpreterSettingRequest request =
+        NewInterpreterSettingRequest.fromJson(message);
+    if (request == null) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+    }
+
+    markdownOption.setCustomInterpreterName(request.getName());
+    markdownOption.setInterpreterName(request.getGroup());
+    return new JsonResponse(HttpStatus.OK, "", markdownOption).build();
   }
 
   @ZeppelinApi
@@ -208,11 +204,8 @@ public class InterpreterRestApi {
    */
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
-    final Map<String, InterpreterOption> m =  new HashMap<String, InterpreterOption>() {{
-        put("md", markdownOption);
-     }};
-    logger.info("\n[DEBUG]\njson-{}\n[DEBUG]",
-        new JsonResponse<>(HttpStatus.OK, "", m).build());
+    final Map<String, InterpreterOption> m =  new HashMap<>();
+    m.put("md", markdownOption);
     return new JsonResponse<>(HttpStatus.OK, "", m).build();
   }
 
@@ -224,7 +217,7 @@ public class InterpreterRestApi {
   public ResponseEntity listRepositories() {
     //    final List<RemoteRepository> interpreterRepositories = interpreterSettingRepository.getRepositories();
     //    return new JsonResponse(HttpStatus.OK, "", interpreterRepositories).build();
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.OK, "", Collections.emptyList()).build();
   }
 
   /**
@@ -246,7 +239,7 @@ public class InterpreterRestApi {
     //          ExceptionUtils.getStackTrace(e)).build();
     //    }
     //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.OK, "", Collections.emptyList()).build();
   }
 
   /**
@@ -274,9 +267,7 @@ public class InterpreterRestApi {
    */
   @GetMapping(value = "/property/types", produces = "application/json")
   public ResponseEntity listInterpreterPropertyTypes() {
-    //FIXME
-    //return new JsonResponse(HttpStatus.OK, InterpreterPropertyType.getTypes()).build();
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.OK, InterpreterProperty.getTypes()).build();
   }
 
   /** Install interpreter */
