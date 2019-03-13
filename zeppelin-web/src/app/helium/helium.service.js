@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-import {HeliumType} from './helium-type';
+// import {HeliumType} from './helium-type';
 import {
   createAllPackageConfigs,
   createPersistableConfig,
@@ -30,7 +30,7 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
   let visualizationBundles = [];
   let visualizationPackageOrder = [];
   // name `heliumBundles` should be same as `HeliumBundleFactory.HELIUM_BUNDLES_VAR`
-  let heliumBundles = [];
+  // let heliumBundles = [];
   // map for `{ magic: interpreter }`
   let spellPerMagic = {};
   // map for `{ magic: package-name }`
@@ -259,7 +259,8 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
     });
   };
 
-  /*const p = this.getAllEnabledPackages()
+  /*
+  const p = this.getAllEnabledPackages()
     .then((enabledPackageSearchResults) => {
       const promises = enabledPackageSearchResults.map((packageSearchResult) => {
         const pkgName = packageSearchResult.pkg.name;
