@@ -64,8 +64,10 @@ public class ParagraphHandler extends AbstractHandler {
 
     final String title = fromMessage.safeGetType("title", LOG);
     final String text = fromMessage.safeGetType("paragraph", LOG);
+    final Map<String, Object> config = fromMessage.safeGetType("config", LOG);
     final Map<String, Object> params = fromMessage.safeGetType("params", LOG);
 
+    p.setConfig(config);
     p.getSettings().setParams(params);
     p.setTitle(title);
     p.setText(text);
@@ -132,9 +134,9 @@ public class ParagraphHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
-    final Integer index = fromMessage.safeGetType("index", LOG);
+    final int index = ((Double) fromMessage.safeGetType("index", LOG)).intValue();
 
-    if (index > 0 && index >= note.getParagraphs().size()) {
+    if (index < 0 || index > note.getParagraphs().size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
 
@@ -152,9 +154,9 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final Integer index = fromMessage.safeGetType("index", LOG);
+    final int index = ((Double) fromMessage.safeGetType("index", LOG)).intValue();
 
-    if (index > 0 && index >= note.getParagraphs().size()) {
+    if (index < 0 || index > note.getParagraphs().size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
 

@@ -31,7 +31,17 @@ function NoteCreateCtrl($scope, noteListFactory, $routeParams, websocketMsgSrv) 
     if (!vm.clone) {
       let defaultInterpreterGroup = '';
       if ($scope.note.defaultInterpreter !== null) {
-        defaultInterpreterGroup = $scope.note.defaultInterpreter.name;
+
+
+        //TODO(SAN) добавил проверку на null
+        if ($scope.note.defaultInterpreter) {
+          defaultInterpreterGroup = $scope.note.defaultInterpreter.name;
+        } else {
+          defaultInterpreterGroup = 'python';
+        }
+
+
+
       }
       vm.websocketMsgSrv.createNotebook($scope.note.path, defaultInterpreterGroup);
       $scope.note.defaultInterpreter = $scope.interpreterSettings[0];

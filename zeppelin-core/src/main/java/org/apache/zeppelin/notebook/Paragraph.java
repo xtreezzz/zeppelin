@@ -17,6 +17,8 @@
 
 package org.apache.zeppelin.notebook;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -43,6 +45,10 @@ public class Paragraph implements Serializable {
   private LocalDateTime created;
   private LocalDateTime updated;
 
+  //TODO(SAN) вернул config :)
+  //paragraph configs like isOpen, colWidth, etc
+  private Map<String, Object> config;
+
   // form and parameter settings
   private GUI settings;
 
@@ -56,6 +62,7 @@ public class Paragraph implements Serializable {
     this.user = user;
     this.created = LocalDateTime.now();
     this.updated = LocalDateTime.now();
+    this.config = new HashMap<>();
     this.settings = settings;
   }
 
@@ -110,6 +117,14 @@ public class Paragraph implements Serializable {
     this.updated = updated;
   }
 
+  public Map<String, Object> getConfig() {
+    return config;
+  }
+
+  public void setConfig(final Map<String, Object> config) {
+    this.config = config;
+  }
+
   public GUI getSettings() {
     return settings;
   }
@@ -136,6 +151,7 @@ public class Paragraph implements Serializable {
         .append(text, paragraph.text)
         .append(user, paragraph.user)
         .append(created, paragraph.created)
+        .append(config, paragraph.config)
         .append(settings, paragraph.settings)
         .isEquals();
   }
@@ -147,6 +163,7 @@ public class Paragraph implements Serializable {
         .append(text)
         .append(user)
         .append(created)
+        .append(config)
         .append(settings)
         .toHashCode();
   }

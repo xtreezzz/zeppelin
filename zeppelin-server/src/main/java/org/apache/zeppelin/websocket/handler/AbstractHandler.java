@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.Input;
-import org.apache.zeppelin.repositories.NoteRepository;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
@@ -47,9 +47,9 @@ public abstract class AbstractHandler {
           .registerTypeAdapterFactory(Input.TypeAdapterFactory).create();
 
   protected final ConnectionManager connectionManager;
-  protected final NoteRepository noteRepository;
+  protected final DatabaseNoteRepository noteRepository;
 
-  public AbstractHandler(final ConnectionManager connectionManager, final NoteRepository noteRepository) {
+  public AbstractHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository) {
     this.connectionManager = connectionManager;
     this.noteRepository = noteRepository;
   }

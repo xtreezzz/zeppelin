@@ -11,9 +11,10 @@ CREATE TABLE paragraphs
   note_id  VARCHAR(9) REFERENCES notes ON DELETE CASCADE,
   title    VARCHAR,
   text     VARCHAR,
-  username   VARCHAR,
+  username VARCHAR,
   created  VARCHAR,
   updated  VARCHAR,
+  config   VARCHAR,
   settings VARCHAR
 );
 

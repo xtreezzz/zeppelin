@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,19 +33,19 @@ public class DatabaseStorage {
 
   private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs";
   private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE note_id = ?;";
-  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(id, note_id, title, text, username, created, UPDATEd, settings) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
-  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=?, text=?, username=?, updated=?, settings=? WHERE id=?;";
+  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(id, note_id, title, text, username, created, updated, config, settings) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=?, text=?, username=?, updated=?, config=?, settings=? WHERE id=?;";
 
   private static final DateTimeFormatter paragraphDateFormatter = DateTimeFormatter
       .ofPattern("YYYY-MM-dd HH:mm:ss.SSS");
 
   public void createNote(final Note note) {
-    int affectedRows = jdbcTemplate
+    final int affectedRows = jdbcTemplate
         .update(INSERT_NOTE, note.getId(), note.getPath(), note.getDefaultInterpreterGroup());
     if (affectedRows == 0) {
       throw new RuntimeException("Can't create note " + note.getId());
     }
-    note.getParagraphs().forEach(p -> saveParagraph(p, note.getId()));
+    saveNoteParagraphs(note);
   }
 
   public void updateNote(final Note note) {
@@ -53,7 +54,7 @@ public class DatabaseStorage {
     if (affectedRows == 0) {
       throw new RuntimeException("Can't update note " + note.getId());
     }
-    note.getParagraphs().forEach(p -> saveParagraph(p, note.getId()));
+    saveNoteParagraphs(note);
   }
 
   public Note getNote(final String noteId) {
@@ -73,6 +74,8 @@ public class DatabaseStorage {
       );
 
       note.getParagraphs().addAll(paragraphs);
+      note.getParagraphs()
+          .sort(Comparator.comparingInt(p -> ((Double) p.getConfig().get("position")).intValue()));
       return note;
     } catch (final EmptyResultDataAccessException ignore) {
       return null;
@@ -98,6 +101,8 @@ public class DatabaseStorage {
           noteMap.get(note_id).getParagraphs().add(paragraph);
         });
 
+    notes.forEach(n -> n.getParagraphs()
+        .sort(Comparator.comparingInt(p -> ((Double) p.getConfig().get("position")).intValue())));
     return notes;
   }
 
@@ -121,6 +126,7 @@ public class DatabaseStorage {
         .fromJson(resultSet.getString("created"), LocalDateTime.class);
     final LocalDateTime updated = gson
         .fromJson(resultSet.getString("updated"), LocalDateTime.class);
+    final String configJson = resultSet.getString("config");
     final String settingsJson = resultSet.getString("settings");
 
     final GUI settings = new Gson().fromJson(settingsJson, GUI.class);
@@ -129,11 +135,21 @@ public class DatabaseStorage {
     paragraph.setId(id);
     paragraph.setCreated(created);
     paragraph.setUpdated(updated);
+    paragraph.setConfig(gson.fromJson(configJson, paragraph.getConfig().getClass()));
 
     return paragraph;
   }
 
+  private void saveNoteParagraphs(Note note) {
+    for (int i = 0; i < note.getParagraphs().size(); i++) {
+      final Paragraph paragraph = note.getParagraphs().get(i);
+      paragraph.getConfig().put("position", i);
+      saveParagraph(paragraph, note.getId());
+    }
+  }
+
   private void saveParagraph(final Paragraph p, final String noteId) {
+    final String configJson = gson.toJson(p.getConfig());
     final String settingsJson = gson.toJson(p.getSettings());
     final String createdJson = gson.toJson(p.getCreated());
     final String updatedJson = gson.toJson(p.getUpdated());
@@ -144,6 +160,7 @@ public class DatabaseStorage {
         p.getText(),
         p.getUser(),
         updatedJson,
+        configJson,
         settingsJson,
         p.getId()
     ) == 0;
@@ -158,6 +175,7 @@ public class DatabaseStorage {
           p.getUser(),
           createdJson,
           updatedJson,
+          configJson,
           settingsJson
       );
     }

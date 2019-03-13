@@ -17,9 +17,11 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.repositories.NoteRepository;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -28,13 +30,8 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class NoteRevisionHandler extends AbstractHandler {
@@ -42,7 +39,7 @@ public class NoteRevisionHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteRevisionHandler.class);
 
   @Autowired
-  public NoteRevisionHandler(final ConnectionManager connectionManager, final NoteRepository noteRepository) {
+  public NoteRevisionHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository) {
     super(connectionManager, noteRepository);
   }
 
