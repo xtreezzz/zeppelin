@@ -17,81 +17,29 @@
 
 package org.apache.zeppelin.interpreterV2.configuration;
 
-import java.io.Serializable;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
+import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
 
 /**
- *
+ * Full interpreter settings on interpreter page.
  */
-public class InterpreterOption implements Serializable {
-  public static final String SHARED = "shared";
-  public static final String SCOPED = "scoped";
-  public static final String ISOLATED = "isolated";
-  private static ZeppelinConfiguration conf =  ZeppelinConfiguration.create();
-
-  // always set it as true, keep this field just for backward compatibility
-  boolean remote = true;
-  String host = null;
-  int port = -1;
+public class InterpreterOption {
+  private static final String SHARED = "shared";
+  private static final String SCOPED = "scoped";
+  private static final String ISOLATED = "isolated";
 
   private String perNote;
   private String perUser;
 
-  public boolean isExistingProcess;
-  private boolean setPermission;
-  public List<String> owners;
-  boolean isUserImpersonate;
+  private BaseInterpreterConfig config;
 
-  public boolean isExistingProcess() {
-    return isExistingProcess;
-  }
+  private ExistingProcess remoteProcess;
+  private Permissions permissions;
 
-  public void setExistingProcess(boolean isExistingProcess) {
-    this.isExistingProcess = isExistingProcess;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public void setHost(String host) {
-    this.host = host;
-  }
-
-  public boolean permissionIsSet() {
-    return setPermission;
-  }
-
-  public void setUserPermission(boolean setPermission) {
-    this.setPermission = setPermission;
-  }
-
-  public List<String> getOwners() {
-    if (null != owners && conf.isUsernameForceLowerCase()) {
-      List<String> lowerCaseUsers = new ArrayList<String>();
-      for (String owner : owners) {
-        lowerCaseUsers.add(owner.toLowerCase());
-      }
-      return lowerCaseUsers;
-    }
-    return owners;
-  }
-
-  public boolean isUserImpersonate() {
-    return isUserImpersonate;
-  }
-
-  public void setUserImpersonate(boolean userImpersonate) {
-    isUserImpersonate = userImpersonate;
-  }
-
-  public InterpreterOption() {
-  }
-
-  public InterpreterOption(String perUser, String perNote) {
+  public InterpreterOption(String perNote, String perUser,
+      ExistingProcess remoteProcess,
+      Permissions permissions,
+      BaseInterpreterConfig config) {
     if (perUser == null) {
       throw new NullPointerException("perUser can not be null.");
     }
@@ -99,33 +47,36 @@ public class InterpreterOption implements Serializable {
       throw new NullPointerException("perNote can not be null.");
     }
 
-    this.perUser = perUser;
     this.perNote = perNote;
+    this.perUser = perUser;
+    this.remoteProcess = remoteProcess;
+    this.permissions = permissions;
+    this.config = config;
   }
 
-  public static InterpreterOption fromInterpreterOption(InterpreterOption other) {
-    InterpreterOption option = new InterpreterOption();
-    option.remote = other.remote;
-    option.host = other.host;
-    option.port = other.port;
-    option.perNote = other.perNote;
-    option.perUser = other.perUser;
-    option.isExistingProcess = other.isExistingProcess;
-    option.setPermission = other.setPermission;
-    option.owners = (null == other.owners) ?
-        new ArrayList<String>() : new ArrayList<>(other.owners);
-
-    return option;
+  public BaseInterpreterConfig getConfig() {
+    return config;
   }
 
-  public String getHost() {
-    return host;
+  public void setConfig(BaseInterpreterConfig config) {
+    this.config = config;
   }
 
-  public int getPort() {
-    return port;
+  public ExistingProcess getRemoteProcess() {
+    return remoteProcess;
   }
 
+  public void setRemoteProcess(ExistingProcess remoteProcess) {
+    this.remoteProcess = remoteProcess;
+  }
+
+  public Permissions getPermissions() {
+    return permissions;
+  }
+
+  public void setPermissions(Permissions permissions) {
+    this.permissions = permissions;
+  }
 
   public boolean perUserShared() {
     return SHARED.equals(perUser);

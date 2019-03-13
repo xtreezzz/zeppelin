@@ -20,8 +20,8 @@ package org.apache.zeppelin.websocket.handler;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
 import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -39,18 +39,15 @@ public class SettingsHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SettingsHandler.class);
 
   private final ConfigurationService configurationService;
-  private final InterpreterSettingRepository interpreterSettingRepository;
   //private final InterpreterFactory interpreterFactory;
 
   @Autowired
   public SettingsHandler(final DatabaseNoteRepository noteRepository,
                          final ConnectionManager connectionManager,
-                         final ConfigurationService configurationService,
-                         final InterpreterSettingRepository interpreterSettingRepository) {
+                         final ConfigurationService configurationService) {
                          //final InterpreterFactory interpreterFactory) {
     super(connectionManager, noteRepository);
     this.configurationService = configurationService;
-    this.interpreterSettingRepository = interpreterSettingRepository;
     //this.interpreterFactory = interpreterFactory;
   }
 
@@ -92,11 +89,12 @@ public class SettingsHandler extends AbstractHandler {
   }
 
 
+  //FIXME
   public void getInterpreterSettings(final WebSocketSession conn) throws IOException {
-    final List<InterpreterSettingV2> availableSettings = interpreterSettingRepository.get();
-    final SockMessage message = new SockMessage(Operation.INTERPRETER_SETTINGS)
-            .put("interpreterSettings", availableSettings);
-    conn.sendMessage(message.toSend());
+  //    final List<InterpreterSettingV2> availableSettings = interpreterSettingRepository.get();
+  //    final SockMessage message = new SockMessage(Operation.INTERPRETER_SETTINGS)
+  //            .put("interpreterSettings", availableSettings);
+  //    conn.sendMessage(message.toSend());
   }
 
 }

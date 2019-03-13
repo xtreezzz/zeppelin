@@ -36,7 +36,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.repositories.DatabaseNoteRepository;
@@ -63,15 +62,12 @@ public class InterpreterService {
 
   private final ZeppelinConfiguration conf;
   //FIXME
-  private final InterpreterSettingRepository interpreterSettingRepository;
   private final DatabaseNoteRepository noteRepository;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
-                            final InterpreterSettingRepository interpreterSettingRepository,
                             final DatabaseNoteRepository noteRepository) {
     this.conf = conf;
-    this.interpreterSettingRepository = interpreterSettingRepository;
     this.noteRepository = noteRepository;
   }
 

@@ -21,11 +21,36 @@ package org.apache.zeppelin.interpreterV2.configuration;
  * Property for registered interpreter
  */
 public class InterpreterProperty {
+
+  /**
+   * Types of interpreter properties
+   */
+  private enum Type {
+
+    TEXTAREA("textarea"),
+    STRING("string"),
+    NUMBER("number"),
+    URL("url"),
+    PASSWORD("password"),
+    CHECKBOX("checkbox");
+
+    private String value;
+
+    Type(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
+
   private String envName;
   private String propertyName;
   private Object defaultValue;
   private String description;
   private String type;
+
 
   public InterpreterProperty(String envName, String propertyName, Object defaultValue,
                              String description, String type) {
@@ -41,16 +66,16 @@ public class InterpreterProperty {
   }
 
   public InterpreterProperty(Object defaultValue, String description) {
-    this(null, null, defaultValue, description, InterpreterPropertyType.TEXTAREA.getValue());
+    this(null, null, defaultValue, description, Type.TEXTAREA.getValue());
   }
 
   public InterpreterProperty(String envName, String propertyName, String defaultValue) {
-    this(envName, propertyName, defaultValue, null, InterpreterPropertyType.TEXTAREA.getValue());
+    this(envName, propertyName, defaultValue, null, Type.TEXTAREA.getValue());
   }
 
   public InterpreterProperty(String envName, String propertyName, String defaultValue,
                              String description) {
-    this(envName, propertyName, defaultValue, description, InterpreterPropertyType.TEXTAREA.getValue());
+    this(envName, propertyName, defaultValue, description, Type.TEXTAREA.getValue());
   }
 
   public String getEnvName() {

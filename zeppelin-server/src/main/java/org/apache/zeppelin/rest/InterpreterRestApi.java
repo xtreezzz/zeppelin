@@ -19,9 +19,11 @@ package org.apache.zeppelin.rest;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterPropertyType;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingV2;
+import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
+import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
+import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
 import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
@@ -49,16 +51,28 @@ public class InterpreterRestApi {
 
   private final SecurityService securityService;
   private final InterpreterService interpreterService;
-  private final InterpreterSettingRepository interpreterSettingRepository;
+
+  private final InterpreterOption markdownOption = new InterpreterOption("shared", "shared",
+      new ExistingProcess(), new Permissions(), new BaseInterpreterConfig(
+          "Best Markdown Interpreter", "md", "org.apache.zeppelin.markdown.Markdown",
+      new HashMap<String, InterpreterProperty>() {{
+        put("markdown.parser.type",
+            new InterpreterProperty(
+                "MARKDOWN_PARSER_TYPE",
+                "markdown.parser.type",
+                "pegdown",
+                "Markdown Parser Type. Available values: pegdown, markdown4j. Default = pegdown",
+                "string"
+            )
+        );
+          }}));
 
   @Autowired
   public InterpreterRestApi(
           @Qualifier("NoSecurityService") final SecurityService securityService,
-          final InterpreterService interpreterService,
-          final InterpreterSettingRepository interpreterSettingRepository) {
+          final InterpreterService interpreterService) {
     this.securityService = securityService;
     this.interpreterService = interpreterService;
-    this.interpreterSettingRepository = interpreterSettingRepository;
   }
 
   /**
@@ -67,7 +81,7 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
-    return new JsonResponse(HttpStatus.OK, "", interpreterSettingRepository.get()).build();
+    return new JsonResponse(HttpStatus.OK, "", markdownOption.getConfig().getProperties()).build();
   }
 
   /**
@@ -77,11 +91,11 @@ public class InterpreterRestApi {
   @GetMapping(value = "/setting/{settingId}", produces = "application/json")
   public ResponseEntity getSetting(@PathVariable("settingId") final String settingId) {
     try {
-      final InterpreterSettingV2 setting = interpreterSettingRepository.get(settingId);
+      final InterpreterOption setting = markdownOption;
       if (setting == null) {
         return new JsonResponse(HttpStatus.NOT_FOUND).build();
       } else {
-        return new JsonResponse(HttpStatus.OK, "", setting).build();
+        return new JsonResponse(HttpStatus.OK, "", setting.getConfig().getProperties()).build();
       }
     } catch (final NullPointerException e) {
       logger.error("Exception in InterpreterRestApi while creating ", e);
@@ -98,23 +112,25 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(final String message) {
-    try {
-      final NewInterpreterSettingRequest request =
-          NewInterpreterSettingRequest.fromJson(message);
-      if (request == null) {
-        return new JsonResponse(HttpStatus.BAD_REQUEST).build();
-      }
-
-      final InterpreterSettingV2 interpreterSetting = interpreterSettingRepository
-          .createNewSetting(request.getName(), request.getGroup(), request.getDependencies(),
-              request.getOption(), request.getProperties());
-      logger.info("new setting created with {}", interpreterSetting.getId());
-      return new JsonResponse(HttpStatus.OK, "", interpreterSetting).build();
-    } catch (final IOException e) {
-      logger.error("Exception in InterpreterRestApi while creating ", e);
-      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
-          .build();
-    }
+    //FIXME
+    //    try {
+    //      final NewInterpreterSettingRequest request =
+    //          NewInterpreterSettingRequest.fromJson(message);
+    //      if (request == null) {
+    //        return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+    //      }
+    //
+    //      final InterpreterSettingV2 interpreterSetting = interpreterSettingRepository
+    //          .createNewSetting(request.getName(), request.getGroup(), request.getDependencies(),
+    //              request.getOption(), request.getProperties());
+    //      logger.info("new setting created with {}", interpreterSetting.getId());
+    //      return new JsonResponse(HttpStatus.OK, "", interpreterSetting).build();
+    //    } catch (final IOException e) {
+    //      logger.error("Exception in InterpreterRestApi while creating ", e);
+    //      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
+    //          .build();
+    //    }
+    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   @ZeppelinApi
@@ -192,7 +208,7 @@ public class InterpreterRestApi {
    */
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
-    final Map<String, InterpreterSettingV2> m = interpreterSettingRepository.getInterpreterSettingTemplates();
+    final Map<String, InterpreterProperty> m = markdownOption.getConfig().getProperties();
     return new JsonResponse(HttpStatus.OK, "", m).build();
   }
 
@@ -254,7 +270,9 @@ public class InterpreterRestApi {
    */
   @GetMapping(value = "/property/types", produces = "application/json")
   public ResponseEntity listInterpreterPropertyTypes() {
-    return new JsonResponse(HttpStatus.OK, InterpreterPropertyType.getTypes()).build();
+    //FIXME
+    //return new JsonResponse(HttpStatus.OK, InterpreterPropertyType.getTypes()).build();
+    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /** Install interpreter */
