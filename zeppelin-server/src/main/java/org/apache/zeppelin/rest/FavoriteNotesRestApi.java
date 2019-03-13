@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import org.apache.shiro.SecurityUtils;
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -57,17 +57,17 @@ public class FavoriteNotesRestApi {
   private static final Integer SAVE_ON_DISK_INTERVAL = 5; // minutes
 
   private final ZeppelinConfiguration configuration;
-  private final FileSystemNoteRepository fileSystemNoteRepository;
+  private final DatabaseNoteRepository noteRepository;
   private final ScheduledExecutorService saveExecServ;
 
   private File dataFile;
   private Map<String, Map<String, Set<String>>> usersNotes;
 
   @Autowired
-  public FavoriteNotesRestApi(ZeppelinConfiguration configuration, FileSystemNoteRepository FileSystemNoteRepository) {
+  public FavoriteNotesRestApi(ZeppelinConfiguration configuration, DatabaseNoteRepository noteRepository) {
     this.configuration = configuration;
     this.saveExecServ = Executors.newSingleThreadScheduledExecutor();
-    this.fileSystemNoteRepository = FileSystemNoteRepository;
+    this.noteRepository = noteRepository;
   }
 
   @PostConstruct
@@ -105,7 +105,7 @@ public class FavoriteNotesRestApi {
   }
 
   private boolean noteIdIsCorrect(String noteId) {
-    Note note = fileSystemNoteRepository.getNote(noteId);
+    Note note = noteRepository.getNote(noteId);
     if (note == null) {
       return false;
     }

@@ -42,8 +42,7 @@ public class NoteRevisionHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteRevisionHandler.class);
 
   @Autowired
-  public NoteRevisionHandler(final ConnectionManager connectionManager,
-      @Qualifier("DatabaseNoteRepository") final NoteRepository noteRepository) {
+  public NoteRevisionHandler(final ConnectionManager connectionManager, final NoteRepository noteRepository) {
     super(connectionManager, noteRepository);
   }
 

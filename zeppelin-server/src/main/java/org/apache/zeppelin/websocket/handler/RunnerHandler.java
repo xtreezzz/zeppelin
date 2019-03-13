@@ -17,8 +17,9 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import java.io.IOException;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -26,14 +27,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
-
 @Component
 public class RunnerHandler extends AbstractHandler {
 
   @Autowired
-  public RunnerHandler(final ConnectionManager connectionManager, final FileSystemNoteRepository fileSystemNoteRepository) {
-    super(connectionManager, fileSystemNoteRepository);
+  public RunnerHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository) {
+    super(connectionManager, noteRepository);
   }
 
   public void stopNoteExecution(final WebSocketSession conn,

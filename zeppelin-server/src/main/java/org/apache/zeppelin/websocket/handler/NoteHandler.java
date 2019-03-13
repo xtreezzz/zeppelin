@@ -31,7 +31,7 @@ import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.repositories.NoteRepository;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -39,7 +39,6 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -52,8 +51,7 @@ public class NoteHandler extends AbstractHandler {
   private final ZeppelinConfiguration zeppelinConfiguration;
 
   @Autowired
-//  FileSystemNoteRepository DatabaseNoteRepository
-  public NoteHandler(@Qualifier("DatabaseNoteRepository") final NoteRepository noteRepository,
+  public NoteHandler(final DatabaseNoteRepository noteRepository,
                      final ConnectionManager connectionManager,
                      final ZeppelinConfiguration zeppelinConfiguration) {
     super(connectionManager, noteRepository);

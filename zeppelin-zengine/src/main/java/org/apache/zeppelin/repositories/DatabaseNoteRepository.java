@@ -6,11 +6,9 @@ import org.apache.zeppelin.DatabaseStorage;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
-@Qualifier("DatabaseNoteRepository")
 public class DatabaseNoteRepository implements NoteRepository {
 
   @Autowired
@@ -35,13 +33,13 @@ public class DatabaseNoteRepository implements NoteRepository {
 
   @Override
   public Note persistNote(final Note note) {
-    storage.addOrUpdateNote(note);
+    storage.createNote(note);
     return note;
   }
 
   @Override
   public Note updateNote(final Note note) {
-    storage.addOrUpdateNote(note);
+    storage.updateNote(note);
     return note;
   }
 

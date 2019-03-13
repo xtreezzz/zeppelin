@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
@@ -39,22 +38,33 @@ public class DatabaseStorage {
   private static final DateTimeFormatter paragraphDateFormatter = DateTimeFormatter
       .ofPattern("YYYY-MM-dd HH:mm:ss.SSS");
 
-  public void addOrUpdateNote(final Note note) {
-    final boolean noteMissing = jdbcTemplate
-        .update(UPDATE_NOTE, note.getPath(), note.getDefaultInterpreterGroup(), note.getId()) == 0;
-
-    if (noteMissing) {
-      jdbcTemplate
-          .update(INSERT_NOTE, note.getId(), note.getPath(), note.getDefaultInterpreterGroup());
+  public void createNote(final Note note) {
+    int affectedRows = jdbcTemplate
+        .update(INSERT_NOTE, note.getId(), note.getPath(), note.getDefaultInterpreterGroup());
+    if (affectedRows == 0) {
+      throw new RuntimeException("Can't create note " + note.getId());
     }
+    note.getParagraphs().forEach(p -> saveParagraph(p, note.getId()));
+  }
 
+  public void updateNote(final Note note) {
+    final int affectedRows = jdbcTemplate
+        .update(UPDATE_NOTE, note.getPath(), note.getDefaultInterpreterGroup(), note.getId());
+    if (affectedRows == 0) {
+      throw new RuntimeException("Can't update note " + note.getId());
+    }
     note.getParagraphs().forEach(p -> saveParagraph(p, note.getId()));
   }
 
   public Note getNote(final String noteId) {
     try {
       final Note note = jdbcTemplate
-          .queryForObject(GET_NOTE, new Object[]{noteId}, this::convertResultSetToNote);
+          .queryForObject(GET_NOTE, new Object[]{noteId},
+              (resultSet, i) -> convertResultSetToNote(resultSet));
+
+      if (note == null) {
+        throw new RuntimeException("Can't find note " + noteId);
+      }
 
       final List<Paragraph> paragraphs = jdbcTemplate.query(
           GET_PARAGRAPH,
@@ -62,7 +72,7 @@ public class DatabaseStorage {
           (resultSet, i) -> convertResultSetToParagraph(resultSet)
       );
 
-      Objects.requireNonNull(note).getParagraphs().addAll(paragraphs);
+      note.getParagraphs().addAll(paragraphs);
       return note;
     } catch (final EmptyResultDataAccessException ignore) {
       return null;
@@ -74,7 +84,8 @@ public class DatabaseStorage {
   }
 
   public List<Note> getAllNotes() {
-    final List<Note> notes = jdbcTemplate.query(GET_ALL_NOTES, this::convertResultSetToNote);
+    final List<Note> notes = jdbcTemplate
+        .query(GET_ALL_NOTES, (resultSet, i) -> convertResultSetToNote(resultSet));
     final Map<String, Note> noteMap = new HashMap<>();
     for (final Note note : notes) {
       noteMap.put(note.getId(), note);
@@ -90,7 +101,7 @@ public class DatabaseStorage {
     return notes;
   }
 
-  private Note convertResultSetToNote(final ResultSet resultSet, final int index)
+  private Note convertResultSetToNote(final ResultSet resultSet)
       throws SQLException {
     final String noteId = resultSet.getString("id");
     final String notePath = resultSet.getString("path");
@@ -106,8 +117,10 @@ public class DatabaseStorage {
     final String title = resultSet.getString("title");
     final String text = resultSet.getString("text");
     final String user = resultSet.getString("username");
-    final LocalDateTime created = gson.fromJson(resultSet.getString("created"), LocalDateTime.class);
-    final LocalDateTime updated = gson.fromJson(resultSet.getString("updated"), LocalDateTime.class);
+    final LocalDateTime created = gson
+        .fromJson(resultSet.getString("created"), LocalDateTime.class);
+    final LocalDateTime updated = gson
+        .fromJson(resultSet.getString("updated"), LocalDateTime.class);
     final String settingsJson = resultSet.getString("settings");
 
     final GUI settings = new Gson().fromJson(settingsJson, GUI.class);

@@ -20,7 +20,7 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
@@ -65,7 +65,7 @@ public class NotebookRestApi extends AbstractRestApi {
   private final JobManagerService jobManagerService;
   private final SecurityService securityService;
   private final ConnectionManager connectionManager;
-  private final FileSystemNoteRepository fileSystemNoteRepository;
+  private final DatabaseNoteRepository noteRepository;
 
   @Autowired
   public NotebookRestApi(
@@ -74,14 +74,14 @@ public class NotebookRestApi extends AbstractRestApi {
           @Qualifier("NoSecurityService") final SecurityService securityService,
           final JobManagerService jobManagerService,
           final ConnectionManager connectionManager,
-          final FileSystemNoteRepository fileSystemNoteRepository) {
+          final DatabaseNoteRepository noteRepository) {
     super(securityService);
     this.jobManagerService = jobManagerService;
     //this.noteSearchService = search;
     this.zConf = zConf;
     this.securityService = securityService;
     this.connectionManager = connectionManager;
-    this.fileSystemNoteRepository = fileSystemNoteRepository;
+    this.noteRepository = noteRepository;
   }
 
   /**
@@ -94,7 +94,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfUserCanRead(noteId,
             "Insufficient privileges you cannot get the list of permissions for this note");
     final HashMap<String, Set<String>> permissionsMap = new HashMap<>();
-    Note target = fileSystemNoteRepository.getNote(noteId);
+    Note target = noteRepository.getNote(noteId);
     if (target != null) {
       permissionsMap.put("owners", target.getOwners());
       permissionsMap.put("readers", target.getReaders());
@@ -213,7 +213,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final HashMap<String, HashSet<String>> permMap =
             gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
             }.getType());
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
 
     checkIfUserIsOwner(noteId,
         ownerPermissionError(userAndRoles, note.getOwners()));
@@ -268,7 +268,7 @@ public class NotebookRestApi extends AbstractRestApi {
     LOG.debug("After set permissions {} {} {} {}", note.getOwners(), note.getReaders(),
         note.getRunners(), note.getWriters());
 
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     //TODO(KOT): FIX
       /*
     zeppelinRepositoryServer.broadcastNote(note);
@@ -280,7 +280,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity getNoteList() {
-    final List<NoteInfo> notesInfo = fileSystemNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
    // final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     return new JsonResponse(HttpStatus.OK, "", notesInfo).build();
   }
@@ -288,7 +288,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @ZeppelinApi
   @GetMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity getNote(@PathVariable("noteId") final String noteId) {
-    return new JsonResponse(HttpStatus.OK, "", fileSystemNoteRepository.getNote(noteId)).build();
+    return new JsonResponse(HttpStatus.OK, "", noteRepository.getNote(noteId)).build();
   }
 
   /**
@@ -356,7 +356,7 @@ public class NotebookRestApi extends AbstractRestApi {
         note.getParagraphs().add(paragraph);
       }
     }
-    fileSystemNoteRepository.persistNote(note);
+    noteRepository.persistNote(note);
 
     return new JsonResponse(HttpStatus.OK, "", note.getId()).build();
   }
@@ -373,9 +373,9 @@ public class NotebookRestApi extends AbstractRestApi {
   public ResponseEntity deleteNote(@PathVariable("noteId") final String noteId) throws IOException {
     LOG.info("Delete note {} ", noteId);
 
-    fileSystemNoteRepository.removeNote(noteId);
+    noteRepository.removeNote(noteId);
 
-    final List<NoteInfo> notesInfo = fileSystemNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
@@ -404,7 +404,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     //connectionManager.broadcast(newNote.getId(), new SockMessage(Operation.NOTE).put("note", newNote));
 
-    final List<NoteInfo> notesInfo = fileSystemNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
@@ -429,7 +429,7 @@ public class NotebookRestApi extends AbstractRestApi {
       LOG.warn("Trying to rename zeppelinRepository {} with empty name parameter", noteId);
       throw new BadRequestException("name can not be empty");
     }
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     String newName = org.apache.commons.lang.StringUtils.EMPTY;
     if (!name.startsWith("/")) {
       newName = "/" + name;
@@ -439,7 +439,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
-    final List<NoteInfo> notesInfo = fileSystemNoteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
@@ -458,7 +458,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final String user = securityService.getPrincipal();
     LOG.info("insert paragraph {} {}", noteId, message);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot add paragraph to this note");
 
@@ -481,7 +481,7 @@ public class NotebookRestApi extends AbstractRestApi {
       note.getParagraphs().add(indexDouble.intValue(), paragraph);
     }
 
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     //TODO(egorklimov): fix paragraph id
@@ -501,7 +501,7 @@ public class NotebookRestApi extends AbstractRestApi {
                                      @PathVariable("paragraphId") final String paragraphId) {
     LOG.info("get paragraph {} {}", noteId, paragraphId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get this paragraph");
     final Paragraph p = note.getParagraph(paragraphId);
@@ -525,7 +525,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final String user = securityService.getPrincipal();
     LOG.info("{} will update paragraph {} {}", user, noteId, paragraphId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph");
     final Paragraph p = note.getParagraph(paragraphId);
@@ -538,7 +538,7 @@ public class NotebookRestApi extends AbstractRestApi {
       p.setTitle(updatedParagraph.getTitle());
     }
 
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -552,7 +552,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final String user = securityService.getPrincipal();
     LOG.info("{} will update paragraph config {} {}", user, noteId, paragraphId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph config");
     final Paragraph p = note.getParagraph(paragraphId);
@@ -560,7 +560,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final Map<String, Object> newConfig = gson.fromJson(message, HashMap.class);
     configureParagraph(p, newConfig, user);
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
     return new JsonResponse(HttpStatus.OK, "", p).build();
   }
 
@@ -575,13 +575,13 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException {
     LOG.info("move paragraph {} {} {}", noteId, paragraphId, index);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     if (index > 0 && index >= note.getParagraphs().size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
 
     //note.moveParagraph(paragraphId, index);
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", paragraphId)
@@ -607,12 +607,12 @@ public class NotebookRestApi extends AbstractRestApi {
                                   @PathVariable("paragraphId") final String paragraphId) throws IOException {
     LOG.info("delete paragraph {} {}", noteId, paragraphId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
 
     note.getParagraphs().removeIf(paragraph -> paragraph.getId().equals(paragraphId));
     //note.removeParagraph(getServiceContext().getAutheInfo().getUser(), paragraphId);
 
-    fileSystemNoteRepository.updateNote(note);
+    noteRepository.updateNote(note);
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
@@ -631,7 +631,7 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException {
     LOG.info("clear all paragraph output of note {}", noteId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
 
     //note.clearAllParagraphOutput();
 
@@ -655,7 +655,7 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException, IllegalArgumentException {
     final boolean blocking = waitToFinish == null || waitToFinish;
     LOG.info("run note jobs {} waitToFinish: {}", noteId, blocking);
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
     subject.setRoles(new LinkedList<>(securityService.getAssociatedRoles()));
     checkIfNoteIsNotNull(note);
@@ -684,7 +684,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @DeleteMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity stopNoteJobs(@PathVariable("noteId") final String noteId) throws IllegalArgumentException {
     LOG.info("stop note jobs {} ", noteId);
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot stop this job for this note");
 
@@ -710,7 +710,7 @@ public class NotebookRestApi extends AbstractRestApi {
   public ResponseEntity getNoteJobStatus(@PathVariable("noteId") final String noteId)
           throws IOException, IllegalArgumentException {
     LOG.info("get note job status.");
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
@@ -733,7 +733,7 @@ public class NotebookRestApi extends AbstractRestApi {
                                                   @PathVariable("paragraphId") final String paragraphId)
           throws IllegalArgumentException {
     LOG.info("get note paragraph job status.");
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
@@ -875,7 +875,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final CronRequest request = CronRequest.fromJson(message);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot set a cron job for this note");
 
@@ -920,7 +920,7 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException, IllegalArgumentException {
     LOG.info("Remove cron job note {}", noteId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserIsOwner(noteId,
             "Insufficient privileges you cannot remove this cron job from this note");
@@ -944,7 +944,7 @@ public class NotebookRestApi extends AbstractRestApi {
           throws IOException, IllegalArgumentException {
     LOG.info("Get cron job note {}", noteId);
 
-    final Note note = fileSystemNoteRepository.getNote(noteId);
+    final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get cron information");
     final Map<String, Object> response = new HashMap<>();

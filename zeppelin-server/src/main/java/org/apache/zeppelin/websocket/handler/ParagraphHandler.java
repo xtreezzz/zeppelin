@@ -18,12 +18,15 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -36,10 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Map;
-
 @Component
 public class ParagraphHandler extends AbstractHandler {
 
@@ -48,9 +47,9 @@ public class ParagraphHandler extends AbstractHandler {
   private final Boolean collaborativeModeEnable;
 
   @Autowired
-  public ParagraphHandler(final FileSystemNoteRepository fileSystemNoteRepository,
+  public ParagraphHandler(final DatabaseNoteRepository noteRepository,
                           final ConnectionManager connectionManager) {
-    super(connectionManager, fileSystemNoteRepository);
+    super(connectionManager, noteRepository);
     this.collaborativeModeEnable = ZeppelinConfiguration
             .create()
             .isZeppelinNotebookCollaborativeModeEnable();

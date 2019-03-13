@@ -20,21 +20,6 @@ package org.apache.zeppelin.service;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sonatype.aether.RepositoryException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,6 +32,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.zeppelin.DependencyResolver;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSettingRepository;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonatype.aether.RepositoryException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * This class handles all of business logic for {@link org.apache.zeppelin.rest.InterpreterRestApi}
@@ -65,15 +64,15 @@ public class InterpreterService {
   private final ZeppelinConfiguration conf;
   //FIXME
   private final InterpreterSettingRepository interpreterSettingRepository;
-  private final FileSystemNoteRepository fileSystemNoteRepository;
+  private final DatabaseNoteRepository noteRepository;
 
   @Autowired
   public InterpreterService(final ZeppelinConfiguration conf,
                             final InterpreterSettingRepository interpreterSettingRepository,
-                            final FileSystemNoteRepository fileSystemNoteRepository) {
+                            final DatabaseNoteRepository noteRepository) {
     this.conf = conf;
     this.interpreterSettingRepository = interpreterSettingRepository;
-    this.fileSystemNoteRepository = fileSystemNoteRepository;
+    this.noteRepository = noteRepository;
   }
 
   public void installInterpreter(
@@ -182,7 +181,7 @@ public class InterpreterService {
    * Extract info about running interpreters with additional paragraph info.
    */
   public List<Map<String, String>> getRunningInterpretersParagraphInfo() {
-    return fileSystemNoteRepository.getAllNotes().stream()
+    return noteRepository.getAllNotes().stream()
             .map(Note::getParagraphs)
             .flatMap(Collection::stream)
             //.filter(Paragraph::isRunning)

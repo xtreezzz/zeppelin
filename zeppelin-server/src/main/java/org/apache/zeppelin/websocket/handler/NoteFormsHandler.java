@@ -17,10 +17,12 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.repositories.FileSystemNoteRepository;
+import java.io.IOException;
+import java.util.Map;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.repositories.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -31,18 +33,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
-import java.util.Map;
-
 @Component
 public class NoteFormsHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoteFormsHandler.class);
 
   @Autowired
-  public NoteFormsHandler(final FileSystemNoteRepository fileSystemNoteRepository,
+  public NoteFormsHandler(final DatabaseNoteRepository noteRepository,
                           final ConnectionManager connectionManager) {
-    super(connectionManager, fileSystemNoteRepository);
+    super(connectionManager, noteRepository);
   }
 
   @ZeppelinApi
