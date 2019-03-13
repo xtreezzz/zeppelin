@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.interpreterV2.configuration;
 
+import java.util.StringJoiner;
 import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
 
@@ -28,6 +29,13 @@ public class InterpreterOption {
   private static final String SCOPED = "scoped";
   private static final String ISOLATED = "isolated";
 
+  // Human readable name with description
+  private String customInterpreterName;
+
+  // Interpreter Name
+  private String interpreterName;
+  private String shebang;
+
   private String perNote;
   private String perUser;
 
@@ -36,10 +44,12 @@ public class InterpreterOption {
   private ExistingProcess remoteProcess;
   private Permissions permissions;
 
-  public InterpreterOption(String perNote, String perUser,
+
+  public InterpreterOption(String customInterpreterName, String interpreterName,
+      String shebang, String perNote, String perUser,
+      BaseInterpreterConfig config,
       ExistingProcess remoteProcess,
-      Permissions permissions,
-      BaseInterpreterConfig config) {
+      Permissions permissions) {
     if (perUser == null) {
       throw new NullPointerException("perUser can not be null.");
     }
@@ -47,11 +57,38 @@ public class InterpreterOption {
       throw new NullPointerException("perNote can not be null.");
     }
 
+    this.customInterpreterName = customInterpreterName;
+    this.interpreterName = interpreterName;
+    this.shebang = shebang;
     this.perNote = perNote;
     this.perUser = perUser;
+    this.config = config;
     this.remoteProcess = remoteProcess;
     this.permissions = permissions;
-    this.config = config;
+  }
+
+  public String getCustomInterpreterName() {
+    return customInterpreterName;
+  }
+
+  public void setCustomInterpreterName(String customInterpreterName) {
+    this.customInterpreterName = customInterpreterName;
+  }
+
+  public String getInterpreterName() {
+    return interpreterName;
+  }
+
+  public void setInterpreterName(String interpreterName) {
+    this.interpreterName = interpreterName;
+  }
+
+  public String getShebang() {
+    return shebang;
+  }
+
+  public void setShebang(String shebang) {
+    this.shebang = shebang;
   }
 
   public BaseInterpreterConfig getConfig() {
@@ -116,5 +153,19 @@ public class InterpreterOption {
 
   public void setPerUser(String perUser) {
     this.perUser = perUser;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "{", "}")
+        .add("customInterpreterName: '" + customInterpreterName + "'")
+        .add("interpreterName: '" + interpreterName + "'")
+        .add("shebang: '" + shebang + "'")
+        .add("perNote: '" + perNote + "'")
+        .add("perUser: '" + perUser + "'")
+        .add("config: " + config)
+        .add("remoteProcess: " + remoteProcess)
+        .add("permissions: " + permissions)
+        .toString();
   }
 }

@@ -3,6 +3,8 @@ package org.apache.zeppelin.interpreterV2.configuration.option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Option 'permission' on interpreter configuration page.
@@ -41,5 +43,13 @@ public class Permissions {
 
   public void setEnabled(boolean enabled) {
     isEnabled = enabled;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "{", "}")
+        .add("owners: " + owners)
+        .add("isEnabled: " + isEnabled)
+        .toString();
   }
 }

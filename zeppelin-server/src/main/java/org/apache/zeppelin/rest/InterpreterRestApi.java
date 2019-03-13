@@ -24,7 +24,6 @@ import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
-import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
@@ -52,9 +51,10 @@ public class InterpreterRestApi {
   private final SecurityService securityService;
   private final InterpreterService interpreterService;
 
-  private final InterpreterOption markdownOption = new InterpreterOption("shared", "shared",
-      new ExistingProcess(), new Permissions(), new BaseInterpreterConfig(
-          "Best Markdown Interpreter", "md", "org.apache.zeppelin.markdown.Markdown",
+  private final InterpreterOption markdownOption = new InterpreterOption(
+      "Best Markdown Interpreter", "md", "%md",
+      "shared", "shared", new BaseInterpreterConfig(
+          "md", "md", "org.apache.zeppelin.markdown.Markdown",
       new HashMap<String, InterpreterProperty>() {{
         put("markdown.parser.type",
             new InterpreterProperty(
@@ -65,7 +65,7 @@ public class InterpreterRestApi {
                 "string"
             )
         );
-          }}));
+          }}), new ExistingProcess(), new Permissions());
 
   @Autowired
   public InterpreterRestApi(
@@ -130,7 +130,7 @@ public class InterpreterRestApi {
     //      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
     //          .build();
     //    }
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   @ZeppelinApi
@@ -157,7 +157,7 @@ public class InterpreterRestApi {
     //    if (setting == null) {
     //      return new JsonResponse(HttpStatus.NOT_FOUND, "", settingId).build();
     //    }
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -169,7 +169,7 @@ public class InterpreterRestApi {
     //    logger.info("Remove interpreterSetting {}", settingId);
     //    interpreterSettingManager.remove(settingId);
     //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -200,7 +200,7 @@ public class InterpreterRestApi {
     //      return new JsonResponse(HttpStatus.NOT_FOUND, "", settingId).build();
     //    }
     //    return new JsonResponse(HttpStatus.OK, "", setting).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -208,8 +208,12 @@ public class InterpreterRestApi {
    */
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
-    final Map<String, InterpreterProperty> m = markdownOption.getConfig().getProperties();
-    return new JsonResponse(HttpStatus.OK, "", m).build();
+    final Map<String, InterpreterOption> m =  new HashMap<String, InterpreterOption>() {{
+        put("md", markdownOption);
+     }};
+    logger.info("\n[DEBUG]\njson-{}\n[DEBUG]",
+        new JsonResponse<>(HttpStatus.OK, "", m).build());
+    return new JsonResponse<>(HttpStatus.OK, "", m).build();
   }
 
   /**
@@ -220,7 +224,7 @@ public class InterpreterRestApi {
   public ResponseEntity listRepositories() {
     //    final List<RemoteRepository> interpreterRepositories = interpreterSettingRepository.getRepositories();
     //    return new JsonResponse(HttpStatus.OK, "", interpreterRepositories).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -242,7 +246,7 @@ public class InterpreterRestApi {
     //          ExceptionUtils.getStackTrace(e)).build();
     //    }
     //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -262,7 +266,7 @@ public class InterpreterRestApi {
     //          ExceptionUtils.getStackTrace(e)).build();
     //    }
     //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -272,7 +276,7 @@ public class InterpreterRestApi {
   public ResponseEntity listInterpreterPropertyTypes() {
     //FIXME
     //return new JsonResponse(HttpStatus.OK, InterpreterPropertyType.getTypes()).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /** Install interpreter */
@@ -333,7 +337,7 @@ public class InterpreterRestApi {
   @GetMapping(value = "/running", produces = "application/json")
   public ResponseEntity listRunningInterpreters() {
     //    return new JsonResponse(HttpStatus.OK, "", interpreterSettingManager.getRunningInterpretersInfo()).build();
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
   }
 
   /**
@@ -348,6 +352,6 @@ public class InterpreterRestApi {
     response.put("lastResponseUnixTime", System.currentTimeMillis());
     response.put("runningInterpreters", interpreterService.getRunningInterpretersParagraphInfo());
 
-    return new JsonResponse(HttpStatus.OK, "", response).build();
+    return new JsonResponse<>(HttpStatus.OK, "", response).build();
   }
 }

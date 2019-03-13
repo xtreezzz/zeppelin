@@ -24,10 +24,10 @@ import org.springframework.http.ResponseEntity;
 /**
  * Json response builder.
  */
-public class JsonResponse {
+public class JsonResponse<T> {
   private HttpStatus status;
   private String message;
-  private final Object body;
+  private final T body;
   //transient ArrayList<Coo> cookies;
   transient boolean pretty = false;
 
@@ -43,13 +43,13 @@ public class JsonResponse {
     this.body = null;
   }
 
-  public JsonResponse(final HttpStatus status, final Object body) {
+  public JsonResponse(final HttpStatus status, final T body) {
     this.status = status;
     this.message = null;
     this.body = body;
   }
 
-  public JsonResponse(final HttpStatus status, final String message, final Object body) {
+  public JsonResponse(final HttpStatus status, final String message, final T body) {
     this.status = status;
     this.message = message;
     this.body = body;

@@ -1,6 +1,8 @@
 package org.apache.zeppelin.interpreterV2.configuration.option;
 
+import java.util.StringJoiner;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  *  Option 'Connect to existing process' on interpreter configuration page.
@@ -44,5 +46,14 @@ public class ExistingProcess {
 
   public void setEnabled(boolean enabled) {
     isEnabled = enabled;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "{", "}")
+        .add("host: '" + host + "'")
+        .add("port: " + port)
+        .add("isEnabled: " + isEnabled)
+        .toString();
   }
 }
