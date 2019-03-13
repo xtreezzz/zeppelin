@@ -142,7 +142,7 @@ public class InterpreterSettingRepository {
   }
 
   public InterpreterSettingV2 createNewSetting(String name, String group,
-      List<Dependency> dependencies, InterpreterOption option, Map<String, InterpreterProperty> p)
+      List<Dependency> dependencies, InterpreterOption option, Map<String, InterpreterPropertyOld> p)
       throws IOException {
 
     if (name.contains(".")) {
@@ -155,11 +155,11 @@ public class InterpreterSettingRepository {
       }
     }
 
-    List<InterpreterInfo> infos = interpreterSettingTemplates.get(group).getInterpreterInfos();
-    InterpreterSettingV2 setting = new InterpreterSettingV2(name, name, group, p, infos, dependencies, option);
-    interpreterSettings.put(setting.getId(), setting);
+    //List<InterpreterInfo> infos = interpreterSettingTemplates.get(group).getInterpreterInfos();
+    //InterpreterSettingV2 setting = new InterpreterSettingV2(name, name, group, p, infos, dependencies, option);
+    //interpreterSettings.put(setting.getId(), setting);
     saveToFile();
-    return setting;
+    return null;
   }
 
   public Map<String, InterpreterSettingV2> getInterpreterSettingTemplates() {
@@ -211,8 +211,8 @@ public class InterpreterSettingRepository {
     if (interpreterJsonPath.toFile().exists()) {
       LOGGER.debug("Reading interpreter-setting.json from file {}", interpreterJsonPath);
       try (FileInputStream json = new FileInputStream(interpreterJsonPath.toFile())) {
-        List<RegisteredInterpreter> registeredInterpreterList = getInterpreterListFromJson(json);
-        registerInterpreterSetting(registeredInterpreterList, override);
+        List<BaseInterpreterConfig> baseInterpreterConfigList = getInterpreterListFromJson(json);
+        registerInterpreterSetting(baseInterpreterConfigList, override);
         return true;
       } catch (IOException e) {
         LOGGER.error("Failed to register interpreter from path - {}", interpreterJsonPath, e);
@@ -224,39 +224,39 @@ public class InterpreterSettingRepository {
   /**
    * Input stream should be closed in caller method!
    */
-  private List<RegisteredInterpreter> getInterpreterListFromJson(final InputStream stream) {
-    Type registeredInterpreterListType = new TypeToken<List<RegisteredInterpreter>>() {}.getType();
+  private List<BaseInterpreterConfig> getInterpreterListFromJson(final InputStream stream) {
+    Type registeredInterpreterListType = new TypeToken<List<BaseInterpreterConfig>>() {}.getType();
     return new GsonBuilder().setPrettyPrinting().create().fromJson(
         new InputStreamReader(stream), registeredInterpreterListType);
   }
 
-  private void registerInterpreterSetting(final List<RegisteredInterpreter> registeredInterpreters,
+  private void registerInterpreterSetting(final List<BaseInterpreterConfig> baseInterpreterConfigs,
       final boolean override) {
 
-    Map<String, DefaultInterpreterProperty> properties = new HashMap<>();
-    List<InterpreterInfo> interpreterInfos = new ArrayList<>();
-    InterpreterOption option = defaultOption;
-    String group = null;
-    for (RegisteredInterpreter registeredInterpreter : registeredInterpreters) {
-      InterpreterInfo interpreterInfo =
-          new InterpreterInfo(registeredInterpreter.getClassName(), registeredInterpreter.getName(),
-              registeredInterpreter.isDefaultInterpreter(), registeredInterpreter.getEditor());
-      group = registeredInterpreter.getGroup();
-      // use defaultOption if it is not specified in interpreter-setting.json
-      if (registeredInterpreter.getOption() != null) {
-        option = registeredInterpreter.getOption();
-      }
-      properties.putAll(registeredInterpreter.getProperties());
-      interpreterInfos.add(interpreterInfo);
-    }
-    InterpreterSettingV2 interpreterSettingTemplate = new InterpreterSettingV2(
-        group, group, group, properties, interpreterInfos, new ArrayList<>(), option);
-
-    String key = interpreterSettingTemplate.getName();
-    if(override || !interpreterSettingTemplates.containsKey(key)) {
-      LOGGER.info("Register InterpreterSettingTemplate: {}", key);
-      interpreterSettingTemplates.put(key, interpreterSettingTemplate);
-    }
+//    Map<String, InterpreterProperty> properties = new HashMap<>();
+//    List<InterpreterInfo> interpreterInfos = new ArrayList<>();
+//    InterpreterOption option = defaultOption;
+//    String group = null;
+//    for (BaseInterpreterConfig baseInterpreterConfig : baseInterpreterConfigs) {
+////      InterpreterInfo interpreterInfo =
+////          new InterpreterInfo(baseInterpreterConfig.getClassName(), baseInterpreterConfig.getName(),
+////              baseInterpreterConfig.isDefaultInterpreter(), baseInterpreterConfig.getEditor());
+////      group = baseInterpreterConfig.getGroup();
+////      // use defaultOption if it is not specified in interpreter-setting.json
+////      if (baseInterpreterConfig.getOption() != null) {
+////        option = baseInterpreterConfig.getOption();
+////      }
+////      properties.putAll(baseInterpreterConfig.getProperties());
+////      interpreterInfos.add(interpreterInfo);
+//    }
+//    //InterpreterSettingV2 interpreterSettingTemplate = new InterpreterSettingV2(
+//    //    group, group, group, properties, interpreterInfos, new ArrayList<>(), option);
+//
+//    String key = interpreterSettingTemplate.getName();
+//    if(override || !interpreterSettingTemplates.containsKey(key)) {
+//      LOGGER.info("Register InterpreterSettingTemplate: {}", key);
+//      interpreterSettingTemplates.put(key, interpreterSettingTemplate);
+//    }
   }
 
   private boolean registerInterpreterFromResource(final String interpreterDir,
@@ -278,8 +278,8 @@ public class InterpreterSettingRepository {
   private boolean readInterpreterSettingJsonByUrl(final URL url, final boolean override) {
     LOGGER.debug("Reading interpreter-setting.json from {} as Resource", url);
     try (InputStream stream = url.openStream()) {
-      List<RegisteredInterpreter> registeredInterpreterList = getInterpreterListFromJson(stream);
-      registerInterpreterSetting(registeredInterpreterList, override);
+      List<BaseInterpreterConfig> baseInterpreterConfigList = getInterpreterListFromJson(stream);
+      registerInterpreterSetting(baseInterpreterConfigList, override);
       return true;
     } catch (IOException e) {
       LOGGER.error("Failed to read resource file", e);
@@ -348,12 +348,12 @@ public class InterpreterSettingRepository {
       // the user saved interpreter setting
       if (interpreterSettingTemplate != null) {
         // merge properties from interpreter-setting.json and interpreter.json
-        Map<String, InterpreterProperty> mergedProperties = convertInterpreterProperties(
+        Map<String, InterpreterPropertyOld> mergedProperties = convertInterpreterProperties(
             interpreterSettingTemplate.getProperties());
-        Map<String, InterpreterProperty> savedProperties = convertInterpreterProperties(
+        Map<String, InterpreterPropertyOld> savedProperties = convertInterpreterProperties(
             savedInterpreterSetting.getProperties());
 
-        for (Map.Entry<String, InterpreterProperty> entry : savedProperties.entrySet()) {
+        for (Map.Entry<String, InterpreterPropertyOld> entry : savedProperties.entrySet()) {
           // only merge properties whose value is not empty
           if (entry.getValue().getValue() != null && !
               StringUtils.isBlank(entry.getValue().toString())) {
@@ -426,26 +426,26 @@ public class InterpreterSettingRepository {
   //FIXME
   /**
    * Converts {@link InterpreterSettingV2#properties} from {@code Properties}
-   * or {@code <String, DefaultInterpreterProperty>} to {@code <String, InterpreterProperty>}
+   * or {@code <String, InterpreterProperty>} to {@code <String, InterpreterPropertyOld>}
    *
    * @return copy of {@link InterpreterSettingV2#properties} converted to
-   * {@code Map<String, InterpreterProperty>}
+   * {@code Map<String, InterpreterPropertyOld>}
    */
-  private Map<String, InterpreterProperty> convertInterpreterProperties(Object properties) {
+  private Map<String, InterpreterPropertyOld> convertInterpreterProperties(Object properties) {
     if (properties instanceof Properties) {
-      Map<String, InterpreterProperty> newProperties = new HashMap<>();
+      Map<String, InterpreterPropertyOld> newProperties = new HashMap<>();
       Properties p = (Properties) properties;
       for (String key : p.stringPropertyNames()) {
         Object entry = p.get(key);
         if (!(entry instanceof Properties)) {
-          InterpreterProperty newProperty = new InterpreterProperty(
+          InterpreterPropertyOld newProperty = new InterpreterPropertyOld(
               key,
               entry,
               InterpreterPropertyType.STRING.getValue());
           newProperties.put(key, newProperty);
         } else {
           // already converted
-          return new HashMap<>((Map<String, InterpreterProperty>) properties);
+          return new HashMap<>((Map<String, InterpreterPropertyOld>) properties);
         }
       }
       return newProperties;
@@ -453,22 +453,22 @@ public class InterpreterSettingRepository {
     } else if (properties instanceof Map) {
       Map<String, Object> dProperties =
           (Map<String, Object>) properties;
-      Map<String, InterpreterProperty> newProperties = new HashMap<>();
+      Map<String, InterpreterPropertyOld> newProperties = new HashMap<>();
       for (String key : dProperties.keySet()) {
         Object value = dProperties.get(key);
-        if (value instanceof InterpreterProperty) {
-          return new HashMap<>((Map<String, InterpreterProperty>) properties);
+        if (value instanceof InterpreterPropertyOld) {
+          return new HashMap<>((Map<String, InterpreterPropertyOld>) properties);
         } else if (value instanceof Properties) {
           Properties stringMap = (Properties) value;
-          InterpreterProperty newProperty = new InterpreterProperty(
+          InterpreterPropertyOld newProperty = new InterpreterPropertyOld(
               key,
               stringMap.get("value"),
               stringMap.containsKey("type") ? stringMap.get("type").toString() : "string");
 
           newProperties.put(newProperty.getName(), newProperty);
-        } else if (value instanceof DefaultInterpreterProperty){
-          DefaultInterpreterProperty dProperty = (DefaultInterpreterProperty) value;
-          InterpreterProperty property = new InterpreterProperty(
+        } else if (value instanceof InterpreterProperty){
+          InterpreterProperty dProperty = (InterpreterProperty) value;
+          InterpreterPropertyOld property = new InterpreterPropertyOld(
               key,
               dProperty.getValue(),
               dProperty.getType() != null ? dProperty.getType() : "string"
@@ -476,7 +476,7 @@ public class InterpreterSettingRepository {
           );
           newProperties.put(key, property);
         } else if (value instanceof String) {
-          InterpreterProperty newProperty = new InterpreterProperty(
+          InterpreterPropertyOld newProperty = new InterpreterPropertyOld(
               key,
               value,
               "string");

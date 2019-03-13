@@ -6,24 +6,24 @@ import java.util.Map;
 /**
  * Represent registered interpreter class
  */
-public class RegisteredInterpreter {
+public class BaseInterpreterConfig {
 
   private String group;
   private String name;
   private String className;
   private boolean defaultInterpreter;
-  private Map<String, DefaultInterpreterProperty> properties;
+  private Map<String, InterpreterProperty> properties;
   private Map<String, Object> editor;
   private String path;
   private InterpreterOption option;
 
-  public RegisteredInterpreter(String name, String group, String className,
-                               Map<String, DefaultInterpreterProperty> properties) {
+  public BaseInterpreterConfig(String name, String group, String className,
+                               Map<String, InterpreterProperty> properties) {
     this(name, group, className, false, properties);
   }
 
-  public RegisteredInterpreter(String name, String group, String className,
-                               boolean defaultInterpreter, Map<String, DefaultInterpreterProperty> properties) {
+  public BaseInterpreterConfig(String name, String group, String className,
+                               boolean defaultInterpreter, Map<String, InterpreterProperty> properties) {
     super();
     this.name = name;
     this.group = group;
@@ -53,7 +53,7 @@ public class RegisteredInterpreter {
     this.defaultInterpreter = defaultInterpreter;
   }
 
-  public Map<String, DefaultInterpreterProperty> getProperties() {
+  public Map<String, InterpreterProperty> getProperties() {
     return properties;
   }
 

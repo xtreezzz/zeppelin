@@ -49,10 +49,10 @@ public class InterpreterSettingV2 implements Serializable {
   private String group;
 
   /**
-   * properties can be either Properties or Map<String, InterpreterProperty>
+   * properties can be either Properties or Map<String, InterpreterPropertyOld>
    * properties should be:
    * - Properties when Interpreter instances are saved to `conf/interpreter.json` file
-   * - Map<String, InterpreterProperty> when Interpreters are registered
+   * - Map<String, InterpreterPropertyOld> when Interpreters are registered
    * : this is needed after https://github.com/apache/zeppelin/pull/1145
    * which changed the way of getting default interpreter setting AKA interpreterSettingsRef
    *
@@ -86,8 +86,8 @@ public class InterpreterSettingV2 implements Serializable {
    * }
    */
   /**
-   * TODO(egorklimov): очень странная логи преврашения DefaultInterpreterProperty в
-   * InterpreterProperty {@link InterpreterSettingRepository#convertInterpreterProperties(Object)}
+   * TODO(egorklimov): очень странная логи преврашения InterpreterProperty в
+   * InterpreterPropertyOld {@link InterpreterSettingRepository#convertInterpreterProperties(Object)}
    */
   private Object properties;
 
@@ -95,7 +95,7 @@ public class InterpreterSettingV2 implements Serializable {
   private String errorReason;
 
   @SerializedName("interpreterGroup")
-  private final List<InterpreterInfo> interpreterInfos;
+  private final List<Object> interpreterInfos;
 
   //TODO(egorklimov): always empty?
   private final List<Dependency> dependencies;
@@ -112,7 +112,7 @@ public class InterpreterSettingV2 implements Serializable {
 
   //TODO(egorklimov) download dependencies?
   public InterpreterSettingV2(String id, String name, String group, Object properties,
-      List<InterpreterInfo> interpreterInfos, List<Dependency> dependencies,
+      List<Object> interpreterInfos, List<Dependency> dependencies,
       InterpreterOption option) {
     this.id = id;
     this.name = name;
@@ -150,7 +150,7 @@ public class InterpreterSettingV2 implements Serializable {
     return Collections.unmodifiableList(dependencies);
   }
 
-  public List<InterpreterInfo> getInterpreterInfos() {
+  public List<Object> getInterpreterInfos() {
     return interpreterInfos;
   }
 
@@ -169,7 +169,7 @@ public class InterpreterSettingV2 implements Serializable {
 
   @VisibleForTesting
   public void setProperty(final String name, final String value) {
-    ((Map<String, InterpreterProperty>) properties).put(name, new InterpreterProperty(name, value));
+    ((Map<String, InterpreterPropertyOld>) properties).put(name, new InterpreterPropertyOld(name, value));
   }
 
   //TODO(egorklimov): should loadInterpreterDependencies() after updating
@@ -210,7 +210,7 @@ public class InterpreterSettingV2 implements Serializable {
     this.errorReason = errorReason;
   }
 
-  public void setInterpreterInfos(List<InterpreterInfo> interpreterInfos) {
+  public void setInterpreterInfos(List<Object> interpreterInfos) {
     this.interpreterInfos.clear();
     this.interpreterInfos.addAll(interpreterInfos);
   }

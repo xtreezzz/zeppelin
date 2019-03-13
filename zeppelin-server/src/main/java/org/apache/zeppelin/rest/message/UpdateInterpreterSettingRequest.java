@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.apache.zeppelin.Dependency;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterPropertyOld;
 
 /**
  * UpdateInterpreterSetting rest api request message.
@@ -31,18 +31,18 @@ import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
 public class UpdateInterpreterSettingRequest implements JsonSerializable {
   private static final Gson gson = new Gson();
 
-  Map<String, InterpreterProperty> properties;
+  Map<String, InterpreterPropertyOld> properties;
   List<Dependency> dependencies;
   InterpreterOption option;
 
-  public UpdateInterpreterSettingRequest(final Map<String, InterpreterProperty> properties,
+  public UpdateInterpreterSettingRequest(final Map<String, InterpreterPropertyOld> properties,
                                          final List<Dependency> dependencies, final InterpreterOption option) {
     this.properties = properties;
     this.dependencies = dependencies;
     this.option = option;
   }
 
-  public Map<String, InterpreterProperty> getProperties() {
+  public Map<String, InterpreterPropertyOld> getProperties() {
     return properties;
   }
 

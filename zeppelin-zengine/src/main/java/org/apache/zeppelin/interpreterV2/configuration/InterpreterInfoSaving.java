@@ -49,13 +49,13 @@ public class InterpreterInfoSaving {
   public Map<String, InterpreterSettingV2> interpreterSettings = new HashMap<>();
   public List<RemoteRepository> interpreterRepositories = new ArrayList<>();
 
-  public static InterpreterInfoSaving loadFromFile(Path file) throws IOException {
+  public static Object loadFromFile(Path file) throws IOException {
     LOGGER.info("Load interpreter setting from file: " + file);
-    InterpreterInfoSaving infoSaving = null;
+    Object infoSaving = null;
     try (BufferedReader json = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
       JsonParser jsonParser = new JsonParser();
       JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-      infoSaving = new Gson().fromJson(jsonObject.toString(), InterpreterInfoSaving.class);
+      infoSaving = new Gson().fromJson(jsonObject.toString(), Object.class);
     }
     return infoSaving == null ? new InterpreterInfoSaving() : infoSaving;
   }

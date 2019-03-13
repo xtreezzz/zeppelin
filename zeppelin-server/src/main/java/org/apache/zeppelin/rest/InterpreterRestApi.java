@@ -262,12 +262,12 @@ public class InterpreterRestApi {
   //@Path("install")
  /* @ZeppelinApi
   @PostMapping(value = "/install", produces = "application/json")
-  public ResponseEntity installInterpreter(@NotNull String message) {
+  public ResponseEntity install(@NotNull String message) {
     logger.info("Install interpreter: {}", message);
     InterpreterInstallationRequest request = InterpreterInstallationRequest.fromJson(message);
 
     try {
-      interpreterService.installInterpreter(
+      interpreterService.install(
           request,
           new SimpleServiceCallback<String>() {
             @Override
