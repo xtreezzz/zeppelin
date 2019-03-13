@@ -25,19 +25,16 @@ public class DatabaseStorage {
 
   private static final Gson gson = new Gson();
 
-  private static final String GET_ALL_NOTES = "SELECT * FROM notes;";
-  private static final String GET_NOTE = "SELECT * FROM notes WHERE id = ?;";
-  private static final String INSERT_NOTE = "INSERT INTO notes(id, path, default_interpreter_group) VALUES (?, ?, ?);";
-  private static final String UPDATE_NOTE = "UPDATE notes SET path=?, default_interpreter_group=? WHERE id=?;";
-  private static final String DELETE_NOTE = "DELETE FROM notes WHERE id = ?;";
+  private static final String GET_ALL_NOTES = "SELECT * FROM notes";
+  private static final String GET_NOTE = "SELECT * FROM notes WHERE id = ?";
+  private static final String INSERT_NOTE = "INSERT INTO notes(id, path, default_interpreter_group) VALUES (?, ?, ?)";
+  private static final String UPDATE_NOTE = "UPDATE notes SET path=?, default_interpreter_group=? WHERE id=?";
+  private static final String DELETE_NOTE = "DELETE FROM notes WHERE id = ?";
 
-  private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs";
-  private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE note_id = ?;";
-  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(id, note_id, title, text, username, created, updated, config, settings) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=?, text=?, username=?, updated=?, config=?, settings=? WHERE id=?;";
-
-  private static final DateTimeFormatter paragraphDateFormatter = DateTimeFormatter
-      .ofPattern("YYYY-MM-dd HH:mm:ss.SSS");
+  private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs ORDER BY position";
+  private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE note_id = ? ORDER BY position";
+  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(id, note_id, title, text, username, created, updated, config, settings, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=?, text=?, username=?, updated=?, config=?, settings=?, position=? WHERE id=?";
 
   public void createNote(final Note note) {
     final int affectedRows = jdbcTemplate
@@ -74,8 +71,6 @@ public class DatabaseStorage {
       );
 
       note.getParagraphs().addAll(paragraphs);
-      note.getParagraphs()
-          .sort(Comparator.comparingInt(p -> ((Double) p.getConfig().get("position")).intValue()));
       return note;
     } catch (final EmptyResultDataAccessException ignore) {
       return null;
@@ -100,9 +95,6 @@ public class DatabaseStorage {
           final Paragraph paragraph = convertResultSetToParagraph(resultSet);
           noteMap.get(note_id).getParagraphs().add(paragraph);
         });
-
-    notes.forEach(n -> n.getParagraphs()
-        .sort(Comparator.comparingInt(p -> ((Double) p.getConfig().get("position")).intValue())));
     return notes;
   }
 
@@ -122,10 +114,10 @@ public class DatabaseStorage {
     final String title = resultSet.getString("title");
     final String text = resultSet.getString("text");
     final String user = resultSet.getString("username");
-    final LocalDateTime created = gson
-        .fromJson(resultSet.getString("created"), LocalDateTime.class);
-    final LocalDateTime updated = gson
-        .fromJson(resultSet.getString("updated"), LocalDateTime.class);
+    final LocalDateTime created = LocalDateTime
+        .parse(resultSet.getString("created"), DateTimeFormatter.ISO_DATE_TIME);
+    final LocalDateTime updated = LocalDateTime
+        .parse(resultSet.getString("updated"), DateTimeFormatter.ISO_DATE_TIME);
     final String configJson = resultSet.getString("config");
     final String settingsJson = resultSet.getString("settings");
 
@@ -143,25 +135,23 @@ public class DatabaseStorage {
   private void saveNoteParagraphs(Note note) {
     for (int i = 0; i < note.getParagraphs().size(); i++) {
       final Paragraph paragraph = note.getParagraphs().get(i);
-      paragraph.getConfig().put("position", i);
-      saveParagraph(paragraph, note.getId());
+      saveParagraph(paragraph, note.getId(), i);
     }
   }
 
-  private void saveParagraph(final Paragraph p, final String noteId) {
+  private void saveParagraph(final Paragraph p, final String noteId, final int position) {
     final String configJson = gson.toJson(p.getConfig());
     final String settingsJson = gson.toJson(p.getSettings());
-    final String createdJson = gson.toJson(p.getCreated());
-    final String updatedJson = gson.toJson(p.getUpdated());
 
     final boolean paragraphMissing = jdbcTemplate.update(
         UPDATE_PARAGRAPH,
         p.getTitle(),
         p.getText(),
         p.getUser(),
-        updatedJson,
+        p.getUpdated().format(DateTimeFormatter.ISO_DATE_TIME),
         configJson,
         settingsJson,
+        position,
         p.getId()
     ) == 0;
 
@@ -173,10 +163,11 @@ public class DatabaseStorage {
           p.getTitle(),
           p.getText(),
           p.getUser(),
-          createdJson,
-          updatedJson,
+          p.getCreated().format(DateTimeFormatter.ISO_DATE_TIME),
+          p.getUpdated().format(DateTimeFormatter.ISO_DATE_TIME),
           configJson,
-          settingsJson
+          settingsJson,
+          position
       );
     }
   }

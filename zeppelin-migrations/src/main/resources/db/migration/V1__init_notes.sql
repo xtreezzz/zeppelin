@@ -15,10 +15,6 @@ CREATE TABLE paragraphs
   created  VARCHAR,
   updated  VARCHAR,
   config   VARCHAR,
-  settings VARCHAR
+  settings VARCHAR,
+  position INTEGER
 );
-
-
--- Test
-insert into notes(id, path, default_interpreter_group)
-values ('2E71ZWF5H', '/Super Note 3000', 'python');

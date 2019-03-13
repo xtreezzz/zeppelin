@@ -19,7 +19,9 @@ package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
@@ -140,7 +142,8 @@ public class ParagraphHandler extends AbstractHandler {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
 
-    //note.moveParagraph(p.getId(), index);
+    final List<Paragraph> paragraphs = note.getParagraphs();
+    Collections.swap(paragraphs, index, paragraphs.indexOf(p));
     noteRepository.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
