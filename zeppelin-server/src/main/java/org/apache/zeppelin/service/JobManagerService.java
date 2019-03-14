@@ -18,7 +18,7 @@
 package org.apache.zeppelin.service;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;

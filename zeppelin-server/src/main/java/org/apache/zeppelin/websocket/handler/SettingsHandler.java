@@ -18,11 +18,8 @@
 package org.apache.zeppelin.websocket.handler;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;

@@ -18,14 +18,41 @@
 package org.apache.zeppelin;
 
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 @Configuration
 public class ZeppelinBeanConfiguration {
 
-    @Bean
-    public ZeppelinConfiguration zeppelinConfiguration() {
-        return new ZeppelinConfiguration();
-    }
+  @Bean
+  public ZeppelinConfiguration zeppelinConfiguration() {
+    return new ZeppelinConfiguration();
+  }
+
+  @Bean
+  @Autowired
+  public DatabaseNoteRepository databaseNoteRepository(final JdbcTemplate jdbcTemplate) {
+    return new DatabaseNoteRepository(new DatabaseStorage(jdbcTemplate));
+  }
+
+  @Bean
+  JdbcTemplate jdbcTemplate(
+      @Value("${spring.datasource.driverClassName}") final String driverClassName,
+      @Value("${spring.datasource.url}") final String url,
+      @Value("${spring.datasource.username}") final String username,
+      @Value("${spring.datasource.password}") final String password) {
+
+    //TODO(SAN) этот dataSource временный! На прод его нельзя!!!
+    final DriverManagerDataSource dataSource = new DriverManagerDataSource();
+    dataSource.setDriverClassName(driverClassName);
+    dataSource.setUrl(url);
+    dataSource.setUsername(username);
+    dataSource.setPassword(password);
+
+    return new JdbcTemplate(dataSource);
+  }
 }

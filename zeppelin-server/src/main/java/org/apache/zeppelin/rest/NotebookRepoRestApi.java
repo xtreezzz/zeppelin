@@ -22,7 +22,7 @@ import com.google.gson.JsonSyntaxException;
 import java.util.Collections;
 import org.apache.commons.lang.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;

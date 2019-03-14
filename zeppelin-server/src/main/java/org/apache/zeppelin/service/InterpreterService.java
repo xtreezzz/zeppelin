@@ -38,7 +38,7 @@ import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.message.InterpreterInstallationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

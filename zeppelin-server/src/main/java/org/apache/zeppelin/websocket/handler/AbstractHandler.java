@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.Input;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;

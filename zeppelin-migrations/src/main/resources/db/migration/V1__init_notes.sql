@@ -3,6 +3,8 @@ CREATE TABLE notes
   id                        VARCHAR(9) NOT NULL PRIMARY KEY,
   path                      VARCHAR    NOT NULL,
   default_interpreter_group VARCHAR    NOT NULL
+-- permission
+-- gui
 );
 
 CREATE TABLE paragraphs
@@ -15,6 +17,6 @@ CREATE TABLE paragraphs
   created  VARCHAR,
   updated  VARCHAR,
   config   VARCHAR,
-  settings VARCHAR,
+  settings VARCHAR,  -- rename
   position INTEGER
 );

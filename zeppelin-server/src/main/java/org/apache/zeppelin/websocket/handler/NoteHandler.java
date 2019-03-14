@@ -31,7 +31,7 @@ import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.repositories.DatabaseNoteRepository;
+import org.apache.zeppelin.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -47,6 +47,7 @@ import org.springframework.web.socket.WebSocketSession;
 public class NoteHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoteHandler.class);
+  private static final String TRASH_FOLDER = "~Trash";
 
   private final ZeppelinConfiguration zeppelinConfiguration;
 
@@ -131,7 +132,6 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
     noteRepository.removeNote(note.getId());
-    //zeppelinRepository.removeNote(note.getId(), serviceContext.getAutheInfo());
     connectionManager.removeNoteSubscribers(note.getId());
     broadcastNoteList(serviceContext.getUserAndRoles());
   }
@@ -171,16 +171,27 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    final String name = fromMessage.safeGetType("name", LOG);
+    String path = fromMessage.safeGetType("name", LOG);
+    if (!path.startsWith(File.separator)) {
+      path = File.separator + path;
+    }
 
-    final String newNoteName = StringUtils.isBlank(name)
-            ? "/Cloned Note_" + note.getId()
-            : name;
+    final Note cloneNote = new Note(path, note.getDefaultInterpreterGroup());
 
-    //final Note newNote = zeppelinRepository.cloneNote(note.getId(), normalizeNotePath(newNoteName), serviceContext.getAutheInfo());
+    // clone all paragraphs
+    note.getParagraphs().forEach(p -> {
+      final Paragraph newParag =
+          new Paragraph(p.getTitle(), p.getText(), p.getUser(), p.getSettings());
+      newParag.setConfig(p.getConfig());
+      newParag.setCreated(p.getCreated());
+      newParag.setUpdated(p.getUpdated());
+      cloneNote.getParagraphs().add(newParag);
+    });
 
-    //connectionManager.addSubscriberToNode(newNote.getId(), conn);
-    //publishNote(newNote, conn, serviceContext);
+    noteRepository.persistNote(cloneNote);
+
+    connectionManager.addSubscriberToNode(cloneNote.getId(), conn);
+    publishNote(cloneNote, conn, serviceContext);
   }
 
   public void importNote(final SockMessage fromMessage) throws IOException {
@@ -205,7 +216,7 @@ public class NoteHandler extends AbstractHandler {
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
     //TODO(SAN) вынести потом '~Trash' куда-нибудь
-    note.setPath("/" + "~Trash" + note.getPath());
+    note.setPath("/" + TRASH_FOLDER + note.getPath());
     noteRepository.updateNote(note);
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     broadcastNoteList(serviceContext.getUserAndRoles());
@@ -216,18 +227,15 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
-    //if (!note.getPath().startsWith("/" + NoteManager.TRASH_FOLDER)) {
-    //  throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
-    //}
+    if (!note.getPath().startsWith("/" + TRASH_FOLDER)) {
+      throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
+    }
 
-    //try {
-      //final String destNotePath = note.getPath().replace("/" + NoteManager.TRASH_FOLDER, "");
-      //zeppelinRepository.moveNote(note.getId(), destNotePath);
-      //connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-      //broadcastNoteList(serviceContext.getUserAndRoles());
-    //} catch (final IOException e) {
-    //  throw new IOException("Fail to restore note: " + note.getId(), e);
-    //}
+    final String destNotePath = note.getPath().replace("/" + TRASH_FOLDER, "");
+    note.setPath(destNotePath);
+    noteRepository.updateNote(note);
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
+    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 
   public void restoreFolder(final SockMessage fromMessage) throws IOException {

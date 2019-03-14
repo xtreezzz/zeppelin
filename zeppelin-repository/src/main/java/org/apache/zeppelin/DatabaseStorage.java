@@ -5,23 +5,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
-@Component
 public class DatabaseStorage {
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
 
   private static final Gson gson = new Gson();
 
@@ -35,6 +30,10 @@ public class DatabaseStorage {
   private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE note_id = ? ORDER BY position";
   private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(id, note_id, title, text, username, created, updated, config, settings, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=?, text=?, username=?, updated=?, config=?, settings=?, position=? WHERE id=?";
+
+  public DatabaseStorage(final JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
 
   public void createNote(final Note note) {
     final int affectedRows = jdbcTemplate
