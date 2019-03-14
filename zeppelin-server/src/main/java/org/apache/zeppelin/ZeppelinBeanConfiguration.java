@@ -46,6 +46,9 @@ public class ZeppelinBeanConfiguration {
       @Value("${spring.datasource.username}") final String username,
       @Value("${spring.datasource.password}") final String password) {
 
+    // Init database's migrations
+    FlywayMigrationInitializer.startMigrations(url, username, password);
+
     //TODO(SAN) этот dataSource временный! На прод его нельзя!!!
     final DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName(driverClassName);
