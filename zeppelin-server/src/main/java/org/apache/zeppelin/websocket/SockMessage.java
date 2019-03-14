@@ -54,7 +54,7 @@ public class SockMessage {
     return (T) value;
   }
 
-  public <T> T getOrDefault(final String key, final Object defaultValue) {
+  public <T> T getOrDefault(final String key, final T defaultValue) {
     final Object value = data.get(key);
     return (T) (value != null ? value : defaultValue);
   }

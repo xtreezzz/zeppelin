@@ -109,10 +109,12 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
     final String path = fromMessage.getNotNull("path");
-    final NoteCronConfiguration config =  new NoteCronConfiguration(fromMessage.getNotNull("config"));
+    final Map config =  fromMessage.getOrDefault("config", null);
 
     note.setPath(path);
-    note.setNoteCronConfiguration(config);
+    if (config != null) {
+      note.setNoteCronConfiguration(new NoteCronConfiguration(config));
+    }
     //if (!note.getNoteCronConfiguration().equals(config)) {
     //  zeppelinRepository.refreshCron(note.getId());
     //}
