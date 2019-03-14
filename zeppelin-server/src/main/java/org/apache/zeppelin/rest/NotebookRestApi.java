@@ -335,8 +335,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final NewNoteRequest request = NewNoteRequest.fromJson(message);
     final Note note = new Note(
             request.getName().substring(0, request.getName().lastIndexOf("/")),
-            request.getName().substring(request.getName().lastIndexOf("/") + 1),
-            zConf.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT)
+            request.getName().substring(request.getName().lastIndexOf("/") + 1)
         //getServiceContext().getAutheInfo());
     );
 

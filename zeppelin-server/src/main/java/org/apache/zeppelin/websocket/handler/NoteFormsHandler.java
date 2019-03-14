@@ -49,7 +49,7 @@ public class NoteFormsHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, serviceContext, conn);
-    final Map<String, Object> noteParams = fromSockMessage.safeGetType("noteParams", LOG);
+    final Map<String, Object> noteParams = fromSockMessage.getNotNull("noteParams");
 
     //TODO(KOT): wrong field
     note.getGuiConfiguration().setParams(noteParams);
@@ -63,7 +63,7 @@ public class NoteFormsHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, serviceContext, conn);
-    final String formName = fromSockMessage.safeGetType("formName", LOG);
+    final String formName = fromSockMessage.getNotNull("formName");
 
     note.getGuiConfiguration().getForms().remove(formName);
     note.getGuiConfiguration().getParams().remove(formName);

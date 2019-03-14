@@ -46,33 +46,17 @@ public class SockMessage {
     return this;
   }
 
-  public <T> T getType(final String key, final Logger LOG) {
-    try {
-      //TODO(SAN) стирание типов
-      return (T) data.get(key);
-    } catch (final ClassCastException e) {
-      LOG.error("Failed to get " + key + " from message (Invalid type). " , e);
-      return null;
-    }
-  }
-
-  public Object getOrDefault(final String key, final Object defaultValue) {
-    Object value = data.get(key);
-    return value != null ? value : defaultValue;
-  }
-
-  public <T> T safeGetType(final String key, final Logger LOG) {
-    T result = null;
-    try {
-      //TODO(SAN) стирание типов
-      result = (T) data.get(key);
-    } catch (final ClassCastException e) {
-      LOG.error("Failed to get " + key + " from message (Invalid type). " , e);
-    }
-    if(result == null) {
+  public <T> T getNotNull(final String key) {
+    final Object value = data.get(key);
+    if (value == null) {
       throw new IllegalStateException(key + " is not defined");
     }
-    return result;
+    return (T) value;
+  }
+
+  public <T> T getOrDefault(final String key, final Object defaultValue) {
+    final Object value = data.get(key);
+    return (T) (value != null ? value : defaultValue);
   }
 
   @Override

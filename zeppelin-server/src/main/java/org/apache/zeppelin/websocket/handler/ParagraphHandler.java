@@ -64,10 +64,10 @@ public class ParagraphHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    final String title = fromMessage.safeGetType("title", LOG);
-    final String text = fromMessage.safeGetType("paragraph", LOG);
-    final Map<String, Object> config = fromMessage.safeGetType("config", LOG);
-    final Map<String, Object> params = fromMessage.safeGetType("params", LOG);
+    final String title = fromMessage.getNotNull("title");
+    final String text = fromMessage.getNotNull("paragraph");
+    final Map<String, Object> config = fromMessage.getNotNull("config");
+    final Map<String, Object> params = fromMessage.getNotNull("params");
 
     p.setConfig(config);
     p.getSettings().setParams(params);
@@ -88,8 +88,8 @@ public class ParagraphHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    final String paragraphId = fromMessage.safeGetType("id", LOG);
-    final String patchText = fromMessage.safeGetType("patch", LOG);
+    final String paragraphId = fromMessage.getNotNull("id");
+    final String patchText = fromMessage.getNotNull("patch");
 
     String paragraphText = p.getText() == null ? StringUtils.EMPTY : p.getText();
 
@@ -136,7 +136,7 @@ public class ParagraphHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
-    final int index = ((Double) fromMessage.safeGetType("index", LOG)).intValue();
+    final int index = ((Double) fromMessage.getNotNull("index")).intValue();
 
     if (index < 0 || index > note.getParagraphs().size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
@@ -157,7 +157,7 @@ public class ParagraphHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final int index = ((Double) fromMessage.safeGetType("index", LOG)).intValue();
+    final int index = ((Double) fromMessage.getNotNull("index")).intValue();
 
     if (index < 0 || index > note.getParagraphs().size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");

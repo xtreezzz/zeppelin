@@ -76,7 +76,7 @@ public abstract class AbstractHandler {
                               final WebSocketSession conn) {
     final String noteId = connectionManager.getAssociatedNoteId(conn) != null
             ? connectionManager.getAssociatedNoteId(conn)
-            : message.safeGetType(paramName, LOG);
+            : message.getNotNull(paramName);
 
     checkPermission(noteId, permission, serviceContext);
     final Note note = noteRepository.getNote(noteId);
@@ -89,7 +89,7 @@ public abstract class AbstractHandler {
   protected Paragraph safeLoadParagraph(final String paramName,
                                         final SockMessage fromSockMessage,
                                         final Note note) {
-    final String paragraphId = fromSockMessage.safeGetType(paramName, LOG);
+    final String paragraphId = fromSockMessage.getNotNull(paramName);
     final Paragraph p = note.getParagraph(paragraphId);
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);

@@ -115,6 +115,10 @@ function HomeCtrl($scope, noteListFactory, websocketMsgSrv, $rootScope, arrayOrd
     vm.numberOfNotesDisplayed += 10;
   };
 
+  $scope.renameNote = function(nodeId, nodePath) {
+    vm.noteActionService.renameNote(nodeId, nodePath);
+  };
+
   $scope.moveNoteToTrash = function(noteId) {
     vm.noteActionService.moveNoteToTrash(noteId, false);
   };

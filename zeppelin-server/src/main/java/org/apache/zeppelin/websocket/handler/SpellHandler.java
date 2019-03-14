@@ -54,11 +54,11 @@ public class SpellHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, session);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    final String text = fromMessage.safeGetType("paragraph", LOG);
-    final String title = fromMessage.safeGetType("title", LOG);
-    final Map<String, Object> params = fromMessage.safeGetType("params", LOG);
-    final String dateStarted = fromMessage.safeGetType("dateStarted", LOG);
-    final String dateFinished = fromMessage.safeGetType("dateFinished", LOG);
+    final String text = fromMessage.getNotNull("paragraph");
+    final String title = fromMessage.getNotNull("title");
+    final Map<String, Object> params = fromMessage.getNotNull("params");
+    final String dateStarted = fromMessage.getNotNull("dateStarted");
+    final String dateFinished = fromMessage.getNotNull("dateFinished");
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 

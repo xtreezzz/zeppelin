@@ -122,7 +122,7 @@ public class JobManagerService {
       } else {
         this.noteType = "normal";
       }
-      this.interpreter = note.getDefaultInterpreterGroup();
+//      this.interpreter = note.getDefaultInterpreterGroup();
 
       // set paragraphs
       this.paragraphs = new ArrayList<>();

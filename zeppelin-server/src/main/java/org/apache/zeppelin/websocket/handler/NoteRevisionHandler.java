@@ -47,7 +47,7 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final String commitSockMessage = fromMessage.safeGetType("commitSockMessage", LOG);
+    final String commitSockMessage = fromMessage.getNotNull("commitSockMessage");
 
     final NotebookRepoWithVersionControl.Revision revision
             = null;//notebook.checkpointNote(note.getId(), note.getName(), commitSockMessage);
@@ -75,7 +75,7 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
-    final String revisionId = fromMessage.safeGetType("revisionId", LOG);
+    final String revisionId = fromMessage.getNotNull("revisionId");
 
     final Note revisionNote = note;//notebook.getNoteByRevision(note.getId(), note.getPath(), revisionId);
     final SockMessage message = new SockMessage(Operation.NOTE_REVISION)
@@ -89,8 +89,8 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
-    final String position = fromMessage.safeGetType("position", LOG);
-    final String revisionId = fromMessage.safeGetType("revisionId", LOG);
+    final String position = fromMessage.getNotNull("position");
+    final String revisionId = fromMessage.getNotNull("revisionId");
 
     final Note revisionNote;
     if ("Head".equals(revisionId)) {
@@ -111,7 +111,7 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final String revisionId = fromMessage.safeGetType("revisionId", LOG);
+    final String revisionId = fromMessage.getNotNull("revisionId");
 
     //notebook.setNoteRevision(note.getId(), note.getPath(), revisionId);
     final Note reloadedNote = note;//notebook.loadNoteFromRepo(note.getId(), serviceContext.getAutheInfo());

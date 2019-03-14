@@ -48,7 +48,6 @@ public class Note implements Serializable {
   private String id;
   private String name;
   private String path;
-  private String defaultInterpreterGroup;
 
   /**
    * form and parameter guiConfiguration
@@ -68,16 +67,15 @@ public class Note implements Serializable {
   private final Set<String> runners;
   private final Set<String> writers;
 
-  public Note(final String path, final String defaultInterpreterGroup) {
-    this(null, path, defaultInterpreterGroup);
+  public Note(final String path) {
+    this(null, path);
     this.name = path.substring(path.lastIndexOf(File.separator) + 1);
   }
 
-  public Note(final String name, final String path, final String defaultInterpreterGroup) {
+  public Note(final String name, final String path) {
     this.id = IdHashes.generateId();
     this.name = name;
     this.path = path;
-    this.defaultInterpreterGroup = defaultInterpreterGroup;
 
     this.guiConfiguration = new GUI();
 
@@ -100,14 +98,6 @@ public class Note implements Serializable {
 
   public String getName() {
     return name;
-  }
-
-  public String getDefaultInterpreterGroup() {
-    return defaultInterpreterGroup;
-  }
-
-  public void setDefaultInterpreterGroup(String defaultInterpreterGroup) {
-    this.defaultInterpreterGroup = defaultInterpreterGroup;
   }
 
   public GUI getGuiConfiguration() {

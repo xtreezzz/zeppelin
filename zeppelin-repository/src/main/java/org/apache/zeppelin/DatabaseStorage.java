@@ -22,8 +22,8 @@ public class DatabaseStorage {
 
   private static final String GET_ALL_NOTES = "SELECT * FROM notes";
   private static final String GET_NOTE = "SELECT * FROM notes WHERE id = ?";
-  private static final String INSERT_NOTE = "INSERT INTO notes(id, path, default_interpreter_group) VALUES (?, ?, ?)";
-  private static final String UPDATE_NOTE = "UPDATE notes SET path=?, default_interpreter_group=? WHERE id=?";
+  private static final String INSERT_NOTE = "INSERT INTO notes(id, path) VALUES (?, ?)";
+  private static final String UPDATE_NOTE = "UPDATE notes SET path=? WHERE id=?";
   private static final String DELETE_NOTE = "DELETE FROM notes WHERE id = ?";
 
   private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs ORDER BY position";
@@ -37,7 +37,7 @@ public class DatabaseStorage {
 
   public void createNote(final Note note) {
     final int affectedRows = jdbcTemplate
-        .update(INSERT_NOTE, note.getId(), note.getPath(), note.getDefaultInterpreterGroup());
+        .update(INSERT_NOTE, note.getId(), note.getPath());
     if (affectedRows == 0) {
       throw new RuntimeException("Can't create note " + note.getId());
     }
@@ -46,7 +46,7 @@ public class DatabaseStorage {
 
   public void updateNote(final Note note) {
     final int affectedRows = jdbcTemplate
-        .update(UPDATE_NOTE, note.getPath(), note.getDefaultInterpreterGroup(), note.getId());
+        .update(UPDATE_NOTE, note.getPath(), note.getId());
     if (affectedRows == 0) {
       throw new RuntimeException("Can't update note " + note.getId());
     }
@@ -101,8 +101,7 @@ public class DatabaseStorage {
       throws SQLException {
     final String noteId = resultSet.getString("id");
     final String notePath = resultSet.getString("path");
-    final String interGroup = resultSet.getString("default_interpreter_group");
-    final Note note = new Note(notePath, interGroup);
+    final Note note = new Note(notePath);
     note.setId(noteId);
     return note;
   }

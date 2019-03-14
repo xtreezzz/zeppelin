@@ -108,8 +108,8 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    final String path = fromMessage.safeGetType("path", LOG);
-    final NoteCronConfiguration config =  new NoteCronConfiguration(fromMessage.safeGetType("config", LOG));
+    final String path = fromMessage.getNotNull("path");
+    final NoteCronConfiguration config =  new NoteCronConfiguration(fromMessage.getNotNull("config"));
 
     note.setPath(path);
     note.setNoteCronConfiguration(config);
@@ -141,16 +141,13 @@ public class NoteHandler extends AbstractHandler {
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    String notePath = fromMessage.safeGetType("path", LOG);
+    String notePath = fromMessage.getNotNull("path");
     if (!notePath.startsWith(File.separator)) {
       notePath = File.separator + notePath;
     }
-    final String defaultInterpreterGroup = fromMessage.getType("defaultInterpreterGroup", LOG) == null
-            ? fromMessage.safeGetType("defaultInterpreterGroup", LOG)
-            : zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_GROUP_DEFAULT);
 
     try {
-      final Note note = new Note(notePath, defaultInterpreterGroup);
+      final Note note = new Note(notePath);
 
       // it's an empty note. so add one paragraph
       //note.addParagraph(serviceContext.getAutheInfo());
@@ -171,12 +168,12 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    String path = fromMessage.safeGetType("name", LOG);
+    String path = fromMessage.getNotNull("name");
     if (!path.startsWith(File.separator)) {
       path = File.separator + path;
     }
 
-    final Note cloneNote = new Note(path, note.getDefaultInterpreterGroup());
+    final Note cloneNote = new Note(path);
 
     // clone all paragraphs
     note.getParagraphs().forEach(p -> {
@@ -197,8 +194,8 @@ public class NoteHandler extends AbstractHandler {
   public void importNote(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String noteName = (String) ((Map) fromMessage.safeGetType("note", LOG)).get("name");
-    final String noteJson = gson.toJson(fromMessage.safeGetType("note", LOG));
+    final String noteName = (String) ((Map) fromMessage.getNotNull("note")).get("name");
+    final String noteJson = gson.toJson(fromMessage.getNotNull("note"));
 
     final String resultNoteName = noteName == null
             ? noteName
@@ -258,8 +255,8 @@ public class NoteHandler extends AbstractHandler {
   public void renameFolder(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String oldFolderId = fromMessage.safeGetType("id", LOG);
-    final String newFolderId = fromMessage.safeGetType("name", LOG);
+    final String oldFolderId = fromMessage.getNotNull("id");
+    final String newFolderId = fromMessage.getNotNull("name");
     //TODO(zjffdu) folder permission check
 
     //try {
@@ -273,7 +270,7 @@ public class NoteHandler extends AbstractHandler {
   public void moveFolderToTrash(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String folderPath = fromMessage.safeGetType("id", LOG);
+    final String folderPath = fromMessage.getNotNull("id");
     //TODO(zjffdu) folder permission check
     //TODO(zjffdu) folderPath is relative path, need to fix it in frontend
 
@@ -290,7 +287,7 @@ public class NoteHandler extends AbstractHandler {
   public void removeFolder(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final String folderPath = "/" + fromMessage.safeGetType("id", LOG);
+    final String folderPath = "/" + fromMessage.getNotNull("id");
     //try {
       //zeppelinRepository.removeFolder(folderPath);
       final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();

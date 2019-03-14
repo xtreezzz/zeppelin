@@ -1,8 +1,7 @@
 CREATE TABLE notes
 (
   id                        VARCHAR(9) NOT NULL PRIMARY KEY,
-  path                      VARCHAR    NOT NULL,
-  default_interpreter_group VARCHAR    NOT NULL
+  path                      VARCHAR    NOT NULL
 -- permission
 -- gui
 );
