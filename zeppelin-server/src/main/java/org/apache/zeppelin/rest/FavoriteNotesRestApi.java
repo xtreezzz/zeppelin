@@ -63,7 +63,7 @@ public class FavoriteNotesRestApi {
   private Map<String, Map<String, Set<String>>> usersNotes;
 
   @Autowired
-  public FavoriteNotesRestApi(ZeppelinConfiguration configuration, DatabaseNoteRepository noteRepository) {
+  public FavoriteNotesRestApi(final ZeppelinConfiguration configuration, final DatabaseNoteRepository noteRepository) {
     this.configuration = configuration;
     this.saveExecServ = Executors.newSingleThreadScheduledExecutor();
     this.noteRepository = noteRepository;
@@ -103,7 +103,7 @@ public class FavoriteNotesRestApi {
     }
   }
 
-  private boolean noteIdIsCorrect(String noteId) {
+  private boolean noteIdIsCorrect(final String noteId) {
     Note note = noteRepository.getNote(noteId);
     if (note == null) {
       return false;
@@ -111,9 +111,9 @@ public class FavoriteNotesRestApi {
     return !note.isTrashed();
   }
 
-  private void clearIncorrectNotesIds() {
-    for (Map<String, Set<String>> userList : usersNotes.values()) {
-      for (Set<String> noteType : userList.values()) {
+  private synchronized void clearIncorrectNotesIds() {
+    for (final Map<String, Set<String>> userList : usersNotes.values()) {
+      for (final Set<String> noteType : userList.values()) {
         noteType.removeIf(id -> !noteIdIsCorrect(id));
       }
     }
@@ -121,7 +121,7 @@ public class FavoriteNotesRestApi {
 
   @ZeppelinApi
   @GetMapping(value = "/get_notes_ids", produces = "application/json")
-  public ResponseEntity getNotesIds(@RequestParam("username") String username) {
+  public ResponseEntity getNotesIds(@RequestParam("username") final String username) {
     try {
       HashMap<String, Set> idsMap = new HashMap<>(2);
       Set<String> favoriteSet = Collections.emptySet();
@@ -144,10 +144,10 @@ public class FavoriteNotesRestApi {
 
   @ZeppelinApi
   @GetMapping(value = "/set_note_status", produces = "application/json")
-  public ResponseEntity setNoteStatus(@RequestParam("username") String username,
-                                      @RequestParam("note_id") String noteId,
-                                      @RequestParam("note_type") String noteType,
-                                      @RequestParam("note_action") String noteAction) {
+  public ResponseEntity setNoteStatus(@RequestParam("username") final String username,
+                                      @RequestParam("note_id") final String noteId,
+                                      @RequestParam("note_type") final String noteType,
+                                      @RequestParam("note_action") final String noteAction) {
 
     //TODO(SAN) add " || !SecurityUtils.getSubject().getPrincipal().equals(username)"
     if (username == null || username.isEmpty()) {

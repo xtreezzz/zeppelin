@@ -58,7 +58,7 @@ public abstract class AbstractHandler {
     final AuthenticationInfo authInfo = new AuthenticationInfo(message.principal, message.roles, message.ticket);
     final Set<String> userAndRoles = new HashSet<>();
     userAndRoles.add(message.principal);
-    if (message.roles != null && !message.roles.equals("")) {
+    if (message.roles != null && !"".equals(message.roles)) {
       final HashSet<String> roles = gson.fromJson(message.roles, new TypeToken<HashSet<String>>() {
       }.getType());
       if (roles != null) {
@@ -81,7 +81,7 @@ public abstract class AbstractHandler {
     checkPermission(noteId, permission, serviceContext);
     final Note note = noteRepository.getNote(noteId);
     if (note == null) {
-      throw new NoteNotFoundException(noteId);
+      throw new NoteNotFoundException("Can't find note with id '" + noteId +"'.");
     }
     return note;
   }

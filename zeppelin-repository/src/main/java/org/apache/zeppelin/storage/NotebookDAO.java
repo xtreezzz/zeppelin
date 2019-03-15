@@ -84,7 +84,7 @@ public class NotebookDAO {
     return jdbcTemplate.update(DELETE_NOTE, new MapSqlParameterSource("note_id", noteId)) != 0;
   }
 
-  public List<Note> getAllNotes() {
+  List<Note> getAllNotes() {
     List<Note> notes = jdbcTemplate
         .query(GET_ALL_NOTES, (resultSet, i) -> convertResultSetToNote(resultSet));
     Map<String, Note> noteMap = new HashMap<>();
