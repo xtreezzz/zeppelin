@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
@@ -69,7 +70,7 @@ public class InterpreterRestApi {
                 "string"
             )
         );
-          }}), new ExistingProcess(), new Permissions());
+          }}), new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1);
 
   @Autowired
   public InterpreterRestApi(

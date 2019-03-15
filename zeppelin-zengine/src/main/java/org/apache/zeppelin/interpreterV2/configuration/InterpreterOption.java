@@ -42,6 +42,14 @@ public class InterpreterOption implements Serializable {
 
   private BaseInterpreterConfig config;
 
+  // additional jvm parameter string
+  private String jvmOptions;
+
+  /**
+   *  Count of tasks available for concurrent execution
+   */
+  private int concurrentTasks;
+
   private ExistingProcess remoteProcess;
   private Permissions permissions;
 
@@ -50,7 +58,9 @@ public class InterpreterOption implements Serializable {
       String shebang, String perNote, String perUser,
       BaseInterpreterConfig config,
       ExistingProcess remoteProcess,
-      Permissions permissions) {
+      Permissions permissions,
+      String jvmOptions,
+      int concurrentTasks) {
     if (perUser == null) {
       throw new NullPointerException("perUser can not be null.");
     }
@@ -66,6 +76,24 @@ public class InterpreterOption implements Serializable {
     this.config = config;
     this.remoteProcess = remoteProcess;
     this.permissions = permissions;
+    this.jvmOptions = jvmOptions;
+    this.concurrentTasks = concurrentTasks;
+  }
+
+  public String getJvmOptions() {
+    return jvmOptions;
+  }
+
+  public void setJvmOptions(String jvmOptions) {
+    this.jvmOptions = jvmOptions;
+  }
+
+  public int getConcurrentTasks() {
+    return concurrentTasks;
+  }
+
+  public void setConcurrentTasks(int concurrentTasks) {
+    this.concurrentTasks = concurrentTasks;
   }
 
   public String getCustomInterpreterName() {

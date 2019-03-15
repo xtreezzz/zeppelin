@@ -53,9 +53,19 @@ public class InterpreterProperty implements Serializable {
   private String envName;
   private String propertyName;
   private Object defaultValue;
+  private Object currentValue;
   private String description;
   private String type;
 
+  public InterpreterProperty(String envName, String propertyName, Object defaultValue,
+      Object currentValue, String description, String type) {
+    this.envName = envName;
+    this.propertyName = propertyName;
+    this.defaultValue = defaultValue;
+    this.description = description;
+    this.currentValue = currentValue;
+    this.type = type;
+  }
 
   public InterpreterProperty(String envName, String propertyName, Object defaultValue,
                              String description, String type) {
@@ -63,6 +73,7 @@ public class InterpreterProperty implements Serializable {
     this.propertyName = propertyName;
     this.defaultValue = defaultValue;
     this.description = description;
+    this.currentValue = defaultValue;
     this.type = type;
   }
 
@@ -81,6 +92,14 @@ public class InterpreterProperty implements Serializable {
   public InterpreterProperty(String envName, String propertyName, String defaultValue,
                              String description) {
     this(envName, propertyName, defaultValue, description, Type.TEXTAREA.getValue());
+  }
+
+  public Object getCurrentValue() {
+    return currentValue;
+  }
+
+  public void setCurrentValue(Object currentValue) {
+    this.currentValue = currentValue;
   }
 
   public String getEnvName() {
