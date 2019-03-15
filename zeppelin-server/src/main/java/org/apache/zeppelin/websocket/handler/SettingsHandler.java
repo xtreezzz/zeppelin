@@ -19,7 +19,7 @@ package org.apache.zeppelin.websocket.handler;
 
 import java.io.IOException;
 import java.util.Map;
-import org.apache.zeppelin.DatabaseNoteRepository;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;

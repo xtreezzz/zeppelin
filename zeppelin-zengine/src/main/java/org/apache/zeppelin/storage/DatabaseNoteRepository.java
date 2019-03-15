@@ -1,4 +1,4 @@
-package org.apache.zeppelin;
+package org.apache.zeppelin.storage;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,9 +7,9 @@ import org.apache.zeppelin.notebook.NoteInfo;
 
 public class DatabaseNoteRepository {
 
-  private final DatabaseStorage storage;
+  private final NotebookDAO storage;
 
-  public DatabaseNoteRepository(final DatabaseStorage storage) {
+  public DatabaseNoteRepository(final NotebookDAO storage) {
     this.storage = storage;
   }
 

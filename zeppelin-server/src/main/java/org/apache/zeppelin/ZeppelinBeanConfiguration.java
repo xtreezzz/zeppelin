@@ -18,11 +18,13 @@
 package org.apache.zeppelin;
 
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
+import org.apache.zeppelin.storage.NotebookDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 @Configuration
@@ -35,12 +37,12 @@ public class ZeppelinBeanConfiguration {
 
   @Bean
   @Autowired
-  public DatabaseNoteRepository databaseNoteRepository(final JdbcTemplate jdbcTemplate) {
-    return new DatabaseNoteRepository(new DatabaseStorage(jdbcTemplate));
+  public DatabaseNoteRepository databaseNoteRepository(final NamedParameterJdbcTemplate jdbcTemplate) {
+    return new DatabaseNoteRepository(new NotebookDAO(jdbcTemplate));
   }
 
   @Bean
-  JdbcTemplate jdbcTemplate(
+  NamedParameterJdbcTemplate jdbcTemplate(
       @Value("${spring.datasource.driverClassName}") final String driverClassName,
       @Value("${spring.datasource.url}") final String url,
       @Value("${spring.datasource.username}") final String username,
@@ -56,6 +58,6 @@ public class ZeppelinBeanConfiguration {
     dataSource.setUsername(username);
     dataSource.setPassword(password);
 
-    return new JdbcTemplate(dataSource);
+    return new NamedParameterJdbcTemplate(dataSource);
   }
 }

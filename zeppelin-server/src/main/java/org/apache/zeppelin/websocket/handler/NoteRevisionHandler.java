@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.DatabaseNoteRepository;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;

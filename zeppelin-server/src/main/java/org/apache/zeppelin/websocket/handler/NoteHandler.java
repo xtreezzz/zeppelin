@@ -31,7 +31,7 @@ import org.apache.zeppelin.notebook.NoteCronConfiguration;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.DatabaseNoteRepository;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;

@@ -37,7 +37,7 @@ import java.util.*;
 // * Убрал персонализированный мод
 public class Note implements Serializable {
 
-  private static Gson gson = new GsonBuilder()
+  private static final Gson gson = new GsonBuilder()
       .setPrettyPrinting()
       .registerTypeAdapterFactory(Input.TypeAdapterFactory)
       .create();
@@ -92,7 +92,7 @@ public class Note implements Serializable {
     return id;
   }
 
-  public void setId(String id) {
+  public void setId(final String id) {
     this.id = id;
   }
 
@@ -121,11 +121,11 @@ public class Note implements Serializable {
     return isRunning;
   }
 
-  public void setRunning(boolean running) {
+  public void setRunning(final boolean running) {
     isRunning = running;
   }
 
-  public void setNoteCronConfiguration(NoteCronConfiguration noteCronConfiguration) {
+  public void setNoteCronConfiguration(final NoteCronConfiguration noteCronConfiguration) {
     this.noteCronConfiguration = noteCronConfiguration;
   }
 
@@ -153,7 +153,7 @@ public class Note implements Serializable {
     return path;
   }
 
-  public void setPath(String path) {
+  public void setPath(final String path) {
     this.path = path;
     this.name = path.substring(path.lastIndexOf(File.separator) + 1);
   }

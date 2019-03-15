@@ -1,21 +1,24 @@
 CREATE TABLE notes
 (
-  id                        VARCHAR(9) NOT NULL PRIMARY KEY,
-  path                      VARCHAR    NOT NULL
--- permission
--- gui
+  id          BIGSERIAL  NOT NULL PRIMARY KEY,
+  note_id     VARCHAR(9) NOT NULL UNIQUE,
+  path        VARCHAR    NOT NULL,
+  permissions JSON,
+  gui         JSON
 );
 
 CREATE TABLE paragraphs
 (
-  id       VARCHAR NOT NULL PRIMARY KEY,
-  note_id  VARCHAR(9) REFERENCES notes ON DELETE CASCADE,
-  title    VARCHAR,
-  text     VARCHAR,
-  username VARCHAR,
-  created  VARCHAR,
-  updated  VARCHAR,
-  config   VARCHAR,
-  settings VARCHAR,  -- rename
-  position INTEGER
+  id           BIGSERIAL NOT NULL PRIMARY KEY,
+  paragraph_id VARCHAR   NOT NULL,
+  note_id      VARCHAR(9) REFERENCES notes (note_id) ON DELETE CASCADE,
+  title        VARCHAR,
+  text         VARCHAR,
+  username     VARCHAR,
+  created      VARCHAR   NOT NULL,
+  updated      VARCHAR   NOT NULL,
+  config       JSON,
+  gui          JSON,
+  position     INTEGER,
+  UNIQUE (paragraph_id, note_id)
 );
