@@ -1,0 +1,55 @@
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<div id="srcModal" class="modal fade" role="dialog"
+     tabindex="-1">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Add New Source</h4>
+      </div>
+
+      <form class="form-horizontal" ng-submit="addNewSource()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="name">Interpreter Name</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="name" ng-model="newSrcSetting.interpreterName"
+                     placeholder="Interpreter Name" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="artifact">Artifact</label>
+            <div class="col-sm-10">
+              <input type="text"
+                     class="form-control" id="artifact" ng-model="newSrcSetting.artifact"
+                     placeholder="Interpreter Artifact" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit"
+                  class="btn btn-default">Add
+          </button>
+          <button type="button" data-dismiss="modal"
+                  class="btn btn-default" ng-click="resetNewSourceSetting()">Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

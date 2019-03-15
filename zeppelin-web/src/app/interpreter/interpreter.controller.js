@@ -24,6 +24,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   $scope.availableInterpreters = {};
   $scope.showAddNewSetting = false;
   $scope.showRepositoryInfo = false;
+  $scope.showSourcesInfo = false;
   $scope.searchInterpreter = '';
   $scope._ = _;
   $scope.interpreterPropertyTypes = [];
@@ -748,6 +749,56 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
     }
   };
 
+  // Sources.
+  $scope.resetNewSourceSetting = function() {
+    $scope.newSrcSetting = {
+      interpreterName: '',
+      artifact: '',
+    };
+  };
+
+  let getSources = function() {
+    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/source')
+      .success(function(data, status, headers, config) {
+        $scope.sources = data.body;
+      }).error(function(data, status, headers, config) {
+        console.log('Error %o %o', status, data.message);
+      });
+  };
+
+  $scope.addNewSource = function() {
+    let request = angular.copy($scope.newSrcSetting);
+    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source', request)
+      .then(function(res) {
+        getSources();
+        $scope.resetNewSourceSetting();
+        angular.element('#srcModal').modal('hide');
+      }).catch(function(res) {
+        console.log('Error %o %o', res.headers, res.config);
+      });
+  };
+
+  $scope.removeSource = function(artifact) {
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: 'Do you want to delete this source?',
+      callback: function(result) {
+        if (result) {
+          $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + artifact)
+            .then(function(res) {
+              let index = _.findIndex($scope.sources, {'artifact': artifact});
+              $scope.sources.splice(index, 1);
+            }).catch(function(res) {
+              console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+            });
+        }
+      },
+    });
+  };
+
+  // common
+
   $scope.showErrorMessage = function(setting) {
     BootstrapDialog.show({
       title: 'Error downloading dependencies',
@@ -760,10 +811,12 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
 
     $scope.resetNewInterpreterSetting();
     $scope.resetNewRepositorySetting();
+    $scope.resetNewSourceSetting();
 
     getInterpreterSettings();
     getAvailableInterpreters();
     getRepositories();
+    getSources();
   };
 
   $scope.getInterpreterBindingModeDocsLink = function() {

@@ -17,15 +17,19 @@
 
 package org.apache.zeppelin.rest;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
+import org.apache.zeppelin.interpreterV2.configuration.InterpreterSource;
 import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
 import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;
@@ -38,11 +42,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Interpreter Rest API.
@@ -56,26 +63,37 @@ public class InterpreterRestApi {
   private final SecurityService securityService;
   private final InterpreterService interpreterService;
 
-  private final InterpreterOption markdownOption = new InterpreterOption(
-      "Best Markdown Interpreter", "md", "%md",
-      "shared", "shared", new BaseInterpreterConfig(
-          "md", "md", "org.apache.zeppelin.markdown.Markdown",
-      new HashMap<String, InterpreterProperty>() {{
-        put("markdown.parser.type",
-            new InterpreterProperty(
-                "MARKDOWN_PARSER_TYPE",
-                "markdown.parser.type",
-                "pegdown",
-                "Markdown Parser Type. Available values: pegdown, markdown4j. Default = pegdown",
-                "string"
-            )
-        );
-          }}), new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1);
+  private final InterpreterOption markdownOption;
+  private final List<InterpreterSource> interpreterSources;
+  private final List<Repository> repositories;
 
   @Autowired
   public InterpreterRestApi(
           @Qualifier("NoSecurityService") final SecurityService securityService,
           final InterpreterService interpreterService) {
+    Map<String, InterpreterProperty> interpreterPropertyMap = new HashMap<>();
+    interpreterPropertyMap.put("markdown.parser.type",
+        new InterpreterProperty(
+            "MARKDOWN_PARSER_TYPE",
+            "markdown.parser.type",
+            "pegdown",
+            "Markdown Parser Type. Available values: pegdown, markdown4j. Default = pegdown",
+            "string"
+        )
+    );
+
+    markdownOption = new InterpreterOption(
+        "Best Markdown Interpreter", "md", "%md",
+        "shared", "shared", new BaseInterpreterConfig(
+            "md", "md", "org.apache.zeppelin.markdown.Markdown", interpreterPropertyMap),
+        new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1);
+
+    interpreterSources = new ArrayList<>();
+    interpreterSources.add(new InterpreterSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
+
+    repositories = new ArrayList<>();
+    repositories.add(new Repository("hardcoded"));
+
     this.securityService = securityService;
     this.interpreterService = interpreterService;
   }
@@ -216,9 +234,7 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
-    //    final List<RemoteRepository> interpreterRepositories = interpreterSettingRepository.getRepositories();
-    //    return new JsonResponse(HttpStatus.OK, "", interpreterRepositories).build();
-    return new JsonResponse<>(HttpStatus.OK, "", Collections.emptyList()).build();
+    return new JsonResponse<>(HttpStatus.OK, "", repositories).build();
   }
 
   /**
@@ -228,19 +244,17 @@ public class InterpreterRestApi {
    */
   @ZeppelinApi
   @PostMapping(value = "/repository", produces = "application/json")
-  public ResponseEntity addRepository(final String message) {
-    //    try {
-    //      final Repository request = Repository.fromJson(message);
-    //      interpreterSettingManager.addRepository(request.getId(), request.getUrl(),
-    //          request.isSnapshot(), request.getAuthentication(), request.getProxy());
-    //      logger.info("New repository {} added", request.getId());
-    //    } catch (final Exception e) {
-    //      logger.error("Exception in InterpreterRestApi while adding repository ", e);
-    //      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-    //          ExceptionUtils.getStackTrace(e)).build();
-    //    }
-    //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse<>(HttpStatus.OK, "", Collections.emptyList()).build();
+  public ResponseEntity addRepository(@RequestBody final String message) {
+    final Repository request = Repository.fromJson(message);
+    repositories.add(
+        new Repository(request.getId())
+            .url(request.getUrl())
+            .credentials(
+                request.getAuthentication().getUsername(),
+                request.getAuthentication().getPassword())
+    );
+    logger.info("New repository {} added", request.getId());
+    return new JsonResponse(HttpStatus.OK).build();
   }
 
   /**
@@ -252,15 +266,44 @@ public class InterpreterRestApi {
   @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
   public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
     logger.info("Remove repository {}", repoId);
-    //    try {
-    //      interpreterSettingManager.removeRepository(repoId);
-    //    } catch (final Exception e) {
-    //      logger.error("Exception in InterpreterRestApi while removing repository ", e);
-    //      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-    //          ExceptionUtils.getStackTrace(e)).build();
-    //    }
-    //    return new JsonResponse(HttpStatus.OK).build();
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    repositories.removeIf(repo -> repo.getId().equalsIgnoreCase(repoId));
+    return new JsonResponse(HttpStatus.OK).build();
+  }
+
+  /**
+   * List of all sources.
+   */
+  @ZeppelinApi
+  @GetMapping(value = "/source", produces = "application/json")
+  public ResponseEntity listSources() {
+    return new JsonResponse<>(HttpStatus.OK, "", interpreterSources).build();
+  }
+
+  /**
+   * Add new source.
+   *
+   * @param message InterpreterSource
+   */
+  @ZeppelinApi
+  @PostMapping(value = "/source", produces = "application/json")
+  public ResponseEntity addSource(@RequestBody final String message) {
+    final InterpreterSource request = InterpreterSource.fromJson(message);
+    interpreterSources.add(request);
+    logger.info("New source {} added", request.getArtifact());
+    return new JsonResponse(HttpStatus.OK).build();
+  }
+
+  /**
+   * Delete source.
+   *
+   * @param artifact of interpreter
+   */
+  @ZeppelinApi
+  @DeleteMapping(value = "/source/{artifact}", produces = "application/json")
+  public ResponseEntity removeSource(@PathVariable("artifact") final String artifact) {
+    logger.info("Remove source {}", artifact);
+    interpreterSources.removeIf(src -> src.getArtifact().equalsIgnoreCase(artifact));
+    return new JsonResponse(HttpStatus.OK).build();
   }
 
   /**

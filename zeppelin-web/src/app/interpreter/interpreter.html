@@ -25,6 +25,11 @@ limitations under the License.
             Repository
           </button>
           <button class="btn btn-default btn-sm"
+                  ng-click="showSourcesInfo = !showSourcesInfo">
+            <i class="fa fa-arrow-circle-down" ng-style="{color: showSourcesInfo ? '#3071A9' : 'black' }"></i>
+            Sources
+          </button>
+          <button class="btn btn-default btn-sm"
                   ng-click="showAddNewSetting = !showAddNewSetting">
             <i class="fa fa-plus"></i>
             Create
@@ -76,6 +81,34 @@ limitations under the License.
           <div class="btn btn-default"
                data-toggle="modal"
                data-target="#repoModal">
+            <span class="fa fa-plus"></span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row" ng-if="showSourcesInfo">
+    <div class="col-md-12">
+      <hr />
+      <h4>Sources</h4>
+      <p>Available sources lists. These sources are used to install interpreters by artifact.</p>
+      <ul class="noDot">
+        <li ng-repeat="source in sources">
+          <a tabindex="0" class="btn btn-info" role="button"
+             tooltip-append-to-body="true" tooltip-placement="top-left"
+             uib-tooltip="{{source.interpreterName}}">
+            <span class="fa fa-arrow-circle-down"></span>
+            {{source.interpreterName}}: {{source.artifact}}&nbsp;
+            <span class="fa fa-close blackOpc"
+                  ng-click="removeSource(source.artifact)"></span>
+          </a>
+        </li>
+        <li class="liVertical">
+          <div ng-include src="'app/interpreter/source-create.html'"></div>
+          <div class="btn btn-default"
+               data-toggle="modal"
+               data-target="#srcModal">
             <span class="fa fa-plus"></span>
           </div>
         </li>

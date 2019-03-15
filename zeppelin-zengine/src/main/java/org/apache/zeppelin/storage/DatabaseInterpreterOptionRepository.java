@@ -47,7 +47,7 @@ public class DatabaseInterpreterOptionRepository {
     return null;
   }
 
-  public InterpreterSource getSource(final String name) {
+  public InterpreterSource getSource(final String artifact) {
     return null;
   }
 
@@ -75,7 +75,7 @@ public class DatabaseInterpreterOptionRepository {
     return false;
   }
 
-  public boolean removeSource(final String name) {
+  public boolean removeSource(final String artifact) {
     return false;
   }
 }
