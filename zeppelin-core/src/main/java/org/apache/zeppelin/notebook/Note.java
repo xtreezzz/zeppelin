@@ -20,21 +20,19 @@ package org.apache.zeppelin.notebook;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.notebook.display.Input;
 import org.apache.zeppelin.utils.IdHashes;
-
-import java.io.Serializable;
-import java.util.*;
 
 /**
  * Represent the note of Zeppelin. All the note and its paragraph operations are done
  * via this class.
  */
-//TODO(egorklimov):
-// * Убрал toJson, сериализация в json должна производиться явно
-// * Убрал все что связано с исполнением
-// * Убрал персонализированный мод
 public class Note implements Serializable {
 
   private static final Gson gson = new GsonBuilder()

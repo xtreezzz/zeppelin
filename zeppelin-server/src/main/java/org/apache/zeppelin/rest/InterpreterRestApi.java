@@ -26,16 +26,16 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSource;
-import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
-import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
-import org.apache.zeppelin.rest.message.NewInterpreterSettingRequest;
+import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
+import org.apache.zeppelin.interpreter.configuration.InterpreterSource;
+import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
+import org.apache.zeppelin.interpreter.configuration.option.Permissions;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
+import org.apache.zeppelin.storage.DatabaseInterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,15 +62,18 @@ public class InterpreterRestApi {
 
   private final SecurityService securityService;
   private final InterpreterService interpreterService;
+  private final DatabaseInterpreterOptionRepository interpreterOptionRepository;
 
-  private final InterpreterOption markdownOption;
-  private final List<InterpreterSource> interpreterSources;
   private final List<Repository> repositories;
 
   @Autowired
   public InterpreterRestApi(
-          @Qualifier("NoSecurityService") final SecurityService securityService,
-          final InterpreterService interpreterService) {
+      @Qualifier("NoSecurityService") final SecurityService securityService,
+      final InterpreterService interpreterService,
+      final DatabaseInterpreterOptionRepository interpreterOptionRepository) {
+    this.interpreterOptionRepository = interpreterOptionRepository;
+    interpreterOptionRepository.saveSource(new InterpreterSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
+
     Map<String, InterpreterProperty> interpreterPropertyMap = new HashMap<>();
     interpreterPropertyMap.put("markdown.parser.type",
         new InterpreterProperty(
@@ -81,15 +84,11 @@ public class InterpreterRestApi {
             "string"
         )
     );
-
-    markdownOption = new InterpreterOption(
+    interpreterOptionRepository.saveOption(new InterpreterOption(
         "Best Markdown Interpreter", "md", "%md",
         "shared", "shared", new BaseInterpreterConfig(
             "md", "md", "org.apache.zeppelin.markdown.Markdown", interpreterPropertyMap),
-        new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1);
-
-    interpreterSources = new ArrayList<>();
-    interpreterSources.add(new InterpreterSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
+        new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1));
 
     repositories = new ArrayList<>();
     repositories.add(new Repository("hardcoded"));
@@ -104,19 +103,17 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
-    List<InterpreterOption> settings = new ArrayList<>();
-    settings.add(markdownOption);
-    return new JsonResponse<>(HttpStatus.OK, "", settings).build();
+    return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllOptions()).build();
   }
 
   /**
    * Get a setting.
    */
   @ZeppelinApi
-  @GetMapping(value = "/setting/{settingId}", produces = "application/json")
-  public ResponseEntity getSetting(@PathVariable("settingId") final String settingId) {
+  @GetMapping(value = "/setting/{shebang}", produces = "application/json")
+  public ResponseEntity getSetting(@PathVariable("shebang") final String shebang) {
     try {
-      final InterpreterOption setting = markdownOption;
+      final InterpreterOption setting = interpreterOptionRepository.getOption(shebang);
       if (setting == null) {
         return new JsonResponse<>(HttpStatus.NOT_FOUND).build();
       } else {
@@ -137,15 +134,15 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(final String message) {
-    final NewInterpreterSettingRequest request =
-        NewInterpreterSettingRequest.fromJson(message);
-    if (request == null) {
-      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
-    }
-
-    markdownOption.setCustomInterpreterName(request.getName());
-    markdownOption.setInterpreterName(request.getGroup());
-    return new JsonResponse(HttpStatus.OK, "", markdownOption).build();
+//    final NewInterpreterSettingRequest request =
+//        NewInterpreterSettingRequest.fromJson(message);
+//    if (request == null) {
+//      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+//    }
+//
+//    markdownOption.setCustomInterpreterName(request.getName());
+//    markdownOption.setInterpreterName(request.getGroup());
+    return new JsonResponse(HttpStatus.OK, "").build();
   }
 
   @ZeppelinApi
@@ -224,7 +221,10 @@ public class InterpreterRestApi {
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
     final Map<String, InterpreterOption> m =  new HashMap<>();
-    m.put("md", markdownOption);
+    List<InterpreterOption> interpreters = interpreterOptionRepository.getAllOptions();
+    for (InterpreterOption option : interpreters) {
+      m.put(option.getConfig().getGroup(), option);
+    }
     return new JsonResponse<>(HttpStatus.OK, "", m).build();
   }
 
@@ -276,7 +276,7 @@ public class InterpreterRestApi {
   @ZeppelinApi
   @GetMapping(value = "/source", produces = "application/json")
   public ResponseEntity listSources() {
-    return new JsonResponse<>(HttpStatus.OK, "", interpreterSources).build();
+    return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllSources()).build();
   }
 
   /**
@@ -288,7 +288,7 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source", produces = "application/json")
   public ResponseEntity addSource(@RequestBody final String message) {
     final InterpreterSource request = InterpreterSource.fromJson(message);
-    interpreterSources.add(request);
+    interpreterOptionRepository.saveSource(request);
     logger.info("New source {} added", request.getArtifact());
     return new JsonResponse(HttpStatus.OK).build();
   }
@@ -302,7 +302,7 @@ public class InterpreterRestApi {
   @DeleteMapping(value = "/source/{artifact}", produces = "application/json")
   public ResponseEntity removeSource(@PathVariable("artifact") final String artifact) {
     logger.info("Remove source {}", artifact);
-    interpreterSources.removeIf(src -> src.getArtifact().equalsIgnoreCase(artifact));
+    interpreterOptionRepository.removeSource(artifact);
     return new JsonResponse(HttpStatus.OK).build();
   }
 

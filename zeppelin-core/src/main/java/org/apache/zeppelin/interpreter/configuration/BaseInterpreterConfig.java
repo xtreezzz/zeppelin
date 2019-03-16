@@ -1,4 +1,4 @@
-package org.apache.zeppelin.interpreterV2.configuration;
+package org.apache.zeppelin.interpreter.configuration;
 
 import java.io.Serializable;
 import java.util.HashMap;

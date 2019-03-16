@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.interpreterV2.configuration;
+package org.apache.zeppelin.interpreter.configuration;
 
 import java.io.Serializable;
 import java.util.StringJoiner;
-import org.apache.zeppelin.interpreterV2.configuration.option.ExistingProcess;
-import org.apache.zeppelin.interpreterV2.configuration.option.Permissions;
+import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
+import org.apache.zeppelin.interpreter.configuration.option.Permissions;
 
 /**
  * Full interpreter settings on interpreter page.
@@ -33,7 +33,6 @@ public class InterpreterOption implements Serializable {
   // Human readable name with description
   private String customInterpreterName;
 
-  // Interpreter Name
   private String interpreterName;
   private String shebang;
 
@@ -78,6 +77,14 @@ public class InterpreterOption implements Serializable {
     this.permissions = permissions;
     this.jvmOptions = jvmOptions;
     this.concurrentTasks = concurrentTasks;
+  }
+
+  public String getPerNote() {
+    return perNote;
+  }
+
+  public String getPerUser() {
+    return perUser;
   }
 
   public String getJvmOptions() {

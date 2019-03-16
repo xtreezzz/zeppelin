@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.interpreterV2.configuration;
+package org.apache.zeppelin.interpreter.configuration;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Property for registered interpreter
@@ -142,15 +144,6 @@ public class InterpreterProperty implements Serializable {
     this.type = type;
   }
 
-  public int hashCode() {
-    return this.toString().hashCode();
-  }
-
-  public boolean equals(Object o) {
-    if (o == null) return false;
-    return this.toString().equals(o.toString());
-  }
-
   public static List<String> getTypes() {
     return Arrays.stream(Type.values()).map(Type::getValue).collect(Collectors.toList());
   }
@@ -169,7 +162,46 @@ public class InterpreterProperty implements Serializable {
         return propValue;
       }
     }
-    return defaultValue;
+
+    if (currentValue == null) {
+      return defaultValue;
+    }
+
+    return currentValue;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    InterpreterProperty that = (InterpreterProperty) o;
+
+    return new EqualsBuilder()
+        .append(envName, that.envName)
+        .append(propertyName, that.propertyName)
+        .append(defaultValue, that.defaultValue)
+        .append(currentValue, that.currentValue)
+        .append(description, that.description)
+        .append(type, that.type)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(envName)
+        .append(propertyName)
+        .append(defaultValue)
+        .append(currentValue)
+        .append(description)
+        .append(type)
+        .toHashCode();
   }
 
   @Override

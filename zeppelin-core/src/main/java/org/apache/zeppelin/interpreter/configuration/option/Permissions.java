@@ -1,11 +1,10 @@
-package org.apache.zeppelin.interpreterV2.configuration.option;
+package org.apache.zeppelin.interpreter.configuration.option;
 
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Option 'permission' on interpreter configuration page.

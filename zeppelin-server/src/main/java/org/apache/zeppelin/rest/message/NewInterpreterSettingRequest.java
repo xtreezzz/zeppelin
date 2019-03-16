@@ -17,13 +17,11 @@
 package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
-
 import java.util.List;
 import java.util.Map;
-
 import org.apache.zeppelin.Dependency;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterProperty;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
 
 /**
  * NewInterpreterSetting REST API request message.

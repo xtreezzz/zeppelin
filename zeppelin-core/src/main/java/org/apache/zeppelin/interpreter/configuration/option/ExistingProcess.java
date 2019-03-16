@@ -1,9 +1,8 @@
-package org.apache.zeppelin.interpreterV2.configuration.option;
+package org.apache.zeppelin.interpreter.configuration.option;
 
 import java.io.Serializable;
 import java.util.StringJoiner;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  *  Option 'Connect to existing process' on interpreter configuration page.

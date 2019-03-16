@@ -1,20 +1,19 @@
 package org.apache.zeppelin.interpreterV2.server;
 
-import org.apache.commons.exec.ExecuteException;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TTransportException;
-import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
-import org.apache.zeppelin.interpreterV2.configuration.BaseInterpreterConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.annotation.PostConstruct;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
+import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @Component
 public class InterpreterProcessServerManager {

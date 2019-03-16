@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.interpreterV2.configuration;
+package org.apache.zeppelin.interpreter.configuration;
 
 import com.google.gson.Gson;
 import java.io.Serializable;

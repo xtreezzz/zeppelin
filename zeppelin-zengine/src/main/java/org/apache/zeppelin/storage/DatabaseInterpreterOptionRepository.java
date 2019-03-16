@@ -19,8 +19,8 @@ package org.apache.zeppelin.storage;
 
 import java.util.List;
 import org.apache.zeppelin.Repository;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreterV2.configuration.InterpreterSource;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.configuration.InterpreterSource;
 
 
 public class DatabaseInterpreterOptionRepository {
@@ -32,11 +32,11 @@ public class DatabaseInterpreterOptionRepository {
   }
 
   public InterpreterOption getOption(final String shebang) {
-    return null;
+    return storage.getInterpreterOption(shebang);
   }
 
   public List<InterpreterOption> getAllOptions() {
-    return null;
+    return storage.getAllInterpreterOptions();
   }
 
   public Repository getRepository(final String id) {
@@ -48,11 +48,11 @@ public class DatabaseInterpreterOptionRepository {
   }
 
   public InterpreterSource getSource(final String artifact) {
-    return null;
+    return storage.getSource(artifact);
   }
 
   public List<InterpreterSource> getAllSources() {
-    return null;
+    return storage.getAllSources();
   }
 
   public Repository saveRepostitory(final Repository repository) {
@@ -60,10 +60,12 @@ public class DatabaseInterpreterOptionRepository {
   }
 
   public InterpreterOption saveOption(final InterpreterOption interpreterOption) {
+    storage.saveInterpreterOption(interpreterOption);
     return interpreterOption;
   }
 
   public InterpreterSource saveSource(final InterpreterSource interpreterSource) {
+    storage.saveInterpreterSource(interpreterSource);
     return interpreterSource;
   }
 
@@ -72,10 +74,10 @@ public class DatabaseInterpreterOptionRepository {
   }
 
   public boolean removeOption(final String shebang) {
-    return false;
+    return storage.removeInterpreterOption(shebang);
   }
 
   public boolean removeSource(final String artifact) {
-    return false;
+    return storage.removeInterpreterSource(artifact);
   }
 }
