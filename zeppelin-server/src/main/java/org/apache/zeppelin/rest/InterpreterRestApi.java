@@ -35,7 +35,7 @@ import org.apache.zeppelin.interpreter.configuration.option.Permissions;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
-import org.apache.zeppelin.storage.DatabaseInterpreterOptionRepository;
+import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +62,7 @@ public class InterpreterRestApi {
 
   private final SecurityService securityService;
   private final InterpreterService interpreterService;
-  private final DatabaseInterpreterOptionRepository interpreterOptionRepository;
+  private final InterpreterOptionRepository interpreterOptionRepository;
 
   private final List<Repository> repositories;
 
@@ -70,7 +70,7 @@ public class InterpreterRestApi {
   public InterpreterRestApi(
       @Qualifier("NoSecurityService") final SecurityService securityService,
       final InterpreterService interpreterService,
-      final DatabaseInterpreterOptionRepository interpreterOptionRepository) {
+      final InterpreterOptionRepository interpreterOptionRepository) {
     this.interpreterOptionRepository = interpreterOptionRepository;
     interpreterOptionRepository.saveSource(new InterpreterSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
 

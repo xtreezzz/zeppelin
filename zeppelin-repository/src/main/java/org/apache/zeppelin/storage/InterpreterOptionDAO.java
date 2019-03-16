@@ -36,8 +36,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
-public class
-InterpreterOptionDAO {
+class InterpreterOptionDAO {
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -123,7 +122,7 @@ InterpreterOptionDAO {
    * @see InterpreterOptionDAO#saveInterpreterConfig(BaseInterpreterConfig)
    */
   void saveInterpreterOption(final InterpreterOption option) {
-    int affectedRows =
+    final int affectedRows =
         jdbcTemplate.update(INSERT_OPTION, convertInterpreterOptionToParameters(option));
 
     if (affectedRows == 0) {
@@ -133,7 +132,7 @@ InterpreterOptionDAO {
 
   InterpreterOption getInterpreterOption(final String shebang) {
     try {
-      InterpreterOption option = jdbcTemplate.queryForObject(
+      final InterpreterOption option = jdbcTemplate.queryForObject(
           GET_OPTION,
           new MapSqlParameterSource("shebang", shebang),
           (resultSet, i) -> convertResultSetToInterpreterOption(resultSet)
@@ -159,7 +158,7 @@ InterpreterOptionDAO {
   }
 
   void updateInterpreterOption(final InterpreterOption option) {
-    int affectedRows =
+    final int affectedRows =
         jdbcTemplate.update(INSERT_OPTION, convertInterpreterOptionToParameters(option));
 
     if (affectedRows == 0) {
@@ -174,7 +173,7 @@ InterpreterOptionDAO {
    * @return key - id of added record
    */
   private long saveInterpreterConfig(final BaseInterpreterConfig config) {
-    int affectedRows =
+    final int affectedRows =
         jdbcTemplate.update(INSERT_CONFIG, convertInterpreterConfigToParameters(config), keyHolder,
             new String[] { "id" });
 
@@ -216,7 +215,7 @@ InterpreterOptionDAO {
 
   InterpreterSource getSource(final String artifact) {
     try {
-      InterpreterSource source = jdbcTemplate.queryForObject(
+      final InterpreterSource source = jdbcTemplate.queryForObject(
           GET_SOURCE,
           new MapSqlParameterSource("artifact", artifact),
           (resultSet, i) -> convertResultSetToInterpreterSource(resultSet)
@@ -233,7 +232,7 @@ InterpreterOptionDAO {
   }
 
   void saveInterpreterSource(final InterpreterSource source) {
-    int affectedRows =
+    final int affectedRows =
         jdbcTemplate.update(INSERT_SOURCE, convertInterpreterSourceToParameters(source));
 
     if (affectedRows == 0) {
@@ -248,9 +247,9 @@ InterpreterOptionDAO {
   //---------------------- CONVERTERS FROM RESULT SETS TO OBJECTS ---------------------
   private BaseInterpreterConfig convertResultSetToInterpreterConfig(final ResultSet resultSet)
       throws SQLException {
-    String name = resultSet.getString("name");
-    String group = resultSet.getString("group");
-    String className = resultSet.getString("class_name");
+    final String name = resultSet.getString("name");
+    final String group = resultSet.getString("group");
+    final String className = resultSet.getString("class_name");
 
     Map<String, InterpreterProperty> properties = new HashMap<>();
     properties = gson.fromJson(resultSet.getString("properties"), properties.getClass());
@@ -260,12 +259,12 @@ InterpreterOptionDAO {
 
   private InterpreterOption convertResultSetToInterpreterOption(final ResultSet resultSet)
       throws SQLException {
-    String shebang = resultSet.getString("shebang");
-    String name = resultSet.getString("interpreter_name");
-    String customInterpreterName = resultSet.getString("custom_interpreter_name");
-    String perNote = resultSet.getString("per_note");
-    String perUser = resultSet.getString("per_user");
-    BaseInterpreterConfig config = getInterpreterConfig(shebang);
+    final String shebang = resultSet.getString("shebang");
+    final String name = resultSet.getString("interpreter_name");
+    final String customInterpreterName = resultSet.getString("custom_interpreter_name");
+    final String perNote = resultSet.getString("per_note");
+    final String perUser = resultSet.getString("per_user");
+    final BaseInterpreterConfig config = getInterpreterConfig(shebang);
     ExistingProcess existingProcess = gson.fromJson(
         resultSet.getString("remote_process"), ExistingProcess.class);
     Permissions permissions = gson.fromJson(
@@ -287,7 +286,7 @@ InterpreterOptionDAO {
   }
   //---------------------- CONVERTERS FROM OBJECTS TO PARAMETERS ----------------------
   private MapSqlParameterSource convertInterpreterConfigToParameters(final BaseInterpreterConfig config) {
-    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    final MapSqlParameterSource parameters = new MapSqlParameterSource();
     parameters
         .addValue("name", config.getName())
         .addValue("group", config.getGroup())
@@ -306,7 +305,7 @@ InterpreterOptionDAO {
    * @return query parameters
    */
   private MapSqlParameterSource convertInterpreterOptionToParameters(final InterpreterOption option) {
-    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
           .addValue("shebang", option.getShebang())
@@ -326,7 +325,7 @@ InterpreterOptionDAO {
   }
 
   private MapSqlParameterSource convertInterpreterSourceToParameters(final InterpreterSource source) {
-    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
           .addValue("artifact", source.getArtifact())
@@ -340,7 +339,7 @@ InterpreterOptionDAO {
   //----------------------------- UTIL -----------------------------
   private PGobject generatePGjson(final Object value) {
     try {
-      PGobject pgObject = new PGobject();
+      final PGobject pgObject = new PGobject();
       pgObject.setType("jsonb");
       pgObject.setValue(gson.toJson(value));
       return pgObject;

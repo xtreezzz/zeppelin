@@ -21,14 +21,15 @@ import java.util.List;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.configuration.InterpreterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 
-public class DatabaseInterpreterOptionRepository {
+public class InterpreterOptionRepository {
 
   private final InterpreterOptionDAO storage;
 
-  public DatabaseInterpreterOptionRepository(final InterpreterOptionDAO storage) {
-    this.storage = storage;
+  public InterpreterOptionRepository(final NamedParameterJdbcTemplate jdbcTemplate) {
+    this.storage = new InterpreterOptionDAO(jdbcTemplate);
   }
 
   public InterpreterOption getOption(final String shebang) {
