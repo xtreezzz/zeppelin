@@ -32,6 +32,16 @@
             <artifactId>commons-configuration</artifactId>
             <version>${dependency.commons-configuration}</version>
         </dependency>
+        <dependency>
+          <groupId>com.google.code.findbugs</groupId>
+          <artifactId>jsr305</artifactId>
+          <version>${dependency.com.google.code.findbugs}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
+        </dependency>
 
     </dependencies>
 

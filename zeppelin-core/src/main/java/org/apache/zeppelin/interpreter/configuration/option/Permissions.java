@@ -5,11 +5,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
+import javax.annotation.Nonnull;
 
 /**
  * Option 'permission' on interpreter configuration page.
  */
 public class Permissions implements Serializable {
+  @Nonnull
   private final List<String> owners;
   private boolean isEnabled;
 
@@ -18,7 +20,7 @@ public class Permissions implements Serializable {
     this.isEnabled = false;
   }
 
-  public Permissions(List<String> owners, boolean isEnabled) {
+  public Permissions(@Nonnull final List<String> owners, final boolean isEnabled) {
     this.owners = owners;
     this.isEnabled = isEnabled;
   }
@@ -33,6 +35,7 @@ public class Permissions implements Serializable {
   //      return lowerCaseUsers;
   //    }
   //    return owners;
+  @Nonnull
   public List<String> getOwners() {
     return owners;
   }
@@ -41,7 +44,7 @@ public class Permissions implements Serializable {
     return isEnabled;
   }
 
-  public void setEnabled(boolean enabled) {
+  public void setEnabled(final boolean enabled) {
     isEnabled = enabled;
   }
 

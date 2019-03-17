@@ -32,7 +32,7 @@ import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
  */
 public class RepositorySystemFactory {
   public static RepositorySystem newRepositorySystem() {
-    DefaultServiceLocator locator = new DefaultServiceLocator();
+    final DefaultServiceLocator locator = new DefaultServiceLocator();
     locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
     locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
     locator.setServices(WagonProvider.class, new ManualWagonProvider());
@@ -46,7 +46,7 @@ public class RepositorySystemFactory {
   public static class ManualWagonProvider implements WagonProvider {
 
     @Override
-    public Wagon lookup(String roleHint) throws Exception {
+    public Wagon lookup(final String roleHint) throws Exception {
       if ("http".equals(roleHint)) {
         return new LightweightHttpWagon();
       }
@@ -59,7 +59,7 @@ public class RepositorySystemFactory {
     }
 
     @Override
-    public void release(Wagon arg0) {
+    public void release(final Wagon arg0) {
 
     }
   }

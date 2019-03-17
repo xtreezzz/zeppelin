@@ -778,16 +778,16 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       });
   };
 
-  $scope.removeSource = function(artifact) {
+  $scope.removeSource = function(interpreterName) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to delete this source?',
       callback: function(result) {
         if (result) {
-          $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + artifact)
+          $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + interpreterName)
             .then(function(res) {
-              let index = _.findIndex($scope.sources, {'artifact': artifact});
+              let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
               $scope.sources.splice(index, 1);
             }).catch(function(res) {
               console.log('Error %o %o', res.status, res.data ? res.data.message : '');

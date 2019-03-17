@@ -22,7 +22,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.transfer.AbstractTransferListener;
@@ -33,17 +32,17 @@ import org.sonatype.aether.transfer.TransferResource;
  * Simple listener that show deps downloading progress.
  */
 public class TransferListener extends AbstractTransferListener {
-  private Logger logger = LoggerFactory.getLogger(TransferListener.class);
+  private final Logger logger = LoggerFactory.getLogger(TransferListener.class);
 
-  private Map<TransferResource, Long> downloads = new ConcurrentHashMap<>();
+  private final Map<TransferResource, Long> downloads = new ConcurrentHashMap<>();
 
   private int lastLength;
 
   public TransferListener() {}
 
   @Override
-  public void transferInitiated(TransferEvent event) {
-    String message =
+  public void transferInitiated(final TransferEvent event) {
+    final String message =
         event.getRequestType() == TransferEvent.RequestType.PUT ? "Uploading" : "Downloading";
 
     logger.info(message + ": " + event.getResource().getRepositoryUrl()
@@ -51,20 +50,20 @@ public class TransferListener extends AbstractTransferListener {
   }
 
   @Override
-  public void transferProgressed(TransferEvent event) {
-    TransferResource resource = event.getResource();
+  public void transferProgressed(final TransferEvent event) {
+    final TransferResource resource = event.getResource();
     downloads.put(resource, event.getTransferredBytes());
 
-    StringBuilder buffer = new StringBuilder(64);
+    final StringBuilder buffer = new StringBuilder(64);
 
-    for (Map.Entry<TransferResource, Long> entry : downloads.entrySet()) {
-      long total = entry.getKey().getContentLength();
-      long complete = entry.getValue();
+    for (final Map.Entry<TransferResource, Long> entry : downloads.entrySet()) {
+      final long total = entry.getKey().getContentLength();
+      final long complete = entry.getValue();
 
       buffer.append(getStatus(complete, total)).append("  ");
     }
 
-    int pad = lastLength - buffer.length();
+    final int pad = lastLength - buffer.length();
     lastLength = buffer.length();
     pad(buffer, pad);
     buffer.append('\r');
@@ -72,7 +71,7 @@ public class TransferListener extends AbstractTransferListener {
     logger.info(buffer.toString());
   }
 
-  private String getStatus(long complete, long total) {
+  private String getStatus(final long complete, final long total) {
     if (total >= 1024) {
       return toKB(complete) + "/" + toKB(total) + " KB ";
     } else if (total >= 0) {
@@ -84,31 +83,31 @@ public class TransferListener extends AbstractTransferListener {
     }
   }
 
-  private void pad(StringBuilder buffer, int spaces) {
-    String block = "                                        ";
+  private void pad(final StringBuilder buffer, int spaces) {
+    final String block = "                                        ";
     while (spaces > 0) {
-      int n = Math.min(spaces, block.length());
+      final int n = Math.min(spaces, block.length());
       buffer.append(block, 0, n);
       spaces -= n;
     }
   }
 
   @Override
-  public void transferSucceeded(TransferEvent event) {
+  public void transferSucceeded(final TransferEvent event) {
     transferCompleted(event);
 
-    TransferResource resource = event.getResource();
-    long contentLength = event.getTransferredBytes();
+    final TransferResource resource = event.getResource();
+    final long contentLength = event.getTransferredBytes();
     if (contentLength >= 0) {
-      String type =
+      final String type =
           (event.getRequestType() == TransferEvent.RequestType.PUT ? "Uploaded" : "Downloaded");
-      String len = contentLength >= 1024 ? toKB(contentLength) + " KB" : contentLength + " B";
+      final String len = contentLength >= 1024 ? toKB(contentLength) + " KB" : contentLength + " B";
 
       String throughput = "";
-      long duration = System.currentTimeMillis() - resource.getTransferStartTime();
+      final long duration = System.currentTimeMillis() - resource.getTransferStartTime();
       if (duration > 0) {
-        DecimalFormat format = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.ENGLISH));
-        double kbPerSec = (contentLength / 1024.0) / (duration / 1000.0);
+        final DecimalFormat format = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.ENGLISH));
+        final double kbPerSec = (contentLength / 1024.0) / (duration / 1000.0);
         throughput = " at " + format.format(kbPerSec) + " KB/sec";
       }
 
@@ -118,25 +117,25 @@ public class TransferListener extends AbstractTransferListener {
   }
 
   @Override
-  public void transferFailed(TransferEvent event) {
+  public void transferFailed(final TransferEvent event) {
     transferCompleted(event);
     logger.warn("Unsuccessful transfer", event.getException());
   }
 
-  private void transferCompleted(TransferEvent event) {
+  private void transferCompleted(final TransferEvent event) {
     downloads.remove(event.getResource());
-    StringBuilder buffer = new StringBuilder(64);
+    final StringBuilder buffer = new StringBuilder(64);
     pad(buffer, lastLength);
     buffer.append('\r');
     logger.info(buffer.toString());
   }
 
   @Override
-  public void transferCorrupted(TransferEvent event) {
+  public void transferCorrupted(final TransferEvent event) {
     logger.error("Corrupted transfer", event.getException());
   }
 
-  private long toKB(long bytes) {
+  private long toKB(final long bytes) {
     return (bytes + 1023) / 1024;
   }
 

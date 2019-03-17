@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.repository.Authentication;
@@ -40,17 +39,17 @@ public abstract class AbstractDependencyResolver {
   protected List<RemoteRepository> repos = new LinkedList<>();
   protected RepositorySystemSession session;
   
-  public AbstractDependencyResolver(String localRepoPath) {
+  public AbstractDependencyResolver(final String localRepoPath) {
     session = Booter.newRepositorySystemSession(system, localRepoPath);
     repos.add(Booter.newCentralRepository()); // add maven central
     repos.add(Booter.newLocalRepository());
   }
 
-  public void setProxy(URL proxyUrl, String proxyUser, String proxyPassword) {
-    Authentication auth = new Authentication(proxyUser, proxyPassword);
-    Proxy proxy = new Proxy(proxyUrl.getProtocol(), proxyUrl.getHost(), proxyUrl.getPort(), auth);
+  public void setProxy(final URL proxyUrl, final String proxyUser, final String proxyPassword) {
+    final Authentication auth = new Authentication(proxyUser, proxyPassword);
+    final Proxy proxy = new Proxy(proxyUrl.getProtocol(), proxyUrl.getHost(), proxyUrl.getPort(), auth);
     synchronized (repos) {
-      for (RemoteRepository repo : repos) {
+      for (final RemoteRepository repo : repos) {
         repo.setProxy(proxy);
       }
     }
@@ -60,10 +59,10 @@ public abstract class AbstractDependencyResolver {
     return this.repos;
   }
   
-  public void addRepo(String id, String url, boolean snapshot) {
+  public void addRepo(final String id, final String url, final boolean snapshot) {
     synchronized (repos) {
       delRepo(id);
-      RemoteRepository rr = new RemoteRepository(id, "default", url);
+      final RemoteRepository rr = new RemoteRepository(id, "default", url);
       rr.setPolicy(snapshot, new RepositoryPolicy(
           true,
           RepositoryPolicy.UPDATE_POLICY_DAILY,
@@ -72,10 +71,10 @@ public abstract class AbstractDependencyResolver {
     }
   }
 
-  public void addRepo(String id, String url, boolean snapshot, Authentication auth, Proxy proxy) {
+  public void addRepo(final String id, final String url, final boolean snapshot, final Authentication auth, final Proxy proxy) {
     synchronized (repos) {
       delRepo(id);
-      RemoteRepository rr = new RemoteRepository(id, "default", url);
+      final RemoteRepository rr = new RemoteRepository(id, "default", url);
       rr.setPolicy(snapshot, new RepositoryPolicy(
           true,
           RepositoryPolicy.UPDATE_POLICY_DAILY,
@@ -86,11 +85,11 @@ public abstract class AbstractDependencyResolver {
     }
   }
 
-  public RemoteRepository delRepo(String id) {
+  public RemoteRepository delRepo(final String id) {
     synchronized (repos) {
-      Iterator<RemoteRepository> it = repos.iterator();
+      final Iterator<RemoteRepository> it = repos.iterator();
       while (it.hasNext()) {
-        RemoteRepository repo = it.next();
+        final RemoteRepository repo = it.next();
         if (repo.getId().equals(id)) {
           it.remove();
           return repo;

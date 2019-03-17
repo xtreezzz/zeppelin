@@ -80,6 +80,7 @@
   </modules>
 
   <properties>
+    <dependency.com.google.code.findbugs>3.0.2</dependency.com.google.code.findbugs>
     <dependency.org.slf4j>1.7.25</dependency.org.slf4j>
     <dependency.io.atomix>3.0.0-rc4</dependency.io.atomix>
     <dependency.commons-configuration>1.10</dependency.commons-configuration>

@@ -19,8 +19,11 @@ package org.apache.zeppelin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -46,21 +49,21 @@ import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
  */
 //TODO(egorklimov) @Component?
 public class DependencyResolver extends AbstractDependencyResolver {
-  private Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
+  private final Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
 
   private final String[] exclusions = new String[] {"org.apache.zeppelin:zeppelin-zengine",
       "org.apache.zeppelin:zeppelin-interpreter",
       "org.apache.zeppelin:zeppelin-server"};
 
-  public DependencyResolver(String localRepoPath) {
+  public DependencyResolver(final String localRepoPath) {
     super(localRepoPath);
   }
 
-  public List<File> load(String artifact) throws RepositoryException, IOException {
+  public List<File> load(final String artifact) throws RepositoryException, IOException {
     return load(artifact, new LinkedList<String>());
   }
 
-  public synchronized List<File> load(String artifact, Collection<String> excludes)
+  public synchronized List<File> load(final String artifact, final Collection<String> excludes)
       throws RepositoryException, IOException {
     if (StringUtils.isBlank(artifact)) {
       // Skip dependency loading if artifact is empty
@@ -68,28 +71,28 @@ public class DependencyResolver extends AbstractDependencyResolver {
     }
 
     // <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
-    int numSplits = artifact.split(":").length;
+    final int numSplits = artifact.split(":").length;
     if (numSplits >= 3 && numSplits <= 6) {
       return loadFromMvn(artifact, excludes);
     } else {
-      LinkedList<File> libs = new LinkedList<>();
+      final LinkedList<File> libs = new LinkedList<>();
       libs.add(new File(artifact));
       return libs;
     }
   }
 
-  public List<File> load(String artifact, File destPath) throws IOException, RepositoryException {
+  public List<File> load(final String artifact, final File destPath) throws IOException, RepositoryException {
     return load(artifact, new LinkedList<String>(), destPath);
   }
 
-  public List<File> load(String artifact, Collection<String> excludes, File destPath) throws RepositoryException, IOException {
+  public List<File> load(final String artifact, final Collection<String> excludes, final File destPath) throws RepositoryException, IOException {
     List<File> libs = new LinkedList<>();
 
     if (StringUtils.isNotBlank(artifact)) {
       libs = load(artifact, excludes);
 
-      for (File srcFile : libs) {
-        File destFile = new File(destPath, srcFile.getName());
+      for (final File srcFile : libs) {
+        final File destFile = new File(destPath, srcFile.getName());
         if (!destFile.exists() || !FileUtils.contentEquals(srcFile, destFile)) {
           FileUtils.copyFile(srcFile, destFile);
           logger.debug("copy {} to {}", srcFile.getAbsolutePath(), destPath);
@@ -99,14 +102,14 @@ public class DependencyResolver extends AbstractDependencyResolver {
     return libs;
   }
 
-  public synchronized void copyLocalDependency(String srcPath, File destPath)
+  public synchronized void copyLocalDependency(final String srcPath, final File destPath)
       throws IOException {
     if (StringUtils.isBlank(srcPath)) {
       return;
     }
 
-    File srcFile = new File(srcPath);
-    File destFile = new File(destPath, srcFile.getName());
+    final File srcFile = new File(srcPath);
+    final File destFile = new File(destPath, srcFile.getName());
 
     if (!destFile.exists() || !FileUtils.contentEquals(srcFile, destFile)) {
       FileUtils.copyFile(srcFile, destFile);
@@ -114,20 +117,20 @@ public class DependencyResolver extends AbstractDependencyResolver {
     }
   }
 
-  private List<File> loadFromMvn(String artifact, Collection<String> excludes)
+  private List<File> loadFromMvn(final String artifact, final Collection<String> excludes)
       throws RepositoryException {
-    Collection<String> allExclusions = new LinkedList<>();
+    final Collection<String> allExclusions = new LinkedList<>();
     allExclusions.addAll(excludes);
     allExclusions.addAll(Arrays.asList(exclusions));
 
-    List<ArtifactResult> listOfArtifact;
+    final List<ArtifactResult> listOfArtifact;
     listOfArtifact = getArtifactsWithDep(artifact, allExclusions);
 
-    Iterator<ArtifactResult> it = listOfArtifact.iterator();
+    final Iterator<ArtifactResult> it = listOfArtifact.iterator();
     while (it.hasNext()) {
-      Artifact a = it.next().getArtifact();
-      String gav = a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion();
-      for (String exclude : allExclusions) {
+      final Artifact a = it.next().getArtifact();
+      final String gav = a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion();
+      for (final String exclude : allExclusions) {
         if (gav.startsWith(exclude)) {
           it.remove();
           break;
@@ -135,8 +138,8 @@ public class DependencyResolver extends AbstractDependencyResolver {
       }
     }
 
-    List<File> files = new LinkedList<>();
-    for (ArtifactResult artifactResult : listOfArtifact) {
+    final List<File> files = new LinkedList<>();
+    for (final ArtifactResult artifactResult : listOfArtifact) {
       files.add(artifactResult.getArtifact().getFile());
       logger.debug("load {}", artifactResult.getArtifact().getFile().getAbsolutePath());
     }
@@ -151,27 +154,27 @@ public class DependencyResolver extends AbstractDependencyResolver {
    * @throws Exception
    */
   @Override
-  public List<ArtifactResult> getArtifactsWithDep(String dependency,
-      Collection<String> excludes)
+  public List<ArtifactResult> getArtifactsWithDep(final String dependency,
+      final Collection<String> excludes)
       throws RepositoryException {
-    Artifact artifact = new DefaultArtifact(dependency);
-    DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE);
-    PatternExclusionsDependencyFilter exclusionFilter =
+    final Artifact artifact = new DefaultArtifact(dependency);
+    final DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE);
+    final PatternExclusionsDependencyFilter exclusionFilter =
         new PatternExclusionsDependencyFilter(excludes);
 
-    CollectRequest collectRequest = new CollectRequest();
+    final CollectRequest collectRequest = new CollectRequest();
     collectRequest.setRoot(new Dependency(artifact, JavaScopes.COMPILE));
 
     synchronized (repos) {
-      for (RemoteRepository repo : repos) {
+      for (final RemoteRepository repo : repos) {
         collectRequest.addRepository(repo);
       }
     }
-    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest,
+    final DependencyRequest dependencyRequest = new DependencyRequest(collectRequest,
         DependencyFilterUtils.andFilter(exclusionFilter, classpathFilter));
     try {
       return system.resolveDependencies(session, dependencyRequest).getArtifactResults();
-    } catch (NullPointerException | DependencyResolutionException ex) {
+    } catch (final NullPointerException | DependencyResolutionException ex) {
       throw new RepositoryException(
           String.format("Cannot fetch dependencies for %s", dependency), ex);
     }

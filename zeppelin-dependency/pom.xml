@@ -42,6 +42,12 @@
 
   <dependencies>
 
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${dependency.com.google.code.findbugs}</version>
+    </dependency>
+
     <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
     <dependency>
       <groupId>com.google.code.gson</groupId>

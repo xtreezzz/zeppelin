@@ -18,67 +18,94 @@
 package org.apache.zeppelin.storage;
 
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreter.configuration.InterpreterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
-
+/**
+ * Repository for:
+ *    {@link InterpreterOption},
+ *    {@link InterpreterArtifactSource},
+ *    {@link Repository}
+ *
+ * @see org.apache.zeppelin.rest.InterpreterRestApi
+ */
 public class InterpreterOptionRepository {
 
+  @Nonnull
   private final InterpreterOptionDAO storage;
 
-  public InterpreterOptionRepository(final NamedParameterJdbcTemplate jdbcTemplate) {
+  public InterpreterOptionRepository(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
     this.storage = new InterpreterOptionDAO(jdbcTemplate);
   }
 
-  public InterpreterOption getOption(final String shebang) {
-    return storage.getInterpreterOption(shebang);
-  }
-
+  @Nonnull
   public List<InterpreterOption> getAllOptions() {
     return storage.getAllInterpreterOptions();
   }
 
-  public Repository getRepository(final String id) {
-    return null;
+  @Nullable
+  public InterpreterOption getOption(@Nonnull final String shebang) {
+    return storage.getInterpreterOption(shebang);
   }
 
-  public List<Repository> getAllRepositories() {
-    return null;
-  }
-
-  public InterpreterSource getSource(final String artifact) {
-    return storage.getSource(artifact);
-  }
-
-  public List<InterpreterSource> getAllSources() {
-    return storage.getAllSources();
-  }
-
-  public Repository saveRepostitory(final Repository repository) {
-    return repository;
-  }
-
-  public InterpreterOption saveOption(final InterpreterOption interpreterOption) {
+  @Nonnull
+  public InterpreterOption saveOption(@Nonnull final InterpreterOption interpreterOption) {
     storage.saveInterpreterOption(interpreterOption);
     return interpreterOption;
   }
 
-  public InterpreterSource saveSource(final InterpreterSource interpreterSource) {
-    storage.saveInterpreterSource(interpreterSource);
-    return interpreterSource;
+  @Nonnull
+  public InterpreterOption updateOption(@Nonnull final InterpreterOption interpreterOption) {
+    storage.updateInterpreterOption(interpreterOption);
+    return interpreterOption;
   }
 
-  public boolean removeRepository(final String id) {
-    return false;
-  }
-
-  public boolean removeOption(final String shebang) {
+  public boolean removeOption(@Nonnull final String shebang) {
     return storage.removeInterpreterOption(shebang);
   }
 
-  public boolean removeSource(final String artifact) {
-    return storage.removeInterpreterSource(artifact);
+  @Nonnull
+  public List<InterpreterArtifactSource> getAllSources() {
+    return storage.getAllSources();
+  }
+
+  @Nullable
+  public InterpreterArtifactSource getSource(@Nonnull final String name) {
+    return storage.getSource(name);
+  }
+
+  @Nonnull
+  public InterpreterArtifactSource saveSource(
+      @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
+    storage.saveInterpreterSource(interpreterArtifactSource);
+    return interpreterArtifactSource;
+  }
+
+  public boolean removeSource(@Nonnull final String name) {
+    return storage.removeInterpreterSource(name);
+  }
+
+  @Nonnull
+  public List<Repository> getAllRepositories() {
+    return storage.getAllRepositories();
+  }
+
+  @Nullable
+  public Repository getRepository(@Nonnull final String id) {
+    return storage.getRepository(id);
+  }
+
+  @Nonnull
+  public Repository saveRepository(@Nonnull final Repository repository) {
+    storage.saveRepository(repository);
+    return repository;
+  }
+
+  public boolean removeRepository(@Nonnull final String id) {
+    return storage.removeRepository(id);
   }
 }

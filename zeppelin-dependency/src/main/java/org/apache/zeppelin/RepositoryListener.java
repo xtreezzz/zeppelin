@@ -31,88 +31,88 @@ public class RepositoryListener extends AbstractRepositoryListener {
   public RepositoryListener() {}
 
   @Override
-  public void artifactDeployed(RepositoryEvent event) {
+  public void artifactDeployed(final RepositoryEvent event) {
     logger.info("Deployed " + event.getArtifact() + " to " + event.getRepository());
   }
 
   @Override
-  public void artifactDeploying(RepositoryEvent event) {
+  public void artifactDeploying(final RepositoryEvent event) {
     logger.info("Deploying " + event.getArtifact() + " to " + event.getRepository());
   }
 
   @Override
-  public void artifactDescriptorInvalid(RepositoryEvent event) {
+  public void artifactDescriptorInvalid(final RepositoryEvent event) {
     logger.info("Invalid artifact descriptor for " + event.getArtifact() + ": "
                                                    + event.getException().getMessage());
   }
 
   @Override
-  public void artifactDescriptorMissing(RepositoryEvent event) {
+  public void artifactDescriptorMissing(final RepositoryEvent event) {
     logger.info("Missing artifact descriptor for " + event.getArtifact());
   }
 
   @Override
-  public void artifactInstalled(RepositoryEvent event) {
+  public void artifactInstalled(final RepositoryEvent event) {
     logger.info("Installed " + event.getArtifact() + " to " + event.getFile());
   }
 
   @Override
-  public void artifactInstalling(RepositoryEvent event) {
+  public void artifactInstalling(final RepositoryEvent event) {
     logger.info("Installing " + event.getArtifact() + " to " + event.getFile());
   }
 
   @Override
-  public void artifactResolved(RepositoryEvent event) {
+  public void artifactResolved(final RepositoryEvent event) {
     logger.info("Resolved artifact " + event.getArtifact() + " from " + event.getRepository());
   }
 
   @Override
-  public void artifactDownloading(RepositoryEvent event) {
+  public void artifactDownloading(final RepositoryEvent event) {
     logger.info("Downloading artifact " + event.getArtifact() + " from " + event.getRepository());
   }
 
   @Override
-  public void artifactDownloaded(RepositoryEvent event) {
+  public void artifactDownloaded(final RepositoryEvent event) {
     logger.info("Downloaded artifact " + event.getArtifact() + " from " + event.getRepository());
   }
 
   @Override
-  public void artifactResolving(RepositoryEvent event) {
+  public void artifactResolving(final RepositoryEvent event) {
     logger.info("Resolving artifact " + event.getArtifact());
   }
 
   @Override
-  public void metadataDeployed(RepositoryEvent event) {
+  public void metadataDeployed(final RepositoryEvent event) {
     logger.info("Deployed " + event.getMetadata() + " to " + event.getRepository());
   }
 
   @Override
-  public void metadataDeploying(RepositoryEvent event) {
+  public void metadataDeploying(final RepositoryEvent event) {
     logger.info("Deploying " + event.getMetadata() + " to " + event.getRepository());
   }
 
   @Override
-  public void metadataInstalled(RepositoryEvent event) {
+  public void metadataInstalled(final RepositoryEvent event) {
     logger.info("Installed " + event.getMetadata() + " to " + event.getFile());
   }
 
   @Override
-  public void metadataInstalling(RepositoryEvent event) {
+  public void metadataInstalling(final RepositoryEvent event) {
     logger.info("Installing " + event.getMetadata() + " to " + event.getFile());
   }
 
   @Override
-  public void metadataInvalid(RepositoryEvent event) {
+  public void metadataInvalid(final RepositoryEvent event) {
     logger.info("Invalid metadata " + event.getMetadata());
   }
 
   @Override
-  public void metadataResolved(RepositoryEvent event) {
+  public void metadataResolved(final RepositoryEvent event) {
     logger.info("Resolved metadata " + event.getMetadata() + " from " + event.getRepository());
   }
 
   @Override
-  public void metadataResolving(RepositoryEvent event) {
+  public void metadataResolving(final RepositoryEvent event) {
     logger.info("Resolving metadata " + event.getMetadata() + " from " + event.getRepository());
   }
 }

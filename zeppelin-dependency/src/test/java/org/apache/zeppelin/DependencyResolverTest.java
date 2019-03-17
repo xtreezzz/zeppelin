@@ -17,6 +17,11 @@
 
 package org.apache.zeppelin;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Collections;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -24,12 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.sonatype.aether.RepositoryException;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
 
 public class DependencyResolverTest {
   private static DependencyResolver resolver;
@@ -59,14 +58,14 @@ public class DependencyResolverTest {
 
   @Test
   public void testAddRepo() {
-    int reposCnt = resolver.getRepos().size();
+    final int reposCnt = resolver.getRepos().size();
     resolver.addRepo("securecentral", "https://repo1.maven.org/maven2", false);
     assertEquals(reposCnt + 1, resolver.getRepos().size());
   }
 
   @Test
   public void testDelRepo() {
-    int reposCnt = resolver.getRepos().size();
+    final int reposCnt = resolver.getRepos().size();
     resolver.delRepo("securecentral");
     resolver.delRepo("badId");
     assertEquals(reposCnt - 1, resolver.getRepos().size());

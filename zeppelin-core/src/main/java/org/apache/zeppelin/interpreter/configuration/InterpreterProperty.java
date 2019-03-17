@@ -21,6 +21,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -41,9 +43,9 @@ public class InterpreterProperty implements Serializable {
     PASSWORD("password"),
     CHECKBOX("checkbox");
 
-    private String value;
+    private final String value;
 
-    Type(String value) {
+    Type(final String value) {
       this.value = value;
     }
 
@@ -52,112 +54,118 @@ public class InterpreterProperty implements Serializable {
     }
   }
 
+  @Nonnull
   private String envName;
+  @Nonnull
   private String propertyName;
+  @Nonnull
   private Object defaultValue;
+  @Nullable
   private Object currentValue;
+  @Nonnull
   private String description;
+  @Nonnull
   private String type;
 
-  public InterpreterProperty(String envName, String propertyName, Object defaultValue,
-      Object currentValue, String description, String type) {
+  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+      @Nonnull final Object defaultValue, @Nonnull final Object currentValue,
+      @Nonnull final String description, @Nonnull final String type) {
     this.envName = envName;
     this.propertyName = propertyName;
     this.defaultValue = defaultValue;
-    this.description = description;
     this.currentValue = currentValue;
+    this.description = description;
     this.type = type;
   }
 
-  public InterpreterProperty(String envName, String propertyName, Object defaultValue,
-                             String description, String type) {
+  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+      @Nonnull final Object defaultValue, @Nonnull final String description,
+      @Nonnull final String type) {
     this.envName = envName;
     this.propertyName = propertyName;
     this.defaultValue = defaultValue;
     this.description = description;
-    this.currentValue = defaultValue;
     this.type = type;
   }
 
-  public InterpreterProperty(Object defaultValue, String description, String type) {
-    this(null, null, defaultValue, description, type);
-  }
-
-  public InterpreterProperty(Object defaultValue, String description) {
-    this(null, null, defaultValue, description, Type.TEXTAREA.getValue());
-  }
-
-  public InterpreterProperty(String envName, String propertyName, String defaultValue) {
-    this(envName, propertyName, defaultValue, null, Type.TEXTAREA.getValue());
-  }
-
-  public InterpreterProperty(String envName, String propertyName, String defaultValue,
-                             String description) {
+  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+      @Nonnull final String defaultValue, @Nonnull final String description) {
     this(envName, propertyName, defaultValue, description, Type.TEXTAREA.getValue());
   }
 
+  @Nullable
   public Object getCurrentValue() {
     return currentValue;
   }
 
-  public void setCurrentValue(Object currentValue) {
+  public void setCurrentValue(@Nonnull final Object currentValue) {
     this.currentValue = currentValue;
   }
 
+  @Nonnull
   public String getEnvName() {
     return envName;
   }
 
-  public void setEnvName(String envName) {
+  public void setEnvName(@Nonnull final String envName) {
     this.envName = envName;
   }
 
+  @Nonnull
   public String getPropertyName() {
     return propertyName;
   }
 
-  public void setPropertyName(String propertyName) {
+  public void setPropertyName(@Nonnull final String propertyName) {
     this.propertyName = propertyName;
   }
 
+  @Nonnull
   public Object getDefaultValue() {
     return defaultValue;
   }
 
-  public void setDefaultValue(Object defaultValue) {
+  public void setDefaultValue(@Nonnull final Object defaultValue) {
     this.defaultValue = defaultValue;
   }
 
+  @Nonnull
   public String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@Nonnull final String description) {
     this.description = description;
   }
 
+  @Nonnull
   public String getType() {
     return type;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setType(@Nonnull final String type) {
+    // Check that type is correct
+    if (getTypes().contains(type)) {
+      this.type = type;
+    }
   }
 
+  @Nonnull
   public static List<String> getTypes() {
     return Arrays.stream(Type.values()).map(Type::getValue).collect(Collectors.toList());
   }
 
+  @Nonnull
   public Object getValue() {
-    if (envName != null && !envName.isEmpty()) {
-      String envValue = System.getenv().get(envName);
+    if (!envName.isEmpty()) {
+      final String envValue = System.getenv().get(envName);
       if (envValue != null) {
         return envValue;
       }
     }
 
-    if (propertyName != null && !propertyName.isEmpty()) {
-      String propValue = System.getProperty(propertyName);
+    if (!propertyName.isEmpty()) {
+      final String propValue = System.getProperty(propertyName);
       if (propValue != null) {
         return propValue;
       }
@@ -171,7 +179,7 @@ public class InterpreterProperty implements Serializable {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -180,7 +188,7 @@ public class InterpreterProperty implements Serializable {
       return false;
     }
 
-    InterpreterProperty that = (InterpreterProperty) o;
+    final InterpreterProperty that = (InterpreterProperty) o;
 
     return new EqualsBuilder()
         .append(envName, that.envName)
@@ -207,6 +215,6 @@ public class InterpreterProperty implements Serializable {
   @Override
   public String toString() {
     return String.format("{envName=%s, propertyName=%s, defaultValue=%s, description=%20s, " +
-            "type=%s}", envName, propertyName, defaultValue, description, type);
+        "type=%s}", envName, propertyName, defaultValue, description, type);
   }
 }

@@ -17,8 +17,13 @@
 
 package org.apache.zeppelin.interpreter.configuration;
 
+import com.google.common.base.Preconditions;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreter.configuration.option.Permissions;
 
@@ -26,46 +31,69 @@ import org.apache.zeppelin.interpreter.configuration.option.Permissions;
  * Full interpreter settings on interpreter page.
  */
 public class InterpreterOption implements Serializable {
-  private static final String SHARED = "shared";
-  private static final String SCOPED = "scoped";
-  private static final String ISOLATED = "isolated";
+
+  /**
+   * Interpreter process isolation type.
+   */
+  private enum ProcessType {
+    SHARED("shared"),
+    SCOPED("scoped"),
+    ISOLATED("isolated");
+
+    private final String value;
+
+    ProcessType(final String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
 
   // Human readable name with description
+  @Nonnull
   private String customInterpreterName;
-
+  @Nonnull
   private String interpreterName;
+  @Nonnull
   private String shebang;
-
+  @Nonnull
   private String perNote;
+  @Nonnull
   private String perUser;
-
+  @Nonnull
   private BaseInterpreterConfig config;
 
   // additional jvm parameter string
+  //TODO(egorklimov): validatie options
+  @Nonnull
   private String jvmOptions;
 
   /**
-   *  Count of tasks available for concurrent execution
+   * Count of tasks available for concurrent execution
    */
   private int concurrentTasks;
+  private final boolean isEnabled;
 
+  @Nonnull
   private ExistingProcess remoteProcess;
+  @Nonnull
   private Permissions permissions;
 
 
-  public InterpreterOption(String customInterpreterName, String interpreterName,
-      String shebang, String perNote, String perUser,
-      BaseInterpreterConfig config,
-      ExistingProcess remoteProcess,
-      Permissions permissions,
-      String jvmOptions,
-      int concurrentTasks) {
-    if (perUser == null) {
-      throw new NullPointerException("perUser can not be null.");
-    }
-    if (perNote == null) {
-      throw new NullPointerException("perNote can not be null.");
-    }
+  public InterpreterOption(@Nonnull final String customInterpreterName,
+      @Nonnull final String interpreterName,
+      @Nonnull final String shebang,
+      @Nonnull final String perNote,
+      @Nonnull final String perUser,
+      @Nonnull final BaseInterpreterConfig config,
+      @Nonnull final ExistingProcess remoteProcess,
+      @Nonnull final Permissions permissions,
+      @Nonnull final String jvmOptions,
+      final int concurrentTasks,
+      final boolean isEnabled) {
+    Preconditions.checkArgument(isValidShebang(shebang), "Wrong shebang: %s", shebang);
 
     this.customInterpreterName = customInterpreterName;
     this.interpreterName = interpreterName;
@@ -77,21 +105,25 @@ public class InterpreterOption implements Serializable {
     this.permissions = permissions;
     this.jvmOptions = jvmOptions;
     this.concurrentTasks = concurrentTasks;
+    this.isEnabled = isEnabled;
   }
 
+  @Nonnull
   public String getPerNote() {
     return perNote;
   }
 
+  @Nonnull
   public String getPerUser() {
     return perUser;
   }
 
+  @Nonnull
   public String getJvmOptions() {
     return jvmOptions;
   }
 
-  public void setJvmOptions(String jvmOptions) {
+  public void setJvmOptions(@Nonnull final String jvmOptions) {
     this.jvmOptions = jvmOptions;
   }
 
@@ -99,80 +131,87 @@ public class InterpreterOption implements Serializable {
     return concurrentTasks;
   }
 
-  public void setConcurrentTasks(int concurrentTasks) {
+  public void setConcurrentTasks(final int concurrentTasks) {
     this.concurrentTasks = concurrentTasks;
   }
 
+  @Nonnull
   public String getCustomInterpreterName() {
     return customInterpreterName;
   }
 
-  public void setCustomInterpreterName(String customInterpreterName) {
+  public void setCustomInterpreterName(@Nonnull final String customInterpreterName) {
     this.customInterpreterName = customInterpreterName;
   }
 
+  @Nonnull
   public String getInterpreterName() {
     return interpreterName;
   }
 
-  public void setInterpreterName(String interpreterName) {
+  public void setInterpreterName(@Nonnull final String interpreterName) {
     this.interpreterName = interpreterName;
   }
 
+  @Nonnull
   public String getShebang() {
     return shebang;
   }
 
-  public void setShebang(String shebang) {
+  public void setShebang(@Nonnull final String shebang) {
+    Preconditions.checkArgument(isValidShebang(shebang), "Wrong shebang: %s", shebang);
     this.shebang = shebang;
   }
 
+  @Nonnull
   public BaseInterpreterConfig getConfig() {
     return config;
   }
 
-  public void setConfig(BaseInterpreterConfig config) {
+  public void setConfig(@Nonnull final BaseInterpreterConfig config) {
     this.config = config;
   }
 
+  @Nonnull
   public ExistingProcess getRemoteProcess() {
     return remoteProcess;
   }
 
-  public void setRemoteProcess(ExistingProcess remoteProcess) {
+  public void setRemoteProcess(@Nonnull final ExistingProcess remoteProcess) {
     this.remoteProcess = remoteProcess;
   }
 
+  @Nonnull
   public Permissions getPermissions() {
     return permissions;
   }
 
-  public void setPermissions(Permissions permissions) {
+  public void setPermissions(@Nonnull final Permissions permissions) {
     this.permissions = permissions;
   }
 
   public boolean perUserShared() {
-    return SHARED.equals(perUser);
+    return ProcessType.SHARED.getValue().equals(perUser);
   }
 
-  public boolean perUserScoped() {
-    return SCOPED.equals(perUser);
+  private boolean perUserScoped() {
+    return ProcessType.SCOPED.getValue().equals(perUser);
   }
 
-  public boolean perUserIsolated() {
-    return ISOLATED.equals(perUser);
+  private boolean perUserIsolated() {
+    return ProcessType.ISOLATED.getValue().equals(perUser);
   }
 
   public boolean perNoteShared() {
-    return SHARED.equals(perNote);
+    return ProcessType.SHARED.getValue().equals(perNote);
   }
 
-  public boolean perNoteScoped() {
-    return SCOPED.equals(perNote);
+  private boolean perNoteScoped() {
+    return ProcessType.SCOPED.getValue().equals(perNote);
   }
 
-  public boolean perNoteIsolated() {
-    return ISOLATED.equals(perNote);
+  private boolean perNoteIsolated() {
+    return ProcessType.ISOLATED.getValue().equals(perNote);
   }
 
   public boolean isProcess() {
@@ -183,12 +222,27 @@ public class InterpreterOption implements Serializable {
     return perUserScoped() || perNoteScoped();
   }
 
-  public void setPerNote(String perNote) {
+  public void setPerNote(@Nonnull final String perNote) {
+    Preconditions.checkArgument(isValidProcessType(perNote), "Wrong process type: %s", perNote);
     this.perNote = perNote;
   }
 
-  public void setPerUser(String perUser) {
+  public void setPerUser(@Nonnull final String perUser) {
+    Preconditions.checkArgument(isValidProcessType(perUser), "Wrong process type: %s", perUser);
     this.perUser = perUser;
+  }
+
+  public boolean isEnabled() {
+    return isEnabled;
+  }
+
+  private static boolean isValidProcessType(@Nonnull final String value) {
+    return Arrays.stream(ProcessType.values()).map(ProcessType::getValue)
+        .collect(Collectors.toList()).contains(value);
+  }
+
+  private static boolean isValidShebang(@Nonnull final String shebang) {
+    return Pattern.compile("%([\\w.]+)(\\(.*?\\))?").matcher(shebang).matches();
   }
 
   @Override

@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin;
 
+import java.nio.file.Paths;
 import org.apache.commons.lang3.Validate;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.slf4j.Logger;
@@ -26,25 +27,23 @@ import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.RemoteRepository;
 
-import java.nio.file.Paths;
-
 /**
  * Manage mvn repository.
  */
 public class Booter {
-  private static Logger logger = LoggerFactory.getLogger(Booter.class);
+  private static final Logger logger = LoggerFactory.getLogger(Booter.class);
 
   public static RepositorySystem newRepositorySystem() {
     return RepositorySystemFactory.newRepositorySystem();
   }
 
   public static RepositorySystemSession newRepositorySystemSession(
-      RepositorySystem system, String localRepoPath) {
+      final RepositorySystem system, final String localRepoPath) {
     Validate.notNull(localRepoPath, "localRepoPath should have a value");
 
-    MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+    final MavenRepositorySystemSession session = new MavenRepositorySystemSession();
 
-    LocalRepository localRepo = new LocalRepository(resolveLocalRepoPath(localRepoPath));
+    final LocalRepository localRepo = new LocalRepository(resolveLocalRepoPath(localRepoPath));
     session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
 
     if (logger.isDebugEnabled()) {
@@ -57,7 +56,7 @@ public class Booter {
     return session;
   }
 
-  static String resolveLocalRepoPath(String localRepoPath) {
+  static String resolveLocalRepoPath(final String localRepoPath) {
     // todo decouple home folder resolution
     // find homedir
     String home = System.getenv("ZEPPELIN_HOME");

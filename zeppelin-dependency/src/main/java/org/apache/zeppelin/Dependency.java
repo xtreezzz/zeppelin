@@ -25,18 +25,18 @@ import java.util.List;
  *
  */
 public class Dependency implements Serializable {
-  private String groupArtifactVersion;
+  private final String groupArtifactVersion;
   private boolean local = false;
-  private List<String> exclusions;
+  private final List<String> exclusions;
 
 
-  public Dependency(String groupArtifactVersion) {
+  public Dependency(final String groupArtifactVersion) {
     this.groupArtifactVersion = groupArtifactVersion;
     exclusions = new LinkedList<>();
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (!(o instanceof Dependency)) {
       return false;
     } else {
@@ -63,8 +63,8 @@ public class Dependency implements Serializable {
    * @param exclusions comma or newline separated list of "groupId:ArtifactId"
    * @return
    */
-  public Dependency exclude(String exclusions) {
-    for (String item : exclusions.split(",|\n")) {
+  public Dependency exclude(final String exclusions) {
+    for (final String item : exclusions.split(",|\n")) {
       this.exclusions.add(item);
     }
 
@@ -85,7 +85,7 @@ public class Dependency implements Serializable {
   }
 
   public boolean isLocalFsArtifact() {
-    int numSplits = groupArtifactVersion.split(":").length;
+    final int numSplits = groupArtifactVersion.split(":").length;
     return !(numSplits >= 3 && numSplits <= 6);
   }
 }
