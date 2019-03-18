@@ -50,7 +50,6 @@ public class SettingsHandler extends AbstractHandler {
 
   public void sendAllConfigurations(final WebSocketSession conn) throws IOException {
     final Map<String, String> properties = configurationService.getAllProperties();
-//    properties.put("isRevisionSupported", String.valueOf(noteRepository.isRevisionSupported()));
 
     final SockMessage message = new SockMessage(Operation.CONFIGURATIONS_INFO)
             .put("configurations", properties);
@@ -69,14 +68,14 @@ public class SettingsHandler extends AbstractHandler {
     //    try {
     //      final Interpreter intp = interpreterFactory.getInterpreter(
     //              serviceContext.getAutheInfo().getUser(),
-    //              note.getId(),
+    //              note.getNoteId(),
     //              replName,
     //              note.getDefaultInterpreterGroup());
     //      final Map<String, Object> settings = interpreterSettingRepository.
-    //              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getId(), replName);
+    //              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getNoteId(), replName);
     //
     //      final SockMessage message = new SockMessage(Operation.EDITOR_SETTING)
-    //              .put("paragraphId", p.getId())
+    //              .put("paragraphId", p.getNoteId())
     //              .put("editor", settings);
     //      conn.sendMessage(message.toSend());
     //

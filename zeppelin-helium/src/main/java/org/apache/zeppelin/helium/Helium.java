@@ -368,8 +368,8 @@ public class Helium {
         if (pkg.getPkg().getType() == HeliumType.APPLICATION && pkg.isEnabled()) {
           ResourceSet resources = ApplicationLoader.findRequiredResourceSet(
               pkg.getPkg().getResources(),
-              paragraph.getNote().getId(),
-              paragraph.getId(),
+              paragraph.getNote().getNoteId(),
+              paragraph.getNoteId(),
               allResources);
           if (resources == null) {
             continue;

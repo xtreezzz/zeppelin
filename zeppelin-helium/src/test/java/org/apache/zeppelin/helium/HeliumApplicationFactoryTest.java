@@ -100,7 +100,7 @@ package org.apache.zeppelin.helium;
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
 //    p1.setAuthenticationInfo(anonymous);
-//    note1.run(p1.getId());
+//    note1.run(p1.getNoteId());
 //    while(p1.isTerminated()==false || p1.getReturn()==null) Thread.yield();
 //
 //    assertEquals("repl1: job", p1.getReturn().message().get(0).getData());
@@ -124,7 +124,7 @@ package org.apache.zeppelin.helium;
 //
 //    // clean
 //    heliumAppFactory.unload(p1, appId);
-//    notebook.removeNote(note1.getId(), anonymous);
+//    notebook.removeNote(note1.getNoteId(), anonymous);
 //  }
 //
 //  @Test
@@ -144,7 +144,7 @@ package org.apache.zeppelin.helium;
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
 //    p1.setAuthenticationInfo(anonymous);
-//    note1.run(p1.getId());
+//    note1.run(p1.getNoteId());
 //    while(p1.isTerminated()==false || p1.getReturn()==null) Thread.yield();
 //
 //    assertEquals(0, p1.getAllApplicationStates().size());
@@ -155,13 +155,13 @@ package org.apache.zeppelin.helium;
 //    }
 //
 //    // when remove paragraph
-//    note1.removeParagraph("user", p1.getId());
+//    note1.removeParagraph("user", p1.getNoteId());
 //
 //    // then
 //    assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 //
 //    // clean
-//    notebook.removeNote(note1.getId(), anonymous);
+//    notebook.removeNote(note1.getNoteId(), anonymous);
 //  }
 //
 //
@@ -183,7 +183,7 @@ package org.apache.zeppelin.helium;
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
 //    p1.setAuthenticationInfo(anonymous);
-//    note1.run(p1.getId());
+//    note1.run(p1.getNoteId());
 //    while(p1.isTerminated()==false || p1.getReturn()==null) Thread.yield();
 //
 //    assertEquals(0, p1.getAllApplicationStates().size());
@@ -197,7 +197,7 @@ package org.apache.zeppelin.helium;
 //    assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 //
 //    // clean
-//    notebook.removeNote(note1.getId(), anonymous);
+//    notebook.removeNote(note1.getNoteId(), anonymous);
 //  }
 //
 //  @Test
@@ -219,7 +219,7 @@ package org.apache.zeppelin.helium;
 //    }
 //
 //    // remove note
-//    notebook.removeNote(note1.getId(), anonymous);
+//    notebook.removeNote(note1.getNoteId(), anonymous);
 //  }
 //
 //
@@ -236,9 +236,9 @@ package org.apache.zeppelin.helium;
 //
 //    Note note1 = notebook.createNote("note1", anonymous);
 //    String mock1IntpSettingId = null;
-//    for (InterpreterSetting setting : notebook.getBindedInterpreterSettings(note1.getId())) {
+//    for (InterpreterSetting setting : notebook.getBindedInterpreterSettings(note1.getNoteId())) {
 //      if (setting.getName().equals("mock1")) {
-//        mock1IntpSettingId = setting.getId();
+//        mock1IntpSettingId = setting.getNoteId();
 //        break;
 //      }
 //    }
@@ -248,7 +248,7 @@ package org.apache.zeppelin.helium;
 //    // make sure interpreter process running
 //    p1.setText("%mock1 job");
 //    p1.setAuthenticationInfo(anonymous);
-//    note1.run(p1.getId());
+//    note1.run(p1.getNoteId());
 //    while(p1.isTerminated()==false || p1.getReturn()==null) Thread.yield();
 //    assertEquals(0, p1.getAllApplicationStates().size());
 //    String appId = heliumAppFactory.loadAndRun(pkg1, p1);
@@ -269,6 +269,6 @@ package org.apache.zeppelin.helium;
 //    assertEquals(ApplicationState.Status.UNLOADED, app.getStatus());
 //
 //    // clean
-//    notebook.removeNote(note1.getId(), anonymous);
+//    notebook.removeNote(note1.getNoteId(), anonymous);
 //  }
 //}

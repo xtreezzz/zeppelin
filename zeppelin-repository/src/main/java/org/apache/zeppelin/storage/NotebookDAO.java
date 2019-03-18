@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,7 @@ import org.postgresql.util.PGobject;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 public class NotebookDAO {
 
@@ -30,8 +30,8 @@ public class NotebookDAO {
   private static final String DELETE_NOTE = "DELETE FROM notes WHERE note_id = :note_id";
 
   private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs ORDER BY position";
-  private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE note_id =:note_id ORDER BY position";
-  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, note_id, title, text, username, created, updated, config, gui, position) VALUES (:paragraph_id, :note_id, :title, :text, :username, :created, :updated, :config, :gui, :position)";
+  private static final String GET_PARAGRAPH = "SELECT * FROM paragraphs WHERE db_note_id =:db_note_id ORDER BY position";
+  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, db_note_id, title, text, username, created, updated, config, gui, position) VALUES (:paragraph_id, :db_note_id, :title, :text, :username, :created, :updated, :config, :gui, :position)";
   private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, username=:username, updated=:updated, config=:config, gui=:gui, position=:position WHERE paragraph_id=:paragraph_id";
 
   public NotebookDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
@@ -39,18 +39,20 @@ public class NotebookDAO {
   }
 
   void createNote(final Note note) {
-    int affectedRows = jdbcTemplate.update(INSERT_NOTE, convertNoteToParameters(note));
+    GeneratedKeyHolder holder = new GeneratedKeyHolder();
+    int affectedRows = jdbcTemplate.update(INSERT_NOTE, convertNoteToParameters(note), holder);
 
     if (affectedRows == 0) {
-      throw new RuntimeException("Can't create note " + note.getId());
+      throw new RuntimeException("Can't create note " + note.getNoteId());
     }
+    note.setDatabaseId((Long) holder.getKeys().get("id"));
     saveNoteParagraphs(note);
   }
 
   void updateNote(final Note note) {
     int affectedRows = jdbcTemplate.update(UPDATE_NOTE, convertNoteToParameters(note));
     if (affectedRows == 0) {
-      throw new RuntimeException("Can't update note " + note.getId());
+      throw new RuntimeException("Can't update note " + note.getNoteId());
     }
     saveNoteParagraphs(note);
   }
@@ -69,7 +71,7 @@ public class NotebookDAO {
 
       List<Paragraph> paragraphs = jdbcTemplate.query(
           GET_PARAGRAPH,
-          new MapSqlParameterSource("note_id", noteId),
+          new MapSqlParameterSource("db_note_id", note.getDatabaseId()),
           (resultSet, i) -> convertResultSetToParagraph(resultSet)
       );
 
@@ -80,23 +82,23 @@ public class NotebookDAO {
     }
   }
 
-  public boolean removeNote(final String noteId) {
+  boolean removeNote(final String noteId) {
     return jdbcTemplate.update(DELETE_NOTE, new MapSqlParameterSource("note_id", noteId)) != 0;
   }
 
   List<Note> getAllNotes() {
     List<Note> notes = jdbcTemplate
         .query(GET_ALL_NOTES, (resultSet, i) -> convertResultSetToNote(resultSet));
-    Map<String, Note> noteMap = new HashMap<>();
+    Map<Long, Note> noteMap = new HashMap<>();
     for (final Note note : notes) {
-      noteMap.put(note.getId(), note);
+      noteMap.put(note.getDatabaseId(), note);
     }
 
     jdbcTemplate
         .query(GET_ALL_PARAGRAPHS, resultSet -> {
-          String note_id = resultSet.getString("note_id");
+          Long dbNoteId = resultSet.getLong("db_note_id");
           Paragraph paragraph = convertResultSetToParagraph(resultSet);
-          noteMap.get(note_id).getParagraphs().add(paragraph);
+          noteMap.get(dbNoteId).getParagraphs().add(paragraph);
         });
     return notes;
   }
@@ -110,7 +112,7 @@ public class NotebookDAO {
 
     MapSqlParameterSource parameters = new MapSqlParameterSource();
     parameters
-        .addValue("note_id", note.getId())
+        .addValue("note_id", note.getNoteId())
         .addValue("path", note.getPath())
         .addValue("permissions", generatePGjson(permission))
         .addValue("gui", generatePGjson(note.getGuiConfiguration()));
@@ -120,17 +122,17 @@ public class NotebookDAO {
 
   private MapSqlParameterSource convertParagraphToParameters(
       final Paragraph p,
-      final String noteId,
+      final long dbNoteId,
       final int position) {
     MapSqlParameterSource parameters = new MapSqlParameterSource();
     parameters
         .addValue("paragraph_id", p.getId())
-        .addValue("note_id", noteId)
+        .addValue("db_note_id", dbNoteId)
         .addValue("title", p.getTitle())
         .addValue("text", p.getText())
         .addValue("username", p.getUser())
-        .addValue("created", p.getCreated().format(DateTimeFormatter.ISO_DATE_TIME))
-        .addValue("updated", p.getUpdated().format(DateTimeFormatter.ISO_DATE_TIME))
+        .addValue("created", p.getCreated())
+        .addValue("updated", p.getUpdated())
         .addValue("config", generatePGjson(p.getConfig()))
         .addValue("gui", generatePGjson(p.getSettings()))
         .addValue("position", position);
@@ -151,15 +153,16 @@ public class NotebookDAO {
 
   private Note convertResultSetToNote(final ResultSet resultSet)
       throws SQLException {
+    long dbNoteId = resultSet.getLong("id");
     String noteId = resultSet.getString("note_id");
     String notePath = resultSet.getString("path");
     GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
     Map<String, Set<String>> permission = new HashMap<>();
     permission = gson.fromJson(resultSet.getString("permissions"), permission.getClass());
 
-
     Note note = new Note(notePath);
-    note.setId(noteId);
+    note.setDatabaseId(dbNoteId);
+    note.setNoteId(noteId);
     note.getOwners().addAll(permission.get("owners"));
     note.getOwners().addAll(permission.get("readers"));
     note.getOwners().addAll(permission.get("runners"));
@@ -175,10 +178,8 @@ public class NotebookDAO {
     String title = resultSet.getString("title");
     String text = resultSet.getString("text");
     String user = resultSet.getString("username");
-    LocalDateTime created = LocalDateTime
-        .parse(resultSet.getString("created"), DateTimeFormatter.ISO_DATE_TIME);
-    LocalDateTime updated = LocalDateTime
-        .parse(resultSet.getString("updated"), DateTimeFormatter.ISO_DATE_TIME);
+    LocalDateTime created = resultSet.getTimestamp("created").toLocalDateTime();
+    LocalDateTime updated = resultSet.getTimestamp("updated").toLocalDateTime();
     String configJson = resultSet.getString("config");
     GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
 
@@ -194,11 +195,11 @@ public class NotebookDAO {
   private void saveNoteParagraphs(final Note note) {
     for (int i = 0; i < note.getParagraphs().size(); i++) {
       Paragraph paragraph = note.getParagraphs().get(i);
-      saveParagraph(paragraph, note.getId(), i);
+      saveParagraph(paragraph, note.getDatabaseId(), i);
     }
   }
 
-  private void saveParagraph(final Paragraph p, final String noteId, final int position) {
+  private void saveParagraph(final Paragraph p, final long noteId, final int position) {
     MapSqlParameterSource parameters = convertParagraphToParameters(p, noteId, position);
 
     boolean paragraphMissing = jdbcTemplate.update(UPDATE_PARAGRAPH, parameters) == 0;

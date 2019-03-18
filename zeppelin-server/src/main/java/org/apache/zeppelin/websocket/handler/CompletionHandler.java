@@ -58,7 +58,7 @@ public class CompletionHandler extends AbstractHandler {
 //      final Interpreter interpreter =
 //              interpreterFactory.getInterpreter(
 //                      serviceContext.getAutheInfo().getUser(),
-//                      note.getId(),
+//                      note.getNoteId(),
 //                      p.getIntpText(),
 //                      note.getDefaultInterpreterGroup()
 //              );
@@ -76,7 +76,7 @@ public class CompletionHandler extends AbstractHandler {
 //    }*/
 //
 //    final SockMessage message = new SockMessage(Operation.COMPLETION_LIST)
-//            .put("id", p.getId())
+//            .put("id", p.getNoteId())
 //            .put("completions", completions);
 //    conn.sendMessage(message.toSend());
   }

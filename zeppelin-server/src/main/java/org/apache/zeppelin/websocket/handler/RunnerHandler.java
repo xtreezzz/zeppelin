@@ -123,7 +123,7 @@ public class RunnerHandler extends AbstractHandler {
                         isTheLastParagraph) {
                   Paragraph newPara = p.getNote().addParagraph(p.getAuthenticationInfo());
                   //connectionManager.broadcastNewParagraph(p.getNote(), newPara);
-                  connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));
+                  connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", newPara).put("index", index));
                 }
               }
             });
@@ -180,7 +180,7 @@ public class RunnerHandler extends AbstractHandler {
 
     try {
       notebook.saveNote(note, serviceContext.getAutheInfo());
-      return note.run(p.getId(), blocking);
+      return note.run(p.getNoteId(), blocking);
     } catch (Exception ex) {
       LOGGER.error("Exception from run", ex);
       p.setReturn(new InterpreterResult(InterpreterResult.Code.ERROR, ex.getSockMessage()), ex);

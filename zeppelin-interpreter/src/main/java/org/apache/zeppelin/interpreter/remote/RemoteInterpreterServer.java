@@ -219,7 +219,7 @@ public class RemoteInterpreterServer  {
 //                                String userName) throws TException {
 //    if (interpreterGroup == null) {
 //      interpreterGroup = new InterpreterGroup(interpreterGroupId);
-//      angularObjectRegistry = new AngularObjectRegistry(interpreterGroup.getId(), intpEventClient);
+//      angularObjectRegistry = new AngularObjectRegistry(interpreterGroup.getNoteId(), intpEventClient);
 //      hookRegistry = new InterpreterHookRegistry();
 //      interpreterGroup.setInterpreterHookRegistry(hookRegistry);
 //      interpreterGroup.setAngularObjectRegistry(angularObjectRegistry);

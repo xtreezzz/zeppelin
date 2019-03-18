@@ -76,6 +76,6 @@ public class NoteFormsHandler extends AbstractHandler {
     final GUI formsSettings = new GUI();
     formsSettings.setForms(note.getGuiConfiguration().getForms());
     formsSettings.setParams(note.getGuiConfiguration().getParams());
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.SAVE_NOTE_FORMS).put("formsData", formsSettings));
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.SAVE_NOTE_FORMS).put("formsData", formsSettings));
   }
 }

@@ -42,7 +42,9 @@ public class Note implements Serializable {
 
   private final static String TRASH_FOLDER = "~Trash";
 
+  private long databaseId;
 
+  // zeppelin note id
   private String id;
   private String name;
   private String path;
@@ -86,12 +88,20 @@ public class Note implements Serializable {
     this.noteCronConfiguration = new NoteCronConfiguration();
   }
 
-  public String getId() {
+  public String getNoteId() {
     return id;
   }
 
-  public void setId(final String id) {
-    this.id = id;
+  public void setNoteId(final String noteId) {
+    this.id = noteId;
+  }
+
+  public long getDatabaseId() {
+    return databaseId;
+  }
+
+  public void setDatabaseId(final long databaseId) {
+    this.databaseId = databaseId;
   }
 
   public String getName() {
@@ -184,12 +194,17 @@ public class Note implements Serializable {
     }
     Note note = (Note) o;
 
+    if (databaseId != note.getDatabaseId()) {
+      return false;
+    }
+
     if (paragraphs != null ? !paragraphs.equals(note.paragraphs) : note.paragraphs != null) {
       return false;
     }
     //TODO(zjffdu) exclude path because FolderView.index use Note as key and consider different path
     //as same note
     //    if (path != null ? !path.equals(note.path) : note.path != null) return false;
+
     if (id != null ? !id.equals(note.id) : note.id != null) {
       return false;
     }

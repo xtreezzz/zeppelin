@@ -86,7 +86,7 @@ public class RemoteInterpreterProcessListenerImpl {
 //    final Paragraph paragraph = note.getParagraph(paragraphId);
 //    final SockMessage msg = new SockMessage(Operation.PARAGRAPH)
 //            .put("paragraph", paragraph);
-//    connectionManager.broadcast(note.getId(), msg);
+//    connectionManager.broadcast(note.getNoteId(), msg);
 //  }
 //
 //  @Override
@@ -106,12 +106,12 @@ public class RemoteInterpreterProcessListenerImpl {
 //          metaInfos.remove(removeKey);
 //        }
 //
-//        //paragraph.updateRuntimeInfos(label, tooltip, metaInfos, setting.getGroup(), setting.getId());
+//        //paragraph.updateRuntimeInfos(label, tooltip, metaInfos, setting.getGroup(), setting.getNoteId());
 //
 //        final SockMessage msg = new SockMessage(Operation.PARAS_INFO)
 //                .put("id", paragraphId)
 //                .put("infos", "paragraph.getRuntimeInfos()");
-//        connectionManager.broadcast(note.getId(), msg);
+//        connectionManager.broadcast(note.getNoteId(), msg);
 //      }
 //    }
 //  }
@@ -146,16 +146,16 @@ public class RemoteInterpreterProcessListenerImpl {
 //        if (note.getParagraphs().get(paragraphIndex) == null) {
 //          throw new IOException("Not existed paragraphIndex: " + paragraphIndex);
 //        }
-//        if (!note.getParagraphs().get(paragraphIndex).getId().equals(curParagraphId)) {
-//          toBeRunParagraphIds.add(note.getParagraphs().get(paragraphIndex).getId());
+//        if (!note.getParagraphs().get(paragraphIndex).getNoteId().equals(curParagraphId)) {
+//          toBeRunParagraphIds.add(note.getParagraphs().get(paragraphIndex).getNoteId());
 //        }
 //      }
 //    }
 //    // run the whole note except the current paragraph
 //    if (paragraphIds.isEmpty() && paragraphIndices.isEmpty()) {
 //      for (final Paragraph paragraph : note.getParagraphs()) {
-//        if (!paragraph.getId().equals(curParagraphId)) {
-//          toBeRunParagraphIds.add(paragraph.getId());
+//        if (!paragraph.getNoteId().equals(curParagraphId)) {
+//          toBeRunParagraphIds.add(paragraph.getNoteId());
 //        }
 //      }
 //    }

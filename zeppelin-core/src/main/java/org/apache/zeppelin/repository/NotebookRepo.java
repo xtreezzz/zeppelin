@@ -146,22 +146,22 @@ public interface NotebookRepo {
   @ZeppelinApi
   void updateSettings(Map<String, String> settings);
 
-  default String buildNoteFileName(String noteId, String notePath) throws IOException {
+  default String buildNoteFileName(final String noteId, final String notePath) throws IOException {
     if (!notePath.startsWith("/")) {
       throw new IOException("Invalid notePath: " + notePath);
     }
     return (notePath + "_" + noteId + ".zpln").substring(1);
   }
 
-  default String buildNoteFileName(Note note) throws IOException {
-    return buildNoteFileName(note.getId(), note.getPath());
+  default String buildNoteFileName(final Note note) throws IOException {
+    return buildNoteFileName(note.getNoteId(), note.getPath());
   }
 
-  default String buildNoteTempFileName(Note note) {
-    return (note.getPath() + "_" + note.getId() + ".tmp").substring(1);
+  default String buildNoteTempFileName(final Note note) {
+    return (note.getPath() + "_" + note.getNoteId() + ".tmp").substring(1);
   }
 
-  default String getNoteId(String noteFileName) throws IOException {
+  default String getNoteId(final String noteFileName) throws IOException {
     int separatorIndex = noteFileName.lastIndexOf("_");
     if (separatorIndex == -1) {
       throw new IOException(
@@ -175,7 +175,7 @@ public interface NotebookRepo {
     }
   }
 
-  default String getNotePath(String rootNoteFolder, String noteFileName)
+  default String getNotePath(final String rootNoteFolder, final String noteFileName)
       throws IOException {
     int index = noteFileName.lastIndexOf("_");
     if (index == -1) {

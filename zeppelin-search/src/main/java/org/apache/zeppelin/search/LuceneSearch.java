@@ -202,7 +202,7 @@ public class LuceneSearch extends SearchService {
 
   private void updateIndexNoteName(Note note) throws IOException {
     String noteName = note.getName();
-    String noteId = note.getId();
+    String noteId = note.getNoteId();
     logger.debug("Indexing Notebook {}, '{}'", noteId, noteName);
     if (null == noteName || noteName.isEmpty()) {
       logger.debug("Skipping empty notebook name");
@@ -216,7 +216,7 @@ public class LuceneSearch extends SearchService {
       logger.debug("Skipping empty paragraph");
       return;
     }
-    updateDoc(note.getId(), note.getName(), p);
+    updateDoc(note.getNoteId(), note.getName(), p);
   }
 
   /**
@@ -248,7 +248,7 @@ public class LuceneSearch extends SearchService {
     if (null != p) {
       //TODO(egorklimov): fix Paragraph id
 
-      // id = Joiner.on('/').join(id, PARAGRAPH, p.getId());
+      // id = Joiner.on('/').join(id, PARAGRAPH, p.getNoteId());
     }
     return id;
   }
@@ -258,7 +258,7 @@ public class LuceneSearch extends SearchService {
     if (null != p) {
       //TODO(egorklimov): fix Paragraph id
 
-      // id = Joiner.on('/').join(id, PARAGRAPH, p.getId());
+      // id = Joiner.on('/').join(id, PARAGRAPH, p.getNoteId());
     } else {
       id = id + "*";
     }
@@ -342,13 +342,13 @@ public class LuceneSearch extends SearchService {
    * @throws IOException
    */
   private void addIndexDocAsync(Note note) throws IOException {
-    indexNoteName(indexWriter, note.getId(), note.getName());
+    indexNoteName(indexWriter, note.getNoteId(), note.getName());
     for (Paragraph doc : note.getParagraphs()) {
       if (doc.getText() == null) {
         logger.debug("Skipping empty paragraph");
         continue;
       }
-      indexDoc(indexWriter, note.getId(), note.getName(), doc);
+      indexDoc(indexWriter, note.getNoteId(), note.getName(), doc);
     }
   }
 

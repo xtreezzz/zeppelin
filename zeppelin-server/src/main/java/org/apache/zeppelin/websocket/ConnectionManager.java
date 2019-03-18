@@ -154,7 +154,7 @@ public class ConnectionManager {
     final GUI formsSettings = new GUI();
     formsSettings.setForms(note.getGuiConfiguration().getForms());
     formsSettings.setParams(note.getGuiConfiguration().getParams());
-  //broadcast(note.getId(), new Message(Message.OP.SAVE_NOTE_FORMS)
+  //broadcast(note.getNoteId(), new Message(Message.OP.SAVE_NOTE_FORMS)
   //          .put("formsData", formsSettings));
   }
 }

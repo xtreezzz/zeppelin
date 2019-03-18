@@ -75,7 +75,7 @@ public class ParagraphHandler extends AbstractHandler {
     p.setText(text);
 
     noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
   public void patchParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -103,7 +103,7 @@ public class ParagraphHandler extends AbstractHandler {
     final SockMessage message = new SockMessage(Operation.PATCH_PARAGRAPH)
             .put("patch", patchText)
             .put("paragraphId", paragraphId);
-    connectionManager.broadcast(note.getId(), message);
+    connectionManager.broadcast(note.getNoteId(), message);
   }
 
   public void removeParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -118,7 +118,7 @@ public class ParagraphHandler extends AbstractHandler {
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_REMOVED)
             .put("id", p.getId());
-    connectionManager.broadcast(note.getId(), message);
+    connectionManager.broadcast(note.getNoteId(), message);
   }
 
   public void clearParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -127,8 +127,8 @@ public class ParagraphHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    //note.clearParagraphOutput(p.getId());
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    //note.clearParagraphOutput(p.getNoteId());
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
   public void moveParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -149,7 +149,7 @@ public class ParagraphHandler extends AbstractHandler {
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", p.getId())
             .put("index", index);
-    connectionManager.broadcast(note.getId(), message);
+    connectionManager.broadcast(note.getNoteId(), message);
   }
 
   //TODO(egorklimov): config removed from paragraph
@@ -167,7 +167,7 @@ public class ParagraphHandler extends AbstractHandler {
     note.getParagraphs().add(index, p);
 
     noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", p).put("index", index));
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", p).put("index", index));
     return p.getId();
   }
 

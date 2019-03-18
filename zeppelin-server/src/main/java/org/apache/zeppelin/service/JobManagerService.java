@@ -114,7 +114,7 @@ public class JobManagerService {
     public NoteJobInfo(final Note note) {
       boolean isNoteRunning = false;
       long lastRunningUnixTime = 0;
-      this.noteId = note.getId();
+      this.noteId = note.getNoteId();
       this.noteName = note.getName();
       // set note type ( cron or normal )
       if (isCron(note)) {

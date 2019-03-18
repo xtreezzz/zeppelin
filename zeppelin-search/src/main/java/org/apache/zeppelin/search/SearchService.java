@@ -98,7 +98,7 @@ public abstract class SearchService extends NoteEventAsyncListener {
 
   @Override
   public void handleNoteRemoveEvent(NoteRemoveEvent noteRemoveEvent) {
-    deleteIndexDocs(noteRemoveEvent.getNote().getId());
+    deleteIndexDocs(noteRemoveEvent.getNote().getNoteId());
   }
 
   @Override
@@ -122,7 +122,7 @@ public abstract class SearchService extends NoteEventAsyncListener {
   @Override
   public void handleParagraphRemoveEvent(ParagraphRemoveEvent paragraphRemoveEvent) {
     Paragraph p = paragraphRemoveEvent.getParagraph();
-    deleteIndexDoc(p.getNote().getId(), p);
+    deleteIndexDoc(p.getNote().getNoteId(), p);
   }
 
   @Override

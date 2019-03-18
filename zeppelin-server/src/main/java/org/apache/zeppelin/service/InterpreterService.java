@@ -198,8 +198,8 @@ public class InterpreterService {
       // add paragraph info
       //info.put("interpreterText", paragraph.getIntpText());
       //      info.put("noteName", paragraph.getNote().getName());
-      //      info.put("noteId", paragraph.getNote().getId());
-      //      info.put("id", paragraph.getId());
+      //      info.put("noteId", paragraph.getNote().getNoteId());
+      //      info.put("id", paragraph.getNoteId());
       //      info.put("user", paragraph.getUser());
       //      return info;
     //} catch (InterpreterNotFoundException e) {

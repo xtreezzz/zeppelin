@@ -23,7 +23,7 @@ public class DatabaseNoteRepository {
 
   public List<NoteInfo> getNotesInfo() {
     return storage.getAllNotes().stream()
-        .map(note -> new NoteInfo(note.getId(), note.getPath()))
+        .map(note -> new NoteInfo(note.getNoteId(), note.getPath()))
         .collect(Collectors.toList());
   }
 

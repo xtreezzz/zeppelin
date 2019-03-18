@@ -42,10 +42,10 @@ public class ParagraphJobListenerImpl {
 //  @Override
 //  public void onOutputAppend(final Paragraph paragraph, final int idx, final String output) {
 //    final SockMessage msg = new SockMessage(Operation.PARAGRAPH_APPEND_OUTPUT)
-//            .put("noteId", paragraph.getNote().getId())
-//            .put("paragraphId", paragraph.getId())
+//            .put("noteId", paragraph.getNote().getNoteId())
+//            .put("paragraphId", paragraph.getNoteId())
 //            .put("data", output);
-//    connectionManager.broadcast(paragraph.getNote().getId(), msg);
+//    connectionManager.broadcast(paragraph.getNote().getNoteId(), msg);
 //  }
 //
 //  /**
@@ -54,10 +54,10 @@ public class ParagraphJobListenerImpl {
 //  @Override
 //  public void onOutputUpdate(final Paragraph paragraph, final int idx, final InterpreterResultMessage result) {
 //    final SockMessage msg = new SockMessage(Operation.PARAGRAPH_UPDATE_OUTPUT)
-//            .put("noteId", paragraph.getNote().getId())
-//            .put("paragraphId", paragraph.getId())
+//            .put("noteId", paragraph.getNote().getNoteId())
+//            .put("paragraphId", paragraph.getNoteId())
 //            .put("data", result.getData());
-//    connectionManager.broadcast(paragraph.getNote().getId(), msg);
+//    connectionManager.broadcast(paragraph.getNote().getNoteId(), msg);
 //  }
 //
 //  @Override
@@ -76,11 +76,11 @@ public class ParagraphJobListenerImpl {
 //  //TODO(egorklimov): Replace Job with corresponding Paragraph class
 //  public void onProgressUpdate(final Job p, final int progress) {
 //    final SockMessage message = new SockMessage(Operation.PROGRESS)
-//            .put("id", p.getId())
+//            .put("id", p.getNoteId())
 //            .put("progress", progress);
 //    //TODO(egorklimov): parent note has been removed from paragraph
 //    throw new NotImplementedException("Parent note has been removed from paragraph");
-//    //connectionManager.broadcast(p.getNote().getId(), message);
+//    //connectionManager.broadcast(p.getNote().getNoteId(), message);
 //  }
 //
 //  @Override
@@ -97,11 +97,11 @@ public class ParagraphJobListenerImpl {
 //    //    if (p.isTerminated()) {
 //    //      if (p.getStatus() == Job.Status.FINISHED) {
 //    //        LOG.info("Note {}, job {} is finished successfully, status: {}",
-//    //                p.getNote().getId(), p.getId(), p.getStatus());
+//    //                p.getNote().getNoteId(), p.getNoteId(), p.getStatus());
 //    //      } else {
 //    //        LOG.warn("Note {}. job {} is finished, status: {}, exception: {}, "
 //    //                        + "result\n@@@@@ Result start @@@@@\n{}\n@@@@@ Result end @@@@@",
-//    //                p.getNote().getId(), p.getId(), p.getStatus(), p.getException(), p.getReturn());
+//    //                p.getNote().getNoteId(), p.getNoteId(), p.getStatus(), p.getException(), p.getReturn());
 //    //      }
 //    //
 //    //      try {
@@ -112,7 +112,7 @@ public class ParagraphJobListenerImpl {
 //    //    }
 //    //
 //    //    p.setStatusToUserParagraph(p.getStatus());
-//    //    connectionManager.broadcast(p.getNote().getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+//    //    connectionManager.broadcast(p.getNote().getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
 //
 //    //    for (NoteEventListener listener : zeppelinRepository.getNoteEventListeners()) {
 //    //      listener.onParagraphStatusChange(p, after);

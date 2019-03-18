@@ -60,13 +60,13 @@ public class NoteEventListenerImpl implements NoteEventListener {
     notesJobInfo = jobManagerService.getNoteJobInfoByUnixTime(System.currentTimeMillis() - 5000);
     broadcastSuccessResponse(notesJobInfo);
 
-    notesJobInfo = jobManagerService.removeNoteJobInfo(note.getId());
+    notesJobInfo = jobManagerService.removeNoteJobInfo(note.getNoteId());
     broadcastSuccessResponse(notesJobInfo);
   }
 
   @Override
   public void onParagraphCreate(final Paragraph p) {
-    final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(p.getNote().getId());
+    final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(p.getNote().getNoteId());
     broadcastSuccessResponse(notesJobInfo);
   }
 
@@ -77,7 +77,7 @@ public class NoteEventListenerImpl implements NoteEventListener {
 
   @Override
   public void onNoteCreate(final Note note) {
-    final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(note.getId());
+    final List<JobManagerService.NoteJobInfo> notesJobInfo = jobManagerService.getNoteJobInfo(note.getNoteId());
     broadcastSuccessResponse(notesJobInfo);
   }
 

@@ -73,7 +73,7 @@ public class SpellHandler extends AbstractHandler {
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
     noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
   }
 
 
@@ -82,7 +82,7 @@ public class SpellHandler extends AbstractHandler {
     //TODO(egorklimov): Should get ParagraphJobContext
     //    if (!(Strings.isNullOrEmpty(p.getText()) ||
     //            Strings.isNullOrEmpty(p.getScriptText())) &&
-    //            note.isLastParagraph(p.getId())) {
+    //            note.isLastParagraph(p.getNoteId())) {
     //      note.addParagraph(p.getAuthenticationInfo());
   }
 
