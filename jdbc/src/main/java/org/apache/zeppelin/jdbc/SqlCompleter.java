@@ -4,14 +4,20 @@ package org.apache.zeppelin.jdbc;
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
 
+import com.google.gson.Gson;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -281,7 +287,7 @@ public class SqlCompleter {
    *        for example "prod_v_%,prod_t_%"
    */
   public void createOrUpdateFromConnection(Connection connection, String schemaFiltersString,
-      String buffer, int cursor) {
+      String buffer, int cursor, final String connectionUrl) {
     try (Connection c = connection) {
       if (schemaFiltersString == null) {
         schemaFiltersString = StringUtils.EMPTY;
@@ -295,8 +301,27 @@ public class SqlCompleter {
       Set<String> catalogs = new HashSet<>();
       Set<String> keywords = new HashSet<>();
 
+      final File dumpFolder = new File("/Metadata");
+      if(!dumpFolder.exists()) {
+        dumpFolder.mkdir();
+      }
+      final File dump = new File("/Metadata/" + DigestUtils.md5Hex(connectionUrl));
+
       if (c != null) {
-        DatabaseMetaData databaseMetaData = c.getMetaData();
+        DatabaseMetaData databaseMetaData;
+        if(dump.exists()) {
+          try {
+            databaseMetaData = new Gson().fromJson(new String(Files.readAllBytes(dump.toPath())), DatabaseMetaData.class);
+          } catch (Exception e) {
+            logger.error("Error while deserialize metafile", e);
+            databaseMetaData = c.getMetaData();
+            FileUtils.writeStringToFile(dump, new Gson().toJson(databaseMetaData));
+          }
+        } else {
+          databaseMetaData = c.getMetaData();
+          FileUtils.writeStringToFile(dump, new Gson().toJson(databaseMetaData));
+        }
+
         if (keywordCompleter == null || keywordCompleter.getCompleter() == null
             || keywordCompleter.isExpired()) {
           keywords = getSqlKeywordsCompletions(databaseMetaData);

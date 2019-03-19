@@ -240,7 +240,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private SqlCompleter createOrUpdateSqlCompleter(SqlCompleter sqlCompleter,
-      final Connection connection, String propertyKey, final String buf, final int cursor) {
+      final Connection connection, String propertyKey, final String buf, final int cursor, final String connectionUrl) {
     String schemaFiltersKey = String.format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY);
     String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
     final String schemaFiltersString = getProperty(schemaFiltersKey);
@@ -257,7 +257,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     executorService.execute(new Runnable() {
       @Override
       public void run() {
-        completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
+        completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor, connectionUrl);
       }
     });
 
@@ -882,7 +882,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       logger.warn("SQLCompleter will created without use connection");
     }
 
-    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
+    sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor, properties.getProperty(URL_KEY));
     sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
     sqlCompleter.complete(buf, cursor, candidates);
 
