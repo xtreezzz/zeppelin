@@ -233,7 +233,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteRevisionService.checkpointNote(session, messagereceived);
           break;
         case LIST_REVISION_HISTORY:
-//          noteRevisionService.listRevisionHistory(session, messagereceived);
+          noteRevisionService.listRevisionHistory(session, messagereceived);
           break;
         case SET_NOTE_REVISION:
           noteRevisionService.setNoteRevision(session, messagereceived);

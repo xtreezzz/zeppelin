@@ -18,12 +18,9 @@
 package org.apache.zeppelin.websocket.handler;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
-import org.apache.zeppelin.repository.NotebookRepoWithVersionControl;
 import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -47,16 +44,9 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final String commitSockMessage = fromMessage.getNotNull("commitSockMessage");
+    final String message = fromMessage.getNotNull("commitMessage");
 
-    final NotebookRepoWithVersionControl.Revision revision
-            = null;//notebook.checkpointNote(note.getNoteId(), note.getName(), commitSockMessage);
-
-    if (NotebookRepoWithVersionControl.Revision.isEmpty(revision)) {
-      throw new IOException("Couldn't checkpoint note revision: possibly storage doesn't support versioning. "
-              + "Please check the logs for more details.");
-    }
-
+    noteRepository.createRevision(note, message);
     listRevisionHistory(conn, fromMessage);
   }
 
@@ -65,9 +55,8 @@ public class NoteRevisionHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
 
-    final List<NotebookRepoWithVersionControl.Revision> revisions = new ArrayList<>();//notebook.listRevisionHistory(note.getNoteId(), note.getPath());
     final SockMessage message = new SockMessage(Operation.LIST_REVISION_HISTORY)
-            .put("revisionList", revisions);
+            .put("revisionList", noteRepository.getRevisions(note.getDatabaseId()));
     conn.sendMessage(message.toSend());
   }
 
@@ -75,7 +64,9 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
-    final String revisionId = fromMessage.getNotNull("revisionId");
+    final Long revisionId = Long.parseLong(fromMessage.getNotNull("revisionId"));
+
+    noteRepository.checkoutRevision(note, revisionId);
 
     final Note revisionNote = note;//notebook.getNoteByRevision(note.getNoteId(), note.getPath(), revisionId);
     final SockMessage message = new SockMessage(Operation.NOTE_REVISION)
@@ -90,20 +81,19 @@ public class NoteRevisionHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
     final String position = fromMessage.getNotNull("position");
-    final String revisionId = fromMessage.getNotNull("revisionId");
+    final Long revisionId = ((Double) fromMessage.getNotNull("revisionId")).longValue();
 
-    final Note revisionNote;
     if ("Head".equals(revisionId)) {
-      revisionNote = note;
+      noteRepository.checkoutRevision(note, null);
     } else {
-      revisionNote = note;// notebook.getNoteByRevision(note.getNoteId(), note.getPath(), revisionId);
+      noteRepository.checkoutRevision(note, revisionId);
     }
 
     final SockMessage message = new SockMessage(Operation.NOTE_REVISION_FOR_COMPARE)
             .put("noteId", note.getNoteId())
             .put("revisionId", revisionId)
             .put("position", position)
-            .put("note", revisionNote);
+            .put("note", note);
     conn.sendMessage(message.toSend());
   }
 
@@ -111,14 +101,13 @@ public class NoteRevisionHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-    final String revisionId = fromMessage.getNotNull("revisionId");
+    final Long revisionId = Long.parseLong(fromMessage.getNotNull("revisionId"));
 
-    //notebook.setNoteRevision(note.getNoteId(), note.getPath(), revisionId);
-    final Note reloadedNote = note;//notebook.loadNoteFromRepo(note.getNoteId(), serviceContext.getAutheInfo());
+    noteRepository.applyRevision(note, revisionId);
 
     final SockMessage message = new SockMessage(Operation.SET_NOTE_REVISION)
             .put("status", true);
     conn.sendMessage(message.toSend());
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", reloadedNote));
+    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
   }
 }

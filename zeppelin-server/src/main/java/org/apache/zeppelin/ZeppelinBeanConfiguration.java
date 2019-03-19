@@ -20,7 +20,9 @@ package org.apache.zeppelin;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
+import org.apache.zeppelin.storage.NoteRevisionDAO;
 import org.apache.zeppelin.storage.NotebookDAO;
+import org.apache.zeppelin.storage.ParagraphDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -39,7 +41,9 @@ public class ZeppelinBeanConfiguration {
   @Bean
   @Autowired
   public DatabaseNoteRepository databaseNoteRepository(final NamedParameterJdbcTemplate jdbcTemplate) {
-    return new DatabaseNoteRepository(new NotebookDAO(jdbcTemplate));
+    ParagraphDAO paragraphDAO = new ParagraphDAO(jdbcTemplate);
+    NoteRevisionDAO noteRevisionDAO = new NoteRevisionDAO(jdbcTemplate, paragraphDAO);
+    return new DatabaseNoteRepository(new NotebookDAO(jdbcTemplate, paragraphDAO), noteRevisionDAO);
   }
 
   @Bean

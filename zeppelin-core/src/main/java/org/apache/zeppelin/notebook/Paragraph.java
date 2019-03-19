@@ -37,7 +37,7 @@ public class Paragraph implements Serializable {
   //  * Убрал конфиг, так как видимо в нем хранилось только isEnabled - думаю стоит вынести это в джобу
   //  * Убрал InterpreterResult - надо сделать сервис по загрузке
   //  * Убрал ApplicationState - надо сделать сервис по загрузке
-
+  private long databaseId;
   private String id;
   private String title;
   private String text;
@@ -72,6 +72,14 @@ public class Paragraph implements Serializable {
 
   public void setId(final String id) {
     this.id = id;
+  }
+
+  public long getDatabaseId() {
+    return databaseId;
+  }
+
+  public void setDatabaseId(final long databaseId) {
+    this.databaseId = databaseId;
   }
 
   public String getTitle() {

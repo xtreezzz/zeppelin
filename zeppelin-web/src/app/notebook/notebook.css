@@ -19,6 +19,7 @@
 .revision  {
   max-width: 250px;
   margin-bottom: 0 !important;
+  border-bottom: 1px solid #e3e3e3;
 }
 
 .revision a {
@@ -39,9 +40,11 @@
 }
 
 .revisionDate {
-  font-size: 8px;
-  color: DarkGrey;
+  font-size: 11px;
+  color: #002377;
   display: block;
+  text-align: right;
+  padding: 2px 10px 8px 0;
 }
 
 .revisionName:hover,

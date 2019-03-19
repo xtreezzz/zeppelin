@@ -26,7 +26,7 @@ limitations under the License.
           ng-class="{'cursor-hand': !$last, 'selected-revision': revision.message === currentSecondRevisionForCompare}"
           ng-click="getNoteRevisionForReview($ctrl.noteRevisions[$index + 1], 'first'); getNoteRevisionForReview(revision, 'second')">
         <td>{{revision.message}}</td>
-        <td>{{formatRevisionDate(revision.time)}}</td>
+        <td>{{formatRevisionDate(revision.date)}}</td>
       </tr>
       </tbody>
     </table>
@@ -48,7 +48,7 @@ limitations under the License.
             <strong>{{revision.message}}</strong>
           </span>
             <span class="revisionDate">
-            <em>{{formatRevisionDate(revision.time)}}</em>
+            <em>{{formatRevisionDate(revision.date)}}</em>
           </span>
           </a>
         </li>
@@ -70,7 +70,7 @@ limitations under the License.
             <strong>{{revision.message}}</strong>
           </span>
             <span class="revisionDate">
-            <em>{{formatRevisionDate(revision.time)}}</em>
+            <em>{{formatRevisionDate(revision.date)}}</em>
           </span>
           </a>
         </li>

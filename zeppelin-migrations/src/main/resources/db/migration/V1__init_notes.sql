@@ -1,17 +1,26 @@
 CREATE TABLE notes
 (
-  id          BIGSERIAL     PRIMARY KEY,
+  id          BIGSERIAL PRIMARY KEY,
   note_id     VARCHAR(9)    NOT NULL UNIQUE,
   path        VARCHAR(1024) NOT NULL,
   permissions JSON          NOT NULL,
   gui         JSON          NOT NULL
 );
 
+CREATE TABLE revisions
+(
+  id      BIGSERIAL PRIMARY KEY,
+  note_id BIGINT REFERENCES notes (id) ON DELETE CASCADE,
+  message VARCHAR(128) NOT NULL,
+  date    TIMESTAMP    NOT NULL
+);
+
 CREATE TABLE paragraphs
 (
   id           BIGSERIAL PRIMARY KEY,
-  paragraph_id VARCHAR(40)      NOT NULL,
+  paragraph_id VARCHAR(40)  NOT NULL,
   db_note_id   BIGINT REFERENCES notes (id) ON DELETE CASCADE,
+  revision_id  BIGINT REFERENCES revisions (id),
   title        VARCHAR(256) NOT NULL,
   text         TEXT         NOT NULL,
   username     VARCHAR(128) NOT NULL,
@@ -20,8 +29,7 @@ CREATE TABLE paragraphs
   config       JSON         NOT NULL,
   gui          JSON         NOT NULL,
   position     INTEGER      NOT NULL,
-  job_result   BIGINT,
-  UNIQUE (paragraph_id, id)
+  job_result   BIGINT
 );
 
 CREATE TABLE JOB_BATCH

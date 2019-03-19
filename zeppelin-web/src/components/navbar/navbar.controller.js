@@ -31,7 +31,6 @@ function NavCtrl($scope, $rootScope, $http, $routeParams, $location,
   vm.TRASH_FOLDER_ID = TRASH_FOLDER_ID;
   vm.isFilterNote = isFilterNote;
   vm.numberOfNotesDisplayed = 10;
-  let revisionSupported = false;
 
   $scope.query = {q: ''};
 
@@ -251,16 +250,5 @@ function NavCtrl($scope, $rootScope, $http, $routeParams, $location,
       }
     }
     return 'top';
-  };
-
-  $scope.$on('configurationsInfo', function(scope, event) {
-    // Server send this parameter is String
-    if(event.configurations['isRevisionSupported']==='true') {
-      revisionSupported = true;
-    }
-  });
-
-  $rootScope.isRevisionSupported = function() {
-    return revisionSupported;
   };
 }

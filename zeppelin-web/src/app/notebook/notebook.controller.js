@@ -43,7 +43,13 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   $scope.selectedParagraphsIds = new Set();
 
   $scope.formatRevisionDate = function(date) {
-    return moment.unix(date).format('MMMM Do YYYY, h:mm a');
+    if (!date) {
+      return 'Unidentified'
+    }
+    let parsedDate = new Date(
+      date.date.year, date.date.month - 1, date.date.day,
+        date.time.hour, date.time.minute, date.time.second);
+    return moment.unix(parsedDate / 1000).format('MMMM Do YYYY, HH:mm');
   };
 
   $scope.interpreterSettings = [];
@@ -284,7 +290,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       message: 'Commit note to current repository?',
       callback: function(result) {
         if (result) {
-          websocketMsgSrv.checkpointNote($routeParams.noteId, $routeParams.name, commitMessage);
+          websocketMsgSrv.checkpointNote($routeParams.noteId, commitMessage);
         }
       },
     });
@@ -299,7 +305,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       message: 'Set notebook head to current revision?',
       callback: function(result) {
         if (result) {
-          websocketMsgSrv.setNoteRevision($routeParams.noteId, $routeParams.name, $routeParams.revisionId);
+          websocketMsgSrv.setNoteRevision($routeParams.noteId, $routeParams.revisionId);
         }
       },
     });

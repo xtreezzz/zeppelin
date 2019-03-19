@@ -43,11 +43,10 @@ public class Note implements Serializable {
   private final static String TRASH_FOLDER = "~Trash";
 
   private long databaseId;
-
-  // zeppelin note id
   private String id;
   private String name;
   private String path;
+  private NoteRevision revision;
 
   /**
    * form and parameter guiConfiguration
@@ -164,6 +163,14 @@ public class Note implements Serializable {
   public void setPath(final String path) {
     this.path = path;
     this.name = path.substring(path.lastIndexOf(File.separator) + 1);
+  }
+
+  public NoteRevision getRevision() {
+    return revision;
+  }
+
+  public void setRevision(final NoteRevision revision) {
+    this.revision = revision;
   }
 
   public boolean isTrashed() {

@@ -153,7 +153,13 @@ function RevisionsComparatorController($scope, websocketMsgSrv, $routeParams) {
   });
 
   $scope.formatRevisionDate = function(date) {
-    return moment.unix(date).format('MMMM Do YYYY, h:mm:ss a');
+    if (!date) {
+      return 'Unidentified'
+    }
+    let parsedDate = new Date(
+      date.date.year, date.date.month - 1, date.date.day,
+      date.time.hour, date.time.minute, date.time.second);
+    return moment.unix(parsedDate / 1000).format('MMMM Do YYYY, HH:mm');
   };
 
   $scope.changeCurrentParagraphDiffDisplay = function(paragraphId) {
