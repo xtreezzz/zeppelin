@@ -3,13 +3,19 @@ package ru.tinkoff.zeppelin.jdbc;
 /*
  * This source file is based on code taken from SQLLine 1.0.2 See SQLLine notice in LICENSE
  */
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashSet;
+
+import com.google.gson.Gson;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -312,7 +318,7 @@ public class SqlCompleter {
    */
 
   void createOrUpdateFromConnection(Connection connection, String schemaFiltersString,
-                                    String buffer, int cursor) {
+                                    String buffer, int cursor, final String connectionUrl) {
     // get statement completion
     Set<String> keywords = getSqlKeywordsCompletions(buffer);
     initKeywords(keywords);
@@ -325,8 +331,35 @@ public class SqlCompleter {
       List<String> schemaFilters = Arrays.asList(schemaFiltersString.split(","));
 
 
+      final File dumpFolder = new File("/Metadata");
+      if(!dumpFolder.exists()) {
+        dumpFolder.mkdir();
+      }
+      final File dump = new File("/Metadata/" + DigestUtils.md5Hex(connectionUrl));
+
       if (c != null) {
-        DatabaseMetaData databaseMetaData = c.getMetaData();
+        DatabaseMetaData databaseMetaData;
+        if(dump.exists()) {
+          try {
+            databaseMetaData = new Gson().fromJson(new String(Files.readAllBytes(dump.toPath())), DatabaseMetaData.class);
+          } catch (Exception e) {
+            logger.error("Error while deserialize metafile", e);
+            databaseMetaData = c.getMetaData();
+            try {
+              FileUtils.writeStringToFile(dump, new Gson().toJson(databaseMetaData));
+            } catch (Exception e1) {
+              logger.error("Error while deserialize metafile", e1);
+            }
+          }
+        } else {
+          databaseMetaData = c.getMetaData();
+          try {
+            FileUtils.writeStringToFile(dump, new Gson().toJson(databaseMetaData));
+          } catch (Exception e1) {
+            logger.error("Error while deserialize metafile", e1);
+          }
+        }
+
 
         //TODO(mebelousov): put defaultSchema in cache
         if (defaultSchema == null) {

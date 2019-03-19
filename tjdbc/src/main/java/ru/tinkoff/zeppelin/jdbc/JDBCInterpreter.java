@@ -241,7 +241,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private SqlCompleter createOrUpdateSqlCompleter(SqlCompleter sqlCompleter,
-      final Connection connection, String propertyKey, final String buf, final int cursor) {
+      final Connection connection, String propertyKey, final String buf, final int cursor,
+                                                  final String connectionUrl) {
     String schemaFiltersKey = String.format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY);
     String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
     final String schemaFiltersString = getProperty(schemaFiltersKey);
@@ -256,7 +257,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
     ExecutorService executorService = Executors.newFixedThreadPool(1);
     executorService.execute(() -> {
-      completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor);
+      completer.createOrUpdateFromConnection(connection, schemaFiltersString, buf, cursor, connectionUrl);
     });
 
     executorService.shutdown();
@@ -848,7 +849,12 @@ public class JDBCInterpreter extends KerberosInterpreter {
     }
 
     try {
-      sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);
+      sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter,
+              connection,
+              propertyKey,
+              buf,
+              cursor,
+              properties.getProperty(URL_KEY));
       sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
       sqlCompleter.fillCandidates(buf, cursor, candidates);
     } catch (Exception e) {
