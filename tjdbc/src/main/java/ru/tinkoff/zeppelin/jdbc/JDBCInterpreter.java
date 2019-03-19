@@ -19,11 +19,18 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod.KERBEROS;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.sql.*;
 import java.util.Map.Entry;
+
+import com.google.gson.Gson;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDriver;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang.mutable.MutableBoolean;
@@ -39,12 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -837,25 +838,48 @@ public class JDBCInterpreter extends KerberosInterpreter {
       InterpreterContext interpreterContext) {
     List<InterpreterCompletion> candidates = new ArrayList<>();
     String propertyKey = getPropertyKey(interpreterContext);
-    String sqlCompleterKey =
-        String.format("%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
-    SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
 
-    Connection connection = null;
-    try {
-      connection = getConnection(propertyKey, interpreterContext);
-    } catch (ClassNotFoundException | SQLException | IOException | InterpreterException e) {
-      logger.warn("SQLCompleter will created without use connection", e);
+
+    SqlCompleter sqlCompleter = null;
+    // try to deserialize
+    final File dumpFolder = new File("Metadata2");
+    if(!dumpFolder.exists()) {
+      dumpFolder.mkdir();
+    }
+    final File dump = new File("Metadata2/" + DigestUtils.md5Hex(properties.getProperty(URL_KEY)));
+    if(dump.exists()) {
+      try {
+        sqlCompleter = new Gson().fromJson(new String(Files.readAllBytes(dump.toPath())), SqlCompleter.class);
+      } catch (Exception e) {
+        logger.error("Completion failed", e);
+        try {
+          FileUtils.forceDelete(dump);
+        } catch (Exception e1) {
+          logger.error("Completion failed", e1);
+        }
+      }
     }
 
     try {
-      sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter,
-              connection,
-              propertyKey,
-              buf,
-              cursor,
-              properties.getProperty(URL_KEY));
-      sqlCompletersMap.put(sqlCompleterKey, sqlCompleter);
+      if(sqlCompleter == null) {
+        Connection connection = null;
+        try {
+          connection = getConnection(propertyKey, interpreterContext);
+        } catch (ClassNotFoundException | SQLException | IOException | InterpreterException e) {
+          logger.warn("SQLCompleter will created without use connection", e);
+        }
+        sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter,
+                connection,
+                propertyKey,
+                buf,
+                cursor,
+                properties.getProperty(URL_KEY));
+        try {
+          FileUtils.writeStringToFile(dump, new Gson().toJson(sqlCompleter));
+        } catch (Exception e1) {
+          logger.error("Error while serialize metafile", e1);
+        }
+      }
       sqlCompleter.fillCandidates(buf, cursor, candidates);
     } catch (Exception e) {
       logger.error("Completion failed", e);
