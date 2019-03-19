@@ -846,19 +846,31 @@ public class JDBCInterpreter extends KerberosInterpreter {
     if(!dumpFolder.exists()) {
       dumpFolder.mkdir();
     }
-    final File dump = new File("Metadata2/" + DigestUtils.md5Hex(properties.getProperty(URL_KEY)));
-    if(dump.exists()) {
-      try {
-        sqlCompleter = new Gson().fromJson(new String(Files.readAllBytes(dump.toPath())), SqlCompleter.class);
-      } catch (Exception e) {
-        logger.error("Completion failed", e);
+
+    File dump = null;
+    try {
+      String user = interpreterContext.getAuthenticationInfo().getUser();
+      JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
+      setUserProperty(propertyKey, interpreterContext);
+
+      final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
+      dump = new File("Metadata2/" + DigestUtils.md5Hex(properties.getProperty(URL_KEY)));
+      if(dump.exists()) {
         try {
-          FileUtils.forceDelete(dump);
-        } catch (Exception e1) {
-          logger.error("Completion failed", e1);
+          sqlCompleter = new Gson().fromJson(new String(Files.readAllBytes(dump.toPath())), SqlCompleter.class);
+        } catch (Exception e) {
+          logger.error("Completion failed", e);
+          try {
+            FileUtils.forceDelete(dump);
+          } catch (Exception e1) {
+            logger.error("Completion failed", e1);
+          }
         }
       }
+    } catch (Exception e) {
+      logger.error("Completion failed", e);
     }
+
 
     try {
       if(sqlCompleter == null) {
@@ -875,7 +887,9 @@ public class JDBCInterpreter extends KerberosInterpreter {
                 cursor,
                 properties.getProperty(URL_KEY));
         try {
-          FileUtils.writeStringToFile(dump, new Gson().toJson(sqlCompleter));
+          if(dump != null) {
+            FileUtils.writeStringToFile(dump, new Gson().toJson(sqlCompleter));
+          }
         } catch (Exception e1) {
           logger.error("Error while serialize metafile", e1);
         }
