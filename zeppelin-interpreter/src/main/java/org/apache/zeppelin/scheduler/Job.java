@@ -236,7 +236,7 @@ public abstract class Job<T> {
   public void abort() {
     final boolean aborted = jobAbort();
     synchronized (this) {
-      this.aborted.set(aborted);
+      this.aborted.set(false);
     }
   }
 

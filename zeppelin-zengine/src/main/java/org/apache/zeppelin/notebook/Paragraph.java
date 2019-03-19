@@ -516,6 +516,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
         }
       } else {
         setStatus(Status.ABORT);
+        setAbortedStatus(false);
         this.getNote().setRunning(false);
       }
     }
