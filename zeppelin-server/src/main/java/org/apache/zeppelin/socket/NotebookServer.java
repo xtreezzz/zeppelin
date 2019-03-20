@@ -697,6 +697,13 @@ public class NotebookServer extends WebSocketServlet
             broadcastNote(note);
             broadcastNoteList(context.getAutheInfo(), context.getUserAndRoles());
           }
+
+          @Override
+          public void onFailure(Exception ex, ServiceContext context) throws IOException {
+            super.onFailure(ex, context);
+            conn.send(serializeMessage(new Message(OP.ERROR_INFO).put("info",
+                "Failed to rename note.\n" + ex.getMessage())));
+          }
         });
   }
 
@@ -734,7 +741,7 @@ public class NotebookServer extends WebSocketServlet
           public void onFailure(Exception ex, ServiceContext context) throws IOException {
             super.onFailure(ex, context);
             conn.send(serializeMessage(new Message(OP.ERROR_INFO).put("info",
-                "Failed to create note.\n" + ExceptionUtils.getMessage(ex))));
+                "Failed to create note.\n" + ex.getMessage())));
           }
         });
   }

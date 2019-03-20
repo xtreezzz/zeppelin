@@ -194,6 +194,10 @@ public class NoteManager {
   public void moveNote(String noteId,
                        String newNotePath,
                        AuthenticationInfo subject) throws IOException {
+    if (getAllNotes().stream().map(Note::getPath).collect(Collectors.toList())
+        .contains(newNotePath)) {
+      throw new IOException("Note name must be unique");
+    }
     String notePath = this.notesInfo.get(noteId);
     if (noteId == null) {
       throw new IOException("No metadata found for this note: " + noteId);
@@ -218,7 +222,6 @@ public class NoteManager {
   public void moveFolder(String folderPath,
                          String newFolderPath,
                          AuthenticationInfo subject) throws IOException {
-
     // update notebookrepo
     this.notebookRepo.move(folderPath, newFolderPath, subject);
 
