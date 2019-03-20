@@ -241,7 +241,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
   }
 
   private SqlCompleter createOrUpdateSqlCompleter(SqlCompleter sqlCompleter,
-      final Connection connection, String propertyKey, final String buf, final int cursor) {
+      final CachedConnection connection, String propertyKey, final String buf, final int cursor) {
     String schemaFiltersKey = String.format("%s.%s", propertyKey, COMPLETER_SCHEMA_FILTERS_KEY);
     String sqlCompleterTtlKey = String.format("%s.%s", propertyKey, COMPLETER_TTL_KEY);
     final String schemaFiltersString = getProperty(schemaFiltersKey);
@@ -269,7 +269,7 @@ public class JDBCInterpreter extends KerberosInterpreter {
       if (connection != null) {
         try {
           connection.close();
-        } catch (SQLException e1) {
+        } catch (Exception e1) {
           logger.warn("Error close connection", e1);
         }
       }
@@ -402,63 +402,67 @@ public class JDBCInterpreter extends KerberosInterpreter {
     return DriverManager.getConnection(jdbcDriver);
   }
 
-  private Connection getConnection(String propertyKey, InterpreterContext interpreterContext)
-      throws ClassNotFoundException, SQLException, InterpreterException, IOException {
-    final String user = interpreterContext.getAuthenticationInfo().getUser();
-    Connection connection;
-    if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
-      return null;
-    }
+  private Connection getConnection(String propertyKey, InterpreterContext interpreterContext) {
+    try {
+      final String user = interpreterContext.getAuthenticationInfo().getUser();
+      Connection connection;
+      if (propertyKey == null || basePropretiesMap.get(propertyKey) == null) {
+        return null;
+      }
 
-    JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
-    setUserProperty(propertyKey, interpreterContext);
+      JDBCUserConfigurations jdbcUserConfigurations = getJDBCConfiguration(user);
+      setUserProperty(propertyKey, interpreterContext);
 
-    final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
-    final String url = properties.getProperty(URL_KEY);
+      final Properties properties = jdbcUserConfigurations.getPropertyMap(propertyKey);
+      final String url = properties.getProperty(URL_KEY);
 
-    if (isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
-      connection = getConnectionFromPool(url, user, propertyKey, properties);
-    } else {
-      UserGroupInformation.AuthenticationMethod authType =
-          JDBCSecurityImpl.getAuthtype(getProperties());
+      if (isEmpty(getProperty("zeppelin.jdbc.auth.type"))) {
+        connection = getConnectionFromPool(url, user, propertyKey, properties);
+      } else {
+        UserGroupInformation.AuthenticationMethod authType =
+            JDBCSecurityImpl.getAuthtype(getProperties());
 
-      final String connectionUrl = appendProxyUserToURL(url, user, propertyKey);
+        final String connectionUrl = appendProxyUserToURL(url, user, propertyKey);
 
-      JDBCSecurityImpl.createSecureConfiguration(getProperties(), authType);
-      if (authType == KERBEROS) {
-        if (user == null || "false".equalsIgnoreCase(
-            getProperty("zeppelin.jdbc.auth.kerberos.proxy.enable"))) {
-          connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
-        } else {
-          if (basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
+        JDBCSecurityImpl.createSecureConfiguration(getProperties(), authType);
+        if (authType == KERBEROS) {
+          if (user == null || "false".equalsIgnoreCase(
+              getProperty("zeppelin.jdbc.auth.kerberos.proxy.enable"))) {
             connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
           } else {
-            UserGroupInformation ugi = null;
-            try {
-              ugi = UserGroupInformation.createProxyUser(
-                  user, UserGroupInformation.getCurrentUser());
-            } catch (Exception e) {
-              logger.error("Error in getCurrentUser", e);
-              throw new InterpreterException("Error in getCurrentUser", e);
-            }
+            if (basePropretiesMap.get(propertyKey).containsKey("proxy.user.property")) {
+              connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
+            } else {
+              UserGroupInformation ugi = null;
+              try {
+                ugi = UserGroupInformation.createProxyUser(
+                    user, UserGroupInformation.getCurrentUser());
+              } catch (Exception e) {
+                logger.error("Error in getCurrentUser", e);
+                throw new InterpreterException("Error in getCurrentUser", e);
+              }
 
-            final String poolKey = propertyKey;
-            try {
-              connection = ugi.doAs(
-                  (PrivilegedExceptionAction<Connection>) () ->
-                      getConnectionFromPool(connectionUrl, user, poolKey, properties));
-            } catch (Exception e) {
-              logger.error("Error in doAs", e);
-              throw new InterpreterException("Error in doAs", e);
+              final String poolKey = propertyKey;
+              try {
+                connection = ugi.doAs(
+                    (PrivilegedExceptionAction<Connection>) () ->
+                        getConnectionFromPool(connectionUrl, user, poolKey, properties));
+              } catch (Exception e) {
+                logger.error("Error in doAs", e);
+                throw new InterpreterException("Error in doAs", e);
+              }
             }
           }
+        } else {
+          connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
         }
-      } else {
-        connection = getConnectionFromPool(connectionUrl, user, propertyKey, properties);
       }
-    }
 
-    return connection;
+      return connection;
+    } catch (Exception e) {
+      logger.error("Can not get connection", e);
+      return null;
+    }
   }
 
   private String appendProxyUserToURL(String url, String user, String propertyKey) {
@@ -840,12 +844,8 @@ public class JDBCInterpreter extends KerberosInterpreter {
         String.format("%s.%s", interpreterContext.getAuthenticationInfo().getUser(), propertyKey);
     SqlCompleter sqlCompleter = sqlCompletersMap.get(sqlCompleterKey);
 
-    Connection connection = null;
-    try {
-      connection = getConnection(propertyKey, interpreterContext);
-    } catch (ClassNotFoundException | SQLException | IOException | InterpreterException e) {
-      logger.warn("SQLCompleter will created without use connection", e);
-    }
+    CachedConnection connection = new CachedConnection(
+        () -> getConnection(propertyKey, interpreterContext), properties.getProperty("URL_KEY"));
 
     try {
       sqlCompleter = createOrUpdateSqlCompleter(sqlCompleter, connection, propertyKey, buf, cursor);

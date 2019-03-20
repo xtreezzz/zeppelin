@@ -78,10 +78,10 @@ public class SqlCompleter {
     this.ttlInSeconds = ttlInSeconds;
   }
 
-  private static String extractEntityDescription(ResultSet entityInfo) {
+  private static String extractEntityDescription(Map<String, Object> entityInfo) {
     String description = StringUtils.EMPTY;
     try {
-      description  = entityInfo.getString("REMARKS");
+      description  = (String) entityInfo.get("REMARKS");
       if (description == null) {
         description  = StringUtils.EMPTY;
       }
@@ -96,7 +96,7 @@ public class SqlCompleter {
    * Typically it is enough to use getSchema() on connection,
    * but for Oracle - getUserName() from DatabaseMetaData.
    */
-  private String getDefaultSchema(Connection conn, DatabaseMetaData meta) {
+  private String getDefaultSchema(CachedConnection conn) {
     String defaultSchema = null;
     try {
       if ((defaultSchema = conn.getSchema()) == null) {
@@ -105,7 +105,7 @@ public class SqlCompleter {
     } catch (SQLException | AbstractMethodError e) {
       logger.debug("Default schema is not defined", e);
       try {
-        defaultSchema = meta.getUserName();
+        defaultSchema = conn.getUserName();
       } catch (Exception ee) {
         logger.debug("User name is not defined", ee);
       }
@@ -116,22 +116,23 @@ public class SqlCompleter {
   /**
    * Return list of schema names within the database.
    *
-   * @param meta          metadata from connection to database
+   * @param connection          metadata from connection to database
    * @param schemaFilters a schema name patterns; must match the schema name
    *                      as it is stored in the database; "" retrieves those without a schema;
    *                      <code>null</code> means that the schema name should not be used to narrow
    *                      the search; supports '%'; for example "prod_v_%"
    * @return set of all schema names in the database
    */
-  private static Set<String> getSchemaNames(DatabaseMetaData meta, List<String> schemaFilters) {
+  private static Set<String> getSchemaNames(CachedConnection connection, List<String> schemaFilters) {
     Set<String> res = new HashSet<>();
-    try (ResultSet schemas = meta.getSchemas()) {
-      while (schemas.next()) {
-        String schemaName = schemas.getString("TABLE_SCHEM");
+    try {
+      List<Map<String, Object>> schemas = connection.getSchemas();
+      for (Map<String, Object> schema : schemas) {
+        String schemaName = (String) schema.get("TABLE_SCHEM");
         if (schemaName == null) {
           schemaName = "";
         }
-        String schemaDescription = extractEntityDescription(schemas);
+        String schemaDescription = extractEntityDescription(schema);
         for (String schemaFilter : schemaFilters) {
           if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%",
               ".*?"))) {
@@ -140,54 +141,58 @@ public class SqlCompleter {
           }
         }
       }
-    } catch (SQLException t) {
-      logger.error("Failed to retrieve the schema names", t);
+    } catch (Exception e) {
+      logger.error("getSchemaNames", e);
     }
+
     return res;
   }
 
   /**
    * Return list of catalog names within the database.
    *
-   * @param meta          metadata from connection to database
+   * @param connetion          metadata from connection to database
    * @param schemaFilters a catalog name patterns; must match the catalog name
    *                      as it is stored in the database; "" retrieves those without a catalog;
    *                      <code>null</code> means that the schema name should not be used to narrow
    *                      the search; supports '%'; for example "prod_v_%"
    * @return set of all catalog names in the database
    */
-  private static Set<String> getCatalogNames(DatabaseMetaData meta, List<String> schemaFilters) {
+  private static Set<String> getCatalogNames(CachedConnection connetion,
+      List<String> schemaFilters) {
     Set<String> res = new HashSet<>();
     try {
-      try (ResultSet schemas = meta.getCatalogs()) {
-        while (schemas.next()) {
-          String schemaName = schemas.getString("TABLE_CAT");
-          String schemaDescription = extractEntityDescription(schemas);
-          for (String schemaFilter : schemaFilters) {
-            if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%",
-                ".*?"))) {
-              res.add(schemaName);
-              databaseEntityDescription.put(schemaName, schemaDescription);
-            }
+
+      List<Map<String, Object>> schemas = connetion.getCatalogs();
+      for (Map<String, Object> schema : schemas) {
+        String schemaName = (String) schema.get("TABLE_CAT");
+        String schemaDescription = extractEntityDescription(schema);
+        for (String schemaFilter : schemaFilters) {
+          if (schemaFilter.equals("") || schemaName.matches(schemaFilter.replace("%",
+              ".*?"))) {
+            res.add(schemaName);
+            databaseEntityDescription.put(schemaName, schemaDescription);
           }
         }
       }
+
     } catch (SQLException t) {
       logger.error("Failed to retrieve the schema names", t);
     }
     return res;
   }
 
-  private static void fillViewsNames(String schema, DatabaseMetaData meta, Set<String> views) {
-    try (ResultSet tbls = meta.getTables(schema, schema, "%",
-        new String[]{"VIEW"})) {
-      if (!tbls.isBeforeFirst()) {
+  private static void fillViewsNames(String schema, CachedConnection connection, Set<String> views) {
+    try {
+      List<Map<String, Object>> tbls = connection.getTables(schema, schema, "%",
+          new String[]{"VIEW"});
+      if (tbls.size() == 0) {
         logger.debug("There is no views for schema {}", schema);
       } else {
-        while (tbls.next()) {
+        for (Map<String, Object> tbl : tbls) {
           logger.info("\n[DEBUG]\n {}", tbls);
-          String table = tbls.getString("TABLE_NAME");
-          String tableDescription = extractEntityDescription(tbls);
+          String table = (String) tbl.get("TABLE_NAME");
+          String tableDescription = extractEntityDescription(tbl);
           views.add(schema + "." + table);
           databaseEntityDescription.put(schema + "." + table, tableDescription);
         }
@@ -197,16 +202,17 @@ public class SqlCompleter {
     }
   }
 
-  private static void fillTableNames(String schema, DatabaseMetaData meta, Set<String> tables) {
-    try (ResultSet tbls = meta.getTables(schema, schema, "%",
-        new String[]{"TABLE", "ALIAS", "SYNONYM", "GLOBAL TEMPORARY",
-            "LOCAL TEMPORARY"})) {
-      if (!tbls.isBeforeFirst()) {
+  private static void fillTableNames(String schema, CachedConnection connection, Set<String> tables) {
+    try {
+      List<Map<String, Object>> tbls = connection.getTables(schema, schema, "%",
+          new String[]{"TABLE", "ALIAS", "SYNONYM", "GLOBAL TEMPORARY",
+              "LOCAL TEMPORARY"});
+      if (tbls.size() == 0) {
         logger.debug("There is no tables for schema {}", schema);
       } else {
-        while (tbls.next()) {
-          String table = tbls.getString("TABLE_NAME");
-          String tableDescription = extractEntityDescription(tbls);
+        for (Map<String, Object> tbl : tbls) {
+          String table = (String) tbl.get("TABLE_NAME");
+          String tableDescription = extractEntityDescription(tbl);
           tables.add(schema + "." + table);
           databaseEntityDescription.put(schema + "." + table, tableDescription);
         }
@@ -221,16 +227,17 @@ public class SqlCompleter {
    *
    * @param schema  name of a scheme
    * @param table   name of a table
-   * @param meta    meta metadata from connection to database
+   * @param connection    meta metadata from connection to database
    * @param columns function fills this set, for every table name adds set
    *                of columns within the table; table name is in format schema_name.table_name
    */
-  private static void fillColumnNames(String schema, String table, DatabaseMetaData meta,
+  private static void fillColumnNames(String schema, String table, CachedConnection connection,
                                       Set<String> columns) {
-    try (ResultSet cols = meta.getColumns(schema, schema, table, "%")) {
-      while (cols.next()) {
-        String column = cols.getString("COLUMN_NAME");
-        String columnDescription = extractEntityDescription(cols);
+    try {
+      List<Map<String, Object>> cols = connection.getColumns(schema, schema, table, "%");
+      for (Map<String, Object> col : cols) {
+        String column = (String) col.get("COLUMN_NAME");
+        String columnDescription = extractEntityDescription(col);
         columns.add(schema + "." + table + "." + column);
         databaseEntityDescription.put(schema + "." + table + "." + column, columnDescription);
       }
@@ -311,14 +318,14 @@ public class SqlCompleter {
    *                            for example "prod_v_%,prod_t_%"
    */
 
-  void createOrUpdateFromConnection(Connection connection, String schemaFiltersString,
+  void createOrUpdateFromConnection(CachedConnection connection, String schemaFiltersString,
                                     String buffer, int cursor) {
     // get statement completion
     Set<String> keywords = getSqlKeywordsCompletions(buffer);
     initKeywords(keywords);
     logger.info("Keyword completer initialized with {} keywords", keywords.size());
 
-    try (Connection c = connection) {
+    try (CachedConnection c = connection) {
       if (schemaFiltersString == null) {
         schemaFiltersString = StringUtils.EMPTY;
       }
@@ -326,17 +333,16 @@ public class SqlCompleter {
 
 
       if (c != null) {
-        DatabaseMetaData databaseMetaData = c.getMetaData();
 
         //TODO(mebelousov): put defaultSchema in cache
         if (defaultSchema == null) {
-          defaultSchema = getDefaultSchema(connection, databaseMetaData);
+          defaultSchema = getDefaultSchema(connection);
         }
 
         if (schemasCompleter == null || schemasCompleter.getCompleter() == null
             || schemasCompleter.isExpired()) {
-          Set<String> schemas = getSchemaNames(databaseMetaData, schemaFilters);
-          Set<String> catalogs = getCatalogNames(databaseMetaData, schemaFilters);
+          Set<String> schemas = getSchemaNames(connection, schemaFilters);
+          Set<String> catalogs = getCatalogNames(connection, schemaFilters);
 
           if (schemas.size() == 0) {
             schemas.addAll(catalogs);
@@ -351,7 +357,7 @@ public class SqlCompleter {
 
         if (tablesCompleterInDefaultSchema == null || tablesCompleterInDefaultSchema.isExpired()) {
           Set<String> tables = new HashSet<>();
-          fillTableNames(defaultSchema, databaseMetaData, tables);
+          fillTableNames(defaultSchema, connection, tables);
           initTables(defaultSchema, tables);
         }
 
@@ -360,7 +366,7 @@ public class SqlCompleter {
 
         if (viewsCompleterInDefaultSchema == null || viewsCompleterInDefaultSchema.isExpired()) {
           Set<String> views = new HashSet<>();
-          fillViewsNames(defaultSchema, databaseMetaData, views);
+          fillViewsNames(defaultSchema, connection, views);
           initViews(defaultSchema, views);
         }
 
@@ -371,7 +377,7 @@ public class SqlCompleter {
           CachedCompleter tablesCompleter = tablesCompleters.get(schema);
           if (tablesCompleter == null || tablesCompleter.isExpired()) {
             Set<String> tables = new HashSet<>();
-            fillTableNames(schema, databaseMetaData, tables);
+            fillTableNames(schema, connection, tables);
             initTables(schema, tables);
             logger.info("Tables completer for schema " + schema + " initialized with "
                 + tables.size() + " tables");
@@ -379,7 +385,7 @@ public class SqlCompleter {
           CachedCompleter viewsCompleter = viewsCompleters.get(schema);
           if (viewsCompleter == null || viewsCompleter.isExpired()) {
             Set<String> views = new HashSet<>();
-            fillViewsNames(schema, databaseMetaData, views);
+            fillViewsNames(schema, connection, views);
             initViews(schema, views);
             logger.info("Views completer for schema " + schema + " initialized with "
                 + views.size() + " views");
@@ -392,14 +398,14 @@ public class SqlCompleter {
             int pointPos = schemaTable.indexOf('.');
             Set<String> columns = new HashSet<>();
             fillColumnNames(schemaTable.substring(0, pointPos), schemaTable.substring(pointPos + 1),
-                databaseMetaData, columns);
+                connection, columns);
             initColumns(schemaTable, columns);
             logger.info("Completer for schemaTable " + schemaTable + " initialized with "
                 + columns.size() + " columns.");
           }
         }
       }
-    } catch (SQLException e) {
+    } catch (Exception e) {
       logger.error("Failed to update the metadata completions" + e.getMessage());
     }
   }
