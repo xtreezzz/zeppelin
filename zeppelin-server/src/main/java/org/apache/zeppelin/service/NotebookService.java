@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -152,7 +153,7 @@ public class NotebookService {
       callback.onSuccess(note, context);
       return note;
     } catch (IOException e) {
-      callback.onFailure(new IOException("Fail to create note", e), context);
+      callback.onFailure(e, context);
       return null;
     }
   }
@@ -174,6 +175,12 @@ public class NotebookService {
     if (notePath.contains("..")) {
       throw new IOException("Note name can not contain '..'");
     }
+
+    if (notebook.getAllNotes().stream().map(Note::getPath).collect(Collectors.toList())
+        .contains(notePath)) {
+      throw new IOException("Note name must be unique");
+    }
+
     return notePath;
   }
 
