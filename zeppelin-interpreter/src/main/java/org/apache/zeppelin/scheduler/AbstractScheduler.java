@@ -98,8 +98,7 @@ public abstract class AbstractScheduler implements Scheduler {
   public synchronized void stop() {
     terminate = true;
     for (Job job : queue) {
-      job.setAbortedStatus(true);
-      job.jobAbort();
+      job.abort();
     }
   }
 

@@ -374,6 +374,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     if (isBlankParagraph()) {
       LOGGER.info("Skip to run blank paragraph. {}", getId());
       setStatus(Job.Status.FINISHED);
+      setAbortedStatus(false);
       return true;
     }
 
@@ -390,11 +391,14 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
+            setAbortedStatus(false);
             throw new RuntimeException(e);
           }
         }
+        setAbortedStatus(false);
         return getStatus() == Status.FINISHED;
       } else {
+        setAbortedStatus(false);
         return true;
       }
     } catch (InterpreterNotFoundException e) {
@@ -402,6 +406,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           new InterpreterResult(InterpreterResult.Code.ERROR);
       setReturn(intpResult, e);
       setStatus(Job.Status.ERROR);
+      setAbortedStatus(false);
       throw new RuntimeException(e);
     }
   }

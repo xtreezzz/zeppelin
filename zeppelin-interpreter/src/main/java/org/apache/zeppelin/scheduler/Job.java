@@ -133,6 +133,9 @@ public abstract class Job<T> {
 
   //TODO(SAN) 'synchronized' fix problem with running paragraph. Need to understand more.
   public void setStatus(Status status) {
+    if (status == Status.ABORT) {
+      setAbortedStatus(false);
+    }
     Status before = null;
     Status after = null;
     synchronized (this) {

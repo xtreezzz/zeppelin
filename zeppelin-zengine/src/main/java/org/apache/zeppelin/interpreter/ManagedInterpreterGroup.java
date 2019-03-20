@@ -148,10 +148,12 @@ public class ManagedInterpreterGroup extends InterpreterGroup {
             job.getJobName(),
             job.getStatus()
         );
+        job.setAbortedStatus(false);
         continue;
       }
       job.abort();
       job.setStatus(Job.Status.ABORT);
+      job.setAbortedStatus(false);
       LOGGER.info("Job " + job.getJobName() + " aborted ");
     }
 
