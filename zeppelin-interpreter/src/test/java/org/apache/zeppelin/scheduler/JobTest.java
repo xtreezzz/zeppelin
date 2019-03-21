@@ -17,6 +17,12 @@
 
 package org.apache.zeppelin.scheduler;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterException;
@@ -28,13 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JobTest {
@@ -51,6 +50,7 @@ public class JobTest {
             "jobid",
             "jobName",
             mockJobListener,
+            10000,
             mockInterpreter,
             "script",
             mockInterpreterContext);
@@ -78,7 +78,8 @@ public class JobTest {
     spyInterpretJob.run();
 
     Object failedResult = spyInterpretJob.getReturn();
-    assertNull(failedResult);
-    assertNotNull(spyInterpretJob.getException());
+    assertTrue(failedResult instanceof InterpreterResult);
+    assertTrue(
+        ((InterpreterResult) failedResult).message().get(0).getData().contains(failedMessage));
   }
 }

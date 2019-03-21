@@ -668,7 +668,6 @@ public class Note implements JsonSerializable {
   public boolean run(String paragraphId, boolean blocking) {
     Paragraph p = getParagraph(paragraphId);
     p.setListener(this.paragraphJobListener);
-    p.setAbortedStatus(false);
     return p.execute(blocking);
   }
 

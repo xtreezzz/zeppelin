@@ -17,14 +17,15 @@
 
 package org.apache.zeppelin.scheduler;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.zeppelin.interpreter.InterpreterResult;
+import org.apache.zeppelin.interpreter.InterpreterResult.Code;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -38,10 +39,7 @@ import java.util.Map;
  * and saving/loading jobs from disk.
  * Changing/adding/deleting non transitive field name need consideration of that.
  */
-public abstract class Job<T> {
-  private static Logger LOGGER = LoggerFactory.getLogger(Job.class);
-  private static SimpleDateFormat JOB_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
-
+public abstract class Job {
   /**
    * Job status.
    *
@@ -74,31 +72,50 @@ public abstract class Job<T> {
   }
 
   private String jobName;
-  private String id;
+  String id;
 
-  private Date dateCreated;
-  private Date dateStarted;
-  private Date dateFinished;
-  private volatile Status status;
+  Date dateCreated;
+  Date dateStarted;
+  Date dateFinished;
+  volatile Status status;
 
-  private volatile AtomicBoolean aborted = new AtomicBoolean(false);
+  static Logger LOGGER = LoggerFactory.getLogger(Job.class);
+
+  transient boolean aborted = false;
+
   private volatile String errorMessage;
   private transient volatile Throwable exception;
   private transient JobListener listener;
+  private long progressUpdateIntervalMs;
 
-  public Job(String jobName, JobListener listener) {
+  public Job(String jobName, JobListener listener, long progressUpdateIntervalMs) {
     this.jobName = jobName;
     this.listener = listener;
+    this.progressUpdateIntervalMs = progressUpdateIntervalMs;
+
     dateCreated = new Date();
-    id = JOB_DATE_FORMAT.format(dateCreated) + "_" + jobName;
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    id = dateFormat.format(dateCreated) + "_" + super.hashCode();
+
     setStatus(Status.READY);
   }
 
+  public Job(String jobName, JobListener listener) {
+    this(jobName, listener, JobProgressPoller.DEFAULT_INTERVAL_MSEC);
+  }
+
   public Job(String jobId, String jobName, JobListener listener) {
+    this(jobId, jobName, listener, JobProgressPoller.DEFAULT_INTERVAL_MSEC);
+  }
+
+  public Job(String jobId, String jobName, JobListener listener, long progressUpdateIntervalMs) {
     this.jobName = jobName;
     this.listener = listener;
+    this.progressUpdateIntervalMs = progressUpdateIntervalMs;
+
     dateCreated = new Date();
     id = jobId;
+
     setStatus(Status.READY);
   }
 
@@ -117,10 +134,10 @@ public abstract class Job<T> {
 
   @Override
   public boolean equals(Object o) {
-    return ((Job) o).id.equals(id);
+    return ((Job) o).hashCode() == hashCode();
   }
 
-  public synchronized Status getStatus() {
+  public Status getStatus() {
     return status;
   }
 
@@ -131,22 +148,14 @@ public abstract class Job<T> {
     this.status = status;
   }
 
-  //TODO(SAN) 'synchronized' fix problem with running paragraph. Need to understand more.
   public void setStatus(Status status) {
-    if (status == Status.ABORT) {
-      setAbortedStatus(false);
+    if (this.status == status) {
+      return;
     }
-    Status before = null;
-    Status after = null;
-    synchronized (this) {
-      if (this.status == status) {
-        return;
-      }
-      before = this.status;
-      after = status;
-      this.status = status;
-    }
-    if (listener != null && before != null && before != after) {
+    Status before = this.status;
+    Status after = status;
+    this.status = status;
+    if (listener != null && before != after) {
       listener.onStatusChange(this, before, after);
     }
   }
@@ -167,41 +176,42 @@ public abstract class Job<T> {
     return this.status.isRunning();
   }
 
-  public void onJobStarted() {
-    dateStarted = new Date();
-  }
-
-  public void onJobEnded() {
-    dateFinished = new Date();
-  }
-
   public void run() {
+    JobProgressPoller progressUpdator = null;
+    dateStarted = new Date();
     try {
-      onJobStarted();
+      progressUpdator = new JobProgressPoller(this, progressUpdateIntervalMs);
+      progressUpdator.start();
       completeWithSuccess(jobRun());
     } catch (Throwable e) {
       LOGGER.error("Job failed", e);
       completeWithError(e);
     } finally {
-      onJobEnded();
+      if (progressUpdator != null) {
+        progressUpdator.interrupt();
+      }
+      //aborted = false;
     }
   }
 
-  private synchronized void completeWithSuccess(T result) {
+  private synchronized void completeWithSuccess(Object result) {
     setResult(result);
     exception = null;
     errorMessage = null;
+    dateFinished = new Date();
   }
 
   private synchronized void completeWithError(Throwable error) {
+    setResult(new InterpreterResult(Code.ERROR, getStack(error)));
     setException(error);
-    errorMessage = getJobExceptionStack(error);
+    dateFinished = new Date();
   }
 
-  private String getJobExceptionStack(Throwable e) {
+  public static String getStack(Throwable e) {
     if (e == null) {
       return "";
     }
+
     Throwable cause = ExceptionUtils.getRootCause(e);
     if (cause != null) {
       return ExceptionUtils.getFullStackTrace(cause);
@@ -216,9 +226,10 @@ public abstract class Job<T> {
 
   protected synchronized void setException(Throwable t) {
     exception = t;
+    errorMessage = getStack(t);
   }
 
-  public abstract T getReturn();
+  public abstract Object getReturn();
 
   public String getJobName() {
     return jobName;
@@ -232,23 +243,16 @@ public abstract class Job<T> {
 
   public abstract Map<String, Object> info();
 
-  protected abstract T jobRun() throws Throwable;
+  protected abstract Object jobRun() throws Throwable;
 
   protected abstract boolean jobAbort();
 
   public void abort() {
-    final boolean aborted = jobAbort();
-    synchronized (this) {
-      this.aborted.set(aborted);
-    }
+    aborted = jobAbort();
   }
 
-  public synchronized boolean isAborted() {
-    return aborted.get();
-  }
-
-  public synchronized void setAbortedStatus(boolean status) {
-    aborted.set(status);
+  public boolean isAborted() {
+    return aborted;
   }
 
   public Date getDateCreated() {
@@ -259,25 +263,25 @@ public abstract class Job<T> {
     return dateStarted;
   }
 
-  public void setDateStarted(Date startedAt) {
+  public synchronized void setDateStarted(Date startedAt) {
     dateStarted = startedAt;
   }
 
-  public Date getDateFinished() {
+  public synchronized Date getDateFinished() {
     return dateFinished;
   }
 
-  public void setDateFinished(Date finishedAt) {
+  public synchronized void setDateFinished(Date finishedAt) {
     dateFinished = finishedAt;
   }
 
-  public abstract void setResult(T result);
+  public abstract void setResult(Object results);
 
-  public String getErrorMessage() {
+  public synchronized String getErrorMessage() {
     return errorMessage;
   }
 
-  public void setErrorMessage(String errorMessage) {
+  public synchronized void setErrorMessage(String errorMessage) {
     this.errorMessage = errorMessage;
   }
 }

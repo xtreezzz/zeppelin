@@ -17,25 +17,21 @@
 
 package org.apache.zeppelin.scheduler;
 
-import org.apache.zeppelin.conf.ZeppelinConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Factory class for creating schedulers except RemoteScheduler as RemoteScheudler runs in
- * zeppelin server process instead of interpreter process.
+ * Factory class for creating schedulers
  *
  */
-public class SchedulerFactory {
-  private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerFactory.class);
-  private static final String SCHEDULER_EXECUTOR_NAME = "SchedulerFactory";
-
+public class SchedulerFactory implements SchedulerListener {
+  private static final Logger logger = LoggerFactory.getLogger(SchedulerFactory.class);
   protected ExecutorService executor;
-  protected Map<String, Scheduler> schedulers = new HashMap<>();
+  protected Map<String, Scheduler> schedulers = new LinkedHashMap<>();
 
   private static SchedulerFactory singleton;
   private static Long singletonLock = new Long(0);
@@ -47,7 +43,7 @@ public class SchedulerFactory {
           try {
             singleton = new SchedulerFactory();
           } catch (Exception e) {
-            LOGGER.error(e.toString(), e);
+            logger.error(e.toString(), e);
           }
         }
       }
@@ -55,12 +51,8 @@ public class SchedulerFactory {
     return singleton;
   }
 
-  SchedulerFactory() {
-    ZeppelinConfiguration zConf = ZeppelinConfiguration.create();
-    int threadPoolSize =
-        zConf.getInt(ZeppelinConfiguration.ConfVars.ZEPPELIN_INTERPRETER_SCHEDULER_POOL_SIZE);
-    LOGGER.info("Scheduler Thread Pool Size: " + threadPoolSize);
-    executor = ExecutorFactory.singleton().createOrGet(SCHEDULER_EXECUTOR_NAME, threadPoolSize);
+  SchedulerFactory() throws Exception {
+    executor = ExecutorFactory.singleton().createOrGet("SchedulerFactory", 100);
   }
 
   public void destroy() {
@@ -70,7 +62,7 @@ public class SchedulerFactory {
   public Scheduler createOrGetFIFOScheduler(String name) {
     synchronized (schedulers) {
       if (!schedulers.containsKey(name)) {
-        FIFOScheduler s = new FIFOScheduler(name);
+        Scheduler s = new FIFOScheduler(name, executor, this);
         schedulers.put(name, s);
         executor.execute(s);
       }
@@ -81,7 +73,7 @@ public class SchedulerFactory {
   public Scheduler createOrGetParallelScheduler(String name, int maxConcurrency) {
     synchronized (schedulers) {
       if (!schedulers.containsKey(name)) {
-        ParallelScheduler s = new ParallelScheduler(name, maxConcurrency);
+        Scheduler s = new ParallelScheduler(name, executor, this, maxConcurrency);
         schedulers.put(name, s);
         executor.execute(s);
       }
@@ -89,7 +81,6 @@ public class SchedulerFactory {
     }
   }
 
-  
   public Scheduler createOrGetScheduler(Scheduler scheduler) {
     synchronized (schedulers) {
       if (!schedulers.containsKey(scheduler.getName())) {
@@ -112,5 +103,16 @@ public class SchedulerFactory {
   public ExecutorService getExecutor() {
     return executor;
   }
-  
+
+  @Override
+  public void jobStarted(Scheduler scheduler, Job job) {
+    logger.info("Job " + job.getId() + " started by scheduler " + scheduler.getName());
+
+  }
+
+  @Override
+  public void jobFinished(Scheduler scheduler, Job job) {
+    logger.info("Job " + job.getId() + " finished by scheduler " + scheduler.getName());
+
+  }
 }

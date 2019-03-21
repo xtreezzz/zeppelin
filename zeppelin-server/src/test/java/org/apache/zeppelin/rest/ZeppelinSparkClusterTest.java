@@ -173,18 +173,18 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     assertEquals("hello\n" +
         "import java.util.Date\n" +
         "import java.net.URL\n",
-        p.getReturn().message().get(0).getData());
+        p.getResult().message().get(0).getData());
 
     p.setText("%spark invalid_code");
     note.run(p.getId(), true);
     assertEquals(Status.ERROR, p.getStatus());
-    assertTrue(p.getReturn().message().get(0).getData().contains("error: "));
+    assertTrue(p.getResult().message().get(0).getData().contains("error: "));
 
     // test local properties
     p.setText("%spark(p1=v1,p2=v2) print(z.getInterpreterContext().getLocalProperties().size())");
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals("2", p.getReturn().message().get(0).getData());
+    assertEquals("2", p.getResult().message().get(0).getData());
 
     // test code completion
     List<InterpreterCompletion> completions = note.completion(p.getId(), "sc.", 2, AuthenticationInfo.ANONYMOUS);
@@ -208,7 +208,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     p.setText("%spark print(sc.parallelize(1 to 10).reduce(_ + _))");
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals("55", p.getReturn().message().get(0).getData());
+    assertEquals("55", p.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
   }
@@ -222,7 +222,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
         "df.collect()");
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertTrue(p.getReturn().message().get(0).getData().contains(
+    assertTrue(p.getResult().message().get(0).getData().contains(
         "Array[org.apache.spark.sql.Row] = Array([hello,20])"));
 
     // test display DataFrame
@@ -231,8 +231,8 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
         "z.show(df)");
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals(InterpreterResult.Type.TABLE, p.getReturn().message().get(0).getType());
-    assertEquals("_1\t_2\nhello\t20\n", p.getReturn().message().get(0).getData());
+    assertEquals(InterpreterResult.Type.TABLE, p.getResult().message().get(0).getType());
+    assertEquals("_1\t_2\nhello\t20\n", p.getResult().message().get(0).getData());
 
     // test display DataSet
     if (isSpark2()) {
@@ -241,8 +241,8 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           "z.show(ds)");
       note.run(p.getId(), true);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertEquals(InterpreterResult.Type.TABLE, p.getReturn().message().get(0).getType());
-      assertEquals("_1\t_2\nhello\t20\n", p.getReturn().message().get(0).getData());
+      assertEquals(InterpreterResult.Type.TABLE, p.getResult().message().get(0).getType());
+      assertEquals("_1\t_2\nhello\t20\n", p.getResult().message().get(0).getData());
     }
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
@@ -263,7 +263,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     );
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals("[1] 3", p.getReturn().message().get(0).getData().trim());
+    assertEquals("[1] 3", p.getResult().message().get(0).getData().trim());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
   }
@@ -278,7 +278,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     p.setText("%spark.pyspark sc.parallelize(range(1, 11)).reduce(lambda a, b: a + b)");
     note.run(p.getId(), true);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals("55\n", p.getReturn().message().get(0).getData());
+    assertEquals("55\n", p.getResult().message().get(0).getData());
     if (!isSpark2()) {
       // run sqlContext test
       p = note.addNewParagraph(anonymous);
@@ -287,7 +287,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           "df.collect()");
       note.run(p.getId(), true);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertEquals("[Row(age=20, id=1)]\n", p.getReturn().message().get(0).getData());
+      assertEquals("[Row(age=20, id=1)]\n", p.getResult().message().get(0).getData());
 
       // test display Dataframe
       p = note.addNewParagraph(anonymous);
@@ -297,9 +297,9 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
       note.run(p.getId(), true);
       waitForFinish(p);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertEquals(InterpreterResult.Type.TABLE, p.getReturn().message().get(0).getType());
+      assertEquals(InterpreterResult.Type.TABLE, p.getResult().message().get(0).getType());
       // TODO(zjffdu), one more \n is appended, need to investigate why.
-      assertEquals("age\tid\n20\t1\n", p.getReturn().message().get(0).getData());
+      assertEquals("age\tid\n20\t1\n", p.getResult().message().get(0).getData());
 
       // test udf
       p = note.addNewParagraph(anonymous);
@@ -307,8 +307,8 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           "sqlContext.sql(\"select f1(\\\"abc\\\") as len\").collect()");
       note.run(p.getId(), true);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertTrue("[Row(len=u'3')]\n".equals(p.getReturn().message().get(0).getData()) ||
-          "[Row(len='3')]\n".equals(p.getReturn().message().get(0).getData()));
+      assertTrue("[Row(len=u'3')]\n".equals(p.getResult().message().get(0).getData()) ||
+          "[Row(len='3')]\n".equals(p.getResult().message().get(0).getData()));
 
       // test exception
       p = note.addNewParagraph(anonymous);
@@ -321,9 +321,9 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
       p.setText("%pyspark a=1\n\nprint(a2)");
       note.run(p.getId(), true);
       assertEquals(Status.ERROR, p.getStatus());
-      assertTrue(p.getReturn().message().get(0).getData()
+      assertTrue(p.getResult().message().get(0).getData()
           .contains("Fail to execute line 3: print(a2)"));
-      assertTrue(p.getReturn().message().get(0).getData()
+      assertTrue(p.getResult().message().get(0).getData()
           .contains("name 'a2' is not defined"));
     } else {
       // run SparkSession test
@@ -333,7 +333,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           "df.collect()");
       note.run(p.getId(), true);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertEquals("[Row(age=20, id=1)]\n", p.getReturn().message().get(0).getData());
+      assertEquals("[Row(age=20, id=1)]\n", p.getResult().message().get(0).getData());
 
       // test udf
       p = note.addNewParagraph(anonymous);
@@ -342,8 +342,8 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
           "spark.sql(\"select f1(\\\"abc\\\") as len\").collect()");
       note.run(p.getId(), true);
       assertEquals(Status.FINISHED, p.getStatus());
-      assertTrue("[Row(len=u'3')]\n".equals(p.getReturn().message().get(0).getData()) ||
-          "[Row(len='3')]\n".equals(p.getReturn().message().get(0).getData()));
+      assertTrue("[Row(len=u'3')]\n".equals(p.getResult().message().get(0).getData()) ||
+          "[Row(len='3')]\n".equals(p.getResult().message().get(0).getData()));
     }
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
@@ -369,7 +369,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     assertEquals(Status.FINISHED, p1.getStatus());
     note.run(p2.getId(), true);
     assertEquals(Status.FINISHED, p2.getStatus());
-    assertEquals("10", p2.getReturn().message().get(0).getData());
+    assertEquals("10", p2.getResult().message().get(0).getData());
 
     Paragraph p3 = note.addNewParagraph(anonymous);
     p3.setText("%spark println(new java.util.Date())");
@@ -383,7 +383,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     waitForFinish(p3);
 
     assertEquals(Status.FINISHED, p3.getStatus());
-    String p3result = p3.getReturn().message().get(0).getData();
+    String p3result = p3.getResult().message().get(0).getData();
     assertTrue(p3result.length() > 0);
 
     // z.run(noteId, paragraphId)
@@ -393,7 +393,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     note.run(p0.getId(), true);
     waitForFinish(p3);
     assertEquals(Status.FINISHED, p3.getStatus());
-    assertEquals("END\n", p3.getReturn().message().get(0).getData());
+    assertEquals("END\n", p3.getResult().message().get(0).getData());
 
     // run paragraph in note2 via paragraph in note1
     Note note2 = TestUtils.getInstance(Notebook.class).createNote("note2", anonymous);
@@ -415,7 +415,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     waitForFinish(p21);
     assertEquals(Status.FINISHED, p20.getStatus());
     assertEquals(Status.FINISHED, p21.getStatus());
-    assertEquals("1", p21.getReturn().message().get(0).getData());
+    assertEquals("1", p21.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
     TestUtils.getInstance(Notebook.class).removeNote(note2.getId(), anonymous);
@@ -445,11 +445,11 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
 
     assertEquals(Status.FINISHED, p1.getStatus());
     assertEquals(Status.FINISHED, p2.getStatus());
-    assertEquals("hello world\n", p2.getReturn().message().get(0).getData());
+    assertEquals("hello world\n", p2.getResult().message().get(0).getData());
     assertEquals(Status.FINISHED, p3.getStatus());
-    assertEquals("hello world\n", p3.getReturn().message().get(0).getData());
+    assertEquals("hello world\n", p3.getResult().message().get(0).getData());
     assertEquals(Status.FINISHED, p4.getStatus());
-    assertEquals("hello world\n", p4.getReturn().message().get(0).getData());
+    assertEquals("hello world\n", p4.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
   }
@@ -474,13 +474,13 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
 
     assertEquals(Status.FINISHED, p1.getStatus());
     assertEquals(Status.FINISHED, p2.getStatus());
-    assertEquals("1\n3\n5\n4\n2\n", p2.getReturn().message().get(0).getData());
+    assertEquals("1\n3\n5\n4\n2\n", p2.getResult().message().get(0).getData());
 
     Note note2 = TestUtils.getInstance(Notebook.class).createNote("note2", anonymous);
     Paragraph p3 = note2.addNewParagraph(anonymous);
     p3.setText("%python print(6)");
     note2.run(p3.getId(), true);
-    assertEquals("1\n6\n2\n", p3.getReturn().message().get(0).getData());
+    assertEquals("1\n6\n2\n", p3.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
     TestUtils.getInstance(Notebook.class).removeNote(note2.getId(), anonymous);
@@ -517,7 +517,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     note.run(p1.getId(), true);
 
     assertEquals(Status.FINISHED, p1.getStatus());
-    assertEquals("2\n", p1.getReturn().message().get(0).getData());
+    assertEquals("2\n", p1.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
   }
@@ -530,7 +530,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     note.run(p.getId());
     waitForFinish(p);
     assertEquals(Status.FINISHED, p.getStatus());
-    assertEquals(sparkVersion, p.getReturn().message().get(0).getData());
+    assertEquals(sparkVersion, p.getResult().message().get(0).getData());
 
     TestUtils.getInstance(Notebook.class).removeNote(note.getId(), anonymous);
   }
@@ -568,7 +568,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     assertEquals("my_checkbox", formIter.next());
 
     // check dynamic forms values
-    String[] result = p.getReturn().message().get(0).getData().split("\n");
+    String[] result = p.getResult().message().get(0).getData().split("\n");
     assertEquals(5, result.length);
     assertEquals("default_name", result[0]);
     assertEquals("null", result[1]);
@@ -601,7 +601,7 @@ public class ZeppelinSparkClusterTest extends AbstractTestRestApi {
     assertEquals("my_checkbox", formIter.next());
 
     // check dynamic forms values
-    String[] result = p.getReturn().message().get(0).getData().split("\n");
+    String[] result = p.getResult().message().get(0).getData().split("\n");
     assertEquals(4, result.length);
     assertEquals("default_name", result[0]);
     assertEquals("None", result[1]);

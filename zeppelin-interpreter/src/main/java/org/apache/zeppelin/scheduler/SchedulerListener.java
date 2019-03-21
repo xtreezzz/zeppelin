@@ -15,25 +15,13 @@
  * limitations under the License.
  */
 
-
 package org.apache.zeppelin.scheduler;
 
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
+/**
+ * TODO(moon) : add description.
+ */
+public interface SchedulerListener {
+  void jobStarted(Scheduler scheduler, Job job);
 
-public class SchedulerThreadFactory implements ThreadFactory {
-
-  private String namePrefix;
-  private AtomicLong count = new AtomicLong(1);
-
-  public SchedulerThreadFactory(String namePrefix) {
-    this.namePrefix = namePrefix;
-  }
-
-  @Override
-  public Thread newThread(Runnable r) {
-    Thread thread = new Thread(r);
-    thread.setName(namePrefix + count.getAndIncrement());
-    return thread;
-  }
+  void jobFinished(Scheduler scheduler, Job job);
 }

@@ -17,27 +17,21 @@
 
 package org.apache.zeppelin.scheduler;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
- * Interface for scheduler. Scheduler is used for manage the lifecycle of job.
- * Including query, submit and cancel job.
- *
- * Scheduler can run both in Zeppelin Server and Interpreter Process. e.g. RemoveScheduler run
- * in Zeppelin Server side while FIFOScheduler run in Interpreter Process.
+ * Interface for scheduler
  */
 public interface Scheduler extends Runnable {
-
   String getName();
 
-  List<Job> getAllJobs();
+  Collection<Job> getJobsWaiting();
 
-  Job getJob(String jobId);
+  Collection<Job> getJobsRunning();
 
   void submit(Job job);
 
-  Job cancel(String jobId);
+  Job removeFromWaitingQueue(String jobId);
 
   void stop();
-
 }
