@@ -1617,7 +1617,7 @@ public class NotebookServer extends WebSocketServlet
       } else {
         LOG.warn("Note {}. job {} is finished, status: {}, exception: {}, "
                 + "result\n@@@@@ Result start @@@@@\n{}\n@@@@@ Result end @@@@@",
-                p.getNote().getId(), p.getId(), p.getStatus(), p.getException(), p.getReturn());
+                p.getNote().getId(), p.getId(), p.getStatus(), p.getException(), p.getResult());
       }
 
       try {

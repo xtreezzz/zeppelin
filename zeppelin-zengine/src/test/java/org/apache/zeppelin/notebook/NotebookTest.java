@@ -273,8 +273,8 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     p1.setText("%mock1 hello world");
     p1.setAuthenticationInfo(anonymous);
     note.run(p1.getId());
-    while (p1.isTerminated() == false || p1.getReturn() == null) Thread.yield();
-    assertEquals("repl1: hello world", p1.getReturn().message().get(0).getData());
+    while (p1.isTerminated() == false || p1.getResult() == null) Thread.yield();
+    assertEquals("repl1: hello world", p1.getResult().message().get(0).getData());
 
     // run with specific repl
     Paragraph p2 = note.addNewParagraph(AuthenticationInfo.ANONYMOUS);
@@ -282,8 +282,8 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     p2.setText("%mock2 hello world");
     p2.setAuthenticationInfo(anonymous);
     note.run(p2.getId());
-    while (p2.isTerminated() == false || p2.getReturn() == null) Thread.yield();
-    assertEquals("repl2: hello world", p2.getReturn().message().get(0).getData());
+    while (p2.isTerminated() == false || p2.getResult() == null) Thread.yield();
+    assertEquals("repl2: hello world", p2.getResult().message().get(0).getData());
     notebook.removeNote(note.getId(), anonymous);
   }
 
@@ -404,12 +404,12 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     p1.setAuthenticationInfo(anonymous);
     note.run(p1.getId());
 
-    while (p1.isTerminated() == false || p1.getReturn() == null) Thread.yield();
-    assertEquals("repl1: hello world", p1.getReturn().message().get(0).getData());
+    while (p1.isTerminated() == false || p1.getResult() == null) Thread.yield();
+    assertEquals("repl1: hello world", p1.getResult().message().get(0).getData());
 
     // clear paragraph output/result
     note.clearParagraphOutput(p1.getId());
-    assertNull(p1.getReturn());
+    assertNull(p1.getResult());
     notebook.removeNote(note.getId(), anonymous);
   }
 
@@ -452,9 +452,9 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     // when
     note.runAllParagraphs(anonymous, true);
 
-    assertEquals("repl1: p1", p1.getReturn().message().get(0).getData());
-    assertNull(p2.getReturn());
-    assertEquals("repl1: p3", p3.getReturn().message().get(0).getData());
+    assertEquals("repl1: p1", p1.getResult().message().get(0).getData());
+    assertNull(p2.getResult());
+    assertEquals("repl1: p3", p3.getResult().message().get(0).getData());
 
     notebook.removeNote(note.getId(), anonymous);
   }
@@ -819,7 +819,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     // Test
     assertEquals(p.getId(), p2.getId());
     assertEquals(p.getText(), p2.getText());
-    assertEquals(p.getReturn().message().get(0).getData(), p2.getReturn().message().get(0).getData());
+    assertEquals(p.getResult().message().get(0).getData(), p2.getResult().message().get(0).getData());
 
     // Verify import note with subject
     AuthenticationInfo subject = new AuthenticationInfo("user1");
@@ -850,7 +850,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     // Keep same ParagraphId
     assertEquals(cp.getId(), p.getId());
     assertEquals(cp.getText(), p.getText());
-    assertEquals(cp.getReturn().message().get(0).getData(), p.getReturn().message().get(0).getData());
+    assertEquals(cp.getResult().message().get(0).getData(), p.getResult().message().get(0).getData());
 
     // Verify clone note with subject
     AuthenticationInfo subject = new AuthenticationInfo("user1");
@@ -1131,7 +1131,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
 
     note1.run(p1.getId());
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
-    InterpreterResult result = p1.getReturn();
+    InterpreterResult result = p1.getResult();
 
     // remove note and recreate
     notebook.removeNote(note1.getId(), anonymous);
@@ -1142,7 +1142,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
 
     note1.run(p1.getId());
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
-    assertNotEquals(p1.getReturn().message(), result.message());
+    assertNotEquals(p1.getResult().message(), result.message());
 
     notebook.removeNote(note1.getId(), anonymous);
   }
@@ -1168,7 +1168,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     while (p2.getStatus() != Status.FINISHED) Thread.yield();
 
-    assertEquals(p1.getReturn().message().get(0).getData(), p2.getReturn().message().get(0).getData());
+    assertEquals(p1.getResult().message().get(0).getData(), p2.getResult().message().get(0).getData());
 
 
     // restart interpreter with per note session enabled
@@ -1184,7 +1184,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     while (p2.getStatus() != Status.FINISHED) Thread.yield();
 
-    assertNotEquals(p1.getReturn().message(), p2.getReturn().message().get(0).getData());
+    assertNotEquals(p1.getResult().message(), p2.getResult().message().get(0).getData());
 
     notebook.removeNote(note1.getId(), anonymous);
     notebook.removeNote(note2.getId(), anonymous);
@@ -1212,7 +1212,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     while (p2.getStatus() != Status.FINISHED) Thread.yield();
 
-    assertEquals(p1.getReturn().message().get(0).getData(), p2.getReturn().message().get(0).getData());
+    assertEquals(p1.getResult().message().get(0).getData(), p2.getResult().message().get(0).getData());
 
     // restart interpreter with scoped mode enabled
     for (InterpreterSetting setting : notebook.getInterpreterSettingManager().getInterpreterSettings(note1.getId())) {
@@ -1227,7 +1227,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     while (p2.getStatus() != Status.FINISHED) Thread.yield();
 
-    assertNotEquals(p1.getReturn().message().get(0).getData(), p2.getReturn().message().get(0).getData());
+    assertNotEquals(p1.getResult().message().get(0).getData(), p2.getResult().message().get(0).getData());
 
     // restart interpreter with isolated mode enabled
     for (InterpreterSetting setting : notebook.getInterpreterSettingManager().getInterpreterSettings(note1.getId())) {
@@ -1242,7 +1242,7 @@ public class NotebookTest extends AbstractInterpreterTest implements ParagraphJo
     while (p1.getStatus() != Status.FINISHED) Thread.yield();
     while (p2.getStatus() != Status.FINISHED) Thread.yield();
 
-    assertNotEquals(p1.getReturn().message().get(0).getData(), p2.getReturn().message().get(0).getData());
+    assertNotEquals(p1.getResult().message().get(0).getData(), p2.getResult().message().get(0).getData());
 
     notebook.removeNote(note1.getId(), anonymous);
     notebook.removeNote(note2.getId(), anonymous);

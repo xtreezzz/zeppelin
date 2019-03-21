@@ -245,7 +245,7 @@ public class ParagraphTest extends AbstractInterpreterTest {
     p.setResult(new InterpreterResult(Code.SUCCESS, defaultValue));
     Paragraph newUserParagraph = p.getUserParagraph("new_user");
     assertNotNull(newUserParagraph);
-    assertEquals(defaultValue, newUserParagraph.getReturn().message().get(0).getData());
+    assertEquals(defaultValue, newUserParagraph.getResult().message().get(0).getData());
   }
 
   @Test
@@ -306,7 +306,7 @@ public class ParagraphTest extends AbstractInterpreterTest {
     spyParagraph.jobRun();
     Paragraph p2 = spyParagraph.getUserParagraph(user2.getUser());
 
-    assertNotEquals(p1.getReturn().toString(), p2.getReturn().toString());
+    assertNotEquals(p1.getResult().toString(), p2.getResult().toString());
 
     assertEquals(p1, spyParagraph.getUserParagraph(user1.getUser()));
   }

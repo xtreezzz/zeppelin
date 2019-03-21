@@ -57,7 +57,6 @@ import org.apache.zeppelin.interpreter.thrift.InterpreterCompletion;
 import org.apache.zeppelin.resource.ResourcePool;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.JobListener;
-import org.apache.zeppelin.scheduler.JobWithProgressPoller;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.user.Credentials;
@@ -72,10 +71,9 @@ import com.google.common.collect.Maps;
 /**
  * Paragraph is a representation of an execution unit.
  */
-public class Paragraph extends JobWithProgressPoller<InterpreterResult> implements Cloneable,
-    JsonSerializable {
+public class Paragraph extends Job implements Cloneable, JsonSerializable {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(Paragraph.class);
+  private static Logger logger = LoggerFactory.getLogger(Paragraph.class);
   private static Pattern REPL_PATTERN =
       Pattern.compile("(\\s*)%([\\w\\.]+)(\\(.*?\\))?.*", Pattern.DOTALL);
 
@@ -88,7 +86,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   private Map<String, Object> config = new HashMap<>();
   // form and parameter settings
   public GUI settings = new GUI();
-  private InterpreterResult results;
+  private Object results;
   // Application states in this paragraph
   private final List<ApplicationState> apps = new LinkedList<>();
 
@@ -150,7 +148,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   @Override
-  public void setResult(InterpreterResult result) {
+  public synchronized void setResult(Object result) {
     this.results = result;
   }
 
@@ -158,6 +156,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     Paragraph p = new Paragraph(this);
     // reset status to READY when clone Paragraph for personalization.
     p.setStatus(Status.READY);
+    p.setId(getId());
     addUser(p, user);
     return p;
   }
@@ -179,6 +178,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   public void setText(String newText) {
+    // strip white space from the beginning
     this.text = newText;
     this.dateUpdated = new Date();
     parseText();
@@ -316,7 +316,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     try {
       this.interpreter = getBindedInterpreter();
     } catch (InterpreterNotFoundException e) {
-      LOGGER.debug("Unable to get completion because there's no interpreter bind to it", e);
+      logger.debug("Unable to get completion because there's no interpreter bind to it", e);
       return new ArrayList<>();
     }
     cursor = calculateCursorPosition(buffer, cursor);
@@ -326,7 +326,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       return this.interpreter.completion(this.scriptText, cursor, interpreterContext);
     } catch (Exception e) {
       // catch just for safety
-      LOGGER.warn("Fail to get completion", e);
+      logger.warn("Fail to get completion", e);
       return new ArrayList<>();
     }
   }
@@ -344,7 +344,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   }
 
   @Override
-  public InterpreterResult getReturn() {
+  public synchronized Object getReturn() {
     return results;
   }
 
@@ -372,9 +372,8 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
 
   public boolean execute(boolean blocking) {
     if (isBlankParagraph()) {
-      LOGGER.info("Skip to run blank paragraph. {}", getId());
+      logger.info("Skip to run blank paragraph. {}", getId());
       setStatus(Job.Status.FINISHED);
-      setAbortedStatus(false);
       return true;
     }
 
@@ -391,14 +390,11 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
-            setAbortedStatus(false);
             throw new RuntimeException(e);
           }
         }
-        setAbortedStatus(false);
         return getStatus() == Status.FINISHED;
       } else {
-        setAbortedStatus(false);
         return true;
       }
     } catch (InterpreterNotFoundException e) {
@@ -406,31 +402,30 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
           new InterpreterResult(InterpreterResult.Code.ERROR);
       setReturn(intpResult, e);
       setStatus(Job.Status.ERROR);
-      setAbortedStatus(false);
       throw new RuntimeException(e);
     }
   }
 
   @Override
-  protected InterpreterResult jobRun() throws Throwable {
-    this.runtimeInfos.clear();
+  protected Object jobRun() throws Throwable {
+    logger.info("Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
+            getId(), intpText, note.getId(), subject.getUser());
     this.interpreter = getBindedInterpreter();
     if (this.interpreter == null) {
-      LOGGER.error("Can not find interpreter name " + intpText);
+      logger.error("Can not find interpreter name " + intpText);
       throw new RuntimeException("Can not find interpreter for " + intpText);
     }
-    LOGGER.info("Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
-        getId(), this.interpreter.getClassName(), note.getId(), subject.getUser());
     InterpreterSetting interpreterSetting = ((ManagedInterpreterGroup)
         interpreter.getInterpreterGroup()).getInterpreterSetting();
     if (interpreterSetting != null) {
       interpreterSetting.waitForReady();
     }
-    if (this.user != null) {
-      if (subject != null && !interpreterSetting.isUserAuthorized(subject.getUsersAndRoles())) {
-        String msg = String.format("%s has no permission for %s", subject.getUser(), intpText);
-        LOGGER.error(msg);
-        return new InterpreterResult(Code.ERROR, msg);
+    if (this.hasUser()) {
+      if (interpreterSetting != null && interpreterHasUser(interpreterSetting)
+          && isUserAuthorizedToAccessInterpreter(interpreterSetting.getOption()) == false) {
+        logger.error("{} has no permission for {} ", subject.getUser(), intpText);
+        return new InterpreterResult(Code.ERROR,
+            subject.getUser() + " has no permission for " + intpText);
       }
     }
 
@@ -466,7 +461,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       script = Input.getSimpleQuery(note.getNoteParams(), scriptBody, true);
       script = Input.getSimpleQuery(settings.getParams(), script, false);
     }
-    LOGGER.debug("RUN : " + script);
+    logger.debug("RUN : " + script);
     try {
       InterpreterContext context = getInterpreterContext();
       InterpreterContext.set(context);
@@ -484,20 +479,50 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
       context.out.flush();
       List<InterpreterResultMessage> resultMessages = context.out.toInterpreterResultMessage();
       resultMessages.addAll(ret.message());
+
       InterpreterResult res = new InterpreterResult(ret.code(), resultMessages);
+
       Paragraph p = getUserParagraph(getUser());
       if (null != p) {
         p.setResult(res);
         p.settings.setParams(settings.getParams());
       }
 
-      LOGGER.info("End of Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
+      logger.info("End of Run paragraph [paragraph_id: {}, interpreter: {}, note_id: {}, user: {}]",
           getId(), intpText, note.getId(), subject.getUser());
 
       return res;
     } finally {
       InterpreterContext.remove();
     }
+  }
+
+  public InterpreterResult getResult() {
+    return (InterpreterResult) getReturn();
+  }
+
+  private boolean hasUser() {
+    return this.user != null;
+  }
+
+  private boolean interpreterHasUser(InterpreterSetting interpreterSetting) {
+    return interpreterSetting.getOption().permissionIsSet() &&
+        interpreterSetting.getOption().getOwners() != null;
+  }
+
+  private boolean hasPermission(List<String> userAndRoles, List<String> intpUsersAndRoles) {
+    if (1 > intpUsersAndRoles.size()) {
+      return true;
+    }
+    Set<String> intersection = new HashSet<>(intpUsersAndRoles);
+    intersection.retainAll(userAndRoles);
+    return (intpUsersAndRoles.isEmpty() || (intersection.size() > 0));
+  }
+
+
+  private boolean isUserAuthorizedToAccessInterpreter(InterpreterOption intpOpt) {
+    return intpOpt.permissionIsSet() && hasPermission(subject.getUsersAndRoles(),
+        intpOpt.getOwners());
   }
 
   @Override
@@ -507,32 +532,20 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
     }
 
     Scheduler scheduler = interpreter.getScheduler();
-    if (scheduler != null) {
-      Job job = scheduler.getJob(getId());
-      if (job != null) {
-        if(job.isRunning()) {
-          try {
-            interpreter.cancel(getInterpreterContext(null));
-          } catch (Exception e) {
-            LOGGER.error("Error while aborting paragraph", e);
-          }
-        } else {
-          scheduler.cancel(getId());
-        }
-      } else {
-        setStatus(Status.ABORT);
-        this.getNote().setRunning(false);
-      }
+    if (scheduler == null) {
+      return true;
     }
 
-    if(scheduler == null) {
+    Job job = scheduler.removeFromWaitingQueue(getId());
+    if (job != null) {
+      job.setStatus(Status.ABORT);
+    } else {
       try {
         interpreter.cancel(getInterpreterContext(null));
-      } catch (Exception e) {
-        LOGGER.error("Error while aborting paragraph", e);
+      } catch (InterpreterException e) {
+        throw new RuntimeException(e);
       }
     }
-
     return true;
   }
 
@@ -559,7 +572,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
                         self, index, out.toInterpreterResultMessage());
                   }
                 } catch (IOException e) {
-                  LOGGER.error(e.getMessage(), e);
+                  logger.error(e.getMessage(), e);
                 }
               }
 
@@ -572,7 +585,7 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
                   }
                   updateParagraphResult(messages);
                 } catch (IOException e) {
-                  LOGGER.error(e.getMessage(), e);
+                  logger.error(e.getMessage(), e);
                 }
               }
 
@@ -638,6 +651,12 @@ public class Paragraph extends JobWithProgressPoller<InterpreterResult> implemen
   public void setReturn(InterpreterResult value, Throwable t) {
     setResult(value);
     setException(t);
+  }
+
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    Paragraph paraClone = (Paragraph) this.clone();
+    return paraClone;
   }
 
   private String getApplicationId(HeliumPackage pkg) {

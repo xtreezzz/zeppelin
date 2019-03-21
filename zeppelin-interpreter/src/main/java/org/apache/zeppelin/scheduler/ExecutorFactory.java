@@ -22,53 +22,60 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Factory class for Executor
+ *
  */
 public class ExecutorFactory {
-  private static ExecutorFactory instance;
+  private static ExecutorFactory _executor;
   private static Long _executorLock = new Long(0);
 
-  private Map<String, ExecutorService> executors = new HashMap<>();
+  Map<String, ExecutorService> executor = new HashMap<>();
 
-  private ExecutorFactory() {
+  public ExecutorFactory() {
 
   }
 
   public static ExecutorFactory singleton() {
-    if (instance == null) {
+    if (_executor == null) {
       synchronized (_executorLock) {
-        if (instance == null) {
-          instance = new ExecutorFactory();
+        if (_executor == null) {
+          _executor = new ExecutorFactory();
         }
       }
     }
-    return instance;
+    return _executor;
+  }
+
+  public ExecutorService getDefaultExecutor() {
+    return createOrGet("default");
+  }
+
+  public ExecutorService createOrGet(String name) {
+    return createOrGet(name, 100);
   }
 
   public ExecutorService createOrGet(String name, int numThread) {
-    synchronized (executors) {
-      if (!executors.containsKey(name)) {
-        executors.put(name, Executors.newScheduledThreadPool(numThread,
-            new SchedulerThreadFactory(name)));
+    synchronized (executor) {
+      if (!executor.containsKey(name)) {
+        executor.put(name, Executors.newScheduledThreadPool(numThread));
       }
-      return executors.get(name);
+      return executor.get(name);
     }
   }
 
   public void shutdown(String name) {
-    synchronized (executors) {
-      if (executors.containsKey(name)) {
-        ExecutorService e = executors.get(name);
+    synchronized (executor) {
+      if (executor.containsKey(name)) {
+        ExecutorService e = executor.get(name);
         e.shutdown();
-        executors.remove(name);
+        executor.remove(name);
       }
     }
   }
 
 
   public void shutdownAll() {
-    synchronized (executors) {
-      for (String name : executors.keySet()) {
+    synchronized (executor) {
+      for (String name : executor.keySet()){
         shutdown(name);
       }
     }

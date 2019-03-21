@@ -69,6 +69,7 @@ import org.apache.zeppelin.resource.WellKnownResourceName;
 import org.apache.zeppelin.scheduler.Job;
 import org.apache.zeppelin.scheduler.Job.Status;
 import org.apache.zeppelin.scheduler.JobListener;
+import org.apache.zeppelin.scheduler.JobProgressPoller;
 import org.apache.zeppelin.scheduler.Scheduler;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.slf4j.Logger;
@@ -457,6 +458,7 @@ public class RemoteInterpreterServer extends Thread
         interpreterContext.getParagraphId(),
         "RemoteInterpretJob_" + System.currentTimeMillis(),
         jobListener,
+        JobProgressPoller.DEFAULT_INTERVAL_MSEC,
         intp,
         st,
         context);
@@ -499,30 +501,31 @@ public class RemoteInterpreterServer extends Thread
     }
   }
 
-  public static class InterpretJob extends Job<InterpreterResult> {
-
+  // TODO(jl): Need to extract this class from RemoteInterpreterServer to test it
+  public static class InterpretJob extends Job {
 
     private Interpreter interpreter;
     private String script;
     private InterpreterContext context;
     private Map<String, Object> infos;
-    private InterpreterResult results;
+    private Object results;
 
     public InterpretJob(
         String jobId,
         String jobName,
         JobListener listener,
+        long progressUpdateIntervalMsec,
         Interpreter interpreter,
         String script,
         InterpreterContext context) {
-      super(jobId, jobName, listener);
+      super(jobId, jobName, listener, progressUpdateIntervalMsec);
       this.interpreter = interpreter;
       this.script = script;
       this.context = context;
     }
 
     @Override
-    public InterpreterResult getReturn() {
+    public Object getReturn() {
       return results;
     }
 
@@ -578,7 +581,8 @@ public class RemoteInterpreterServer extends Thread
     }
 
     @Override
-    public InterpreterResult jobRun() throws Throwable {
+    // TODO(jl): need to redesign this class
+    public Object jobRun() throws Throwable {
       ClassLoader currentThreadContextClassloader = Thread.currentThread().getContextClassLoader();
       try {
         InterpreterContext.set(context);
@@ -645,8 +649,8 @@ public class RemoteInterpreterServer extends Thread
     }
 
     @Override
-    public void setResult(InterpreterResult result) {
-      this.results = result;
+    public void setResult(Object results) {
+      this.results = results;
     }
   }
 
@@ -658,9 +662,9 @@ public class RemoteInterpreterServer extends Thread
     logger.info("cancel {} {}", className, interpreterContext.getParagraphId());
     Interpreter intp = getInterpreter(sessionId, className);
     String jobId = interpreterContext.getParagraphId();
-    Job job = intp.getScheduler().getJob(jobId);
+    Job job = intp.getScheduler().removeFromWaitingQueue(jobId);
 
-    if (job != null && job.getStatus() == Status.PENDING) {
+    if (job != null) {
       job.setStatus(Status.ABORT);
     } else {
       try {
@@ -812,13 +816,20 @@ public class RemoteInterpreterServer extends Thread
         logger.info("getStatus:" + Status.UNKNOWN.name());
         return Status.UNKNOWN.name();
       }
-
+      //TODO(zjffdu) ineffient for loop interpreter and its jobs
       for (Interpreter intp : interpreters) {
-        Job job = intp.getScheduler().getJob(jobId);
-        logger.info("job:" + job);
-        if (job != null) {
-          logger.info("getStatus: " + job.getStatus().name());
-          return job.getStatus().name();
+        for (Job job : intp.getScheduler().getJobsRunning()) {
+          if (jobId.equals(job.getId())) {
+            logger.info("getStatus:" + job.getStatus().name());
+            return job.getStatus().name();
+          }
+        }
+
+        for (Job job : intp.getScheduler().getJobsWaiting()) {
+          if (jobId.equals(job.getId())) {
+            logger.info("getStatus:" + job.getStatus().name());
+            return job.getStatus().name();
+          }
         }
       }
     }

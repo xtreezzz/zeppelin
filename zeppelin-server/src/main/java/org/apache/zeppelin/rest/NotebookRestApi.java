@@ -818,7 +818,7 @@ public class NotebookRestApi extends AbstractRestApi {
         new HashMap<>(), false, true, getServiceContext(), new RestServiceCallback<>())) {
       note = notebookService.getNote(noteId, getServiceContext(), new RestServiceCallback<>());
       Paragraph p = note.getParagraph(paragraphId);
-      InterpreterResult result = p.getReturn();
+      InterpreterResult result = p.getResult();
       if (result.code() == InterpreterResult.Code.SUCCESS) {
         return new JsonResponse<>(Status.OK, result).build();
       } else {
