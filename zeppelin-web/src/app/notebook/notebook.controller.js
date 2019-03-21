@@ -44,7 +44,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
 
   $scope.formatRevisionDate = function(date) {
     if (!date) {
-      return 'Unidentified'
+      return 'Unidentified';
     }
     let parsedDate = new Date(
       date.date.year, date.date.month - 1, date.date.day,
