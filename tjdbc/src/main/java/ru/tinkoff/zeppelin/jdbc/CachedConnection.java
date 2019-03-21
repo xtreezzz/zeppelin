@@ -23,12 +23,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +38,8 @@ public class CachedConnection implements AutoCloseable {
   private static final String META_DIR = "Metadata/";
 
   private Connection connection;
-  private Supplier<Connection> connectionSupplier;
-  private String url;
+  private final Supplier<Connection> connectionSupplier;
+  private final String url;
 
   public CachedConnection(final Supplier<Connection> connectionSupplier, final String url) {
     this.connectionSupplier = connectionSupplier;
@@ -79,32 +77,42 @@ public class CachedConnection implements AutoCloseable {
 
   List<Map<String, Object>> getSchemas() throws SQLException {
     return getValue("getSchemas", () -> resultSetToMap(getConnection().getMetaData().getSchemas()),
-        String.class);
+        ArrayList.class);
   }
 
   List<Map<String, Object>> getCatalogs() throws SQLException {
     return getValue("getCatalogs",
-        () -> resultSetToMap(getConnection().getMetaData().getCatalogs()), String.class);
+        () -> resultSetToMap(getConnection().getMetaData().getCatalogs()), ArrayList.class);
   }
 
-  List<Map<String, Object>> getTables(String schema, String schema1, String s, String[] strings)
-      throws SQLException {
+
+  List<Map<String, Object>> getTables(
+      final String schema,
+      final String schema1,
+      final String s,
+      final String[] strings) throws SQLException {
+
     return getValue(
-        schema + "." + schema1 + "." + s + "." + Arrays.stream(strings)
-            .collect(Collectors.joining(".")),
+        String.join(".", schema, schema1, s, String.join(".", strings)),
         () -> resultSetToMap(getConnection().getMetaData().getTables(schema, schema1, s, strings)),
-        ResultSet.class);
+        ArrayList.class);
   }
 
-  List<Map<String, Object>> getColumns(String schema, String schema1, String table, String s)
-      throws SQLException {
+
+  List<Map<String, Object>> getColumns(
+      final String schema,
+      final String schema1,
+      final String table,
+      final String s) throws SQLException {
+
     return getValue(
-        schema + "." + schema1 + "." + s,
+        String.join(".", schema, schema1, s),
         () -> resultSetToMap(getConnection().getMetaData().getColumns(schema, schema1, table, s)),
-        ResultSet.class);
+        ArrayList.class);
   }
 
-  private List<Map<String, Object>> resultSetToMap(ResultSet resultSet) {
+
+  private List<Map<String, Object>> resultSetToMap(final ResultSet resultSet) {
     try {
       List<Map<String, Object>> list = new ArrayList<>();
       while (resultSet.next()) {
@@ -123,19 +131,20 @@ public class CachedConnection implements AutoCloseable {
     return null;
   }
 
-  private <T> T getValue(String key, SupplierWithException<T> valueSupplier, Class clazz) {
+  private <T> T getValue(final String key, final SupplierWithException<T> valueSupplier,
+      final Class clazz) {
     try {
       int hash = (url + key).hashCode();
-      final File metaFolder = new File(META_DIR);
+      File metaFolder = new File(META_DIR);
       if (!metaFolder.exists()) {
         metaFolder.mkdir();
       }
       File file = new File(META_DIR + hash + ".meta");
       if (file.exists()) {
         return (T) gson.fromJson(new String(Files.readAllBytes(file.toPath())), clazz);
-      } else {
-        Files.createFile(file.toPath());
       }
+
+      Files.createFile(file.toPath());
       T value = valueSupplier.get();
       Files.write(file.toPath(), gson.toJson(value).getBytes(), StandardOpenOption.WRITE);
       return value;
@@ -144,25 +153,4 @@ public class CachedConnection implements AutoCloseable {
       return null;
     }
   }
-
-//  private <T> T getValue(String key, SupplierWithException<T> valueSupplier, Class clazz) {
-//    try {
-//      int hash = (url + key).hashCode();
-//      final File metaFolder = new File(META_DIR);
-//      if(!metaFolder.exists()) {
-//        metaFolder.mkdir();
-//      }
-//      ObjectMapper mapper = new ObjectMapper();
-//      File file = new File(META_DIR + hash + ".meta");
-//      if (file.exists()) {
-//        return (T) mapper.readValue(file, clazz);
-//      }
-//      T value = valueSupplier.get();
-//      mapper.writeValue(file, value);
-//      return value;
-//    } catch (Exception e) {
-//      log.error("Error then trying get cached value", e);
-//      return null;
-//    }
-//  }
 }
