@@ -64,8 +64,13 @@ public abstract class AbstractScheduler implements Scheduler {
   @Override
   public void submit(Job job) {
     job.setStatus(Job.Status.PENDING);
-    queue.add(job);
     jobs.put(job.getId(), job);
+    try {
+      TimeUnit.SECONDS.sleep(2);
+    } catch (InterruptedException e) {
+      LOGGER.error("Failed to sleep");
+    }
+    queue.add(job);
   }
 
   @Override
