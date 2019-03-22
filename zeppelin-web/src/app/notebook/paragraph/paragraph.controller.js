@@ -1439,6 +1439,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       '/paragraph/' + $scope.paragraph.id + '?asIframe';
     $window.open(redirectToUrl);
   };
+  $scope.linkToParagraphInContext = function() {
+    let noteId = $route.current.pathParams.noteId;
+    let paragraphUrl = location.protocol + '//' + location.host + location.pathname + '#/notebook/' + noteId +
+      '/?paragraph=' + $scope.paragraph.id;
+    $window.prompt('Copy url to clipboard: Ctrl+C, Enter', paragraphUrl);
+  };
 
   $scope.showScrollDownIcon = function(id) {
     let doc = angular.element('#p' + id + '_text');
