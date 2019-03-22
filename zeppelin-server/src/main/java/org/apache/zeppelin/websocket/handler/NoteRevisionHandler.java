@@ -81,12 +81,10 @@ public class NoteRevisionHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
     final String position = fromMessage.getNotNull("position");
-    final Long revisionId = ((Double) fromMessage.getNotNull("revisionId")).longValue();
+    final String revisionId = fromMessage.getNotNull("revisionId").toString();
 
-    if ("Head".equals(revisionId)) {
-      noteRepository.checkoutRevision(note, null);
-    } else {
-      noteRepository.checkoutRevision(note, revisionId);
+    if (!"Head".equals(revisionId)) {
+      noteRepository.checkoutRevision(note, new Double(revisionId).longValue());
     }
 
     final SockMessage message = new SockMessage(Operation.NOTE_REVISION_FOR_COMPARE)

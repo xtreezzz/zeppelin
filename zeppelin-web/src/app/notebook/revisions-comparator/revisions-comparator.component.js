@@ -156,10 +156,20 @@ function RevisionsComparatorController($scope, websocketMsgSrv, $routeParams) {
     if (!date) {
       return 'Unidentified';
     }
-    let parsedDate = new Date(
+    let parsedDate = $scope.parseDate(date);
+    return moment.unix(parsedDate).format('MMMM Do YYYY, HH:mm:ss');
+  };
+
+  $scope.parseDate = function(date) {
+    return new Date(
       date.date.year, date.date.month - 1, date.date.day,
-      date.time.hour, date.time.minute, date.time.second);
-    return moment.unix(parsedDate / 1000).format('MMMM Do YYYY, HH:mm');
+      date.time.hour, date.time.minute, date.time.second) / 1000;
+  };
+
+  $scope.dateComparator = function(date1, date2) {
+    let d1 = date1.value ? $scope.parseDate(date1.value) : new Date(10000, 1);
+    let d2 = date2.value ? $scope.parseDate(date2.value) : new Date(10000, 1);
+    return d1 < d2 ? -1 : d1 > d2 ? 1 : 0;
   };
 
   $scope.changeCurrentParagraphDiffDisplay = function(paragraphId) {

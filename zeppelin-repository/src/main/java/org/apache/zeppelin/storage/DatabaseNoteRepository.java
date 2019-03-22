@@ -12,8 +12,10 @@ public class DatabaseNoteRepository {
   private final NotebookDAO notebookDAO;
   private final NoteRevisionDAO noteRevisionDAO;
 
-  public DatabaseNoteRepository(final NotebookDAO notebookDAO,
+  public DatabaseNoteRepository(
+      final NotebookDAO notebookDAO,
       final NoteRevisionDAO noteRevisionDAO) {
+
     this.notebookDAO = notebookDAO;
     this.noteRevisionDAO = noteRevisionDAO;
   }

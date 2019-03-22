@@ -21,6 +21,7 @@ CREATE TABLE paragraphs
   paragraph_id VARCHAR(40)  NOT NULL,
   db_note_id   BIGINT REFERENCES notes (id) ON DELETE CASCADE,
   revision_id  BIGINT REFERENCES revisions (id),
+  job_id       BIGINT,
   title        VARCHAR(256) NOT NULL,
   text         TEXT         NOT NULL,
   username     VARCHAR(128) NOT NULL,
@@ -29,7 +30,8 @@ CREATE TABLE paragraphs
   config       JSON         NOT NULL,
   gui          JSON         NOT NULL,
   position     INTEGER      NOT NULL,
-  job_result   BIGINT
+  job_result   BIGINT,
+  shebang      VARCHAR(128)
 );
 
 CREATE TABLE JOB_BATCH
@@ -57,6 +59,8 @@ CREATE TABLE JOB
   STARTED_AT               TIMESTAMP,
   ENDED_AT                 TIMESTAMP
 );
+
+ALTER TABLE paragraphs ADD FOREIGN KEY (job_id) REFERENCES JOB(ID);
 
 CREATE TABLE JOB_PAYLOAD
 (
