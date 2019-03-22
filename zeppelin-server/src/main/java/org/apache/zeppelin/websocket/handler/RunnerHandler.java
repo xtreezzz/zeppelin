@@ -18,7 +18,10 @@
 package org.apache.zeppelin.websocket.handler;
 
 import java.io.IOException;
+
+import org.apache.zeppelin.NoteExecutorService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -30,10 +33,14 @@ import org.springframework.web.socket.WebSocketSession;
 @Component
 public class RunnerHandler extends AbstractHandler {
 
+  private final NoteExecutorService noteExecutorService;
+
   @Autowired
-  public RunnerHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository) {
+  public RunnerHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository, final NoteExecutorService noteExecutorService) {
     super(connectionManager, noteRepository);
+    this.noteExecutorService = noteExecutorService;
   }
+
 
   public void stopNoteExecution(final WebSocketSession conn,
                                 final SockMessage fromMessage) {
@@ -55,7 +62,10 @@ public class RunnerHandler extends AbstractHandler {
     */
   }
 
-  public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
+  public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
+    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
+    noteExecutorService.run(note);
     /*
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 

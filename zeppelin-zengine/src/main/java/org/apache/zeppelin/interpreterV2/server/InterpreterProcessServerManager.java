@@ -1,72 +1,62 @@
 package org.apache.zeppelin.interpreterV2.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import javax.annotation.PostConstruct;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.thrift.transport.TServerSocket;
+import org.apache.commons.exec.*;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
+import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
+import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
+import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+
+
 public class InterpreterProcessServerManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterProcessServerManager.class);
 
   private final InterpreterProcessServer server;
-  private final InterpreterInstaller interpreterInstaller;
-
 
   private final InterpreterProcessServerEventHandler eventHandler;
+  private final InterpreterOptionRepository interpreterOptionRepository;
 
+  private final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
+  private final String remoteServerClassPath;
 
-  private final Map<String, RegisterInfo> registeredInterpreters = new HashMap<>();
-  private final Map<String, BaseInterpreterConfig> defaultInterpreterConfigs = new HashMap<>();
+  private volatile Map<String, InterpreterProcess> registeredInterpreters = new ConcurrentHashMap<>();
 
-  public InterpreterProcessServerManager() {
+  public InterpreterProcessServerManager(final InterpreterOptionRepository interpreterOptionRepository,
+                                         final BiConsumer<String, InterpreterResult> interpreterResultBiConsumer) {
+    this.interpreterOptionRepository = interpreterOptionRepository;
+
     this.server = new InterpreterProcessServer();
-    this.interpreterInstaller = new InterpreterInstaller();
+    this.eventHandler = new InterpreterProcessServerEventHandler(
+            this::onInterpreterprocessStarted,
+            interpreterResultBiConsumer
+    );
 
-    final Consumer<RegisterInfo> onStartInterpreterCallback = this::onInterpreterprocessStarted;
-    this.eventHandler = new InterpreterProcessServerEventHandler(onStartInterpreterCallback);
+    interpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+    interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+    remoteServerClassPath = interpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+
+
+    interpreterInstaller.uninstallInterpreter("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
+    interpreterInstaller.install("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
   }
 
-  public static class InterpreterConfig {
-    public String interpreterGroup;
-    public String artifactName;
-  }
-
-  @PostConstruct
-  public void init() {
-    final List<InterpreterConfig> interpreterConfigs = new ArrayList<>();
-    final InterpreterConfig config1 = new InterpreterConfig();
-    config1.interpreterGroup = "md";
-    config1.artifactName = "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT";
-    interpreterConfigs.add(config1);
-
-    for (final InterpreterConfig config : interpreterConfigs) {
-      final String group = config.interpreterGroup;
-      final String artifact = config.artifactName;
-      if(!interpreterInstaller.isInstalled(group, artifact)) {
-        interpreterInstaller.install(group, artifact);
-      }
-
-      final String classPath = interpreterInstaller.getDirectory(group, artifact);
-      final List<BaseInterpreterConfig> defaultConfig = interpreterInstaller.getDafaultConfig(group, artifact);
-
-      interpreterInstaller.getDafaultConfig(group, artifact).forEach(c -> defaultInterpreterConfigs.put(c.getGroup(), c));
-    }
-
-    final String tst = ";";
-
-  }
 
   public void startServer() throws TTransportException {
     server.start(eventHandler);
@@ -76,55 +66,91 @@ public class InterpreterProcessServerManager {
     server.stop();
   }
 
-  public TServerSocket getServerSocket() {
-    return server.getServerSocket();
+
+  public InterpreterProcess getRemote(final String shebang, InterpreterOption interpreterOption) {
+    if (registeredInterpreters.containsKey(shebang)) {
+      final InterpreterProcess interpreterProcess = registeredInterpreters.get(shebang);
+      return interpreterProcess;
+    } else {
+      if (interpreterOption != null) {
+        final InterpreterArtifactSource artifactSource = interpreterOptionRepository.getSource(interpreterOption.getInterpreterName());
+
+        if (artifactSource == null) {
+          final InterpreterProcess interpreterProcess = new InterpreterProcess();
+          interpreterProcess.setShebang(shebang);
+          interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
+          return interpreterProcess;
+        }
+
+        if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.NOT_INSTALLED.getValue())) {
+          final InterpreterProcess interpreterProcess = new InterpreterProcess();
+          interpreterProcess.setShebang(shebang);
+          interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
+          return interpreterProcess;
+        }
+
+        if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.IN_PROGRESS.getValue())) {
+          final InterpreterProcess interpreterProcess = new InterpreterProcess();
+          interpreterProcess.setShebang(shebang);
+          interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
+          return interpreterProcess;
+        }
+
+        if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.INSTALLED.getValue())) {
+          final InterpreterProcess interpreterProcess = new InterpreterProcess();
+          interpreterProcess.setShebang(shebang);
+          interpreterProcess.setStatus(InterpreterProcess.Status.STARTING);
+          interpreterProcess.setConfig(interpreterOption);
+
+          startInterpreterProcess(shebang, artifactSource.getPath(), interpreterOption.getConfig().getClassName());
+
+          registeredInterpreters.put(shebang, interpreterProcess);
+          return interpreterProcess;
+        }
+
+        // default condition
+        final InterpreterProcess interpreterProcess = new InterpreterProcess();
+        interpreterProcess.setShebang(shebang);
+        interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
+        return interpreterProcess;
+
+      } else {
+        final InterpreterProcess interpreterProcess = new InterpreterProcess();
+        interpreterProcess.setShebang(shebang);
+        interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
+        return interpreterProcess;
+      }
+    }
   }
 
-  public boolean isServerRunning() {
-    return server.isRunning();
-  }
 
+  public void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
+    final String cmd = String.format("java -agentlib:jdwp=transport=dt_socket,server=n,address=172.27.79.51:5005,suspend=y -cp \"./*\" org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer  -h %s -p %s -sb %s -cp %s -cn %s ",
+            server.getServerSocket().getServerSocket().getInetAddress().getHostAddress(),
+            server.getServerSocket().getServerSocket().getLocalPort(),
+            shebang,
+            classpath,
+            classname
+    );
 
-
-  public void startInterpreterProcess() {
-    /*
     // start server process
-    CommandLine cmdLine = CommandLine.parse(interpreterRunner);
-    cmdLine.addArgument("-d", false);
-    //cmdLine.addArgument(interpreterDir, false);
-    cmdLine.addArgument("-c", false);
-    //cmdLine.addArgument(zeppelinServerRPCHost, false);
-    cmdLine.addArgument("-p", false);
-    //cmdLine.addArgument(String.valueOf(zeppelinServerRPCPort), false);
-    cmdLine.addArgument("-r", false);
-    //cmdLine.addArgument(interpreterPortRange, false);
-    cmdLine.addArgument("-i", false);
-    //cmdLine.addArgument(interpreterGroupId, false);
-    //if (isUserImpersonated && !userName.equals("anonymous")) {
-    //  cmdLine.addArgument("-u", false);
-    //  cmdLine.addArgument(userName, false);
-    //}
-    cmdLine.addArgument("-l", false);
-    //cmdLine.addArgument(localRepoDir, false);
-    cmdLine.addArgument("-g", false);
-    //cmdLine.addArgument(interpreterSettingName, false);
+    CommandLine cmdLine = CommandLine.parse(cmd); //CommandLine.parse(interpreterRunner);
 
     final DefaultExecutor executor = new DefaultExecutor();
+    executor.setWorkingDirectory(new File(remoteServerClassPath));
 
     final ExecuteWatchdog watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
     executor.setWatchdog(watchdog);
 
-    final Consumer<Integer> onProcessCompleteConsumer = this::onInterpreterProcessComplete;
-    final Consumer<ExecuteException> onInterpreterProcessFailedConsumer = this::onInterpreterProcessFailed;
     final ExecuteResultHandler handler = new ExecuteResultHandler() {
       @Override
       public void onProcessComplete(final int exitValue) {
-        onProcessCompleteConsumer.accept(exitValue);
+        registeredInterpreters.remove(shebang);
       }
 
       @Override
       public void onProcessFailed(final ExecuteException e) {
-        onInterpreterProcessFailedConsumer.accept(e);
+        registeredInterpreters.remove(shebang);
       }
     };
 
@@ -133,28 +159,17 @@ public class InterpreterProcessServerManager {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    */
   }
 
-  public void stopInterpreterProcess(final String interpreterGroup) {
-    //registeredInterpreters.get(interpreterGroup);
-    //executor.getWatchdog().destroyProcess();
-  }
-
-
-  public void onInterpreterprocessStarted(final RegisterInfo registerInfo) {
-    registeredInterpreters.put(registerInfo.interpreterGroup, registerInfo);
-  }
-
-  public void onInterpreterProcessComplete(final int exitValue) {
-
-  }
-
-  public void onInterpreterProcessFailed(final ExecuteException e) {
-
-  }
-
-  public Map<String, RegisterInfo> getRegisteredInterpreters() {
-    return registeredInterpreters;
+  private void onInterpreterprocessStarted(final RegisterInfo registerInfo) {
+    if (registeredInterpreters.containsKey(registerInfo.getShebang())) {
+      final InterpreterProcess process = registeredInterpreters.get(registerInfo.getShebang());
+      process.setHost(registerInfo.getHost());
+      process.setPort(registerInfo.getPort());
+      process.setInterpreterProcessUUID(registerInfo.getInterpreterProcessUUID());
+      process.setStatus(InterpreterProcess.Status.READY);
+    } else {
+      // TODO: think about it
+    }
   }
 }

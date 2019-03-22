@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
@@ -21,46 +23,44 @@ public class InterpreterInstaller {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterInstaller.class);
 
-  private final String[] exclusions = new String[]{"org.apache.zeppelin:zeppelin-zengine",
-          "org.apache.zeppelin:zeppelin-interpreter",
-          "org.apache.zeppelin:zeppelin-server"};
-
   private final DependencyResolver dependencyResolver;
 
   public InterpreterInstaller() {
     this.dependencyResolver = new DependencyResolver("");
   }
 
-  public boolean isInstalled(final String interpreterGroup, final String artifact) {
-    final File folderToStore = new File("interpreters/" + interpreterGroup + "/");
+  public boolean isInstalled(final String name, final String artifact) {
+    final File folderToStore = new File("interpreters/" + name + "/");
     return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
   }
 
-  public void install(final String interpreterGroup, final String artifact) {
-    if (isInstalled(interpreterGroup, artifact)) {
-      return;
+  public String install(final String name, final String artifact) {
+    if (isInstalled(name, artifact)) {
+      return getDirectory(name, artifact);
     }
 
-    final File folderToStore = new File("interpreters/" + interpreterGroup + "/");
+    final File folderToStore = new File("interpreters/" + name + "/");
     try {
       dependencyResolver.load(artifact, new ArrayList<>(), folderToStore);
+      return folderToStore.getAbsolutePath();
     } catch (final Exception e) {
       LOG.error("Error while install interpreter", e);
-      uninstallInterpreter(interpreterGroup, artifact);
+      uninstallInterpreter(name, artifact);
+      return "";
     }
   }
 
-  public void uninstallInterpreter(final String interpreterGroup, final String artifact) {
-    final File folderToStore = new File("interpreters/" + interpreterGroup + "/");
+  public void uninstallInterpreter(final String name, final String artifact) {
+    final File folderToStore = new File("interpreters/" + name + "/");
     try {
-      Files.delete(folderToStore.toPath());
+      FileUtils.deleteDirectory(folderToStore);
     } catch (final Exception e) {
       LOG.error("Error while remove interpreter", e);
     }
   }
 
-  public List<BaseInterpreterConfig> getDafaultConfig(final String interpreterGroup, final String artifact) {
-    final File folderToStore = new File("interpreters/" + interpreterGroup + "/");
+  public List<BaseInterpreterConfig> getDafaultConfig(final String name, final String artifact) {
+    final File folderToStore = new File("interpreters/" + name + "/");
 
     try {
       final List<URL> urls = Lists.newArrayList();
@@ -78,8 +78,8 @@ public class InterpreterInstaller {
     }
   }
 
-  public String getDirectory(final String interpreterGroup, final String artifact) {
-      final File folderToStore = new File("interpreters/" + interpreterGroup + "/");
+  public String getDirectory(final String name, final String artifact) {
+      final File folderToStore = new File("interpreters/" + name + "/");
       return folderToStore.getAbsolutePath();
   }
 }

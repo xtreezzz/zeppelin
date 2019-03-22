@@ -42,19 +42,6 @@ public class InterpreterResult implements Serializable {
     KEEP_PREVIOUS_RESULT
   }
 
-  /**
-   * Type of Data.
-   */
-  public enum Type {
-    TEXT,
-    HTML,
-    ANGULAR,
-    TABLE,
-    IMG,
-    SVG,
-    NULL,
-    NETWORK
-  }
 
   Code code;
   List<Message> msg = new LinkedList<>();
@@ -68,40 +55,9 @@ public class InterpreterResult implements Serializable {
     msg.addAll(msgs);
   }
 
-  public InterpreterResult(Code code, String msg) {
-    this.code = code;
-    add(msg);
-  }
-
-  public InterpreterResult(Code code, Type type, String msg) {
-    this.code = code;
-    add(type, msg);
-  }
-
-  /**
-   * Automatically detect %[display_system] directives
-   * @param msg
-   */
-  public void add(String msg) {
-   /* InterpreterOutput out = new InterpreterOutput(null);
-    try {
-      out.write(msg);
-      out.flush();
-      this.msg.addAll(out.toInterpreterResultMessage());
-      out.close();
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-    }
-    */
-
-  }
-
-  public void add(Type type, String data) {
-    msg.add(new Message(type, data));
-  }
-
-  public void add(Message message) {
+  public InterpreterResult add(Message message) {
     msg.add(message);
+    return this;
   }
 
   public Code code() {
@@ -112,28 +68,24 @@ public class InterpreterResult implements Serializable {
     return msg;
   }
 
-
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    Type prevType = null;
-    for (Message m : msg) {
-      if (prevType != null) {
-        sb.append("\n");
-        if (prevType == Type.TABLE) {
-          sb.append("\n");
-        }
-      }
-      sb.append(m.toString());
-      prevType = m.getType();
-    }
-
-    return sb.toString();
-  }
-
   /**
    * Interpreter result message
    */
   public static class Message implements Serializable {
+
+    /**
+     * Type of Data.
+     */
+    public enum Type {
+      TEXT,
+      HTML,
+      ANGULAR,
+      TABLE,
+      IMG,
+      SVG,
+      NULL,
+      NETWORK
+    }
 
     public static final String EXCEEDS_LIMIT_ROWS =
             "<strong>Output is truncated</strong> to %s rows. Learn more about <strong>%s</strong>";
@@ -146,15 +98,15 @@ public class InterpreterResult implements Serializable {
                     "%s" +
                     "</div>";
 
-    InterpreterResult.Type type;
+    Type type;
     String data;
 
-    public Message(InterpreterResult.Type type, String data) {
+    public Message(Type type, String data) {
       this.type = type;
       this.data = data;
     }
 
-    public InterpreterResult.Type getType() {
+    public Type getType() {
       return type;
     }
 
@@ -163,13 +115,13 @@ public class InterpreterResult implements Serializable {
     }
 
     public static Message getExceedsLimitRowsMessage(int amount, String variable) {
-      Message message = new Message(InterpreterResult.Type.HTML,
+      Message message = new Message(Type.HTML,
               String.format(EXCEEDS_LIMIT, String.format(EXCEEDS_LIMIT_ROWS, amount, variable)));
       return message;
     }
 
     public static Message getExceedsLimitSizeMessage(int amount, String variable) {
-      Message message = new Message(InterpreterResult.Type.HTML,
+      Message message = new Message(Type.HTML,
               String.format(EXCEEDS_LIMIT, String.format(EXCEEDS_LIMIT_SIZE, amount, variable)));
       return message;
     }

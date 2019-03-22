@@ -51,9 +51,7 @@ import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 public class DependencyResolver extends AbstractDependencyResolver {
   private final Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
 
-  private final String[] exclusions = new String[] {"org.apache.zeppelin:zeppelin-zengine",
-      "org.apache.zeppelin:zeppelin-interpreter",
-      "org.apache.zeppelin:zeppelin-server"};
+  private final String[] exclusions = new String[0];
 
   public DependencyResolver(final String localRepoPath) {
     super(localRepoPath);

@@ -34,7 +34,7 @@ public class InterpreterArtifactSource implements Serializable {
   /**
    * Types of interpreter processes.
    */
-  private enum Status {
+  public enum Status {
     NOT_INSTALLED("not installed"),
     INSTALLED("installed"),
     IN_PROGRESS("in progress");

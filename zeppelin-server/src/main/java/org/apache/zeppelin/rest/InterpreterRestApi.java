@@ -17,9 +17,11 @@
 
 package org.apache.zeppelin.rest;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
@@ -30,6 +32,7 @@ import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreter.configuration.option.Permissions;
+import org.apache.zeppelin.interpreterV2.server.InterpreterInstaller;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
@@ -62,48 +65,141 @@ public class InterpreterRestApi {
   private final InterpreterService interpreterService;
   private final InterpreterOptionRepository interpreterOptionRepository;
 
+  private InterpreterInstaller interpreterInstaller;
+
   @Autowired
   public InterpreterRestApi(
-      @Qualifier("NoSecurityService") final SecurityService securityService,
-      final InterpreterService interpreterService,
-      final InterpreterOptionRepository interpreterOptionRepository) {
+          @Qualifier("NoSecurityService") final SecurityService securityService,
+          final InterpreterService interpreterService,
+          final InterpreterOptionRepository interpreterOptionRepository) {
     this.interpreterOptionRepository = interpreterOptionRepository;
     this.securityService = securityService;
     this.interpreterService = interpreterService;
+
+    interpreterInstaller = new InterpreterInstaller();
+  }
+
+
+  /**
+   * List of dependency resolving repositories.
+   */
+  @ZeppelinApi
+  @GetMapping(value = "/repository", produces = "application/json")
+  public ResponseEntity listRepositories() {
     try {
-      tempRepositoryInit();
+      return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllRepositories()).build();
     } catch (final Exception e) {
-      logger.error("Failed to init interpreter settings", e);
+      logger.error("Exception in InterpreterRestApi while loading all repositories ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
   /**
-   * Initialize interpreter settings
+   * Add new repository.
+   *
+   * @param message Repository
    */
-  private void tempRepositoryInit() {
-    interpreterOptionRepository.saveSource(new InterpreterArtifactSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
+  @ZeppelinApi
+  @PostMapping(value = "/repository", produces = "application/json")
+  public ResponseEntity addRepository(@RequestBody final String message) {
+    try {
+      final Repository request = Repository.fromJson(message);
+      interpreterOptionRepository.saveRepository(request);
+      logger.info("New repository {} added", request.getId());
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while creating repository ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
 
-    final Map<String, InterpreterProperty> interpreterPropertyMap = new HashMap<>();
-    interpreterPropertyMap.put("markdown.parser.type",
-        new InterpreterProperty(
-            "MARKDOWN_PARSER_TYPE",
-            "markdown.parser.type",
-            "pegdown",
-            "Markdown Parser Type. Available values: pegdown, markdown4j. Default = pegdown",
-            "string"
-        )
-    );
-    interpreterOptionRepository.saveOption(new InterpreterOption(
-        "Best Markdown Interpreter", "md", "%md",
-        "shared", "shared", new BaseInterpreterConfig(
-        "md", "md", "org.apache.zeppelin.markdown.Markdown", interpreterPropertyMap, new HashMap<>()),
-        new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1, false));
+  /**
+   * Delete repository.
+   *
+   * @param repoId ID of repository
+   */
+  @ZeppelinApi
+  @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
+  public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
+    try {
+      logger.info("Remove repository {}", repoId);
+      interpreterOptionRepository.removeRepository(repoId);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while deleting repository ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
 
-    interpreterOptionRepository.saveRepository(
-        new Repository(true, "central", "http://repo1.maven.org/maven2/",
-            "username", "password", "HTTP", "127.0.0.1",
-            8000, "proxyLogin", "proxyPass"));
+  /**
+   * List of all sources.
+   */
+  @ZeppelinApi
+  @GetMapping(value = "/source", produces = "application/json")
+  public ResponseEntity listSources() {
+    try {
+      return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllSources()).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while loading all sources ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
 
+  /**
+   * Add new source.
+   *
+   * @param message InterpreterArtifactSource
+   */
+  @ZeppelinApi
+  @PostMapping(value = "/source", produces = "application/json")
+  public ResponseEntity addSource(@RequestBody final String message) {
+    try {
+      final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
+      // install sources
+      final String installationDir = interpreterInstaller.install(request.getInterpreterName(), request.getArtifact());
+      if (!StringUtils.isAllBlank(installationDir)) {
+        request.setPath(installationDir);
+        request.setStatus("installed");
+      } else {
+        request.setPath(null);
+        request.setStatus("not installed");
+      }
+      interpreterOptionRepository.saveSource(request);
+
+      //final InterpreterOption interpreterOption = interpreterInstaller.getDafaultConfig()
+      logger.info("New source {} added", request.getArtifact());
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while creating new source ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * Delete source.
+   *
+   * @param interpreterName of interpreter
+   */
+  @ZeppelinApi
+  @DeleteMapping(value = "/source/{name}", produces = "application/json")
+  public ResponseEntity removeSource(@PathVariable("name") final String interpreterName) {
+    try {
+      logger.info("Remove source {}", interpreterName);
+      final InterpreterArtifactSource source = interpreterOptionRepository.getSource(interpreterName);
+      interpreterInstaller.uninstallInterpreter(source.getInterpreterName(), source.getArtifact());
+
+      interpreterOptionRepository.removeSource(interpreterName);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while deleting source ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+              ExceptionUtils.getStackTrace(e)).build();
+    }
   }
 
   /**
@@ -117,7 +213,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Fail to get all interpreter setting", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -137,7 +233,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -200,7 +296,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while removing interpreter option ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -254,113 +350,6 @@ public class InterpreterRestApi {
     }
   }
 
-  /**
-   * List of dependency resolving repositories.
-   */
-  @ZeppelinApi
-  @GetMapping(value = "/repository", produces = "application/json")
-  public ResponseEntity listRepositories() {
-    try {
-      return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllRepositories()).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while loading all repositories ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-  }
-
-  /**
-   * Add new repository.
-   *
-   * @param message Repository
-   */
-  @ZeppelinApi
-  @PostMapping(value = "/repository", produces = "application/json")
-  public ResponseEntity addRepository(@RequestBody final String message) {
-    try {
-      final Repository request = Repository.fromJson(message);
-      interpreterOptionRepository.saveRepository(request);
-      logger.info("New repository {} added", request.getId());
-      return new JsonResponse(HttpStatus.OK).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while creating repository ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-  }
-
-  /**
-   * Delete repository.
-   *
-   * @param repoId ID of repository
-   */
-  @ZeppelinApi
-  @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
-  public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
-    try {
-      logger.info("Remove repository {}", repoId);
-      interpreterOptionRepository.removeRepository(repoId);
-      return new JsonResponse(HttpStatus.OK).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while deleting repository ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-  }
-
-  /**
-   * List of all sources.
-   */
-  @ZeppelinApi
-  @GetMapping(value = "/source", produces = "application/json")
-  public ResponseEntity listSources() {
-    try {
-    return new JsonResponse<>(HttpStatus.OK, "", interpreterOptionRepository.getAllSources()).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while loading all sources ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-  }
-
-  /**
-   * Add new source.
-   *
-   * @param message InterpreterArtifactSource
-   */
-  @ZeppelinApi
-  @PostMapping(value = "/source", produces = "application/json")
-  public ResponseEntity addSource(@RequestBody final String message) {
-    try {
-      final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
-      interpreterOptionRepository.saveSource(request);
-      logger.info("New source {} added", request.getArtifact());
-      return new JsonResponse(HttpStatus.OK).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while creating new source ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-}
-
-  /**
-   * Delete source.
-   *
-   * @param interpreterName of interpreter
-   */
-  @ZeppelinApi
-  @DeleteMapping(value = "/source/{name}", produces = "application/json")
-  public ResponseEntity removeSource(@PathVariable("name") final String interpreterName) {
-    try {
-      logger.info("Remove source {}", interpreterName);
-      interpreterOptionRepository.removeSource(interpreterName);
-      return new JsonResponse(HttpStatus.OK).build();
-    } catch (final Exception e) {
-      logger.error("Exception in InterpreterRestApi while deleting source ", e);
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
-    }
-  }
 
   /**
    * Get available types for property

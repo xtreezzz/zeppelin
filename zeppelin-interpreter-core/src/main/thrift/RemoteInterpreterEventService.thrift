@@ -23,22 +23,16 @@ namespace java org.apache.zeppelin.interpreter.core.thrift
 struct RegisterInfo {
   1: string host,
   2: i32 port
-  3: string interpreterGroup
-}
-
-struct OutputAppendEvent {
-  1: string noteId,
-  2: string paragraphId,
-  3: i32 index,
-  4: string data,
-  5: string appId
+  3: string shebang
+  4: string interpreterProcessUUID
 }
 
 service RemoteInterpreterEventService {
 
   void registerInterpreterProcess(1: RegisterInfo registerInfo);
 
-  void appendOutput(1: OutputAppendEvent event);
+  void handleInterpreterResult(1: string UUID, 2: string payload);
+
 
 
 }

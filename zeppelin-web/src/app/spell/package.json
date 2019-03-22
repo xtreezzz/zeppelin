@@ -1,7 +1,7 @@
 {
   "name": "zeppelin-spell",
   "description": "Zeppelin Spell Framework",
-  "version": "0.9.0-SNAPSHOT",
+  "version": "1.0.0-T-SNAPSHOT",
   "main": "index",
   "dependencies": {
   },
