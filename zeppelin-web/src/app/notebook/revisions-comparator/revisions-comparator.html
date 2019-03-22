@@ -22,9 +22,9 @@ limitations under the License.
       </tr>
       </thead>
       <tbody class="commit-rows">
-      <tr ng-repeat="revision in $ctrl.noteRevisions | orderBy:'time':true"
+      <tr ng-repeat="revision in (filteredRevisions = ($ctrl.noteRevisions | orderBy:'date':true:dateComparator))"
           ng-class="{'cursor-hand': !$last, 'selected-revision': revision.message === currentSecondRevisionForCompare}"
-          ng-click="getNoteRevisionForReview($ctrl.noteRevisions[$index + 1], 'first'); getNoteRevisionForReview(revision, 'second')">
+          ng-click="getNoteRevisionForReview(filteredRevisions[$index + 1], 'first'); getNoteRevisionForReview(revision, 'second')">
         <td>{{revision.message}}</td>
         <td>{{formatRevisionDate(revision.date)}}</td>
       </tr>

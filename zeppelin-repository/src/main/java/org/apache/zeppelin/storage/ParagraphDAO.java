@@ -26,9 +26,9 @@ public class ParagraphDAO {
   private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs WHERE revision_id ISNULL ORDER BY position";
   private static final String GET_NOTE_PARAGRAPHS = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id ISNULL ORDER BY position";
   private static final String GET_NOTE_PARAGRAPHS_BY_REVISION = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id=:revision_id ORDER BY position";
-  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, db_note_id, revision_id, title, text, username, created, updated, config, gui, position) VALUES (:paragraph_id, :db_note_id, :revision_id, :title, :text, :username, :created, :updated, :config, :gui, :position)";
-  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, username=:username, updated=:updated, config=:config, gui=:gui, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
-  private static final String DELETE_PARAGRAPHS = "DELETE FROM paragraphs WHERE revision_id ISNULL AND paragraph_id NOT IN (:ids)";
+  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, db_note_id, revision_id, title, text, shebang, username, created, updated, config, gui, position) VALUES (:paragraph_id, :db_note_id, :revision_id, :title, :text, :shebang, :username, :created, :updated, :config, :gui, :position)";
+  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, shebang=:shebang, username=:username, updated=:updated, config=:config, gui=:gui, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
+  private static final String DELETE_PARAGRAPHS = "DELETE FROM paragraphs WHERE revision_id ISNULL AND db_note_id=:db_note_id AND paragraph_id NOT IN (:ids)";
 
 
   public ParagraphDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
@@ -83,12 +83,11 @@ public class ParagraphDAO {
         .map(Paragraph::getId)
         .collect(Collectors.toSet());
 
-    deleteNotIncludedParagraphs(existIds);
+    MapSqlParameterSource params = new MapSqlParameterSource("ids", existIds);
+    params.addValue("db_note_id", note.getDatabaseId());
+    jdbcTemplate.update(DELETE_PARAGRAPHS, params);
   }
 
-  private void deleteNotIncludedParagraphs(final Set<String> existIds) {
-    jdbcTemplate.update(DELETE_PARAGRAPHS, new MapSqlParameterSource("ids", existIds));
-  }
 
   private Paragraph convertResultSetToParagraph(final ResultSet resultSet)
       throws SQLException {
@@ -96,6 +95,7 @@ public class ParagraphDAO {
     String id = resultSet.getString("paragraph_id");
     String title = resultSet.getString("title");
     String text = resultSet.getString("text");
+    String shebang = resultSet.getString("shebang");
     String user = resultSet.getString("username");
     LocalDateTime created = resultSet.getTimestamp("created").toLocalDateTime();
     LocalDateTime updated = resultSet.getTimestamp("updated").toLocalDateTime();
@@ -105,6 +105,7 @@ public class ParagraphDAO {
     Paragraph paragraph = new Paragraph(title, text, user, gui);
     paragraph.setId(id);
     paragraph.setDatabaseId(databaseId);
+    paragraph.setShebang(shebang);
     paragraph.setCreated(created);
     paragraph.setUpdated(updated);
     paragraph.setConfig(gson.fromJson(configJson, paragraph.getConfig().getClass()));
@@ -117,6 +118,7 @@ public class ParagraphDAO {
         .addValue("paragraph_id", p.getId())
         .addValue("title", p.getTitle())
         .addValue("text", p.getText())
+        .addValue("shebang", p.getShebang())
         .addValue("username", p.getUser())
         .addValue("created", p.getCreated())
         .addValue("updated", p.getUpdated())

@@ -42,6 +42,7 @@ public class Paragraph implements Serializable {
   private String title;
   private String text;
   private String user;
+  private String shebang;
   private LocalDateTime created;
   private LocalDateTime updated;
 
@@ -98,6 +99,14 @@ public class Paragraph implements Serializable {
   public void setText(final String text) {
     this.text = text;
     this.updated = LocalDateTime.now();
+  }
+
+  public String getShebang() {
+    return shebang;
+  }
+
+  public void setShebang(final String shebang) {
+    this.shebang = shebang;
   }
 
   public String getUser() {
