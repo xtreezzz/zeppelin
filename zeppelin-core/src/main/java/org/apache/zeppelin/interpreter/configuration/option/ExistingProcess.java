@@ -63,8 +63,8 @@ public class ExistingProcess implements Serializable {
    *    -1: default value when process is not enabled.
    *    [1; 2^16): available ports.
    *
-   * @param port
-   * @return
+   * @param port, port number.
+   * @return {@code true} if port is valid, {@code false} otherwise.
    */
   private static boolean isValidPort(final int port) {
     return port == -1 || port > 0 && port < Math.pow(2, 16);
@@ -80,7 +80,7 @@ public class ExistingProcess implements Serializable {
    */
   private static boolean isValidHost(@Nonnull final String host) {
     //TODO(egorklimov): regexp for host
-    return host.equals("") || true;
+    return true;
   }
 
   public static ExistingProcess fromJson(@Nonnull final String message) {
