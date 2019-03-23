@@ -37,9 +37,8 @@ public class InterpreterResult implements Serializable {
    */
   public enum Code {
     SUCCESS,
-    INCOMPLETE,
-    ERROR,
-    KEEP_PREVIOUS_RESULT
+    ABORTED,
+    ERROR
   }
 
 

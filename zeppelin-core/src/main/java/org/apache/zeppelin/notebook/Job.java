@@ -10,6 +10,7 @@ public class Job {
     DONE,
     ERROR,
     CANCELED,
+    ABORTING,
     ABORTED
     ;
   }

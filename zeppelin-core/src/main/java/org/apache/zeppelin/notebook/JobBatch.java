@@ -12,8 +12,8 @@ public class JobBatch {
     DONE,
     HANDLE_ERROR,
     ERROR,
-    HANDLE_CANCEL,
-    CANCELED,
+    ABORTING,
+    ABORTED,
     ;
   }
 

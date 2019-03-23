@@ -121,7 +121,46 @@ public class JobDAO {
           "WHERE JB.STATUS IN ('PENDING', 'RUNNING')\n" +
           "  AND NOT EXISTS(SELECT * FROM JOB WHERE J.BATCH_ID = JB.ID AND J.STATUS IN('RUNNING', 'ERROR'));";
 
-  @Autowired
+
+    private static String SELECT_JOBS_WITH_DEAD_INTERPRETER = "" +
+            "SELECT J.ID,\n" +
+            "       J.BATCH_ID,\n" +
+            "       J.NOTE_ID,\n" +
+            "       J.PARAGRAPH_ID,\n" +
+            "       J.INDEX_NUMBER,\n" +
+            "       J.SHEBANG,\n" +
+            "       J.STATUS,\n" +
+            "       J.INTERPRETER_PROCESS_UUID,\n" +
+            "       J.INTERPRETER_JOB_UUID,\n" +
+            "       J.CREATED_AT,\n" +
+            "       J.STARTED_AT,\n" +
+            "       J.ENDED_AT\n" +
+            "FROM JOB_BATCH JB\n" +
+            "       LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
+            "WHERE JB.STATUS IN ('PENDING', 'RUNNING')\n" +
+            "  AND J.INTERPRETER_PROCESS_UUID = :INTERPRETER_PROCESS_UUID;";
+
+    private static String SELECT_READY_TO_CANCEL_JOBS = "" +
+            "SELECT J.ID,\n" +
+            "       J.BATCH_ID,\n" +
+            "       J.NOTE_ID,\n" +
+            "       J.PARAGRAPH_ID,\n" +
+            "       J.INDEX_NUMBER,\n" +
+            "       J.SHEBANG,\n" +
+            "       J.STATUS,\n" +
+            "       J.INTERPRETER_PROCESS_UUID,\n" +
+            "       J.INTERPRETER_JOB_UUID,\n" +
+            "       J.CREATED_AT,\n" +
+            "       J.STARTED_AT,\n" +
+            "       J.ENDED_AT\n" +
+            "FROM JOB_BATCH JB\n" +
+            "       LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
+            "WHERE JB.STATUS IN (ABORTING)\n" +
+            "  AND J.STATUS IN('RUNNING');";
+
+
+
+    @Autowired
   private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
   public Job persist(final Job job) {
@@ -252,7 +291,7 @@ public class JobDAO {
     });
   }
 
-  public LinkedList<Job> loadNextReady() {
+  public LinkedList<Job> loadNextPending() {
     final SqlParameterSource parameters = new MapSqlParameterSource();
 
     final LinkedList<Job> jobs = new LinkedList<>(namedParameterJdbcTemplate.query(
@@ -354,4 +393,107 @@ public class JobDAO {
     jobs.sort(Comparator.comparing(Job::getIndex));
     return jobs;
   }
+
+    public LinkedList<Job> loadJobsByInterpreterProcessUUID(final String interpreterProcessUUID) {
+        final SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("INTERPRETER_PROCESS_UUID", interpreterProcessUUID);
+
+        final LinkedList<Job> jobs = new LinkedList<>(namedParameterJdbcTemplate.query(
+                SELECT_JOBS_WITH_DEAD_INTERPRETER,
+                parameters,
+                (resultSet, i) -> {
+                    final Long id = resultSet.getLong("ID");
+                    final Long batch_id = resultSet.getLong("BATCH_ID");
+                    final Long noteId = resultSet.getLong("NOTE_ID");
+                    final Long paragraphId = resultSet.getLong("PARAGRAPH_ID");
+                    final Integer index = resultSet.getInt("INDEX_NUMBER");
+                    final String shebang = resultSet.getString("SHEBANG");
+                    final Job.Status status = Job.Status.valueOf(resultSet.getString("STATUS"));
+                    final String interpreter_process_uuid = resultSet.getString("INTERPRETER_PROCESS_UUID");
+                    final String interpreter_job_uuid = resultSet.getString("INTERPRETER_JOB_UUID");
+
+                    final LocalDateTime createdAt =
+                            null != resultSet.getTimestamp("CREATED_AT")
+                                    ? resultSet.getTimestamp("CREATED_AT").toLocalDateTime()
+                                    : null;
+                    final LocalDateTime startedAt =
+                            null != resultSet.getTimestamp("STARTED_AT")
+                                    ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
+                                    : null;
+
+                    final LocalDateTime endedAt =
+                            null != resultSet.getTimestamp("ENDED_AT")
+                                    ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
+                                    : null;
+
+
+                    final Job job = new Job();
+                    job.setId(id);
+                    job.setBatchId(batch_id);
+                    job.setNoteId(noteId);
+                    job.setParagpaphId(paragraphId);
+                    job.setIndex(index);
+                    job.setShebang(shebang);
+                    job.setStatus(status);
+                    job.setInterpreterProcessUUID(interpreter_process_uuid);
+                    job.setInterpreterJobUUID(interpreter_job_uuid);
+                    job.setCreatedAt(createdAt);
+                    job.setStartedAt(startedAt);
+                    job.setEndedAt(endedAt);
+                    return job;
+                }));
+        jobs.sort(Comparator.comparing(Job::getIndex));
+        return jobs;
+    }
+
+    public LinkedList<Job> loadNextCancelling() {
+        final SqlParameterSource parameters = new MapSqlParameterSource();
+
+        final LinkedList<Job> jobs = new LinkedList<>(namedParameterJdbcTemplate.query(
+                SELECT_READY_TO_CANCEL_JOBS,
+                parameters,
+                (resultSet, i) -> {
+                    final Long id = resultSet.getLong("ID");
+                    final Long batch_id = resultSet.getLong("BATCH_ID");
+                    final Long noteId = resultSet.getLong("NOTE_ID");
+                    final Long paragraphId = resultSet.getLong("PARAGRAPH_ID");
+                    final Integer index = resultSet.getInt("INDEX_NUMBER");
+                    final String shebang = resultSet.getString("SHEBANG");
+                    final Job.Status status = Job.Status.valueOf(resultSet.getString("STATUS"));
+                    final String interpreter_process_uuid = resultSet.getString("INTERPRETER_PROCESS_UUID");
+                    final String interpreter_job_uuid = resultSet.getString("INTERPRETER_JOB_UUID");
+
+                    final LocalDateTime createdAt =
+                            null != resultSet.getTimestamp("CREATED_AT")
+                                    ? resultSet.getTimestamp("CREATED_AT").toLocalDateTime()
+                                    : null;
+                    final LocalDateTime startedAt =
+                            null != resultSet.getTimestamp("STARTED_AT")
+                                    ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
+                                    : null;
+
+                    final LocalDateTime endedAt =
+                            null != resultSet.getTimestamp("ENDED_AT")
+                                    ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
+                                    : null;
+
+
+                    final Job job = new Job();
+                    job.setId(id);
+                    job.setBatchId(batch_id);
+                    job.setNoteId(noteId);
+                    job.setParagpaphId(paragraphId);
+                    job.setIndex(index);
+                    job.setShebang(shebang);
+                    job.setStatus(status);
+                    job.setInterpreterProcessUUID(interpreter_process_uuid);
+                    job.setInterpreterJobUUID(interpreter_job_uuid);
+                    job.setCreatedAt(createdAt);
+                    job.setStartedAt(startedAt);
+                    job.setEndedAt(endedAt);
+                    return job;
+                }));
+        jobs.sort(Comparator.comparing(Job::getIndex));
+        return jobs;
+    }
 }

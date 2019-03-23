@@ -99,14 +99,12 @@ public class HeliumBundleFactory {
 
     File zeppelinWebPath = new File(conf.getRelativeDir("zeppelin-web"));
     if (!zeppelinWebPath.isDirectory()) {
-      this.tabledataModulePath =
-          new File(conf.getRelativeDir("lib/node_modules/zeppelin-tabledata"));
+      this.tabledataModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-tabledata"));
       this.visualizationModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-vis"));
       this.spellModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-spell"));
     } else {
       this.tabledataModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/tabledata"));
-      this.visualizationModulePath =
-          new File(conf.getRelativeDir("zeppelin-web/src/app/visualization"));
+      this.visualizationModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/visualization"));
       this.spellModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/spell"));
     }
   }

@@ -10,31 +10,31 @@ public class RemoteInterpreterServer {
 
   public static void main(String[] args) throws Exception {
 
-    Options options = new Options();
+    final Options options = new Options();
 
-    Option host = new Option("h", "host", true, "zeppelin thrift server host");
+    final Option host = new Option("h", "host", true, "zeppelin thrift server host");
     host.setRequired(true);
     options.addOption(host);
 
-    Option port = new Option("p", "port", true, "zeppelin thrift server port");
+    final Option port = new Option("p", "port", true, "zeppelin thrift server port");
     port.setRequired(true);
     options.addOption(port);
 
-    Option shebang = new Option("sb", "shebang", true, "interpreter shebang");
+    final Option shebang = new Option("sb", "shebang", true, "interpreter shebang");
     shebang.setRequired(true);
     options.addOption(shebang);
 
-    Option classpath = new Option("cp", "classpath", true, "interpreter classpath");
+    final Option classpath = new Option("cp", "classpath", true, "interpreter classpath");
     classpath.setRequired(true);
     options.addOption(classpath);
 
-    Option classname = new Option("cn", "classname", true, "interpreter classname");
+    final Option classname = new Option("cn", "classname", true, "interpreter classname");
     classname.setRequired(true);
     options.addOption(classname);
 
 
-    CommandLineParser parser = new DefaultParser();
-    HelpFormatter formatter = new HelpFormatter();
+    final CommandLineParser parser = new DefaultParser();
+    final HelpFormatter formatter = new HelpFormatter();
     CommandLine cmd = null;
 
     try {
@@ -48,15 +48,15 @@ public class RemoteInterpreterServer {
       System.exit(1);
     }
 
-    String zeppelinServerHost = cmd.getOptionValue("host");
-    String zeppelinServerPort = cmd.getOptionValue("port");
+    final String zeppelinServerHost = cmd.getOptionValue("host");
+    final String zeppelinServerPort = cmd.getOptionValue("port");
 
-    String interpreterShebang = cmd.getOptionValue("shebang");
-    String interpreterClasspath = cmd.getOptionValue("classpath");
-    String interpreterClassname = cmd.getOptionValue("classname");
+    final String interpreterShebang = cmd.getOptionValue("shebang");
+    final String interpreterClasspath = cmd.getOptionValue("classpath");
+    final String interpreterClassname = cmd.getOptionValue("classname");
 
 
-    RemoteInterpreterThread remoteInterpreterServer = new RemoteInterpreterThread(
+    final RemoteInterpreterThread remoteInterpreterServer = new RemoteInterpreterThread(
             zeppelinServerHost,
             zeppelinServerPort,
             interpreterShebang,
@@ -71,6 +71,7 @@ public class RemoteInterpreterServer {
       } catch (TException e) {
         //logger.error("Error on shutdown RemoteInterpreterServer", e);
       }
+      System.exit(0);
     });
 
     remoteInterpreterServer.start();

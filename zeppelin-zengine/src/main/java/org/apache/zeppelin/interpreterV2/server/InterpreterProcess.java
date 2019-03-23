@@ -12,7 +12,8 @@ public class InterpreterProcess {
   public enum Status {
     NOT_FOUND,
     STARTING,
-    READY
+    READY,
+    DEAD
   }
 
   private String shebang;
@@ -50,13 +51,13 @@ public class InterpreterProcess {
   }
 
   public RemoteInterpreterService.Client getConnection() {
-    TSocket transport = new TSocket(host, port);
+    final TSocket transport = new TSocket(host, port);
     try {
       transport.open();
-    } catch (TTransportException e) {
-      //return null;
+    } catch (final TTransportException e) {
+      return null;
     }
-    TProtocol protocol = new TBinaryProtocol(transport);
+    final TProtocol protocol = new TBinaryProtocol(transport);
     return new RemoteInterpreterService.Client(protocol);
   }
 
