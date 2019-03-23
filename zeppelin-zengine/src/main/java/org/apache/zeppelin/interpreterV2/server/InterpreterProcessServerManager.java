@@ -1,6 +1,16 @@
 package org.apache.zeppelin.interpreterV2.server;
 
-import org.apache.commons.exec.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteResultHandler;
+import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
@@ -11,15 +21,6 @@ import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 
 
 public class InterpreterProcessServerManager {
@@ -34,7 +35,7 @@ public class InterpreterProcessServerManager {
     private final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
     private final String remoteServerClassPath;
 
-    private volatile Map<String, InterpreterProcess> registeredInterpreters = new ConcurrentHashMap<>();
+    private final Map<String, InterpreterProcess> registeredInterpreters = new ConcurrentHashMap<>();
 
     public InterpreterProcessServerManager(final InterpreterOptionRepository interpreterOptionRepository,
                                            final BiConsumer<String, InterpreterResult> interpreterResultBiConsumer) {
@@ -65,7 +66,7 @@ public class InterpreterProcessServerManager {
     }
 
 
-    public InterpreterProcess getRemote(final String shebang, InterpreterOption interpreterOption) {
+    public InterpreterProcess getRemote(final String shebang, final InterpreterOption interpreterOption) {
         if (registeredInterpreters.containsKey(shebang)) {
             final InterpreterProcess interpreterProcess = registeredInterpreters.get(shebang);
             return interpreterProcess;
@@ -80,21 +81,21 @@ public class InterpreterProcessServerManager {
                     return interpreterProcess;
                 }
 
-                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.NOT_INSTALLED.getValue())) {
+                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.NOT_INSTALLED)) {
                     final InterpreterProcess interpreterProcess = new InterpreterProcess();
                     interpreterProcess.setShebang(shebang);
                     interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
                     return interpreterProcess;
                 }
 
-                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.IN_PROGRESS.getValue())) {
+                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.IN_PROGRESS)) {
                     final InterpreterProcess interpreterProcess = new InterpreterProcess();
                     interpreterProcess.setShebang(shebang);
                     interpreterProcess.setStatus(InterpreterProcess.Status.NOT_FOUND);
                     return interpreterProcess;
                 }
 
-                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.INSTALLED.getValue())) {
+                if (artifactSource.getStatus().equals(InterpreterArtifactSource.Status.INSTALLED)) {
                     final InterpreterProcess interpreterProcess = new InterpreterProcess();
                     interpreterProcess.setShebang(shebang);
                     interpreterProcess.setStatus(InterpreterProcess.Status.STARTING);
@@ -132,7 +133,7 @@ public class InterpreterProcessServerManager {
         );
 
         // start server process
-        CommandLine cmdLine = CommandLine.parse(cmd); //CommandLine.parse(interpreterRunner);
+        final CommandLine cmdLine = CommandLine.parse(cmd); //CommandLine.parse(interpreterRunner);
 
         final DefaultExecutor executor = new DefaultExecutor();
         executor.setWorkingDirectory(new File(remoteServerClassPath));
@@ -154,7 +155,7 @@ public class InterpreterProcessServerManager {
 
         try {
             executor.execute(cmdLine, new HashMap<>(), handler);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
