@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.storage;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
@@ -28,9 +29,12 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.Repository.ProxyProtocol;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
+import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource.Status;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption.ProcessType;
 import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreter.configuration.option.Permissions;
@@ -47,7 +51,7 @@ import org.springframework.jdbc.support.KeyHolder;
  *    {@link InterpreterArtifactSource},
  *    {@link Repository}.
  *
- * Access to {@link BaseInterpreterConfig} is hidden.
+ * Access to {@link org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig} is hidden.
  */
 class InterpreterOptionDAO {
 
@@ -58,50 +62,50 @@ class InterpreterOptionDAO {
 
   private static final Gson gson = new Gson();
 
-  private static final String GET_ALL_OPTIONS = "SELECT * FROM InterpreterOption";
+  private static final String GET_ALL_OPTIONS = "SELECT * FROM INTERPRETER_OPTION";
 
-  private static final String GET_OPTION = "SELECT * FROM InterpreterOption WHERE "
+  private static final String GET_OPTION = "SELECT * FROM INTERPRETER_OPTION WHERE "
       + "shebang = :shebang";
 
-  private static final String INSERT_CONFIG = "INSERT INTO BaseInterpreterConfig(name, "
+  private static final String INSERT_CONFIG = "INSERT INTO BASE_INTERPRETER_CONFIG(name, "
       + "\"group\", class_name, properties, editor) VALUES (:name, :group, :class_name, :properties, "
       + ":editor)";
 
   // get BaseConfig by shebang
-  private static final String GET_CONFIG = "SELECT * FROM BaseInterpreterConfig "
-      + "JOIN InterpreterOption ON InterpreterOption.config_id = BaseInterpreterConfig.id WHERE "
-      + "InterpreterOption.shebang = :shebang";
+  private static final String GET_CONFIG = "SELECT * FROM BASE_INTERPRETER_CONFIG "
+      + "JOIN INTERPRETER_OPTION ON INTERPRETER_OPTION.config_id = BASE_INTERPRETER_CONFIG.id WHERE "
+      + "INTERPRETER_OPTION.shebang = :shebang";
 
   // update BaseConfig by shebang
-  private static final String UPDATE_CONFIG = "UPDATE BaseInterpreterConfig SET name = :name, "
+  private static final String UPDATE_CONFIG = "UPDATE BASE_INTERPRETER_CONFIG SET name = :name, "
       + "\"group\" = :group, class_name = :class_name, properties = :properties, "
-      + "editor = :editor JOIN InterpreterOption ON InterpreterOption.config_id = "
-      + "BaseInterpreterConfig.id WHERE InterpreterOption.shebang = :shebang";
+      + "editor = :editor JOIN INTERPRETER_OPTION ON INTERPRETER_OPTION.config_id = "
+      + "BASE_INTERPRETER_CONFIG.id WHERE INTERPRETER_OPTION.shebang = :shebang";
 
-  private static final String INSERT_OPTION = "INSERT INTO InterpreterOption(shebang, "
+  private static final String INSERT_OPTION = "INSERT INTO INTERPRETER_OPTION(shebang, "
       + "custom_interpreter_name, interpreter_name, per_note, per_user, jvm_options, "
       + "concurrent_tasks, config_id, remote_process, permissions, is_enabled) VALUES (:shebang, "
       + ":custom_interpreter_name, :interpreter_name, :per_note, :per_user, "
       + ":jvm_options, :concurrent_tasks, :config_id, :remote_process, :permissions, :is_enabled)";
 
-  private static final String UPDATE_OPTION = "UPDATE InterpreterOption SET "
+  private static final String UPDATE_OPTION = "UPDATE INTERPRETER_OPTION SET "
       + "custom_interpreter_name = :custom_interpreter_name, interpreter_name = :interpreter_name, "
       + "per_note = :per_note, per_user = :per_user, jvm_options = :jvm_options, "
       + "concurrent_tasks = :concurrent_tasks, config_id = :config_id, remote_process = :remote_process, "
       + "permissions = :permissions, is_enabled = :is_enabled WHERE shebang = :shebang";
 
   // option will be deleted because of cascade rule on FK
-  private static final String DELETE_OPTION = "DELETE FROM BaseInterpreterConfig JOIN "
-      + "InterpreterOption ON InterpreterOption.config_id = BaseInterpreterConfig.id "
-      + "WHERE BaseInterpreterConfig.id = InterpreterOption.config_id AND "
-      + "InterpreterOption.shebang = :shebang";
+  private static final String DELETE_OPTION = "DELETE FROM BASE_INTERPRETER_CONFIG JOIN "
+      + "INTERPRETER_OPTION ON INTERPRETER_OPTION.config_id = BASE_INTERPRETER_CONFIG.id "
+      + "WHERE BASE_INTERPRETER_CONFIG.id = INTERPRETER_OPTION.config_id AND "
+      + "INTERPRETER_OPTION.shebang = :shebang";
 
-  private static final String GET_ALL_SOURCES = "SELECT * FROM InterpreterArtifactSource";
+  private static final String GET_ALL_SOURCES = "SELECT * FROM INTERPRETER_ARTIFACT_SOURCE";
 
-  private static final String GET_SOURCE = "SELECT * FROM InterpreterArtifactSource WHERE "
+  private static final String GET_SOURCE = "SELECT * FROM INTERPRETER_ARTIFACT_SOURCE WHERE "
       + "interpreter_name = :interpreter_name";
 
-  private static final String INSERT_SOURCE = "INSERT INTO InterpreterArtifactSource(interpreter_name, "
+  private static final String INSERT_SOURCE = "INSERT INTO INTERPRETER_ARTIFACT_SOURCE(interpreter_name, "
       + "artifact, status, \"path\") VALUES (:interpreter_name, :artifact, :status, :path)";
 
   private static final String GET_ALL_REPOSITORIES = "SELECT * FROM repository";
@@ -114,7 +118,7 @@ class InterpreterOptionDAO {
       + "proxy_password) VALUES (:repository_id, :snapshot, :url, :username, :password, "
       + ":proxy_protocol, :proxy_host, :proxy_port, :proxy_login, :proxy_password)";
 
-  private static final String DELETE_SOURCE = "DELETE FROM InterpreterArtifactSource WHERE "
+  private static final String DELETE_SOURCE = "DELETE FROM INTERPRETER_ARTIFACT_SOURCE WHERE "
       + "interpreter_name = :interpreter_name";
 
   private static final String DELETE_REPOSITORY = "DELETE FROM Repository WHERE "
@@ -122,18 +126,22 @@ class InterpreterOptionDAO {
 
 
   public InterpreterOptionDAO(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
+    Preconditions.checkNotNull(jdbcTemplate);
     this.jdbcTemplate = jdbcTemplate;
     this.keyHolder = new GeneratedKeyHolder();
   }
 
   @Nonnull
   List<InterpreterOption> getAllInterpreterOptions() {
-    return jdbcTemplate
+    final List<InterpreterOption> result = jdbcTemplate
         .query(GET_ALL_OPTIONS, (resultSet, i) -> convertResultSetToInterpreterOption(resultSet));
+    Preconditions.checkNotNull(result);
+    return result;
   }
 
   @Nullable
   InterpreterOption getInterpreterOption(@Nonnull final String shebang) {
+    Preconditions.checkNotNull(shebang);
     try {
       final InterpreterOption option = jdbcTemplate.queryForObject(
           GET_OPTION,
@@ -156,6 +164,7 @@ class InterpreterOptionDAO {
    * @see InterpreterOptionDAO#convertInterpreterOptionToParameters
    */
   void saveInterpreterOption(@Nonnull final InterpreterOption option) {
+    Preconditions.checkNotNull(option);
     final int affectedRows =
         jdbcTemplate.update(INSERT_OPTION, convertInterpreterOptionToParameters(option));
 
@@ -167,6 +176,7 @@ class InterpreterOptionDAO {
   }
 
   void updateInterpreterConfig(@Nonnull final BaseInterpreterConfig config) {
+    Preconditions.checkNotNull(config);
     final int affectedRows =
         jdbcTemplate.update(UPDATE_CONFIG, convertInterpreterConfigToParameters(config));
 
@@ -178,6 +188,7 @@ class InterpreterOptionDAO {
   void updateInterpreterOption(@Nonnull final InterpreterOption option) {
     //TODO(egorklimov): if config update completed, but option update
     // failed data would be inconsistent, transaction?
+    Preconditions.checkNotNull(option);
     jdbcTemplate.update(UPDATE_CONFIG, convertInterpreterConfigToParameters(option.getConfig()));
     final int affectedRows =
         jdbcTemplate.update(UPDATE_OPTION, convertInterpreterOptionToParameters(option));
@@ -188,6 +199,7 @@ class InterpreterOptionDAO {
   }
 
   boolean removeInterpreterOption(@Nonnull final String shebang) {
+    Preconditions.checkNotNull(shebang);
     return jdbcTemplate.update(DELETE_OPTION, new MapSqlParameterSource("shebang", shebang)) != 0;
   }
 
@@ -199,6 +211,7 @@ class InterpreterOptionDAO {
    * @return key - id of added record
    */
   private long saveInterpreterConfig(@Nonnull final BaseInterpreterConfig config) {
+    Preconditions.checkNotNull(config);
     final int affectedRows =
         jdbcTemplate.update(INSERT_CONFIG, convertInterpreterConfigToParameters(config), keyHolder,
             new String[]{"id"});
@@ -206,7 +219,7 @@ class InterpreterOptionDAO {
     if (affectedRows == 0 || keyHolder.getKey() == null) {
       throw new RuntimeException("Fail to save config " + config);
     }
-
+    //TODO(egorklimov): checkState on key value
     return keyHolder.getKey().longValue();
   }
 
@@ -217,6 +230,8 @@ class InterpreterOptionDAO {
    * @return id of a record, if it exists, null otherwise
    */
   private long findInterpreterConfigIdx(@Nonnull final String shebang) {
+    Preconditions.checkNotNull(shebang);
+    //TODO(egorklimov): checkState on key value
     return jdbcTemplate.queryForObject(
         GET_CONFIG,
         new MapSqlParameterSource("shebang", shebang),
@@ -225,6 +240,7 @@ class InterpreterOptionDAO {
 
   @Nullable
   private BaseInterpreterConfig getInterpreterConfig(@Nonnull final String shebang) {
+    Preconditions.checkNotNull(shebang);
     return jdbcTemplate.queryForObject(
         GET_CONFIG,
         new MapSqlParameterSource("shebang", shebang),
@@ -238,6 +254,7 @@ class InterpreterOptionDAO {
    * @return id of found or created record.
    */
   private long getOrSaveInterpreterConfig(@Nonnull final InterpreterOption option) {
+    Preconditions.checkNotNull(option);
     try {
       return findInterpreterConfigIdx(option.getShebang());
     } catch (final EmptyResultDataAccessException | NullPointerException ignore) {
@@ -247,12 +264,15 @@ class InterpreterOptionDAO {
 
   @Nonnull
   List<InterpreterArtifactSource> getAllSources() {
-    return jdbcTemplate
+    final List<InterpreterArtifactSource> result = jdbcTemplate
         .query(GET_ALL_SOURCES, (resultSet, i) -> convertResultSetToInterpreterSource(resultSet));
+    Preconditions.checkNotNull(result);
+    return result;
   }
 
   @Nullable
   InterpreterArtifactSource getSource(@Nonnull final String name) {
+    Preconditions.checkNotNull(name);
     try {
       final InterpreterArtifactSource source = jdbcTemplate.queryForObject(
           GET_SOURCE,
@@ -271,6 +291,7 @@ class InterpreterOptionDAO {
   }
 
   void saveInterpreterSource(@Nonnull final InterpreterArtifactSource source) {
+    Preconditions.checkNotNull(source);
     final int affectedRows =
         jdbcTemplate.update(INSERT_SOURCE, convertInterpreterSourceToParameters(source));
 
@@ -280,18 +301,22 @@ class InterpreterOptionDAO {
   }
 
   boolean removeInterpreterSource(@Nonnull final String interpreterName) {
+    Preconditions.checkNotNull(interpreterName);
     return jdbcTemplate.update(DELETE_SOURCE,
         new MapSqlParameterSource("interpreter_name", interpreterName)) != 0;
   }
 
   @Nonnull
   List<Repository> getAllRepositories() {
-    return jdbcTemplate.query(
+    final List<Repository> result = jdbcTemplate.query(
         GET_ALL_REPOSITORIES, (resultSet, i) -> convertResultSetToRepository(resultSet));
+    Preconditions.checkNotNull(result);
+    return result;
   }
 
   @Nullable
   Repository getRepository(@Nonnull final String id) {
+    Preconditions.checkNotNull(id);
     try {
       final Repository repository = jdbcTemplate.queryForObject(
           GET_REPOSITORY,
@@ -310,6 +335,7 @@ class InterpreterOptionDAO {
   }
 
   void saveRepository(@Nonnull final Repository repository) {
+    Preconditions.checkNotNull(repository);
     final int affectedRows =
         jdbcTemplate.update(INSERT_REPOSITORY, convertRepositoryToParameters(repository));
 
@@ -319,6 +345,7 @@ class InterpreterOptionDAO {
   }
 
   boolean removeRepository(@Nonnull final String id) {
+    Preconditions.checkNotNull(id);
     return jdbcTemplate.update(
         DELETE_REPOSITORY, new MapSqlParameterSource("repository_id", id)) != 0;
   }
@@ -327,6 +354,8 @@ class InterpreterOptionDAO {
   @Nonnull
   private BaseInterpreterConfig convertResultSetToInterpreterConfig(@Nonnull final ResultSet resultSet)
       throws SQLException {
+    Preconditions.checkNotNull(resultSet);
+
     final String name = resultSet.getString("name");
     final String group = resultSet.getString("group");
     final String className = resultSet.getString("class_name");
@@ -341,24 +370,24 @@ class InterpreterOptionDAO {
   @Nonnull
   private InterpreterOption convertResultSetToInterpreterOption(@Nonnull final ResultSet resultSet)
       throws SQLException {
+    Preconditions.checkNotNull(resultSet);
+
     final String shebang = resultSet.getString("shebang");
     final String name = resultSet.getString("interpreter_name");
     final String customInterpreterName = resultSet.getString("custom_interpreter_name");
-    final String perNote = resultSet.getString("per_note");
-    final String perUser = resultSet.getString("per_user");
+    final ProcessType perNote = ProcessType.valueOf(resultSet.getString("per_note"));
+    final ProcessType perUser = ProcessType.valueOf(resultSet.getString("per_user"));
     final int concurrentTasks = Integer.parseInt(resultSet.getString("concurrent_tasks"));
     final String jvmOptions = resultSet.getString("jvm_options");
     final boolean isEnabled = resultSet.getBoolean("is_enabled");
 
     final BaseInterpreterConfig config = getInterpreterConfig(shebang);
-    if (config == null) {
-      throw new RuntimeException("Fail to get config");
-    }
     final ExistingProcess existingProcess =
         ExistingProcess.fromJson(resultSet.getString("remote_process"));
     final Permissions permissions = gson.fromJson(
         resultSet.getString("permissions"), Permissions.class);
 
+    Preconditions.checkState(config != null, "Fail to get config");
     return new InterpreterOption(
         customInterpreterName, name, shebang, perNote,
         perUser, config, existingProcess,
@@ -369,19 +398,21 @@ class InterpreterOptionDAO {
   private InterpreterArtifactSource convertResultSetToInterpreterSource(
       @Nonnull final ResultSet resultSet)
       throws SQLException {
+    Preconditions.checkNotNull(resultSet);
     return new InterpreterArtifactSource(
         resultSet.getString("interpreter_name"),
         resultSet.getString("artifact"),
         resultSet.getString("path"),
-        resultSet.getString("status")
+        Status.valueOf(resultSet.getString("status"))
     );
   }
 
   @Nonnull
   private Repository convertResultSetToRepository(@Nonnull final ResultSet resultSet) throws SQLException {
+    Preconditions.checkNotNull(resultSet);
     return new Repository(resultSet.getBoolean("snapshot"), resultSet.getString("repository_id"),
         resultSet.getString("url"), resultSet.getString("username"),
-        resultSet.getString("password"), resultSet.getString("proxy_protocol"),
+        resultSet.getString("password"), ProxyProtocol.valueOf(resultSet.getString("proxy_protocol")),
         resultSet.getString("proxy_host"), resultSet.getInt("proxy_port"),
         resultSet.getString("proxy_login"), resultSet.getString("proxy_password"));
   }
@@ -390,6 +421,7 @@ class InterpreterOptionDAO {
   @Nonnull
   private MapSqlParameterSource convertInterpreterConfigToParameters(
       @Nonnull final BaseInterpreterConfig config) {
+    Preconditions.checkNotNull(config);
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     parameters
         .addValue("name", config.getName())
@@ -397,7 +429,7 @@ class InterpreterOptionDAO {
         .addValue("class_name", config.getClassName())
         .addValue("properties", generatePGjson(config.getProperties()))
         .addValue("editor", generatePGjson(config.getEditor()));
-
+    Preconditions.checkNotNull(parameters);
     return parameters;
   }
 
@@ -411,14 +443,15 @@ class InterpreterOptionDAO {
   @Nonnull
   private MapSqlParameterSource convertInterpreterOptionToParameters(
       @Nonnull final InterpreterOption option) {
+    Preconditions.checkNotNull(option);
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
           .addValue("shebang", option.getShebang())
           .addValue("custom_interpreter_name", option.getCustomInterpreterName())
           .addValue("interpreter_name", option.getInterpreterName())
-          .addValue("per_note", option.getPerNote())
-          .addValue("per_user", option.getPerUser())
+          .addValue("per_note", option.getPerNote().name())
+          .addValue("per_user", option.getPerUser().name())
           .addValue("jvm_options", option.getJvmOptions())
           .addValue("concurrent_tasks", option.getConcurrentTasks())
           .addValue("config_id", getOrSaveInterpreterConfig(option))
@@ -428,28 +461,32 @@ class InterpreterOptionDAO {
     } catch (final Exception e) {
       throw new RuntimeException("Fail to convert option", e);
     }
+    Preconditions.checkNotNull(parameters);
     return parameters;
   }
 
   @Nonnull
   private MapSqlParameterSource convertInterpreterSourceToParameters(
       @Nonnull final InterpreterArtifactSource source) {
+    Preconditions.checkNotNull(source);
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
           .addValue("artifact", source.getArtifact())
           .addValue("interpreter_name", source.getInterpreterName())
-          .addValue("status", source.getStatus())
+          .addValue("status", source.getStatus().name())
           .addValue("path", source.getPath());
     } catch (final Exception e) {
       throw new RuntimeException("Fail to convert source", e);
     }
+    Preconditions.checkNotNull(parameters);
     return parameters;
   }
 
   @Nonnull
   private MapSqlParameterSource convertRepositoryToParameters(
       @Nonnull final Repository source) {
+    Preconditions.checkNotNull(source);
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
@@ -458,7 +495,8 @@ class InterpreterOptionDAO {
           .addValue("url", source.getUrl())
           .addValue("username", source.getUsername())
           .addValue("password", source.getPassword())
-          .addValue("proxy_protocol", source.getProxyProtocol())
+          .addValue("proxy_protocol",
+              source.getProxyProtocol() != null ? source.getProxyProtocol().name() : null)
           .addValue("proxy_host", source.getProxyHost())
           .addValue("proxy_port", source.getProxyPort())
           .addValue("proxy_login", source.getProxyLogin())
@@ -466,16 +504,19 @@ class InterpreterOptionDAO {
     } catch (final Exception e) {
       throw new RuntimeException("Fail to convert repository", e);
     }
+    Preconditions.checkNotNull(parameters);
     return parameters;
   }
 
   //----------------------------- UTIL -----------------------------
   @Nonnull
   private PGobject generatePGjson(@Nonnull final Object value) {
+    Preconditions.checkNotNull(value);
     try {
       final PGobject pgObject = new PGobject();
       pgObject.setType("jsonb");
       pgObject.setValue(gson.toJson(value));
+      Preconditions.checkNotNull(pgObject);
       return pgObject;
     } catch (final SQLException e) {
       throw new RuntimeException("Can't generate postgres json", e);

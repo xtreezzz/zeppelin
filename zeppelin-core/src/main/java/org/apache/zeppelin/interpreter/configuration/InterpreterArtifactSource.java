@@ -22,10 +22,7 @@ import com.google.gson.Gson;
 import java.io.Serializable;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -34,35 +31,30 @@ public class InterpreterArtifactSource implements Serializable {
   /**
    * Types of interpreter processes.
    */
-  private enum Status {
-    NOT_INSTALLED("not installed"),
-    INSTALLED("installed"),
-    IN_PROGRESS("in progress");
-
-    private final String value;
-
-    Status(final String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return value;
-    }
+  public enum Status {
+    NOT_INSTALLED,
+    INSTALLED,
+    IN_PROGRESS
   }
 
   @Nonnull
   private String interpreterName;
+
   @Nonnull
   private String artifact;
+
   @Nullable
   private String path;
+
   @Nonnull
-  private String status;
+  private Status status;
 
   public InterpreterArtifactSource(@Nonnull final String interpreterName,
-      @Nonnull final String artifact, @Nullable final String path, @Nonnull final String status) {
-    Preconditions.checkArgument(getAllStatuses().contains(status), "Wrong status: %s", status);
+      @Nonnull final String artifact, @Nullable final String path, @Nonnull final Status status) {
     Preconditions.checkArgument(isValidAbsolutePathOrNull(path), "Wrong path: %s", path);
+    Preconditions.checkNotNull(status);
+    Preconditions.checkNotNull(interpreterName);
+    Preconditions.checkNotNull(artifact);
 
     //TODO(egorklimov): add regexp check for artifact
     this.interpreterName = interpreterName;
@@ -74,15 +66,12 @@ public class InterpreterArtifactSource implements Serializable {
   public InterpreterArtifactSource(@Nonnull final String interpreterName,
       @Nonnull final String artifact) {
     //TODO(egorklimov): add regexp check for artifact
+    Preconditions.checkNotNull(interpreterName);
+    Preconditions.checkNotNull(artifact);
 
     this.interpreterName = interpreterName;
     this.artifact = artifact;
-    this.status = Status.NOT_INSTALLED.getValue();
-  }
-
-  @Nonnull
-  private static List<String> getAllStatuses() {
-    return Arrays.stream(Status.values()).map(Status::getValue).collect(Collectors.toList());
+    this.status = Status.NOT_INSTALLED;
   }
 
   @Nonnull
@@ -119,13 +108,14 @@ public class InterpreterArtifactSource implements Serializable {
     this.path = path;
   }
 
+  // Status, везде через enum
   @Nonnull
-  public String getStatus() {
+  public Status getStatus() {
     return status;
   }
 
-  public void setStatus(@Nonnull final String status) {
-    Preconditions.checkArgument(getAllStatuses().contains(status), "Wrong status: %s", status);
+  public void setStatus(@Nonnull final Status status) {
+    Preconditions.checkNotNull(status);
     this.status = status;
   }
 
@@ -140,16 +130,19 @@ public class InterpreterArtifactSource implements Serializable {
     }
   }
 
-  public static InterpreterArtifactSource fromJson(final String json) {
+  public static InterpreterArtifactSource fromJson(@Nonnull final String json) {
+    Preconditions.checkNotNull(json);
     final InterpreterArtifactSource source = new Gson().fromJson(json, InterpreterArtifactSource.class);
+    Preconditions.checkNotNull(source);
     Preconditions.checkNotNull(source.artifact);
     Preconditions.checkNotNull(source.interpreterName);
 
     if (source.status == null) {
-      source.setStatus(Status.NOT_INSTALLED.getValue());
+      source.setStatus(Status.NOT_INSTALLED);
     }
+
+    Preconditions.checkNotNull(source.status);
     Preconditions.checkState(isValidAbsolutePathOrNull(source.getPath()), "Wrong path: %s", source.getPath());
-    Preconditions.checkState(getAllStatuses().contains(source.getStatus()), "Wrong status: %s", source.getStatus());
     //TODO(egorklimov): add regexp check for artifact
 
     return source;

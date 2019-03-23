@@ -23,10 +23,12 @@ import java.util.Map;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.Repository.ProxyProtocol;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.configuration.InterpreterOption.ProcessType;
 import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
 import org.apache.zeppelin.interpreter.configuration.option.Permissions;
@@ -48,6 +50,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+
+//TODO(egorklimov):
+//  1. Добавить метод get all interpreter configs для получения базовых настроек интерпретаторов (из файлов).
+//  2. install Source, uninstall source
 
 /**
  * Interpreter Rest API.
@@ -95,13 +102,13 @@ public class InterpreterRestApi {
     );
     interpreterOptionRepository.saveOption(new InterpreterOption(
         "Best Markdown Interpreter", "md", "%md",
-        "shared", "shared", new BaseInterpreterConfig(
+        ProcessType.SHARED, ProcessType.SHARED, new BaseInterpreterConfig(
         "md", "md", "org.apache.zeppelin.markdown.Markdown", interpreterPropertyMap, new HashMap<>()),
         new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1, false));
 
     interpreterOptionRepository.saveRepository(
         new Repository(true, "central", "http://repo1.maven.org/maven2/",
-            "username", "password", "HTTP", "127.0.0.1",
+            "username", "password", ProxyProtocol.HTTP, "127.0.0.1",
             8000, "proxyLogin", "proxyPass"));
 
   }
