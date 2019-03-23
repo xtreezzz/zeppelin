@@ -19,7 +19,6 @@ package org.apache.zeppelin.interpreter.core;
 
 
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Interface for interpreters.
@@ -65,7 +64,7 @@ public abstract class Interpreter {
   /**
    * Optionally implement the canceling routine to abort interpret() method
    */
-  public abstract void cancel() throws InterpreterException;
+  public abstract void  cancel() throws InterpreterException;
 
   /**
    * Closes interpreter. You may want to free your resources up here.

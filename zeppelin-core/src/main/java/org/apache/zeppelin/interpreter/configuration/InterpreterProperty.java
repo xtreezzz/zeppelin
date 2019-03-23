@@ -54,14 +54,18 @@ public class InterpreterProperty implements Serializable {
     }
   }
 
-  @Nonnull
+  @Nullable
   private String envName;
+
   @Nonnull
   private String propertyName;
+
   @Nonnull
   private Object defaultValue;
+
   @Nullable
   private Object currentValue;
+
   @Nonnull
   private String description;
   @Nonnull
@@ -214,7 +218,7 @@ public class InterpreterProperty implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("{envName=%s, propertyName=%s, defaultValue=%s, description=%20s, " +
-        "type=%s}", envName, propertyName, defaultValue, description, type);
+    return String.format("{envName=%s, propertyName=%s, currentValue=%s, defaultValue=%s, description=%20s, " +
+        "type=%s}", envName, propertyName, currentValue, defaultValue, description, type);
   }
 }

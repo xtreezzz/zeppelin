@@ -176,10 +176,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
     angular.extend(object, {propertyValue: '', propertyKey: '', propertyType: $scope.interpreterPropertyTypes[0]});
   };
 
-  let emptyNewDependency = function(object) {
-    angular.extend(object, {depArtifact: '', depExclude: ''});
-  };
-
   let removeTMPSettings = function(index) {
     interpreterSettingsTmp.splice(index, 1);
   };
@@ -431,6 +427,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       message: 'Do you want to delete this interpreter setting?',
       callback: function(result) {
         if (result) {
+          console.error(settingId);
           $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + settingId)
             .then(function(res) {
               let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
@@ -444,23 +441,14 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   };
 
   $scope.newInterpreterGroupChange = function() {
-    let el = _.pluck(_.filter($scope.availableInterpreters, {'interpreterName':
-    $scope.newInterpreterSetting.interpreterName}),
-      'config.properties');
-    let properties = {};
-    for (let i = 0; i < el.length; i++) {
-      let intpInfo = el[i];
-      for (let key in intpInfo) {
-        if (intpInfo.hasOwnProperty(key)) {
-          properties[key] = {
-            value: intpInfo[key].defaultValue,
-            description: intpInfo[key].description,
-            type: intpInfo[key].type,
-          };
-        }
+    $scope.newInterpreterSetting.config =
+    $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName];
+    for (let key in $scope.newInterpreterSetting.config.properties) {
+      if ($scope.newInterpreterSetting.config.properties.hasOwnProperty(key)) {
+        $scope.newInterpreterSetting.config.properties[key].currentValue =
+        $scope.newInterpreterSetting.config.properties[key].defaultValue;
       }
     }
-    $scope.newInterpreterSetting.properties = properties;
   };
 
   $scope.restartInterpreterSetting = function(settingId) {
@@ -500,15 +488,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       return;
     }
 
-    if ($scope.newInterpreterSetting.customInterpreterName.indexOf('.') >= 0) {
-      BootstrapDialog.alert({
-        closable: true,
-        title: 'Add interpreter',
-        message: '\'.\' is invalid for interpreter name',
-      });
-      return;
-    }
-
     if (_.findIndex($scope.interpreterSettings, {'shebang': $scope.newInterpreterSetting.shebang}) >= 0) {
       BootstrapDialog.alert({
         closable: true,
@@ -519,40 +498,33 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
     }
 
     let newSetting = $scope.newInterpreterSetting;
-    if (newSetting.propertyKey !== '' || newSetting.propertyKey) {
-      $scope.addNewInterpreterProperty();
-    }
-    if (newSetting.depArtifact !== '' || newSetting.depArtifact) {
-      $scope.addNewInterpreterDependency();
-    }
+
     if (newSetting.permissions.isEnabled === undefined) {
       newSetting.permissions.isEnabled = false;
     }
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
-
     let request = angular.copy($scope.newInterpreterSetting);
 
     // Change properties to proper request format
-    let newProperties = {};
+    let newProperties = angular.copy(
+    $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName].properties);
 
-    for (let p in newSetting.properties) {
-      if (newSetting.properties.hasOwnProperty(p)) {
-        newProperties[p] = {
-          value: newSetting.properties[p].value,
-          type: newSetting.properties[p].type,
-          name: p,
-        };
+    for (let key in newSetting.config.properties) {
+      if (newSetting.config.properties.hasOwnProperty(key)) {
+        newProperties[key].currentValue = newSetting.config.properties[key].defaultValue;
       }
     }
 
-    request.properties = newProperties;
-
+    request.config.properties = newProperties;
+    request.perNote = request.perNote.toUpperCase();
+    request.perUser = request.perUser.toUpperCase();
+    request.jvmOptions = '';
+    request.concurrentTasks = 10;
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)
       .then(function(res) {
         $scope.resetNewInterpreterSetting();
         getInterpreterSettings();
         $scope.showAddNewSetting = false;
-        checkDownloadingDependencies();
       }).catch(function(res) {
         const errorMsg = res.data ? res.data.message : 'Could not connect to server.';
         console.log('Error %o %o', res.status, errorMsg);
@@ -566,26 +538,34 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
   };
 
   $scope.resetNewInterpreterSetting = function() {
+    // see org.apache.zeppelin.interpreter.configuration.InterpreterOption
     $scope.newInterpreterSetting = {
+      customInterpreterName: undefined,
       name: undefined,
-      group: undefined,
-      properties: {},
-      dependencies: [],
-      option: {
-        remote: true,
-        isExistingProcess: false,
-        setPermission: false,
-        session: false,
-        process: false,
-
+      shebang: undefined,
+      perNote: undefined,
+      perUser: undefined,
+      config: {},
+      jvmOptions: undefined,
+      concurrentTasks: undefined,
+      isEnabled: false,
+      remoteProcess: {
+        host: undefined,
+        port: undefined,
+        isEnabled: false,
       },
+      permissions: {
+        isEnabled: false,
+        owners: [],
+      },
+      editor: {},
     };
     emptyNewProperty($scope.newInterpreterSetting);
   };
 
   $scope.removeInterpreterProperty = function(key, settingId) {
     if (settingId === undefined) {
-      delete $scope.newInterpreterSetting.properties[key];
+      delete $scope.newInterpreterSetting.config.properties[key];
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
       delete $scope.interpreterSettings[index].properties[key];
@@ -613,7 +593,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       if (!$scope.newInterpreterSetting.propertyKey || $scope.newInterpreterSetting.propertyKey === '') {
         return;
       }
-      $scope.newInterpreterSetting.properties[$scope.newInterpreterSetting.propertyKey] = {
+      $scope.newInterpreterSetting.config.properties[$scope.newInterpreterSetting.propertyKey] = {
         value: $scope.newInterpreterSetting.propertyValue,
         type: $scope.newInterpreterSetting.propertyType,
       };
@@ -631,57 +611,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
         {value: setting.propertyValue, type: setting.propertyType};
 
       emptyNewProperty(setting);
-    }
-  };
-
-  $scope.addNewInterpreterDependency = function(settingId) {
-    if (settingId === undefined) {
-      // Add new dependency from create form
-      if (!$scope.newInterpreterSetting.depArtifact || $scope.newInterpreterSetting.depArtifact === '') {
-        return;
-      }
-
-      // overwrite if artifact already exists
-      let newSetting = $scope.newInterpreterSetting;
-      for (let d in newSetting.dependencies) {
-        if (newSetting.dependencies[d].groupArtifactVersion === newSetting.depArtifact) {
-          newSetting.dependencies[d] = {
-            'groupArtifactVersion': newSetting.depArtifact,
-            'exclusions': newSetting.depExclude,
-          };
-          newSetting.dependencies.splice(d, 1);
-        }
-      }
-
-      newSetting.dependencies.push({
-        'groupArtifactVersion': newSetting.depArtifact,
-        'exclusions': (newSetting.depExclude === '') ? [] : newSetting.depExclude,
-      });
-      emptyNewDependency(newSetting);
-    } else {
-      // Add new dependency from edit form
-      let index = _.findIndex($scope.interpreterSettings, {'id': settingId});
-      let setting = $scope.interpreterSettings[index];
-      if (!setting.depArtifact || setting.depArtifact === '') {
-        return;
-      }
-
-      // overwrite if artifact already exists
-      for (let dep in setting.dependencies) {
-        if (setting.dependencies[dep].groupArtifactVersion === setting.depArtifact) {
-          setting.dependencies[dep] = {
-            'groupArtifactVersion': setting.depArtifact,
-            'exclusions': setting.depExclude,
-          };
-          setting.dependencies.splice(dep, 1);
-        }
-      }
-
-      setting.dependencies.push({
-        'groupArtifactVersion': setting.depArtifact,
-        'exclusions': (setting.depExclude === '') ? [] : setting.depExclude,
-      });
-      emptyNewDependency(setting);
     }
   };
 

@@ -17,11 +17,11 @@
 
 package org.apache.zeppelin.rest;
 
-import java.util.ArrayList;
+import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
@@ -29,11 +29,9 @@ import org.apache.zeppelin.Repository.ProxyProtocol;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
+import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource.Status;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreter.configuration.InterpreterOption.ProcessType;
 import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
-import org.apache.zeppelin.interpreter.configuration.option.ExistingProcess;
-import org.apache.zeppelin.interpreter.configuration.option.Permissions;
 import org.apache.zeppelin.interpreterV2.server.InterpreterInstaller;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.InterpreterService;
@@ -72,7 +70,7 @@ public class InterpreterRestApi {
   private final InterpreterService interpreterService;
   private final InterpreterOptionRepository interpreterOptionRepository;
 
-  private InterpreterInstaller interpreterInstaller;
+  private final InterpreterInstaller interpreterInstaller;
 
   @Autowired
   public InterpreterRestApi(
@@ -96,24 +94,6 @@ public class InterpreterRestApi {
    * Initialize interpreter settings
    */
   private void tempRepositoryInit() {
-    interpreterOptionRepository.saveSource(new InterpreterArtifactSource("md", "org.apache.zeppelin:zeppelin-markdown:0.9.0-SNAPSHOT"));
-
-    final Map<String, InterpreterProperty> interpreterPropertyMap = new HashMap<>();
-    interpreterPropertyMap.put("markdown.parser.type",
-        new InterpreterProperty(
-            "MARKDOWN_PARSER_TYPE",
-            "markdown.parser.type",
-            "pegdown",
-            "Markdown Parser Type. Available values: pegdown, markdown4j. Default = pegdown",
-            "string"
-        )
-    );
-    interpreterOptionRepository.saveOption(new InterpreterOption(
-        "Best Markdown Interpreter", "md", "%md",
-        ProcessType.SHARED, ProcessType.SHARED, new BaseInterpreterConfig(
-        "md", "md", "org.apache.zeppelin.markdown.Markdown", interpreterPropertyMap, new HashMap<>()),
-        new ExistingProcess(), new Permissions(), StringUtils.EMPTY, 1, false));
-
     interpreterOptionRepository.saveRepository(
         new Repository(true, "central", "http://repo1.maven.org/maven2/",
             "username", "password", ProxyProtocol.HTTP, "127.0.0.1",
@@ -204,15 +184,13 @@ public class InterpreterRestApi {
       final String installationDir = interpreterInstaller.install(request.getInterpreterName(), request.getArtifact());
       if (!StringUtils.isAllBlank(installationDir)) {
         request.setPath(installationDir);
-        request.setStatus("installed");
+        request.setStatus(Status.INSTALLED);
       } else {
-        request.setPath(null);
-        request.setStatus("not installed");
+        request.setStatus(Status.NOT_INSTALLED);
       }
       interpreterOptionRepository.saveSource(request);
 
-      //final InterpreterOption interpreterOption = interpreterInstaller.getDafaultConfig()
-      logger.info("New source {} added", request.getArtifact());
+      logger.info("New source {} added", request.getInterpreterName());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating new source ", e);
@@ -232,6 +210,7 @@ public class InterpreterRestApi {
     try {
       logger.info("Remove source {}", interpreterName);
       final InterpreterArtifactSource source = interpreterOptionRepository.getSource(interpreterName);
+      Preconditions.checkNotNull(source);
       interpreterInstaller.uninstallInterpreter(source.getInterpreterName(), source.getArtifact());
 
       interpreterOptionRepository.removeSource(interpreterName);
@@ -285,43 +264,41 @@ public class InterpreterRestApi {
    */
   @ZeppelinApi
   @PostMapping(value = "/setting", produces = "application/json")
-  public ResponseEntity newSettings(final String message) {
-//    final NewInterpreterSettingRequest request =
-//        NewInterpreterSettingRequest.fromJson(message);
-//    if (request == null) {
-//      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
-//    }
-//
-//    markdownOption.setCustomInterpreterName(request.getName());
-//    markdownOption.setInterpreterName(request.getGroup());
-    return new JsonResponse(HttpStatus.NOT_IMPLEMENTED, "").build();
+  public ResponseEntity newSettings(@RequestBody final String message) {
+    logger.info("Trying to add option via msg: {}", message);
+    if (message == null) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+    }
+    try {
+      final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
+      logger.info("Trying to add option: {}", option);
+      interpreterOptionRepository.saveOption(option);
+      logger.info("New option {} added", option.getShebang());
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while creating option ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
   }
 
   @ZeppelinApi
   @PutMapping(value = "/setting/{settingId}", produces = "application/json")
   public ResponseEntity updateSetting(final String message, @PathVariable("settingId") final String settingId) {
     logger.info("Update interpreterSetting {}", settingId);
-    //
-    //    try {
-    //      final UpdateInterpreterSettingRequest request =
-    //          UpdateInterpreterSettingRequest.fromJson(message);
-    //      interpreterSettingRepository
-    //          .setPropertyAndRestart(settingId, request.getOption(), request.getProperties(),
-    //              request.getDependencies());
-    //    } catch (final InterpreterException e) {
-    //      logger.error("Exception in InterpreterRestApi while updateSetting ", e);
-    //      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
-    //          .build();
-    //    } catch (final IOException e) {
-    //      logger.error("Exception in InterpreterRestApi while updateSetting ", e);
-    //      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-    //          ExceptionUtils.getStackTrace(e)).build();
-    //    }
-    //    final InterpreterSetting setting = interpreterSettingManager.get(settingId);
-    //    if (setting == null) {
-    //      return new JsonResponse(HttpStatus.NOT_FOUND, "", settingId).build();
-    //    }
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    if (message == null) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+    }
+    try {
+      final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
+      interpreterOptionRepository.updateOption(option);
+      logger.info("Option {} updated", option.getShebang());
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while creating option ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
   }
 
   /**
@@ -378,10 +355,14 @@ public class InterpreterRestApi {
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
     try {
-      final Map<String, InterpreterOption> m =  new HashMap<>();
-      final List<InterpreterOption> interpreters = interpreterOptionRepository.getAllOptions();
-      for (final InterpreterOption option : interpreters) {
-        m.put(option.getConfig().getGroup(), option);
+      final Map<String, BaseInterpreterConfig> m =  new HashMap<>();
+      final List<InterpreterArtifactSource> sources= interpreterOptionRepository.getAllSources();
+      for (final InterpreterArtifactSource source: sources) {
+        final List<BaseInterpreterConfig> configList =
+            interpreterInstaller.getDefaultConfig(source.getInterpreterName(), source.getArtifact());
+        if (!configList.isEmpty()) {
+          m.put(source.getInterpreterName(), configList.get(0));
+        }
       }
       return new JsonResponse<>(HttpStatus.OK, "", m).build();
     } catch (final Exception e) {

@@ -42,14 +42,19 @@ public class InterpreterOption implements Serializable {
   // Human readable name with description
   @Nonnull
   private String customInterpreterName;
+
   @Nonnull
   private String interpreterName;
+
   @Nonnull
   private String shebang;
+
   @Nonnull
   private ProcessType perNote;
+
   @Nonnull
   private ProcessType perUser;
+
   @Nonnull
   private BaseInterpreterConfig config;
 
@@ -62,10 +67,12 @@ public class InterpreterOption implements Serializable {
    * Count of tasks available for concurrent execution
    */
   private int concurrentTasks;
+
   private final boolean isEnabled;
 
   @Nonnull
   private ExistingProcess remoteProcess;
+
   @Nonnull
   private Permissions permissions;
 

@@ -6,12 +6,10 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.zeppelin.DependencyResolver;
@@ -59,7 +57,7 @@ public class InterpreterInstaller {
     }
   }
 
-  public List<BaseInterpreterConfig> getDafaultConfig(final String name, final String artifact) {
+  public List<BaseInterpreterConfig> getDefaultConfig(final String name, final String artifact) {
     final File folderToStore = new File("interpreters/" + name + "/");
 
     try {

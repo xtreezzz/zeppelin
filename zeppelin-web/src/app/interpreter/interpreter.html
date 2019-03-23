@@ -159,13 +159,13 @@ limitations under the License.
         <span style="float:right" ng-show="!valueform.$visible" >
           <button class="btn btn-default btn-xs"
                   ng-click="valueform.$show();
-                  copyOriginInterpreterSettingProperties(setting.id)">
+                  copyOriginInterpreterSettingProperties(setting.shebang)">
             <span class="fa fa-pencil"></span> edit</button>
           <button class="btn btn-default btn-xs"
-                  ng-click="restartInterpreterSetting(setting.id)">
+                  ng-click="restartInterpreterSetting(setting.shebang)">
             <span class="fa fa-refresh"></span> restart</button>
           <button class="btn btn-default btn-xs"
-                  ng-click="removeInterpreterSetting(setting.id)">
+                  ng-click="removeInterpreterSetting(setting.shebang)">
             <span class="fa fa-trash"></span> remove</button>
         </span>
       </div>
@@ -433,28 +433,28 @@ limitations under the License.
             <td style="vertical-align: middle;">{{key}}</td>
             <td style="vertical-align: middle;">
               <span ng-if="setting.config.properties[key].type === 'textarea'"
-                    editable-textarea="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
-                 {{setting.config.properties[key].value | breakFilter}}
+                    editable-textarea="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
+                 {{setting.config.properties[key].currentValue | breakFilter}}
               </span>
               <span ng-if="setting.config.properties[key].type === 'string'"
-                    editable-text="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].value}}
+                    editable-text="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].currentValue}}
               </span>
               <span ng-if="setting.config.properties[key].type === 'number'"
-                    editable-text="setting.config.properties[key].value" e-widget-number e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].value}}
+                    editable-text="setting.config.properties[key].currentValue" e-widget-number e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].currentValue}}
               </span>
               <span ng-if="setting.config.properties[key].type === 'url'"
-                    editable-text="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
-                <a ng-href="{{setting.config.properties[key].value}}">{{setting.config.properties[key].value}}</a>
+                    editable-text="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
+                <a ng-href="{{setting.config.properties[key].currentValue}}">{{setting.config.properties[key].currentValue}}</a>
               </span>
               <span ng-if="setting.config.properties[key].type === 'password'"
-                    editable-password="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].value ? '***' : ''}}
+                    editable-password="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].currentValue ? '***' : ''}}
               </span>
               <span ng-if="setting.config.properties[key].type === 'checkbox'"
-                    editable-checkbox="setting.config.properties[key].value" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].value}}
+                    editable-checkbox="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
+                {{setting.config.properties[key].currentValue}}
               </span>
             </td>
             <td style="vertical-align: middle;" ng-if="valueform.$visible">

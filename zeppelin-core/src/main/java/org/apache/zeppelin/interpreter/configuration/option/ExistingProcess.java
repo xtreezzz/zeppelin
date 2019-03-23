@@ -11,9 +11,12 @@ import org.apache.commons.lang3.StringUtils;
  * Option 'Connect to existing process' on interpreter configuration page.
  */
 public class ExistingProcess implements Serializable {
+
   @Nonnull
   private String host;
+
   private int port;
+
   private boolean isEnabled;
 
   public ExistingProcess() {

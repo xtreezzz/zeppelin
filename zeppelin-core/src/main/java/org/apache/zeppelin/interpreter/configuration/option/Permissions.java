@@ -11,8 +11,10 @@ import javax.annotation.Nonnull;
  * Option 'permission' on interpreter configuration page.
  */
 public class Permissions implements Serializable {
+
   @Nonnull
   private final List<String> owners;
+
   private boolean isEnabled;
 
   public Permissions() {
