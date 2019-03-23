@@ -24,7 +24,7 @@ import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterEventService
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class InterpreterProcessServer {
+class InterpreterProcessServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterProcessServer.class);
 
@@ -32,33 +32,30 @@ public class InterpreterProcessServer {
   private TThreadPoolServer thriftServer;
 
 
-  public void start(final RemoteInterpreterEventService.Iface facade) throws TTransportException {
+  void start(final RemoteInterpreterEventService.Iface facade) throws TTransportException {
     this.serverSocket = new TServerSocket(40000);
 
-    Thread startingThread = new Thread() {
-      @Override
-      public void run() {
-        LOGGER.info(
-                "InterpreterEventServer is starting at {}:{}",
-                serverSocket.getServerSocket().getInetAddress().getHostAddress(),
-                serverSocket.getServerSocket().getLocalPort()
-        );
-        final RemoteInterpreterEventService.Processor<RemoteInterpreterEventService.Iface> processor;
-        processor = new RemoteInterpreterEventService.Processor<>(facade);
+    final Thread startingThread = new Thread(() -> {
+      LOGGER.info(
+              "InterpreterEventServer is starting at {}:{}",
+              serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+              serverSocket.getServerSocket().getLocalPort()
+      );
+      final RemoteInterpreterEventService.Processor<RemoteInterpreterEventService.Iface> processor;
+      processor = new RemoteInterpreterEventService.Processor<>(facade);
 
-        thriftServer = new TThreadPoolServer(new TThreadPoolServer.Args(serverSocket).processor(processor));
-        thriftServer.serve();
-      }
-    };
+      thriftServer = new TThreadPoolServer(new TThreadPoolServer.Args(serverSocket).processor(processor));
+      thriftServer.serve();
+    });
     startingThread.start();
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     while ((System.currentTimeMillis() - start) < 30 * 1000) {
       if (thriftServer != null && thriftServer.isServing()) {
         break;
       }
       try {
         Thread.sleep(500);
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         // skip
       }
     }
@@ -69,18 +66,14 @@ public class InterpreterProcessServer {
     LOGGER.info("RemoteInterpreterEventServer is started");
   }
 
-  public void stop() {
+  void stop() {
     if (thriftServer != null) {
       thriftServer.stop();
     }
     LOGGER.info("RemoteInterpreterEventServer is stopped");
   }
 
-  public TServerSocket getServerSocket() {
+  TServerSocket getServerSocket() {
     return serverSocket;
-  }
-
-  public boolean isRunning() {
-    return thriftServer != null && thriftServer.isServing();
   }
 }

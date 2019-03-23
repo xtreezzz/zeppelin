@@ -18,20 +18,37 @@
 
 namespace java org.apache.zeppelin.interpreter.core.thrift
 
+enum PushResultStatus {
+    ACCEPT,
+    DECLINE,
+    ERROR
+}
+
 struct PushResult {
-  1: string status,
+  1: PushResultStatus status,
   2: string interpreterJobUUID,
   3: string interpreterProcessUUID
+}
+
+enum CancelResultStatus {
+    ACCEPT,
+    NOT_FOUND,
+    ERROR
 }
 
 struct CancelResult {
-  1: string status,
+  1: CancelResultStatus status,
   2: string interpreterJobUUID,
   3: string interpreterProcessUUID
 }
 
+enum PingResultStatus {
+    OK,
+    KILL_ME
+}
+
 struct PingResult {
-  1: string status,
+  1: PingResultStatus status,
   2: string interpreterProcessUUID
 }
 
@@ -43,9 +60,6 @@ service RemoteInterpreterService {
   PingResult ping();
 
   void shutdown();
-
-
-
 }
 
 
