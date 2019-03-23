@@ -65,7 +65,7 @@ public class RunnerHandler extends AbstractHandler {
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
-    noteExecutorService.run(note);
+    //noteExecutorService.run(note);
     /*
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 

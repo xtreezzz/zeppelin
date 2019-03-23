@@ -54,16 +54,7 @@
   <modules>
     <module>zeppelin-interpreter</module>
     <module>zeppelin-zengine</module>
-    <!-- <module>zeppelin-display</module> -->
-    <!-- <module>spark</module>  -->
     <module>interpreters/markdown</module>
-    <!--<module>angular</module> -->
-    <!--<module>shell</module> -->
-    <!--<module>jdbc</module> -->
-    <!--<module>tjdbc</module> -->
-    <!--<module>ignite</module> -->
-    <!--<module>kylin</module> -->
-    <!--<module>python</module> -->
 
     <module>zeppelin-web</module>
     <module>zeppelin-server</module>

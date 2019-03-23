@@ -119,7 +119,7 @@ public class JobDAO {
           "FROM JOB_BATCH JB\n" +
           "       LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
           "WHERE JB.STATUS IN ('PENDING', 'RUNNING')\n" +
-          "  AND NOT EXISTS(SELECT * FROM JOB WHERE J.BATCH_ID = JB.ID AND J.STATUS NOT IN('RUNNING', 'ERROR'));";
+          "  AND NOT EXISTS(SELECT * FROM JOB WHERE J.BATCH_ID = JB.ID AND J.STATUS IN('RUNNING', 'ERROR'));";
 
   @Autowired
   private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
