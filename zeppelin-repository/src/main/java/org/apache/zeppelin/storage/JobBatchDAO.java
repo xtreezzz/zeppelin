@@ -1,6 +1,5 @@
 package org.apache.zeppelin.storage;
 
-import com.google.gson.Gson;
 import org.apache.zeppelin.notebook.JobBatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -11,11 +10,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class JobBatchDAO {
@@ -23,13 +17,22 @@ public class JobBatchDAO {
     @Autowired
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    private static final Gson gson = new Gson();
-
-    private static final String PERISIT_BATCH = "INSERT INTO JOB_BATCH (NOTE_ID, STATUS, CREATED_AT, STARTED_AT, ENDED_AT)\n" +
-            "VALUES (:NOTE_ID, :STATUS, :CREATED_AT, :STARTED_AT, :ENDED_AT);";
+    private static final String PERSIST_BATCH = "INSERT INTO JOB_BATCH (NOTE_ID,\n" +
+            "                       STATUS,\n" +
+            "                       CREATED_AT,\n" +
+            "                       STARTED_AT,\n" +
+            "                       ENDED_AT)\n" +
+            "            VALUES (:NOTE_ID,\n" +
+            "                    :STATUS,\n" +
+            "                    :CREATED_AT,\n" +
+            "                    :STARTED_AT,\n" +
+            "                    :ENDED_AT);";
 
     private static final String UPDATE_BATCH = "UPDATE JOB_BATCH\n" +
-            "SET STATUS = :STATUS, CREATED_AT = :CREATED_AT, STARTED_AT = :STARTED_AT, ENDED_AT = :ENDED_AT\n" +
+            "SET STATUS   = :STATUS,\n" +
+            "  CREATED_AT = :CREATED_AT,\n" +
+            "  STARTED_AT = :STARTED_AT,\n" +
+            "  ENDED_AT   = :ENDED_AT\n" +
             "WHERE ID = :ID;";
 
     private static final String LOAD_BATCH_BY_ID = "SELECT * FROM job_batch WHERE ID = :ID;";
@@ -43,7 +46,7 @@ public class JobBatchDAO {
                 .addValue("CREATED_AT", jobBatch.getCreatedAt())
                 .addValue("STARTED_AT", jobBatch.getStartedAt())
                 .addValue("ENDED_AT", jobBatch.getEndedAt());
-        namedParameterJdbcTemplate.update(PERISIT_BATCH, parameters, holder);
+        namedParameterJdbcTemplate.update(PERSIST_BATCH, parameters, holder);
 
         jobBatch.setId((Long) holder.getKeys().get("id"));
         return jobBatch;
