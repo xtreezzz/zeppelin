@@ -30,7 +30,7 @@ CREATE TABLE paragraphs
   config       JSON         NOT NULL,
   gui          JSON         NOT NULL,
   position     INTEGER      NOT NULL,
-  job_result   BIGINT,
+  job          BIGINT,
   shebang      VARCHAR(128)
 );
 
@@ -60,7 +60,8 @@ CREATE TABLE JOB
   ENDED_AT                 TIMESTAMP
 );
 
-ALTER TABLE paragraphs ADD FOREIGN KEY (job_id) REFERENCES JOB(ID);
+ALTER TABLE paragraphs
+  ADD FOREIGN KEY (job_id) REFERENCES JOB (ID);
 
 CREATE TABLE JOB_PAYLOAD
 (
@@ -80,5 +81,5 @@ CREATE TABLE JOB_RESULT
 );
 
 ALTER TABLE paragraphs
-  ADD FOREIGN KEY (job_result) REFERENCES JOB_RESULT (ID);
+  ADD FOREIGN KEY (job) REFERENCES JOB (ID);
 

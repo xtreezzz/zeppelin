@@ -53,6 +53,8 @@ public class Paragraph implements Serializable {
   // form and parameter settings
   private GUI settings;
 
+  private Long jobId;
+
   public Paragraph(final String title,
       final String text,
       final String user,
@@ -149,6 +151,14 @@ public class Paragraph implements Serializable {
   public void setSettings(final GUI settings) {
     this.settings = settings;
     this.updated = LocalDateTime.now();
+  }
+
+  public Long getJobId() {
+    return jobId;
+  }
+
+  public void setJobId(Long jobId) {
+    this.jobId = jobId;
   }
 
   @Override

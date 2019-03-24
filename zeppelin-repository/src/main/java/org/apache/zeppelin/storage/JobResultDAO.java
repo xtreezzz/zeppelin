@@ -10,6 +10,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class JobResultDAO {
@@ -35,6 +36,14 @@ public class JobResultDAO {
           "       RESULT\n" +
           "FROM JOB_RESULT\n" +
           "WHERE ID = :ID;";
+
+  private static final String LOAD_PAYLOAD_BY_JOB_ID = "SELECT ID,\n" +
+          "       JOB_ID,\n" +
+          "       CREATED_AT,\n" +
+          "       TYPE,\n" +
+          "       RESULT\n" +
+          "FROM JOB_RESULT\n" +
+          "WHERE JOB_ID = :JOB_ID;";
 
 
   public JobResult persist(final JobResult jobResult) {
@@ -63,6 +72,26 @@ public class JobResultDAO {
       final JobResult jobResult = new JobResult();
       jobResult.setId(id);
       jobResult.setJobId(jobId);
+      jobResult.setCreatedAt(created_at);
+      jobResult.setType(type);
+      jobResult.setResult(result);
+      return jobResult;
+    });
+  }
+
+  public List<JobResult> getByJobId(final Long jobId) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("JOB_ID", jobId);
+    return namedParameterJdbcTemplate.query(LOAD_PAYLOAD_BY_JOB_ID, parameters, (resultSet, i) -> {
+      final Long id = resultSet.getLong("ID");
+      final Long job_Id = resultSet.getLong("JOB_ID");
+      final LocalDateTime created_at = resultSet.getTimestamp("CREATED_AT").toLocalDateTime();
+      final String type = resultSet.getString("TYPE");
+      final String result = resultSet.getString("RESULT");
+
+      final JobResult jobResult = new JobResult();
+      jobResult.setId(id);
+      jobResult.setJobId(job_Id);
       jobResult.setCreatedAt(created_at);
       jobResult.setType(type);
       jobResult.setResult(result);

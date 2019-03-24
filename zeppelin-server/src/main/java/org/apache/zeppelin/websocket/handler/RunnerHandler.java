@@ -70,6 +70,8 @@ public class RunnerHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("noteId", fromMessage, Permission.READER, serviceContext, conn);
     noteRunner.run(note);
+    noteRepository.updateNote(note);
+
     /*
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 

@@ -36,6 +36,8 @@ import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
+import org.apache.zeppelin.websocket.dto.NoteDTO;
+import org.apache.zeppelin.websocket.dto.NoteDTOConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,13 +52,16 @@ public class NoteHandler extends AbstractHandler {
   private static final String TRASH_FOLDER = "~Trash";
 
   private final ZeppelinConfiguration zeppelinConfiguration;
+  private final NoteDTOConverter noteDTOConverter;
 
   @Autowired
   public NoteHandler(final DatabaseNoteRepository noteRepository,
                      final ConnectionManager connectionManager,
-                     final ZeppelinConfiguration zeppelinConfiguration) {
+                     final ZeppelinConfiguration zeppelinConfiguration,
+                     final NoteDTOConverter noteDTOConverter) {
     super(connectionManager, noteRepository);
     this.zeppelinConfiguration = zeppelinConfiguration;
+    this.noteDTOConverter = noteDTOConverter;
   }
 
 
@@ -92,7 +97,8 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
     connectionManager.addSubscriberToNode(note.getNoteId(), conn);
-    conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
+    final NoteDTO noteDTO = noteDTOConverter.convertNoteToDTO(note);
+    conn.sendMessage(new SockMessage(Operation.NOTE).put("note", noteDTO).toSend());
   }
 
   public void updateNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {

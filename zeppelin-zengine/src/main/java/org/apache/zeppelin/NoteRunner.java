@@ -60,6 +60,8 @@ public class NoteRunner {
             jobPayload.setJobId(job.getId());
             jobPayload.setPayload(getPayload(p));
             jobPayloadDAO.persist(jobPayload);
+
+            p.setJobId(job.getId());
         }
         saved.setStatus(JobBatch.Status.PENDING);
         jobBatchDAO.update(saved);

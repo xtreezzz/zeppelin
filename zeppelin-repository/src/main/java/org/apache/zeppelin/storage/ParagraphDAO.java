@@ -27,7 +27,7 @@ public class ParagraphDAO {
   private static final String GET_NOTE_PARAGRAPHS = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id ISNULL ORDER BY position";
   private static final String GET_NOTE_PARAGRAPHS_BY_REVISION = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id=:revision_id ORDER BY position";
   private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, db_note_id, revision_id, title, text, shebang, username, created, updated, config, gui, position) VALUES (:paragraph_id, :db_note_id, :revision_id, :title, :text, :shebang, :username, :created, :updated, :config, :gui, :position)";
-  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, shebang=:shebang, username=:username, updated=:updated, config=:config, gui=:gui, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
+  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, shebang=:shebang, username=:username, updated=:updated, config=:config, gui=:gui, job=:job, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
   private static final String DELETE_PARAGRAPHS = "DELETE FROM paragraphs WHERE revision_id ISNULL AND db_note_id=:db_note_id AND paragraph_id NOT IN (:ids)";
 
 
@@ -101,6 +101,9 @@ public class ParagraphDAO {
     LocalDateTime updated = resultSet.getTimestamp("updated").toLocalDateTime();
     String configJson = resultSet.getString("config");
     GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
+      Long jobId = resultSet.getString("job") == null
+              ? null
+              : resultSet.getLong("job");
 
     Paragraph paragraph = new Paragraph(title, text, user, gui);
     paragraph.setId(id);
@@ -109,6 +112,7 @@ public class ParagraphDAO {
     paragraph.setCreated(created);
     paragraph.setUpdated(updated);
     paragraph.setConfig(gson.fromJson(configJson, paragraph.getConfig().getClass()));
+    paragraph.setJobId(jobId);
 
     return paragraph;
   }
@@ -123,6 +127,7 @@ public class ParagraphDAO {
         .addValue("created", p.getCreated())
         .addValue("updated", p.getUpdated())
         .addValue("config", generatePGjson(p.getConfig()))
-        .addValue("gui", generatePGjson(p.getSettings()));
+        .addValue("gui", generatePGjson(p.getSettings()))
+        .addValue("job", p.getJobId());
   }
 }
