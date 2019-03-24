@@ -27,8 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class ZeppelinBeanConfiguration {
@@ -37,6 +40,7 @@ public class ZeppelinBeanConfiguration {
   public ZeppelinConfiguration zeppelinConfiguration() {
     return new ZeppelinConfiguration();
   }
+
 
   @Bean
   @Autowired
@@ -54,14 +58,12 @@ public class ZeppelinBeanConfiguration {
   }
 
   @Bean
-  NamedParameterJdbcTemplate jdbcTemplate(
-      @Value("${spring.datasource.driverClassName}") final String driverClassName,
-      @Value("${spring.datasource.url}") final String url,
-      @Value("${spring.datasource.username}") final String username,
-      @Value("${spring.datasource.password}") final String password) {
+  DataSource dataSource(
+          @Value("${spring.datasource.driverClassName}") final String driverClassName,
+          @Value("${spring.datasource.url}") final String url,
+          @Value("${spring.datasource.username}") final String username,
+          @Value("${spring.datasource.password}") final String password) {
 
-    // Init database's migrations
-    FlywayMigrationInitializer.startMigrations(url, username, password);
 
     //TODO(SAN) этот dataSource временный! На прод его нельзя!!!
     final DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -70,6 +72,6 @@ public class ZeppelinBeanConfiguration {
     dataSource.setUsername(username);
     dataSource.setPassword(password);
 
-    return new NamedParameterJdbcTemplate(dataSource);
+    return dataSource;
   }
 }
