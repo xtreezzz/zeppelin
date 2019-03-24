@@ -68,14 +68,18 @@ public class NoteRunner {
     }
 
 
-
-
     private String getShebang(final Paragraph p) {
-        return "%md";
+        final String[] lines = p.getText().split("\\n");
+        return lines[0];
     }
 
     private String getPayload(final Paragraph p) {
-        return "PAYLOAD";
+        final String[] lines = p.getText().split("\\n");
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 1 ; i  < lines.length; i++) {
+            builder.append(lines[i]).append("\\n");
+        }
+        return builder.toString();
     }
 
 }
