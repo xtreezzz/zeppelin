@@ -548,7 +548,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
       config: {},
       jvmOptions: undefined,
       concurrentTasks: undefined,
-      isEnabled: false,
+      isEnabled: true,
       remoteProcess: {
         host: undefined,
         port: undefined,

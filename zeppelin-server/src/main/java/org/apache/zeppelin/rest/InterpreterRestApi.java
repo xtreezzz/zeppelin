@@ -19,6 +19,9 @@ package org.apache.zeppelin.rest;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
@@ -39,17 +42,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 
 //TODO(egorklimov):
-//  1. Добавить метод get all interpreter configs для получения базовых настроек интерпретаторов (из файлов).
-//  2. install Source, uninstall source
-
+// Добавить табличку на страничку Monitoring с основными системными событиями
+// 1. Запуск интерпретатора
+// 2. Сохранение/создание ноута
+// 3. Добавление сурсов, интерпретаторов и т.п.
 /**
  * Interpreter Rest API.
  */
@@ -276,7 +283,7 @@ public class InterpreterRestApi {
 
   @ZeppelinApi
   @PutMapping(value = "/setting/{settingId}", produces = "application/json")
-  public ResponseEntity updateSetting(final String message, @PathVariable("settingId") final String settingId) {
+  public ResponseEntity updateSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
     logger.info("Update interpreterSetting {}", settingId);
     if (message == null) {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
@@ -315,7 +322,7 @@ public class InterpreterRestApi {
    */
   @ZeppelinApi
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
-  public ResponseEntity restartSetting(final String message, @PathVariable("settingId") final String settingId) {
+  public ResponseEntity restartSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
     logger.info("Restart interpreterSetting {}, msg={}", settingId, message);
 
     //    final InterpreterSetting setting = interpreterSettingManager.get(settingId);

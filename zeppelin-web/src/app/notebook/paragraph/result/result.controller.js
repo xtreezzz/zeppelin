@@ -172,26 +172,26 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
 
   $scope.init = function(result, config, paragraph, index) {
     // register helium plugin vis packages
-    let visPackages = heliumService.getVisualizationCachedPackages();
-    const visPackageOrder = heliumService.getVisualizationCachedPackageOrder();
-
-    // push the helium vis packages following the order
-    visPackageOrder.map((visName) => {
-      visPackages.map((vis) => {
-        if (vis.name !== visName) {
-          return;
-        }
-        $scope.builtInTableDataVisualizationList.push({
-          id: vis.id,
-          name: vis.name,
-          icon: $sce.trustAsHtml(vis.icon),
-          supports: [DefaultDisplayType.TABLE, DefaultDisplayType.NETWORK],
-        });
-        builtInVisualizations[vis.id] = {
-          class: vis.class,
-        };
-      });
-    });
+    //    let visPackages = heliumService.getVisualizationCachedPackages();
+    //    const visPackageOrder = heliumService.getVisualizationCachedPackageOrder();
+    //
+    //    // push the helium vis packages following the order
+    //    visPackageOrder.map((visName) => {
+    //      visPackages.map((vis) => {
+    //        if (vis.name !== visName) {
+    //          return;
+    //        }
+    //        $scope.builtInTableDataVisualizationList.push({
+    //          id: vis.id,
+    //          name: vis.name,
+    //          icon: $sce.trustAsHtml(vis.icon),
+    //          supports: [DefaultDisplayType.TABLE, DefaultDisplayType.NETWORK],
+    //        });
+    //        builtInVisualizations[vis.id] = {
+    //          class: vis.class,
+    //        };
+    //      });
+    //    });
 
     updateData(result, config, paragraph, index);
     renderResult($scope.type);

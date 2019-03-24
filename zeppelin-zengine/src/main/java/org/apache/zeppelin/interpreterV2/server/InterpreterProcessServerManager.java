@@ -124,7 +124,7 @@ public class InterpreterProcessServerManager {
 
 
     public void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
-        final String cmd = String.format("java -agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5005,suspend=y" +
+        final String cmd = String.format("java " +
                         " -cp \"./*:%s/*\"" +
                         " org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer" +
                         " -h %s" +
