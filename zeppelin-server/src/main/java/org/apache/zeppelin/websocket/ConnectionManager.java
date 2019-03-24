@@ -45,9 +45,7 @@ public class ConnectionManager {
   // noteId -> connection
   private final Map<String, Queue<WebSocketSession>> noteSocketMap = new ConcurrentHashMap<>();
 
-  private final Boolean collaborativeModeEnable = ZeppelinConfiguration
-          .create()
-          .isZeppelinNotebookCollaborativeModeEnable();
+  private final Boolean collaborativeModeEnable = false;
 
 
   public String getAssociatedNoteId(final WebSocketSession socket) {

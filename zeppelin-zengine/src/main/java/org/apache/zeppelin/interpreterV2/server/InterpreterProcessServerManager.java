@@ -47,13 +47,13 @@ public class InterpreterProcessServerManager {
                 interpreterResultBiConsumer
         );
 
-        interpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
-        interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
-        remoteServerClassPath = interpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+        InterpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+        interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
+        remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
 
 
-        interpreterInstaller.uninstallInterpreter("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
-        interpreterInstaller.install("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
+        InterpreterInstaller.uninstallInterpreter("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
+        interpreterInstaller.install("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
     }
 
 
@@ -124,8 +124,16 @@ public class InterpreterProcessServerManager {
 
 
     public void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
-        final String cmd = String.format("java -agentlib:jdwp=transport=dt_socket,server=n,address=172.27.79.51:5005,suspend=y -cp \"./*\" org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer  -h %s -p %s -sb %s -cp %s -cn %s ",
-                server.getServerSocket().getServerSocket().getInetAddress().getHostAddress(),
+        final String cmd = String.format("java -agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5005,suspend=y" +
+                        " -cp \"./*:%s/*\"" +
+                        " org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer" +
+                        " -h %s" +
+                        " -p %s" +
+                        " -sb %s" +
+                        " -cp %s" +
+                        " -cn %s ",
+                classpath,
+                "127.0.0.1",
                 server.getServerSocket().getServerSocket().getLocalPort(),
                 shebang,
                 classpath,
@@ -175,9 +183,13 @@ public class InterpreterProcessServerManager {
     public Map<String, InterpreterProcess> actualizeInterpreters() {
 
         for (final InterpreterProcess process : registeredInterpreters.values()) {
+            if(process.getStatus() == InterpreterProcess.Status.STARTING) {
+                continue;
+            }
             try {
                 final RemoteInterpreterService.Client connection = process.getConnection();
                 final PingResult pingResult = connection.ping();
+                process.releaseConnection(connection);
                 switch (pingResult.status) {
                     case OK:
                         process.setStatus(InterpreterProcess.Status.READY);
@@ -196,8 +208,9 @@ public class InterpreterProcessServerManager {
 
     public void forceKillInterpreterProcess(final InterpreterProcess process) {
         try {
-            final RemoteInterpreterService.Client client = process.getConnection();
-            client.shutdown();
+            final RemoteInterpreterService.Client connection = process.getConnection();
+            connection.shutdown();
+            process.releaseConnection(connection);
         } catch (final Exception e) {
             // log n skip
         }

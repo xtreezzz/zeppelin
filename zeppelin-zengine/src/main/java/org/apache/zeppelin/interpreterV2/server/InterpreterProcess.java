@@ -19,7 +19,6 @@ public class InterpreterProcess {
   private String shebang;
   private Status status;
   private InterpreterOption config;
-  private RemoteInterpreterService.Client connection;
 
   private String host;
   private int port;
@@ -59,6 +58,10 @@ public class InterpreterProcess {
     }
     final TProtocol protocol = new TBinaryProtocol(transport);
     return new RemoteInterpreterService.Client(protocol);
+  }
+
+  public void releaseConnection(final RemoteInterpreterService.Client connection) {
+    connection.getOutputProtocol().getTransport().close();
   }
 
 

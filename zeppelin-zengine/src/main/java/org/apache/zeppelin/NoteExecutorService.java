@@ -4,6 +4,7 @@ import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.apache.zeppelin.interpreter.core.thrift.CancelResult;
 import org.apache.zeppelin.interpreter.core.thrift.PushResult;
+import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcessServerManager;
 import org.apache.zeppelin.notebook.Job;
@@ -126,6 +127,7 @@ public class NoteExecutorService {
                         )
                 );
                 setErrorResult(job, batch, pseudoResult);
+                continue;
             }
 
             final InterpreterProcess remote = serverManager.getRemote(shebang, interpreterOption);
@@ -151,7 +153,9 @@ public class NoteExecutorService {
 
                 final PushResult result;
                 try {
-                    result = remote.getConnection().push(payload, noteContext, userContext, configuration);
+                    final RemoteInterpreterService.Client connection = remote.getConnection();
+                    result = connection.push(payload, noteContext, userContext, configuration);
+                    remote.releaseConnection(connection);
                     Objects.requireNonNull(result);
                 } catch (final Exception e) {
                     //busyInterpreters.add(job.getShebang());
@@ -218,8 +222,10 @@ public class NoteExecutorService {
                 break;
             case ABORTED:
                 setAbortResult(job, batch, interpreterResult);
+                break;
             case ERROR:
                 setErrorResult(job, batch, interpreterResult);
+                break;
         }
     }
 
@@ -236,7 +242,7 @@ public class NoteExecutorService {
         jobDAO.update(job);
 
         final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
-        final boolean isDone = jobs.stream().anyMatch(j -> j.getStatus() != Job.Status.DONE);
+        final boolean isDone = jobs.stream().noneMatch(j -> j.getStatus() != Job.Status.DONE);
         if (isDone) {
             batch.setStatus(JobBatch.Status.DONE);
             batch.setEndedAt(LocalDateTime.now());
@@ -256,7 +262,7 @@ public class NoteExecutorService {
 
         final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
         for (final Job j : jobs) {
-            if (j.getStatus() != Job.Status.PENDING) {
+            if (j.getStatus() == Job.Status.PENDING) {
                 j.setStatus(Job.Status.CANCELED);
                 j.setStartedAt(LocalDateTime.now());
                 j.setEndedAt(LocalDateTime.now());
@@ -282,7 +288,7 @@ public class NoteExecutorService {
 
         final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
         for (final Job j : jobs) {
-            if (j.getStatus() != Job.Status.PENDING) {
+            if (j.getStatus() == Job.Status.PENDING) {
                 j.setStatus(Job.Status.CANCELED);
                 j.setStartedAt(LocalDateTime.now());
                 j.setEndedAt(LocalDateTime.now());
@@ -321,8 +327,8 @@ public class NoteExecutorService {
                     job.setInterpreterProcessUUID(null);
                     jobDAO.update(job);
                 }
+                serverManager.forceKillInterpreterProcess(process);
             }
-            serverManager.forceKillInterpreterProcess(process);
         }
     }
 
@@ -336,8 +342,9 @@ public class NoteExecutorService {
                 final InterpreterOption interpreterOption = interpreterOptionRepository.getOption(shebang);
                 final InterpreterProcess remote = serverManager.getRemote(shebang, interpreterOption);
 
-                final CancelResult cancelResult = remote.getConnection().cancel(job.getInterpreterJobUUID());
-
+                final RemoteInterpreterService.Client connection = remote.getConnection();
+                final CancelResult cancelResult = connection.cancel(job.getInterpreterJobUUID());
+                remote.releaseConnection(connection);
                 switch (cancelResult.status) {
                     case ACCEPT:
                         job.setStatus(Job.Status.ABORTING);

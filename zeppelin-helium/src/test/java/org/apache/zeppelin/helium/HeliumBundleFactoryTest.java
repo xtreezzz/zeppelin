@@ -44,12 +44,12 @@ public class HeliumBundleFactoryTest {
     zeppelinHomePath = System.getProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName());
     System.setProperty(ZeppelinConfiguration.ConfVars.ZEPPELIN_HOME.getVarName(), "../");
 
-    ZeppelinConfiguration conf = ZeppelinConfiguration.create();
-    nodeInstallationDir =
-        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
-    hbf = new HeliumBundleFactory(conf);
-    hbf.installNodeAndNpm();
-    hbf.copyFrameworkModulesToInstallPath(true);
+//    ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+//    nodeInstallationDir =
+//        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
+//    hbf = new HeliumBundleFactory(conf);
+//    hbf.installNodeAndNpm();
+//    hbf.copyFrameworkModulesToInstallPath(true);
   }
 
   @After

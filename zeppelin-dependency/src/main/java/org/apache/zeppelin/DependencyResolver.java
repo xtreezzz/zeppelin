@@ -17,22 +17,18 @@
 
 package org.apache.zeppelin;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.RepositoryException;
+import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.graph.DependencyFilter;
+import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.resolution.DependencyRequest;
@@ -42,52 +38,38 @@ import org.sonatype.aether.util.artifact.JavaScopes;
 import org.sonatype.aether.util.filter.DependencyFilterUtils;
 import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
 
 /**
  * Deps resolver.
  * Add new dependencies from mvn repository (at runtime) to Zeppelin.
  */
 //TODO(egorklimov) @Component?
-public class DependencyResolver extends AbstractDependencyResolver {
+public class DependencyResolver {
   private final Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
 
-  private final String[] exclusions = new String[0];
+  protected RepositorySystem system = RepositorySystemFactory.newRepositorySystem();
+  protected List<RemoteRepository> repos = new LinkedList<>();
+  protected MavenRepositorySystemSession session;
 
-  public DependencyResolver(final String localRepoPath) {
-    super(localRepoPath);
-  }
-
-  public List<File> load(final String artifact) throws RepositoryException, IOException {
-    return load(artifact, new LinkedList<String>());
-  }
-
-  public synchronized List<File> load(final String artifact, final Collection<String> excludes)
-      throws RepositoryException, IOException {
-    if (StringUtils.isBlank(artifact)) {
-      // Skip dependency loading if artifact is empty
-      return new LinkedList<>();
-    }
-
-    // <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
-    final int numSplits = artifact.split(":").length;
-    if (numSplits >= 3 && numSplits <= 6) {
-      return loadFromMvn(artifact, excludes);
-    } else {
-      final LinkedList<File> libs = new LinkedList<>();
-      libs.add(new File(artifact));
-      return libs;
+  public DependencyResolver(final List<Repository> remoteRepositories) {
+    session = new MavenRepositorySystemSession();
+    final LocalRepository localRepo = new LocalRepository(System.getProperty("user.home") + "/.m2/repository");
+    session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
+    for (final Repository repository : remoteRepositories) {
+      repos.add(new RemoteRepository("central", "default", repository.getUrl()));
     }
   }
 
-  public List<File> load(final String artifact, final File destPath) throws IOException, RepositoryException {
-    return load(artifact, new LinkedList<String>(), destPath);
-  }
-
-  public List<File> load(final String artifact, final Collection<String> excludes, final File destPath) throws RepositoryException, IOException {
+  public List<File> load(final String artifact, final File destPath) throws RepositoryException, IOException {
     List<File> libs = new LinkedList<>();
 
     if (StringUtils.isNotBlank(artifact)) {
-      libs = load(artifact, excludes);
+      libs = loadFromMvn(artifact);
 
       for (final File srcFile : libs) {
         final File destFile = new File(destPath, srcFile.getName());
@@ -100,40 +82,28 @@ public class DependencyResolver extends AbstractDependencyResolver {
     return libs;
   }
 
-  public synchronized void copyLocalDependency(final String srcPath, final File destPath)
-      throws IOException {
-    if (StringUtils.isBlank(srcPath)) {
-      return;
-    }
-
-    final File srcFile = new File(srcPath);
-    final File destFile = new File(destPath, srcFile.getName());
-
-    if (!destFile.exists() || !FileUtils.contentEquals(srcFile, destFile)) {
-      FileUtils.copyFile(srcFile, destFile);
-      logger.debug("copy {} to {}", srcFile.getAbsolutePath(), destPath);
-    }
-  }
-
-  private List<File> loadFromMvn(final String artifact, final Collection<String> excludes)
-      throws RepositoryException {
-    final Collection<String> allExclusions = new LinkedList<>();
-    allExclusions.addAll(excludes);
-    allExclusions.addAll(Arrays.asList(exclusions));
+  private List<File> loadFromMvn(final String artifactName) throws RepositoryException {
 
     final List<ArtifactResult> listOfArtifact;
-    listOfArtifact = getArtifactsWithDep(artifact, allExclusions);
+    final Artifact artifact = new DefaultArtifact(artifactName);
+    final DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE);
+    final PatternExclusionsDependencyFilter exclusionFilter = new PatternExclusionsDependencyFilter();
 
-    final Iterator<ArtifactResult> it = listOfArtifact.iterator();
-    while (it.hasNext()) {
-      final Artifact a = it.next().getArtifact();
-      final String gav = a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion();
-      for (final String exclude : allExclusions) {
-        if (gav.startsWith(exclude)) {
-          it.remove();
-          break;
-        }
+    final CollectRequest collectRequest = new CollectRequest();
+    collectRequest.setRoot(new Dependency(artifact, JavaScopes.COMPILE));
+
+    synchronized (repos) {
+      for (final RemoteRepository repo : repos) {
+        collectRequest.addRepository(repo);
       }
+    }
+    final DependencyRequest dependencyRequest = new DependencyRequest(collectRequest,
+            DependencyFilterUtils.andFilter(exclusionFilter, classpathFilter));
+    try {
+      listOfArtifact =  system.resolveDependencies(session, dependencyRequest).getArtifactResults();
+    } catch (final NullPointerException | DependencyResolutionException ex) {
+      throw new RepositoryException(
+              String.format("Cannot fetch dependencies for %s", artifactName), ex);
     }
 
     final List<File> files = new LinkedList<>();
@@ -145,36 +115,11 @@ public class DependencyResolver extends AbstractDependencyResolver {
     return files;
   }
 
-  /**
-   * @param dependency
-   * @param excludes list of pattern can either be of the form groupId:artifactId
-   * @return
-   * @throws Exception
-   */
-  @Override
-  public List<ArtifactResult> getArtifactsWithDep(final String dependency,
-      final Collection<String> excludes)
-      throws RepositoryException {
-    final Artifact artifact = new DefaultArtifact(dependency);
-    final DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE);
-    final PatternExclusionsDependencyFilter exclusionFilter =
-        new PatternExclusionsDependencyFilter(excludes);
+  public static RemoteRepository newCentralRepository() {
+    return new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+  }
 
-    final CollectRequest collectRequest = new CollectRequest();
-    collectRequest.setRoot(new Dependency(artifact, JavaScopes.COMPILE));
-
-    synchronized (repos) {
-      for (final RemoteRepository repo : repos) {
-        collectRequest.addRepository(repo);
-      }
-    }
-    final DependencyRequest dependencyRequest = new DependencyRequest(collectRequest,
-        DependencyFilterUtils.andFilter(exclusionFilter, classpathFilter));
-    try {
-      return system.resolveDependencies(session, dependencyRequest).getArtifactResults();
-    } catch (final NullPointerException | DependencyResolutionException ex) {
-      throw new RepositoryException(
-          String.format("Cannot fetch dependencies for %s", dependency), ex);
-    }
+  public static RemoteRepository newLocalRepository() {
+    return new RemoteRepository("local", "default", "file://" + System.getProperty("user.home") + "/.m2/repository");
   }
 }

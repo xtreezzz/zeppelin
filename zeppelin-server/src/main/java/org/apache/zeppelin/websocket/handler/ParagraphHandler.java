@@ -52,9 +52,7 @@ public class ParagraphHandler extends AbstractHandler {
   public ParagraphHandler(final DatabaseNoteRepository noteRepository,
                           final ConnectionManager connectionManager) {
     super(connectionManager, noteRepository);
-    this.collaborativeModeEnable = ZeppelinConfiguration
-            .create()
-            .isZeppelinNotebookCollaborativeModeEnable();
+    this.collaborativeModeEnable = false;
   }
 
   //TODO(egorklimov): config removed from paragraph

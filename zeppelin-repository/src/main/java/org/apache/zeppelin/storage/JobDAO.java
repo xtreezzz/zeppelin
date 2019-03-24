@@ -155,7 +155,7 @@ public class JobDAO {
             "       J.ENDED_AT\n" +
             "FROM JOB_BATCH JB\n" +
             "       LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
-            "WHERE JB.STATUS IN (ABORTING)\n" +
+            "WHERE JB.STATUS IN ('ABORTING')\n" +
             "  AND J.STATUS IN('RUNNING');";
 
 

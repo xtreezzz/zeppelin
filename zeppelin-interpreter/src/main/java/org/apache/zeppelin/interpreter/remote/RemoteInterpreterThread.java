@@ -36,7 +36,6 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
     private TThreadPoolServer server;
     private RemoteInterpreterEventService.Client zeppelin;
 
-    private URLClassLoader interpreterClassloader;
     private Class interpreterClass;
 
     private final ConcurrentLinkedQueue<Interpreter> cachedInstances = new ConcurrentLinkedQueue<>();
@@ -59,8 +58,7 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
     @Override
     public void run() {
         try {
-            // load class for handle interpretation
-            initInterpreterClass();
+            interpreterClass = Class.forName(interpreterClassName);
 
             serverTransport = createTServerSocket();
             server = new TThreadPoolServer(
@@ -89,7 +87,8 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
 
                     if (!interrupted) {
                         final RegisterInfo registerInfo = new RegisterInfo(
-                                serverTransport.getServerSocket().getInetAddress().getHostAddress(),
+                                //serverTransport.getServerSocket().getInetAddress().getHostAddress(),
+                                "127.0.0.1",
                                 serverTransport.getServerSocket().getLocalPort(),
                                 interpreterShebang,
                                 processUUID.toString()
@@ -127,40 +126,15 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
         throw new IllegalStateException("No available port in the portRange: " + start + ":" + end);
     }
 
-    public void initInterpreterClass() {
-        final File repoFolder = new File(interpreterClasspath);
-
-        final File[] directories = repoFolder.listFiles();
-        if (directories == null || directories.length == 0) {
-            throw new IllegalStateException("Can't load implementation from " + repoFolder.getAbsolutePath());
-        }
-
-        try {
-            final List<URL> urls = new ArrayList<>();
-            for (final File file : directories) {
-                final URL url = file.toURI().toURL();
-                urls.add(new URL("jar:" + url.toString() + "!/"));
-            }
-            interpreterClassloader = URLClassLoader.newInstance(urls.toArray(new URL[0]));
-        } catch (final Exception e) {
-            // LOG.error("Error while load files from {}", dir);
-        }
-
-        try {
-            interpreterClass = interpreterClassloader.loadClass(interpreterClassName);
-        } catch (final ClassNotFoundException e) {
-            throw new IllegalStateException("Fail to find interpreter class:" + interpreterClassName, e);
-        }
-    }
-
 
     @Override
     public PushResult push(final String st,
                            final Map<String, String> noteContext,
                            final Map<String, String> userContext,
                            final Map<String, String> configuration) throws TException {
+
+        final Interpreter interpreter;
         try {
-            final Interpreter interpreter;
             if (!cachedInstances.isEmpty()) {
                 final Interpreter polled = cachedInstances.poll();
                 if (polled.isReusableForConfiguration(configuration) && polled.isAlive()) {
@@ -174,33 +148,34 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
             }
 
             final UUID uuid = UUID.randomUUID();
+            synchronized (interpreter) {
+                executor.submit(() -> {
+                    synchronized (interpreter) {
+                        interpreter.setSessionUUID(uuid.toString());
+                        workingInstances.offer(interpreter);
 
-            executor.submit(() -> {
-
-                interpreter.setSessionUUID(uuid.toString());
-                workingInstances.offer(interpreter);
-
-                InterpreterResult result = null;
-                try {
-                    if (!interpreter.isOpened()) {
-                        interpreter.open(configuration, this.interpreterClasspath);
+                        InterpreterResult result = null;
+                        try {
+                            if (!interpreter.isOpened()) {
+                                interpreter.open(configuration, this.interpreterClasspath);
+                            }
+                            result = interpreter.interpretV2(st, noteContext, userContext, configuration);
+                        } catch (Exception e) {
+                            //TODO: handle this exception
+                            // result = new.......
+                        }
+                        try {
+                            zeppelin.handleInterpreterResult(interpreter.getSessionUUID(), new Gson().toJson(result));
+                        } catch (final Exception e) {
+                            //skip
+                        }
+                        workingInstances.remove(interpreter);
+                        interpreter.setSessionUUID(null);
+                        cachedInstances.offer(interpreter);
                     }
-                    result = interpreter.interpretV2(st, noteContext, userContext, configuration);
-                } catch (Exception e) {
-                    //TODO: handle this exception
-                    // result = new.......
-                }
-                try {
-                    zeppelin.handleInterpreterResult(interpreter.getSessionUUID(), new Gson().toJson(result));
-                } catch (final Exception e) {
-                    //skip
-                }
-                workingInstances.remove(interpreter);
-                interpreter.setSessionUUID(null);
-                cachedInstances.offer(interpreter);
-            });
-
-            return new PushResult(PushResultStatus.ACCEPT, interpreter.getSessionUUID(), processUUID.toString());
+                });
+                return new PushResult(PushResultStatus.ACCEPT, uuid.toString(), processUUID.toString());
+            }
         } catch (final RejectedExecutionException e) {
             return new PushResult(PushResultStatus.DECLINE, "", "");
         } catch (final Exception e) {

@@ -19,9 +19,6 @@ package org.apache.zeppelin.rest;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
@@ -34,7 +31,6 @@ import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
 import org.apache.zeppelin.interpreterV2.server.InterpreterInstaller;
 import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.service.InterpreterService;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
@@ -43,14 +39,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 //TODO(egorklimov):
@@ -67,21 +60,15 @@ public class InterpreterRestApi {
   private static final Logger logger = LoggerFactory.getLogger(InterpreterRestApi.class);
 
   private final SecurityService securityService;
-  private final InterpreterService interpreterService;
   private final InterpreterOptionRepository interpreterOptionRepository;
-
-  private final InterpreterInstaller interpreterInstaller;
 
   @Autowired
   public InterpreterRestApi(
           @Qualifier("NoSecurityService") final SecurityService securityService,
-          final InterpreterService interpreterService,
           final InterpreterOptionRepository interpreterOptionRepository) {
     this.interpreterOptionRepository = interpreterOptionRepository;
     this.securityService = securityService;
-    this.interpreterService = interpreterService;
 
-    interpreterInstaller = new InterpreterInstaller();
     try {
       tempRepositoryInit();
     } catch (final Exception e) {
@@ -181,7 +168,12 @@ public class InterpreterRestApi {
     try {
       final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
       // install sources
-      final String installationDir = interpreterInstaller.install(request.getInterpreterName(), request.getArtifact());
+      final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
+      final String installationDir = interpreterInstaller.install(
+              request.getInterpreterName(),
+              request.getArtifact(),
+              interpreterOptionRepository.getAllRepositories()
+      );
       if (!StringUtils.isAllBlank(installationDir)) {
         request.setPath(installationDir);
         request.setStatus(Status.INSTALLED);
@@ -211,7 +203,7 @@ public class InterpreterRestApi {
       logger.info("Remove source {}", interpreterName);
       final InterpreterArtifactSource source = interpreterOptionRepository.getSource(interpreterName);
       Preconditions.checkNotNull(source);
-      interpreterInstaller.uninstallInterpreter(source.getInterpreterName(), source.getArtifact());
+      InterpreterInstaller.uninstallInterpreter(source.getInterpreterName(), source.getArtifact());
 
       interpreterOptionRepository.removeSource(interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
@@ -359,7 +351,7 @@ public class InterpreterRestApi {
       final List<InterpreterArtifactSource> sources= interpreterOptionRepository.getAllSources();
       for (final InterpreterArtifactSource source: sources) {
         final List<BaseInterpreterConfig> configList =
-            interpreterInstaller.getDefaultConfig(source.getInterpreterName(), source.getArtifact());
+            InterpreterInstaller.getDefaultConfig(source.getInterpreterName(), source.getArtifact());
         if (!configList.isEmpty()) {
           m.put(source.getInterpreterName(), configList.get(0));
         }

@@ -13,33 +13,31 @@ import java.util.Objects;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.zeppelin.DependencyResolver;
+import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.aether.repository.RemoteRepository;
 
 public class InterpreterInstaller {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterInstaller.class);
 
-  private final DependencyResolver dependencyResolver;
 
-  public InterpreterInstaller() {
-    this.dependencyResolver = new DependencyResolver("");
-  }
-
-  public boolean isInstalled(final String name, final String artifact) {
+  public static boolean isInstalled(final String name, final String artifact) {
     final File folderToStore = new File("interpreters/" + name + "/");
     return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
   }
 
-  public String install(final String name, final String artifact) {
+  public String install(final String name, final String artifact, final List<Repository> repositories) {
     if (isInstalled(name, artifact)) {
       return getDirectory(name, artifact);
     }
 
     final File folderToStore = new File("interpreters/" + name + "/");
     try {
-      dependencyResolver.load(artifact, new ArrayList<>(), folderToStore);
+      final DependencyResolver dependencyResolver = new DependencyResolver(repositories);
+      dependencyResolver.load(artifact, folderToStore);
       return folderToStore.getAbsolutePath();
     } catch (final Exception e) {
       LOG.error("Error while install interpreter", e);
@@ -48,7 +46,7 @@ public class InterpreterInstaller {
     }
   }
 
-  public void uninstallInterpreter(final String name, final String artifact) {
+  public static void uninstallInterpreter(final String name, final String artifact) {
     final File folderToStore = new File("interpreters/" + name + "/");
     try {
       FileUtils.deleteDirectory(folderToStore);
@@ -57,7 +55,7 @@ public class InterpreterInstaller {
     }
   }
 
-  public List<BaseInterpreterConfig> getDefaultConfig(final String name, final String artifact) {
+  public static List<BaseInterpreterConfig> getDefaultConfig(final String name, final String artifact) {
     final File folderToStore = new File("interpreters/" + name + "/");
 
     try {
@@ -76,7 +74,7 @@ public class InterpreterInstaller {
     }
   }
 
-  public String getDirectory(final String name, final String artifact) {
+  public static String getDirectory(final String name, final String artifact) {
       final File folderToStore = new File("interpreters/" + name + "/");
       return folderToStore.getAbsolutePath();
   }

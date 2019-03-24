@@ -105,8 +105,8 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
         return;
       }
 
-      final ZeppelinConfiguration conf = ZeppelinConfiguration.create();
-      final boolean allowAnonymous = conf.isAnonymousAllowed();
+      //final ZeppelinConfiguration conf = ZeppelinConfiguration.create();
+      final boolean allowAnonymous = true;
       if (!allowAnonymous && messagereceived.principal.equals("anonymous")) {
         throw new Exception("Anonymous access not allowed ");
       }

@@ -42,13 +42,13 @@ public class CorsFilter implements Filter {
     final String sourceHost = ((HttpServletRequest) request).getHeader("Origin");
     String origin = "";
 
-    try {
-      if (isValidOrigin(sourceHost, ZeppelinConfiguration.create())) {
-        origin = sourceHost;
-      }
-    } catch (final URISyntaxException e) {
-      LOGGER.error("Exception in WebDriverManager while getWebDriver ", e);
-    }
+    //try {
+      //if (isValidOrigin(sourceHost, ZeppelinConfiguration.create())) {
+       // origin = sourceHost;
+      //}
+    //} catch (final URISyntaxException e) {
+     // LOGGER.error("Exception in WebDriverManager while getWebDriver ", e);
+  //  }
 
     if (((HttpServletRequest) request).getMethod().equals("OPTIONS")) {
       final HttpServletResponse resp = ((HttpServletResponse) response);
@@ -69,12 +69,12 @@ public class CorsFilter implements Filter {
     response.setHeader("Access-Control-Allow-Headers", "authorization,Content-Type");
     response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, HEAD, DELETE");
 
-    final ZeppelinConfiguration zeppelinConfiguration = ZeppelinConfiguration.create();
-    response.setHeader("X-FRAME-OPTIONS", zeppelinConfiguration.getXFrameOptions());
-    if (zeppelinConfiguration.useSsl()) {
-      response.setHeader("Strict-Transport-Security", zeppelinConfiguration.getStrictTransport());
-    }
-    response.setHeader("X-XSS-Protection", zeppelinConfiguration.getXxssProtection());
+//    final ZeppelinConfiguration zeppelinConfiguration = ZeppelinConfiguration.create();
+//    response.setHeader("X-FRAME-OPTIONS", zeppelinConfiguration.getXFrameOptions());
+//    if (zeppelinConfiguration.useSsl()) {
+//      response.setHeader("Strict-Transport-Security", zeppelinConfiguration.getStrictTransport());
+//    }
+//    response.setHeader("X-XSS-Protection", zeppelinConfiguration.getXxssProtection());
   }
 
   @Override
