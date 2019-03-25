@@ -79,8 +79,8 @@ class InterpreterOptionDAO {
   // update BaseConfig by shebang
   private static final String UPDATE_CONFIG = "UPDATE BASE_INTERPRETER_CONFIG SET name = :name, "
       + "\"group\" = :group, class_name = :class_name, properties = :properties, "
-      + "editor = :editor JOIN INTERPRETER_OPTION ON INTERPRETER_OPTION.config_id = "
-      + "BASE_INTERPRETER_CONFIG.id WHERE INTERPRETER_OPTION.shebang = :shebang";
+      + "editor = :editor FROM INTERPRETER_OPTION WHERE INTERPRETER_OPTION.config_id = "
+      + "BASE_INTERPRETER_CONFIG.id AND INTERPRETER_OPTION.shebang = :shebang";
 
   private static final String INSERT_OPTION = "INSERT INTO INTERPRETER_OPTION(shebang, "
       + "custom_interpreter_name, interpreter_name, per_note, per_user, jvm_options, "
@@ -95,9 +95,8 @@ class InterpreterOptionDAO {
       + "permissions = :permissions, is_enabled = :is_enabled WHERE shebang = :shebang";
 
   // option will be deleted because of cascade rule on FK
-  private static final String DELETE_OPTION = "DELETE FROM BASE_INTERPRETER_CONFIG JOIN "
-      + "INTERPRETER_OPTION ON INTERPRETER_OPTION.config_id = BASE_INTERPRETER_CONFIG.id "
-      + "WHERE BASE_INTERPRETER_CONFIG.id = INTERPRETER_OPTION.config_id AND "
+  private static final String DELETE_OPTION = "DELETE FROM BASE_INTERPRETER_CONFIG USING "
+      + "INTERPRETER_OPTION WHERE BASE_INTERPRETER_CONFIG.id = INTERPRETER_OPTION.config_id AND "
       + "INTERPRETER_OPTION.shebang = :shebang";
 
   private static final String GET_ALL_SOURCES = "SELECT * FROM INTERPRETER_ARTIFACT_SOURCE";
@@ -175,21 +174,12 @@ class InterpreterOptionDAO {
     }
   }
 
-  void updateInterpreterConfig(@Nonnull final BaseInterpreterConfig config) {
-    Preconditions.checkNotNull(config);
-    final int affectedRows =
-        jdbcTemplate.update(UPDATE_CONFIG, convertInterpreterConfigToParameters(config));
-
-    if (affectedRows == 0) {
-      throw new RuntimeException("Fail to update config " + config.getGroup());
-    }
-  }
-
   void updateInterpreterOption(@Nonnull final InterpreterOption option) {
     //TODO(egorklimov): if config update completed, but option update
     // failed data would be inconsistent, transaction?
     Preconditions.checkNotNull(option);
-    jdbcTemplate.update(UPDATE_CONFIG, convertInterpreterConfigToParameters(option.getConfig()));
+    jdbcTemplate.update(UPDATE_CONFIG, convertInterpreterConfigToParameters(option.getConfig())
+        .addValue("shebang", option.getShebang()));
     final int affectedRows =
         jdbcTemplate.update(UPDATE_OPTION, convertInterpreterOptionToParameters(option));
 
@@ -213,7 +203,8 @@ class InterpreterOptionDAO {
   private long saveInterpreterConfig(@Nonnull final BaseInterpreterConfig config) {
     Preconditions.checkNotNull(config);
     final int affectedRows =
-        jdbcTemplate.update(INSERT_CONFIG, convertInterpreterConfigToParameters(config), keyHolder,
+        jdbcTemplate.update(INSERT_CONFIG,
+            convertInterpreterConfigToParameters(config), keyHolder,
             new String[]{"id"});
 
     if (affectedRows == 0 || keyHolder.getKey() == null) {

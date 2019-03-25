@@ -115,6 +115,10 @@ let zeppelinWebApp = angular.module('zeppelinWebApp', requiredModules)
         templateUrl: 'app/interpreter/interpreter.html',
         controller: 'InterpreterCtrl',
       })
+      .when('/monitoring', {
+        templateUrl: 'app/monitoring/monitoring.html',
+        controller: 'MonitoringCtrl',
+      })
       .when('/notebookRepos', {
         templateUrl: 'app/notebook-repository/notebook-repository.html',
         controller: 'NotebookRepositoryCtrl',

@@ -757,7 +757,8 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
       renderResult($scope.type, true);
     } else {
       if ($scope.userHasWritePermission()) {
-        return websocketMsgSrv.commitParagraph(paragraph.id, title, text, newParagraphConfig, params);
+        return websocketMsgSrv.commitParagraph(paragraph.id, title, paragraph.shebang, text,
+        newParagraphConfig, params);
       }
     }
   };

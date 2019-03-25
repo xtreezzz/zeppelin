@@ -1,10 +1,9 @@
 package org.apache.zeppelin.websocket.dto;
 
-import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.notebook.display.GUI;
-
 import java.time.LocalDateTime;
 import java.util.Map;
+import org.apache.zeppelin.notebook.Job.Status;
+import org.apache.zeppelin.notebook.display.GUI;
 
 public class ParagraphDTO {
 
@@ -16,6 +15,7 @@ public class ParagraphDTO {
     private String shebang;
     private LocalDateTime created;
     private LocalDateTime updated;
+    private Status status;
 
     //TODO(SAN) вернул config :)
     //paragraph configs like isOpen, colWidth, etc
@@ -112,5 +112,13 @@ public class ParagraphDTO {
 
     public void setResults(InterpreterResultDTO results) {
         this.results = results;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(final Status status) {
+        this.status = status;
     }
 }

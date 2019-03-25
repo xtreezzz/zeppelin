@@ -282,9 +282,9 @@ public class InterpreterRestApi {
   }
 
   @ZeppelinApi
-  @PutMapping(value = "/setting/{settingId}", produces = "application/json")
-  public ResponseEntity updateSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
-    logger.info("Update interpreterSetting {}", settingId);
+  @PutMapping(value = "/setting/{shebang}", produces = "application/json")
+  public ResponseEntity updateSetting(@RequestBody final String message, @PathVariable("shebang") final String shebang) {
+    logger.info("Update interpreterSetting {}", shebang);
     if (message == null) {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
     }
@@ -307,8 +307,8 @@ public class InterpreterRestApi {
   @DeleteMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity removeSetting(@PathVariable("shebang") final String shebang) {
     try {
-      logger.info("Remove interpreterSetting {}", shebang);
-      interpreterOptionRepository.removeOption(shebang);
+      logger.info("Remove interpreterSetting {}", "%" + shebang);
+      interpreterOptionRepository.removeOption("%" + shebang);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while removing interpreter option ", e);

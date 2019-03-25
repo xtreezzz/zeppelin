@@ -1,5 +1,6 @@
 package org.apache.zeppelin.websocket.dto;
 
+import java.util.List;
 import org.apache.zeppelin.notebook.Job;
 import org.apache.zeppelin.notebook.JobResult;
 import org.apache.zeppelin.notebook.Note;
@@ -9,8 +10,6 @@ import org.apache.zeppelin.storage.JobDAO;
 import org.apache.zeppelin.storage.JobPayloadDAO;
 import org.apache.zeppelin.storage.JobResultDAO;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 
 @Component
@@ -63,6 +62,7 @@ public class NoteDTOConverter {
 
         if(paragraph.getJobId() != null) {
             final Job job = jobDAO.get(paragraph.getJobId());
+            paragraphDTO.setStatus(job.getStatus());
             final List<JobResult> jobResults = jobResultDAO.getByJobId(job.getId());
 
             final InterpreterResultDTO interpreterResultDTO = new InterpreterResultDTO();

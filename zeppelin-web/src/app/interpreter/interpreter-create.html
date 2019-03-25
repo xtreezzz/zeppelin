@@ -305,30 +305,6 @@ limitations under the License.
                 {{newInterpreterSetting.config.properties[key].description}}
               </td>
             </tr>
-    <!--
-            <tr>
-              <td style="vertical-align: middle;">
-                <input pu-elastic-input pu-elastic-input-minwidth="180px"
-                       ng-model="newInterpreterSetting.propertyKey" />
-              </td>
-              <td style="vertical-align: middle;" ng-switch on="newInterpreterSetting.propertyType">
-                <textarea ng-switch-default msd-elastic ng-model="newInterpreterSetting.propertyValue"></textarea>
-                <input ng-switch-when="string" type="text" msd-elastic ng-model="newInterpreterSetting.propertyValue" />
-                <input ng-switch-when="number" type="text" number-widget msd-elastic ng-model="newInterpreterSetting.propertyValue" />
-                <input ng-switch-when="url" type="text" msd-elastic ng-model="newInterpreterSetting.propertyValue" />
-                <input ng-switch-when="password" type="password" msd-elastic ng-model="newInterpreterSetting.propertyValue" />
-                <input ng-switch-when="checkbox" type="checkbox" msd-elastic ng-model="newInterpreterSetting.propertyValue" />
-              </td>
-              <td style="vertical-align: middle;">
-                <select msd-elastic ng-model="newInterpreterSetting.propertyType" ng-init="newInterpreterSetting.propertyType=interpreterPropertyTypes[0]"
-                        ng-options="item for item in interpreterPropertyTypes" ng-change="defaultValueByType(newInterpreterSetting)">
-                </select>
-                <button class="btn btn-default btn-sm fa fa-plus" ng-click="addNewInterpreterProperty()">
-                </button>
-              </td>
-              <td></td>
-            </tr>
-   -->
           </table>
         </div>
 

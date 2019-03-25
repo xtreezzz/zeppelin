@@ -123,7 +123,7 @@
   margin-bottom: 0;
 }
 
-.paragraphAsIframe .editor {
+.paragraphAsIframe .editor, select option {
   width: 100%;
   border-left: 4px solid #EEEEEE;
   background: rgba(255, 255, 255, 0.9);

@@ -24,13 +24,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -55,7 +54,6 @@ public class ParagraphHandler extends AbstractHandler {
     this.collaborativeModeEnable = false;
   }
 
-  //TODO(egorklimov): config removed from paragraph
   public void updateParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
@@ -63,6 +61,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String title = fromMessage.getNotNull("title");
+    final String shebang = fromMessage.getNotNull("shebang");
     final String text = fromMessage.getNotNull("paragraph");
     final Map<String, Object> config = fromMessage.getNotNull("config");
     final Map<String, Object> params = fromMessage.getNotNull("params");
@@ -71,6 +70,7 @@ public class ParagraphHandler extends AbstractHandler {
     p.getSettings().setParams(params);
     p.setTitle(title);
     p.setText(text);
+    p.setShebang(shebang);
 
     noteRepository.updateNote(note);
     connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
@@ -150,7 +150,6 @@ public class ParagraphHandler extends AbstractHandler {
     connectionManager.broadcast(note.getNoteId(), message);
   }
 
-  //TODO(egorklimov): config removed from paragraph
   public String insertParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 

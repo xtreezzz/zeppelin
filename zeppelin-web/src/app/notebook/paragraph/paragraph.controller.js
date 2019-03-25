@@ -47,6 +47,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   $scope.cursorPosition = null;
   $scope.diffMatchPatch = new DiffMatchPatch();
   $scope.isNoteRunning = false;
+  // duplicates code from interpreter controller
+  $scope.interpreterSettings = [];
 
   // transactional info for spell execution
   $scope.spellTransaction = {
@@ -130,6 +132,25 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     },
   };
 
+  let getInterpreterSettings = function() {
+    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
+      .then(function(res) {
+        $scope.interpreterSettings = res.data.body;
+      }).catch(function(res) {
+        if (res.status === 401) {
+          ngToast.danger({
+            content: 'You don\'t have permission on this page',
+            verticalPosition: 'bottom',
+            timeout: '3000',
+          });
+          setTimeout(function() {
+            window.location = baseUrlSrv.getBase();
+          }, 3000);
+        }
+        console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+      });
+  };
+
   let angularObjectRegistry = {};
 
   // Controller init
@@ -156,6 +177,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     noteVarShareService.put($scope.paragraph.id + '_paragraphScope', paragraphScope);
 
     initializeDefault($scope.paragraph.config);
+    getInterpreterSettings();
   };
 
   $scope.$on('noteRunningStatus', function(event, status) {
@@ -437,7 +459,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     $scope.bindBeforeUnload();
 
-    commitParagraph(paragraph).then(function() {
+    $scope.commitParagraph(paragraph).then(function() {
       $scope.originalText = dirtyText;
       $scope.dirtyText = undefined;
       $scope.unBindBeforeUnload();
@@ -449,7 +471,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       return;
     }
     paragraph.config.enabled = !paragraph.config.enabled;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   /**
@@ -542,7 +564,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
   $scope.turnOnAutoRun = function(paragraph) {
     paragraph.config.runOnSelectionChange = !paragraph.config.runOnSelectionChange;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.moveUp = function(paragraph) {
@@ -641,25 +663,25 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   $scope.closeEditor = function(paragraph) {
     console.log('close the note');
     paragraph.config.editorHide = true;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.openEditor = function(paragraph) {
     console.log('open the note');
     paragraph.config.editorHide = false;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.closeTable = function(paragraph) {
     console.log('close the output');
     paragraph.config.tableHide = true;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.openTable = function(paragraph) {
     console.log('open the output');
     paragraph.config.tableHide = false;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   let openEditorAndCloseTable = function(paragraph) {
@@ -677,28 +699,28 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   const manageEditorAndTableState = function(paragraph, hideEditor, hideTable) {
     paragraph.config.editorHide = hideEditor;
     paragraph.config.tableHide = hideTable;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.showTitle = function(paragraph) {
     paragraph.config.title = true;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.hideTitle = function(paragraph) {
     paragraph.config.title = false;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.setTitle = function(paragraph) {
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.showLineNumbers = function(paragraph) {
     if ($scope.editor) {
       paragraph.config.lineNumbers = true;
       $scope.editor.renderer.setShowGutter(true);
-      commitParagraph(paragraph);
+      $scope.commitParagraph(paragraph);
     }
   };
 
@@ -706,7 +728,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     if ($scope.editor) {
       paragraph.config.lineNumbers = false;
       $scope.editor.renderer.setShowGutter(false);
-      commitParagraph(paragraph);
+      $scope.commitParagraph(paragraph);
     }
   };
 
@@ -722,7 +744,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     angular.element('.navbar-right.open').removeClass('open');
     paragraph.config.colWidth = width;
     $scope.$broadcast('paragraphResized', $scope.paragraph.id);
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.changeFontSize = function(paragraph, fontSize) {
@@ -733,13 +755,13 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
       autoAdjustEditorHeight($scope.editor);
       paragraph.config.fontSize = fontSize;
-      commitParagraph(paragraph);
+      $scope.commitParagraph(paragraph);
     }
   };
 
   $scope.toggleOutput = function(paragraph) {
     paragraph.config.tableHide = !paragraph.config.tableHide;
-    commitParagraph(paragraph);
+    $scope.commitParagraph(paragraph);
   };
 
   $scope.beautifySqlCode = function() {
@@ -801,7 +823,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       $scope.editor.setHighlightActiveLine($scope.paragraphFocused);
 
       if ($scope.paragraphFocused) {
-        let prefix = '%' + getInterpreterName($scope.paragraph.text);
+        let prefix = $scope.paragraph.shebang;
         let paragraphText = $scope.paragraph.text ? $scope.paragraph.text.trim() : '';
 
         $scope.editor.focus();
@@ -1098,7 +1120,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
-      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      let isTjdbc = $scope.paragraph.shebang === '%tjdbc';
       $scope.editor.setOptions({
         enableLiveAutocompletion: isTjdbc,
       });
@@ -1136,7 +1158,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           return false;
         }
       }
-      let isTjdbc = getInterpreterName($scope.paragraph.text) === 'tjdbc';
+      let isTjdbc = $scope.paragraph.shebang === '%tjdbc';
       let caption = item.snippet || item.caption || item.value;
       if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
         return false;
@@ -1209,7 +1231,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         !setInterpreterBindings) {
         session.setMode($scope.paragraph.config.editorMode);
       } else {
-        let magic = getInterpreterName(paragraphText);
+        let magic = $scope.paragraph.shebang.substring(1);
         if (editorSetting.magic !== magic) {
           editorSetting.magic = magic;
           getEditorSetting($scope.paragraph, magic)
@@ -1222,19 +1244,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
     pastePercentSign = false;
     setInterpreterBindings = false;
-  };
-
-  const getInterpreterName = function(paragraphText) {
-    let intpNameRegexp = /^\s*%(.+?)(\s|\()/g;
-    let match = intpNameRegexp.exec(paragraphText);
-    if (match) {
-      return match[1].trim();
-      // get default interpreter name if paragraph text doesn't start with '%'
-      // TODO(mina): dig into the cause what makes interpreterBindings to have no element
-    } else if ($scope.$parent.interpreterBindings && $scope.$parent.interpreterBindings.length !== 0) {
-      return $scope.$parent.interpreterBindings[0].name;
-    }
-    return '';
   };
 
   const autoAdjustEditorHeight = function(editor) {
@@ -1369,16 +1378,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     return cell;
   };
 
-  const commitParagraph = function(paragraph) {
+  $scope.commitParagraph = function(paragraph) {
     const {
       id,
       title,
+      shebang,
       text,
       config,
       settings: {params},
     } = paragraph;
 
-    return websocketMsgSrv.commitParagraph(id, title, text, config, params,
+    return websocketMsgSrv.commitParagraph(id, title, shebang, text, config, params,
       $route.current.pathParams.noteId);
   };
 
@@ -2025,7 +2035,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       case 'toggleTable':
         $scope.paragraph.config.tableHide = data.toggleTableStatus;
-        commitParagraph($scope.paragraph);
+        $scope.commitParagraph($scope.paragraph);
         break;
 
       case 'toggleEditor':
@@ -2038,7 +2048,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       case 'toggleEnableRun':
         $scope.paragraph.config.enabled = data.toggleEnableRunStatus;
-        commitParagraph($scope.paragraph);
+        $scope.commitParagraph($scope.paragraph);
         break;
 
       case 'delete':
