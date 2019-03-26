@@ -51,9 +51,11 @@ public class InterpreterProcessServerManager {
         interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
         remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
 
-
         InterpreterInstaller.uninstallInterpreter("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT");
         interpreterInstaller.install("md", "org.apache.zeppelin:zeppelin-markdown:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
+
+        InterpreterInstaller.uninstallInterpreter("python", "org.apache.zeppelin:t-python:1.0.0-T-SNAPSHOT");
+        interpreterInstaller.install("python", "org.apache.zeppelin:t-python:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
     }
 
 
@@ -99,7 +101,6 @@ public class InterpreterProcessServerManager {
                     final InterpreterProcess interpreterProcess = new InterpreterProcess();
                     interpreterProcess.setShebang(shebang);
                     interpreterProcess.setStatus(InterpreterProcess.Status.STARTING);
-                    interpreterProcess.setConfig(interpreterOption);
 
                     startInterpreterProcess(shebang, artifactSource.getPath(), interpreterOption.getConfig().getClassName());
 
@@ -125,6 +126,7 @@ public class InterpreterProcessServerManager {
 
     public void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
         final String cmd = String.format("java " +
+                        " -agentlib:jdwp=transport=dt_socket,server=n,address=172.27.79.51:5005,suspend=y" +
                         " -cp \"./*:%s/*\"" +
                         " org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer" +
                         " -h %s" +
@@ -152,12 +154,16 @@ public class InterpreterProcessServerManager {
         final ExecuteResultHandler handler = new ExecuteResultHandler() {
             @Override
             public void onProcessComplete(final int exitValue) {
-                registeredInterpreters.remove(shebang);
+                final InterpreterProcess process = registeredInterpreters.get(shebang);
+                process.setStatus(InterpreterProcess.Status.DEAD);
+                registeredInterpreters.put(shebang, process);
             }
 
             @Override
             public void onProcessFailed(final ExecuteException e) {
-                registeredInterpreters.remove(shebang);
+                final InterpreterProcess process = registeredInterpreters.get(shebang);
+                process.setStatus(InterpreterProcess.Status.DEAD);
+                registeredInterpreters.put(shebang, process);
             }
         };
 
@@ -199,6 +205,7 @@ public class InterpreterProcessServerManager {
                         process.setStatus(InterpreterProcess.Status.DEAD);
                         break;
                 }
+                registeredInterpreters.put(process.getShebang(), process);
             } catch (final Exception e) {
                 process.setStatus(InterpreterProcess.Status.DEAD);
             }
@@ -213,7 +220,9 @@ public class InterpreterProcessServerManager {
             process.releaseConnection(connection);
         } catch (final Exception e) {
             // log n skip
+        } finally {
+            process.setStatus(InterpreterProcess.Status.DEAD);
+            registeredInterpreters.put(process.getShebang(), process);
         }
-        registeredInterpreters.remove(process.getShebang());
     }
 }

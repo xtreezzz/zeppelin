@@ -88,6 +88,7 @@ public class NoteExecutorService {
     @PostConstruct
     public void postConstruct() throws Exception {
         serverManager.startServer();
+        jobDAO.restoreState();
     }
 
     @PreDestroy
@@ -146,7 +147,7 @@ public class NoteExecutorService {
 
                 // prepare configuration
                 final Map<String, String> configuration = new HashMap<>();
-                remote.getConfig()
+                interpreterOption
                         .getConfig()
                         .getProperties()
                         .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));

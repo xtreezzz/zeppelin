@@ -7,6 +7,8 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
 
+import java.util.Objects;
+
 public class InterpreterProcess {
 
   public enum Status {
@@ -18,7 +20,6 @@ public class InterpreterProcess {
 
   private String shebang;
   private Status status;
-  private InterpreterOption config;
 
   private String host;
   private int port;
@@ -39,14 +40,6 @@ public class InterpreterProcess {
 
   public void setStatus(final Status status) {
     this.status = status;
-  }
-
-  public InterpreterOption getConfig() {
-    return config;
-  }
-
-  public void setConfig(final InterpreterOption config) {
-    this.config = config;
   }
 
   public RemoteInterpreterService.Client getConnection() {
@@ -87,5 +80,21 @@ public class InterpreterProcess {
 
   public void setInterpreterProcessUUID(final String interpreterProcessUUID) {
     this.interpreterProcessUUID = interpreterProcessUUID;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final InterpreterProcess that = (InterpreterProcess) o;
+    return port == that.port &&
+            shebang.equals(that.shebang) &&
+            Objects.equals(host, that.host) &&
+            Objects.equals(interpreterProcessUUID, that.interpreterProcessUUID);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(shebang, host, port, interpreterProcessUUID);
   }
 }
