@@ -1,0 +1,42 @@
+[
+  {
+    "group": "python",
+    "name": "python",
+    "className": "ru.tinkoff.zeppelin.interpreter.python.PythonInterpreter",
+    "properties": {
+      "python.working.dir": {
+        "envName": "PYTHON_WORKING_DIR",
+        "propertyName": "python.working.dir",
+        "defaultValue": "",
+        "description": "Path to temp storage of python interpreter results",
+        "type": "string"
+      },
+      "python.jep.library.file": {
+        "envName": "PYTHON_JEP_LIBRARY_FILE",
+        "propertyName": "python.jep.library.file",
+        "defaultValue": "",
+        "description": "Path to JEP *.so library",
+        "type": "string"
+      },
+      "python.watchdog.time": {
+        "envName": "PYTHON_WATCHDOG_TIME",
+        "propertyName": "python.watchdog.time",
+        "defaultValue": "-1",
+        "description": "Watchdog timeout for external python process (ms)",
+        "type": "number"
+      },
+      "python.subprocess.java.args": {
+        "envName": "PYTHON_SUBPROCESS_JAVA_ARGS",
+        "propertyName": "python.subprocess.java.args",
+        "defaultValue": "",
+        "description": "Additional JVM args(used for inner JVM)",
+        "type": "string"
+      }
+    },
+    "editor": {
+      "language": "python",
+      "editOnDblClick": true,
+      "completionSupport": false
+    }
+  }
+]
