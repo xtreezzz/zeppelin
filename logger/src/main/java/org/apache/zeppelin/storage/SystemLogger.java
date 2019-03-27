@@ -17,22 +17,31 @@
 package org.apache.zeppelin.storage;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.apache.zeppelin.Logger;
 import org.apache.zeppelin.SystemEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Simple event logger.
+ */
 @Component
-public class EventLogRepository {
+public class SystemLogger implements Logger {
 
   @Nonnull
   private final EventLogDAO storage;
 
   @Autowired
-  public EventLogRepository(@Nonnull final EventLogDAO storage) {
+  public SystemLogger(@Nonnull final EventLogDAO storage) {
     this.storage = storage;
   }
 
-  public void log(@Nonnull final SystemEvent event) {
-    storage.log(event);
+  @Override
+  public void log(@Nonnull final EventType eventType,
+                  @Nonnull final String message,
+                  @Nullable final String description,
+                  @Nonnull final String username) {
+    storage.log(new SystemEvent(eventType, username, message, description));
   }
 }

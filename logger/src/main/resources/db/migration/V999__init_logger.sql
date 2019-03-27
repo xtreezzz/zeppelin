@@ -15,7 +15,7 @@
 -- limitations under the License.
 --
 
--- Represents org.apache.zeppelin.SystemLogger.EventType
+-- Represents org.apache.zeppelin.LoggerType
 CREATE TABLE SYSTEM_EVENT_TYPE
 (
   ID    BIGSERIAL     PRIMARY KEY,
@@ -27,8 +27,9 @@ CREATE TABLE SYSTEM_EVENT
 (
   ID            BIGSERIAL    PRIMARY KEY,
   USERNAME      VARCHAR(255) NOT NULL,
-  EVENT_TYPE    BIGINT       REFERENCES SYSTEM_EVENT_TYPE (ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  --FIXME: ref on update??
+  EVENT_TYPE    BIGINT       REFERENCES SYSTEM_EVENT_TYPE (ID) ON UPDATE CASCADE,
   MESSAGE       TEXT         NOT NULL,
   DESCRIPTION   TEXT,
-  ACTION_TIME   TIMESTAMP    NOT NULL DEFAULT now()
+  ACTION_TIME   TIMESTAMP    NOT NULL
 );

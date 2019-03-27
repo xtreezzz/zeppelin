@@ -66,10 +66,11 @@
     <module>zeppelin-search</module>
     <module>zeppelin-migrations</module>
     <module>zeppelin-repository</module>
+    <module>logger</module>
 
     <module>zeppelin-interpreter-core</module>
     <module>interpreters/t-python</module>
-    <module>logger</module>
+    <module>interpreters/jdbc</module>
   </modules>
 
   <properties>

@@ -16,10 +16,10 @@
  */
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.Logger;
-import org.apache.zeppelin.SystemLogger.EventType;
+import org.apache.zeppelin.Logger.EventType;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.storage.DatabaseNoteRepository;
+import org.apache.zeppelin.storage.SystemLogger;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,14 +28,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class EventLogHandler extends AbstractHandler {
 
-  private final Logger logger;
+  private final SystemLogger systemLogger;
 
   @Autowired
   public EventLogHandler(final ConnectionManager connectionManager,
                          final DatabaseNoteRepository noteRepository,
-                         final Logger logger) {
+                         final SystemLogger systemLogger) {
     super(connectionManager, noteRepository);
-    this.logger = logger;
+    this.systemLogger = systemLogger;
   }
 
   public void log(final SockMessage message) {
@@ -44,6 +44,6 @@ public class EventLogHandler extends AbstractHandler {
     final String eventMessage = message.getNotNull("message");
     final String description = message.getNotNull("description");
 
-    logger.log(eventType, serviceContext.getAutheInfo().getUser(), eventMessage, description);
+    systemLogger.log(eventType, serviceContext.getAutheInfo().getUser(), eventMessage, description);
   }
 }

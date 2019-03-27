@@ -18,28 +18,30 @@ package org.apache.zeppelin;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.zeppelin.storage.EventLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
- * Simple event logger.
+ * This is an interface for system events logger.
  */
-@Component
-public class Logger implements SystemLogger {
+public interface Logger {
 
-  private final EventLogRepository repository;
-
-  @Autowired
-  public Logger(final EventLogRepository repository) {
-    this.repository = repository;
+  /**
+   * Type of system event.
+   */
+  enum EventType {
+    ADD_INTERPRETER;
   }
 
-  @Override
-  public void log(@Nonnull final EventType eventType,
-                  @Nonnull final String username,
-                  @Nonnull final String message,
-                  @Nullable final String description) {
-    repository.log(new SystemEvent(eventType, username, message, description));
-  }
+  /**
+   * Adds record about system event to event log.
+   *
+   * @param eventType - type of event, never {@code null}.
+   * @param username - user, who made the change, never {@code null}.
+   * @param message - changes msg, never {@code null}.
+   * @param description - human-readable change description, may be {@code null}.
+   */
+  void log(@Nonnull final EventType eventType,
+           @Nonnull final String username,
+           @Nonnull final String message,
+           @Nullable final String description);
+
 }

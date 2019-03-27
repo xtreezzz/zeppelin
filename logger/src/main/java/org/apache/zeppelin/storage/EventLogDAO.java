@@ -21,8 +21,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import javax.annotation.Nonnull;
+import org.apache.zeppelin.Logger.EventType;
 import org.apache.zeppelin.SystemEvent;
-import org.apache.zeppelin.SystemLogger.EventType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -105,7 +105,7 @@ class EventLogDAO {
         jdbcTemplate.update(ADD_EVENT_TYPE_OR_RETURN_ID, convertSystemEventTypeToParameters(type), keyHolder);
 
     if (affectedRows == 0) {
-      throw new RuntimeException("Fail to save event  type " + type.name());
+      throw new RuntimeException("Fail to save event type " + type.name());
     }
     return ((Long) keyHolder.getKeys().get("ID"));
   }
@@ -116,6 +116,7 @@ class EventLogDAO {
         jdbcTemplate.update(LOG, convertSystemEventToParameters(event), keyHolder);
 
     if (affectedRows == 0) {
+      // LOGGER.error
       throw new RuntimeException("Fail to save event " + event);
     }
     event.setDatabaseId((Long) keyHolder.getKeys().get("ID"));

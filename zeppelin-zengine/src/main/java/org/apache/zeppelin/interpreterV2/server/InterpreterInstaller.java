@@ -6,7 +6,6 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -17,11 +16,12 @@ import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonatype.aether.repository.RemoteRepository;
 
+//TODO(egorklimov): pass path as parameter
 public class InterpreterInstaller {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterInstaller.class);
+  private static final String destinationFolder = "interpreters/";
 
 
   public static boolean isInstalled(final String name, final String artifact) {
