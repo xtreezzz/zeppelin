@@ -134,4 +134,70 @@ public class HeliumPackage {
 
   public Map<String, Object> getConfig() { return config; }
 
+  public HeliumPackage() {
+  }
+
+  public static Gson getGson() {
+    return gson;
+  }
+
+  public void setType(final HeliumType type) {
+    this.type = type;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  public void setDescription(final String description) {
+    this.description = description;
+  }
+
+  public void setArtifact(final String artifact) {
+    this.artifact = artifact;
+  }
+
+  public void setClassName(final String className) {
+    this.className = className;
+  }
+
+  public void setResources(final String[][] resources) {
+    this.resources = resources;
+  }
+
+  public void setLicense(final String license) {
+    this.license = license;
+  }
+
+  public void setIcon(final String icon) {
+    this.icon = icon;
+  }
+
+  public String getPublished() {
+    return published;
+  }
+
+  public void setPublished(final String published) {
+    this.published = published;
+  }
+
+  public void setGroupId(final String groupId) {
+    this.groupId = groupId;
+  }
+
+  public void setArtifactId(final String artifactId) {
+    this.artifactId = artifactId;
+  }
+
+  public SpellPackageInfo getSpell() {
+    return spell;
+  }
+
+  public void setSpell(final SpellPackageInfo spell) {
+    this.spell = spell;
+  }
+
+  public void setConfig(final Map<String, Object> config) {
+    this.config = config;
+  }
 }

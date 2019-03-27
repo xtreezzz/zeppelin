@@ -34,11 +34,15 @@ import org.apache.log4j.WriterAppender;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.helium.V2.HeliumRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 /**
@@ -70,43 +74,28 @@ public class HeliumBundleFactory {
   private final File heliumBundleDirectory;
   private final File heliumLocalModuleDirectory;
   private final File yarnCacheDir;
-  private File tabledataModulePath;
-  private File visualizationModulePath;
-  private File spellModulePath;
   private String defaultNodeInstallerUrl;
   private String defaultNpmInstallerUrl;
   private String defaultYarnInstallerUrl;
   private Gson gson;
   private boolean nodeAndNpmInstalled = false;
 
-  private ByteArrayOutputStream out  = new ByteArrayOutputStream();
+  private ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-  public HeliumBundleFactory(ZeppelinConfiguration conf) {
-    this.heliumLocalRepoDirectory =
-        new File(conf.getRelativeDir(ZeppelinConfiguration.ConfVars.ZEPPELIN_DEP_LOCALREPO), HELIUM_LOCAL_REPO);
+  public HeliumBundleFactory() {
+    this.heliumLocalRepoDirectory = new File("helium-repo", HELIUM_LOCAL_REPO);
     this.heliumBundleDirectory = new File(heliumLocalRepoDirectory, HELIUM_BUNDLES_DIR);
     this.heliumLocalModuleDirectory = new File(heliumLocalRepoDirectory, HELIUM_LOCAL_MODULE_DIR);
     this.yarnCacheDir = new File(heliumLocalRepoDirectory, YARN_CACHE_DIR);
-    this.defaultNodeInstallerUrl = conf.getHeliumNodeInstallerUrl();
-    this.defaultNpmInstallerUrl = conf.getHeliumNpmInstallerUrl();
-    this.defaultYarnInstallerUrl = conf.getHeliumYarnInstallerUrl();
+    this.defaultNodeInstallerUrl = "https://nodejs.org/dist/";
+    this.defaultNpmInstallerUrl = "http://registry.npmjs.org/";
+    this.defaultYarnInstallerUrl = "https://github.com/yarnpkg/yarn/releases/download/";
     this.nodeInstallationDirectory = this.heliumLocalRepoDirectory;
 
     this.frontEndPluginFactory =
-        new FrontendPluginFactory(heliumLocalRepoDirectory, nodeInstallationDirectory);
+            new FrontendPluginFactory(heliumLocalRepoDirectory, nodeInstallationDirectory);
 
     this.gson = new Gson();
-
-    File zeppelinWebPath = new File(conf.getRelativeDir("zeppelin-web"));
-    if (!zeppelinWebPath.isDirectory()) {
-      this.tabledataModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-tabledata"));
-      this.visualizationModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-vis"));
-      this.spellModulePath = new File(conf.getRelativeDir("lib/node_modules/zeppelin-spell"));
-    } else {
-      this.tabledataModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/tabledata"));
-      this.visualizationModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/visualization"));
-      this.spellModulePath = new File(conf.getRelativeDir("zeppelin-web/src/app/spell"));
-    }
   }
 
   void installNodeAndNpm() throws TaskRunnerException {
@@ -187,7 +176,7 @@ public class HeliumBundleFactory {
     return url.toLowerCase().startsWith("https");
   }
 
-  public void buildAllPackages(List<HeliumPackage> pkgs) throws IOException {
+  public void buildAllPackages(List<HeliumRegistry.HeliumPackage> pkgs) throws IOException {
     buildAllPackages(pkgs, false);
   }
 
@@ -231,9 +220,9 @@ public class HeliumBundleFactory {
   /**
    * @return main file name of this helium package (relative path)
    */
-  private String downloadPackage(HeliumPackage pkg, String[] nameAndVersion, File bundleDir,
-                                String templateWebpackConfig, String templatePackageJson,
-                                FrontendPluginFactory fpf) throws IOException, TaskRunnerException {
+  private String downloadPackage(HeliumRegistry.HeliumPackage pkg, String[] nameAndVersion, File bundleDir,
+                                 String templateWebpackConfig, String templatePackageJson,
+                                 FrontendPluginFactory fpf) throws IOException, TaskRunnerException {
     if (bundleDir.exists()) {
       FileUtils.deleteQuietly(bundleDir);
     }
@@ -267,7 +256,7 @@ public class HeliumBundleFactory {
       File extracted = new File(heliumBundleDirectory, "package");
       FileUtils.deleteDirectory(extracted);
       List<String> entries = unTgz(tgz, heliumBundleDirectory);
-      for (String entry: entries) logger.debug("Extracted " + entry);
+      for (String entry : entries) logger.debug("Extracted " + entry);
       tgz.delete();
       FileUtils.copyDirectory(extracted, bundleDir);
       FileUtils.deleteDirectory(extracted);
@@ -277,17 +266,18 @@ public class HeliumBundleFactory {
     File existingPackageJson = new File(bundleDir, "package.json");
     JsonReader reader = new JsonReader(new FileReader(existingPackageJson));
     Map<String, Object> packageJson = gson.fromJson(reader,
-            new TypeToken<Map<String, Object>>(){}.getType());
+            new TypeToken<Map<String, Object>>() {
+            }.getType());
     Map<String, String> existingDeps = (Map<String, String>) packageJson.get("dependencies");
     String mainFileName = (String) packageJson.get("main");
 
     StringBuilder dependencies = new StringBuilder();
     int index = 0;
-    for (Map.Entry<String, String> e: existingDeps.entrySet()) {
+    for (Map.Entry<String, String> e : existingDeps.entrySet()) {
       dependencies.append("    \"").append(e.getKey()).append("\": ");
       if (e.getKey().equals("zeppelin-vis") ||
-          e.getKey().equals("zeppelin-tabledata") ||
-          e.getKey().equals("zeppelin-spell")) {
+              e.getKey().equals("zeppelin-tabledata") ||
+              e.getKey().equals("zeppelin-spell")) {
         dependencies.append("\"file:../../" + HELIUM_LOCAL_MODULE_DIR + "/")
                 .append(e.getKey()).append("\"");
       } else {
@@ -312,8 +302,8 @@ public class HeliumBundleFactory {
     return mainFileName;
   }
 
-  private void prepareSource(HeliumPackage pkg, String[] moduleNameVersion,
-                            String mainFileName) throws IOException {
+  private void prepareSource(HeliumRegistry.HeliumPackage pkg, String[] moduleNameVersion,
+                             String mainFileName) throws IOException {
     StringBuilder loadJsImport = new StringBuilder();
     StringBuilder loadJsRegister = new StringBuilder();
     String className = "bundles" + pkg.getName().replaceAll("[-_]", "");
@@ -324,9 +314,9 @@ public class HeliumBundleFactory {
     }
 
     loadJsImport
-        .append("import ")
-        .append(className)
-        .append(" from \"../" + mainFileName + "\"\n");
+            .append("import ")
+            .append(className)
+            .append(" from \"../" + mainFileName + "\"\n");
 
     loadJsRegister.append(HELIUM_BUNDLES_VAR + ".push({\n");
     loadJsRegister.append("id: \"" + moduleNameVersion[0] + "\",\n");
@@ -358,7 +348,7 @@ public class HeliumBundleFactory {
   }
 
   private synchronized File bundleHeliumPackage(FrontendPluginFactory fpf,
-                                               File bundleDir) throws IOException {
+                                                File bundleDir) throws IOException {
     try {
       out.reset();
       logger.info("Bundling helium packages");
@@ -368,25 +358,19 @@ public class HeliumBundleFactory {
       throw new IOException(new String(out.toByteArray()));
     }
 
-    String bundleStdoutResult = new String(out.toByteArray());
     File heliumBundle = new File(bundleDir, HELIUM_BUNDLE);
     if (!heliumBundle.isFile()) {
       throw new IOException(
-              "Can't create bundle: \n" + bundleStdoutResult);
+              "Can't create bundle: ");
     }
 
-    WebpackResult result = getWebpackResultFromOutput(bundleStdoutResult);
-    if (result.errors.length > 0) {
-      FileUtils.deleteQuietly(heliumBundle);
-      throw new IOException(result.errors[0]);
-    }
 
     return heliumBundle;
   }
 
-  public synchronized File buildPackage(HeliumPackage pkg,
+  public synchronized File buildPackage(HeliumRegistry.HeliumPackage pkg,
                                         boolean rebuild,
-                                        boolean recopyLocalModule) throws IOException {
+                                        boolean recopyLocalModule) throws URISyntaxException, IOException {
     if (pkg == null) {
       return null;
     }
@@ -422,9 +406,9 @@ public class HeliumBundleFactory {
 
     // resources: webpack.js, package.json
     String templateWebpackConfig = Resources.toString(
-        Resources.getResource("helium/webpack.config.js"), Charsets.UTF_8);
+            Resources.getResource("helium/webpack.config.js"), Charsets.UTF_8);
     String templatePackageJson = Resources.toString(
-        Resources.getResource("helium/" + PACKAGE_JSON), Charsets.UTF_8);
+            Resources.getResource("helium/" + PACKAGE_JSON), Charsets.UTF_8);
 
     // 2. download helium package using `npm pack`
     String mainFileName = null;
@@ -450,8 +434,8 @@ public class HeliumBundleFactory {
     return bundleCache;
   }
 
-  private synchronized void buildAllPackages(List<HeliumPackage> pkgs, boolean rebuild)
-      throws IOException {
+  private synchronized void buildAllPackages(List<HeliumRegistry.HeliumPackage> pkgs, boolean rebuild)
+          throws IOException {
 
     if (pkgs == null || pkgs.size() == 0) {
       return;
@@ -460,27 +444,24 @@ public class HeliumBundleFactory {
     // DON't recopy local modules when build all packages to avoid duplicated copies.
     boolean recopyLocalModules = false;
 
-    for (HeliumPackage pkg : pkgs) {
+    for (HeliumRegistry.HeliumPackage pkg : pkgs) {
       try {
         buildPackage(pkg, rebuild, recopyLocalModules);
-      } catch (IOException e) {
+      } catch (Exception e) {
         logger.error("Failed to build helium package: " + pkg.getArtifact(), e);
       }
     }
   }
 
-  private void copyFrameworkModule(boolean recopy, FileFilter filter,
-                           File src, File dest) throws IOException {
-    if (src != null) {
-      if (recopy && dest.exists()) {
-        FileUtils.deleteDirectory(dest);
-      }
+  private void copyFrameworkModule(boolean recopy, FileFilter filter, List<String> files, File dest) throws URISyntaxException, IOException {
+    if (recopy && dest.exists()) {
+      FileUtils.deleteDirectory(dest);
+    }
 
-      if (!dest.exists()) {
-        FileUtils.copyDirectory(
-            src,
-            dest,
-            filter);
+    if (!dest.exists()) {
+      for (final String src : files) {
+        final byte[] bytes = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream(src));
+        FileUtils.writeByteArrayToFile(new File(dest, src.substring(src.lastIndexOf('/') + 1)), bytes);
       }
     }
   }
@@ -490,9 +471,9 @@ public class HeliumBundleFactory {
       @Override
       public boolean accept(File dir, String name) {
         if ((name.startsWith("npm-zeppelin-vis-") ||
-            name.startsWith("npm-zeppelin-tabledata-") ||
-            name.startsWith("npm-zeppelin-spell-")) &&
-            dir.isDirectory()) {
+                name.startsWith("npm-zeppelin-tabledata-") ||
+                name.startsWith("npm-zeppelin-spell-")) &&
+                dir.isDirectory()) {
           return true;
         }
 
@@ -509,7 +490,7 @@ public class HeliumBundleFactory {
   }
 
   void copyFrameworkModulesToInstallPath(boolean recopy)
-      throws IOException {
+          throws URISyntaxException, IOException {
 
     FileFilter npmPackageCopyFilter = new FileFilter() {
       @Override
@@ -528,22 +509,65 @@ public class HeliumBundleFactory {
     deleteYarnCache();
 
     // install tabledata module
-    File tabledataModuleInstallPath = new File(heliumLocalModuleDirectory,
-        "zeppelin-tabledata");
-    copyFrameworkModule(recopy, npmPackageCopyFilter,
-        tabledataModulePath, tabledataModuleInstallPath);
+    File tabledataModuleInstallPath = new File(heliumLocalModuleDirectory, "zeppelin-tabledata");
+    final List<String> tabledataFiles = new ArrayList<>();
+    tabledataFiles.add("tabledata/.npmignore");
+    tabledataFiles.add("tabledata/networkdata.js");
+    tabledataFiles.add("tabledata/columnselector.js");
+    tabledataFiles.add("tabledata/pivot_settings.html");
+    tabledataFiles.add("tabledata/transformation.js");
+    tabledataFiles.add("tabledata/tabledata.js");
+    tabledataFiles.add("tabledata/network_settings.html");
+    tabledataFiles.add("tabledata/networkdata.test.js");
+    tabledataFiles.add("tabledata/passthrough.js");
+    tabledataFiles.add("tabledata/tabledata.test.js");
+    tabledataFiles.add("tabledata/advanced-transformation-util.test.js");
+    tabledataFiles.add("tabledata/package.json");
+    tabledataFiles.add("tabledata/advanced-transformation.js");
+    tabledataFiles.add("tabledata/advanced-transformation-setting.html");
+    tabledataFiles.add("tabledata/pivot.js");
+    tabledataFiles.add("tabledata/dataset.js");
+    tabledataFiles.add("tabledata/network.js");
+    tabledataFiles.add("tabledata/datasetfactory.js");
+    tabledataFiles.add("tabledata/advanced-transformation-util.js");
+    tabledataFiles.add("tabledata/datasetfactory.test.js");
+    tabledataFiles.add("tabledata/columnselector_settings.html");
+    copyFrameworkModule(recopy, npmPackageCopyFilter, tabledataFiles, tabledataModuleInstallPath);
+
 
     // install visualization module
-    File visModuleInstallPath = new File(heliumLocalModuleDirectory,
-        "zeppelin-vis");
-    copyFrameworkModule(recopy, npmPackageCopyFilter,
-        visualizationModulePath, visModuleInstallPath);
+    File visModuleInstallPath = new File(heliumLocalModuleDirectory, "zeppelin-vis");
+    final List<String> visualizationFiles = new ArrayList<>();
+    visualizationFiles.add("visualization/.npmignore");
+    visualizationFiles.add("visualization/package.json");
+    visualizationFiles.add("visualization/visualization.js");
+    copyFrameworkModule(recopy, npmPackageCopyFilter, visualizationFiles, visModuleInstallPath);
+
+    File visBuiltinsModuleInstallPath = new File(visModuleInstallPath, "builtins");
+    final List<String> visualizationBuiltinsFiles = new ArrayList<>();
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-areachart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-barchart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-d3network.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-displayXAxis.html");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-linechart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-nvd3chart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-piechart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-scatterchart.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-table.js");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-table-grid-filter.html");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-table-setting.html");
+    visualizationBuiltinsFiles.add("visualization/builtins/visualization-util.js");
+    copyFrameworkModule(recopy, npmPackageCopyFilter, visualizationBuiltinsFiles, visBuiltinsModuleInstallPath);
 
     // install spell module
-    File spellModuleInstallPath = new File(heliumLocalModuleDirectory,
-        "zeppelin-spell");
-    copyFrameworkModule(recopy, npmPackageCopyFilter,
-        spellModulePath, spellModuleInstallPath);
+    File spellModuleInstallPath = new File(heliumLocalModuleDirectory, "zeppelin-spell");
+    final List<String> spellFiles = new ArrayList<>();
+    spellFiles.add("spell/.npmignore");
+    spellFiles.add("spell/index.js");
+    spellFiles.add("spell/package.json");
+    spellFiles.add("spell/spell-base.js");
+    spellFiles.add("spell/spell-result.js");
+    copyFrameworkModule(recopy, npmPackageCopyFilter, spellFiles, spellModuleInstallPath);
   }
 
   private WebpackResult getWebpackResultFromOutput(String output) {
@@ -587,14 +611,15 @@ public class HeliumBundleFactory {
     }
   }
 
-  private boolean isLocalPackage(HeliumPackage pkg) {
+  private boolean isLocalPackage(HeliumRegistry.HeliumPackage pkg) {
     return (pkg.getArtifact().startsWith(".") || pkg.getArtifact().startsWith("/"));
   }
 
-  private String[] getNpmModuleNameAndVersion(HeliumPackage pkg) {
+  private String[] getNpmModuleNameAndVersion(HeliumRegistry.HeliumPackage pkg) {
     String artifact = pkg.getArtifact();
 
-    if (isLocalPackage(pkg)) {
+    //if (isLocalPackage(pkg)) {
+    if (false) {
       File packageJson = new File(artifact, "package.json");
       if (!packageJson.isFile()) {
         return null;
@@ -618,8 +643,8 @@ public class HeliumBundleFactory {
         nameVersion[0] = artifact.substring(0, pos);
         nameVersion[1] = artifact.substring(pos + 1);
       } else if (
-          (pos = artifact.indexOf('^')) > 0 ||
-              (pos = artifact.indexOf('~')) > 0) {
+              (pos = artifact.indexOf('^')) > 0 ||
+                      (pos = artifact.indexOf('~')) > 0) {
         nameVersion[0] = artifact.substring(0, pos);
         nameVersion[1] = artifact.substring(pos);
       } else {
@@ -630,11 +655,11 @@ public class HeliumBundleFactory {
     }
   }
 
-  synchronized void install(HeliumPackage pkg) throws TaskRunnerException {
+  synchronized void install(HeliumRegistry.HeliumPackage pkg) throws TaskRunnerException {
     String commandForNpmInstallArtifact =
-        String.format("install %s --fetch-retries=%d --fetch-retry-factor=%d " +
-                        "--fetch-retry-mintimeout=%d", pkg.getArtifact(),
-                FETCH_RETRY_COUNT, FETCH_RETRY_FACTOR_COUNT, FETCH_RETRY_MIN_TIMEOUT);
+            String.format("install %s --fetch-retries=%d --fetch-retry-factor=%d " +
+                            "--fetch-retry-mintimeout=%d", pkg.getArtifact(),
+                    FETCH_RETRY_COUNT, FETCH_RETRY_FACTOR_COUNT, FETCH_RETRY_MIN_TIMEOUT);
     npmCommand(commandForNpmInstallArtifact);
   }
 
@@ -665,7 +690,7 @@ public class HeliumBundleFactory {
 
   private synchronized void configureLogger() {
     org.apache.log4j.Logger npmLogger = org.apache.log4j.Logger.getLogger(
-        "com.github.eirslett.maven.plugins.frontend.lib.DefaultYarnRunner");
+            "com.github.eirslett.maven.plugins.frontend.lib.DefaultYarnRunner");
     Enumeration appenders = org.apache.log4j.Logger.getRootLogger().getAllAppenders();
 
     if (appenders != null) {
@@ -685,8 +710,39 @@ public class HeliumBundleFactory {
       }
     }
     npmLogger.addAppender(new WriterAppender(
-        new PatternLayout("%m%n"),
-        out
+            new PatternLayout("%m%n"),
+            out
     ));
+  }
+
+
+  public void copyFromJar(String source, final Path target) throws URISyntaxException, IOException {
+    URI resource = URI.create("jar:" + getClass().getClassLoader().getResource(source).toURI());
+    FileSystem fileSystem = FileSystems.newFileSystem(
+            resource,
+            Collections.<String, String>emptyMap()
+    );
+
+
+    final Path jarPath = fileSystem.getPath(source);
+
+    Files.walkFileTree(jarPath, new SimpleFileVisitor<Path>() {
+
+      private Path currentTarget;
+
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        currentTarget = target.resolve(jarPath.relativize(dir).toString());
+        Files.createDirectories(currentTarget);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Files.copy(file, target.resolve(jarPath.relativize(file).toString()), StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+
+    });
   }
 }
