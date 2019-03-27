@@ -17,7 +17,11 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.helium.HeliumBundleFactory;
+import org.apache.zeppelin.helium.V2.HeliumEnabledRegistries;
+import org.apache.zeppelin.helium.V2.HeliumRegistry;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.storage.DatabaseNoteRepository;
@@ -34,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
+
 /**
  * Helium Rest Api.
  */
@@ -45,6 +51,7 @@ public class HeliumRestApi {
   //private final Helium helium;
   private final Gson gson = new Gson();
   private final DatabaseNoteRepository noteRepository;
+
 
   @Autowired
   public HeliumRestApi(//final Helium helium,
@@ -73,8 +80,7 @@ public class HeliumRestApi {
   @GetMapping(value = "/enabledPackage", produces = "application/json")
   public ResponseEntity getAllEnabledPackageInfo() {
     try {
-      //return new JsonResponse(HttpStatus.OK, "", helium.getAllEnabledPackages()).build();
-      return null;
+      return new JsonResponse(HttpStatus.OK, "", HeliumEnabledRegistries.getRegistries()).build();
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
@@ -148,7 +154,7 @@ public class HeliumRestApi {
   }
 
   @GetMapping(value = "/bundle/load/{packageName}", produces = "text/javascript")
-  public ResponseEntity bundleLoad(@RequestParam("refresh") final String refresh,
+  public ResponseEntity bundleLoad(@RequestParam(name = "refresh", required= false, defaultValue = "false") final String refresh,
                              @PathVariable("packageName") final String packageName) {
     if (StringUtils.isEmpty(packageName)) {
       return new JsonResponse(
@@ -156,24 +162,26 @@ public class HeliumRestApi {
               "Can't get bundle due to empty package name").build();
     }
 
-    /*HeliumPackageSearchResult psr = null;
-    final List<HeliumPackageSearchResult> enabledPackages = helium.getAllEnabledPackages();
-    for (final HeliumPackageSearchResult e : enabledPackages) {
-      if (e.getPkg().getName().equals(packageName)) {
-        psr = e;
-        break;
-      }
-    }
-
-    if (psr == null) {
-      // return empty to specify
-      return new JsonResponse(HttpStatus.OK).build();
-    }
 
     try {
       final File bundle;
       final boolean rebuild = (refresh != null && refresh.equals("true"));
-      bundle = helium.getBundle(psr.getPkg(), rebuild);
+      final HeliumBundleFactory bundleFactory = new HeliumBundleFactory();
+
+      final HeliumRegistry.HeliumPackage heliumPackage = HeliumEnabledRegistries.getRegistries()
+              .stream()
+              .filter(registry -> registry.getPkg().getName().equals(packageName))
+              .map(registry -> registry.getPkg())
+              .findFirst()
+              .orElse(null);
+
+      if(heliumPackage == null) {
+        return new JsonResponse(
+                HttpStatus.BAD_REQUEST,
+                "Can't get bundle due to empty package name").build();
+      }
+
+      bundle = bundleFactory.buildPackage(heliumPackage, rebuild, true);
 
       if (bundle == null) {
         return new JsonResponse(HttpStatus.OK).build();
@@ -189,8 +197,6 @@ public class HeliumRestApi {
       // so it's better return ok instead of any error.
       return new JsonResponse(HttpStatus.OK, "ERROR: " + e.getMessage()).build();
     }
-    */
-    return null;
   }
 
   @PostMapping(value = "/enable/{packageName}", produces = "application/json")
