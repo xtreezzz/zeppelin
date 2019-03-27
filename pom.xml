@@ -69,6 +69,7 @@
 
     <module>zeppelin-interpreter-core</module>
     <module>interpreters/t-python</module>
+    <module>logger</module>
   </modules>
 
   <properties>

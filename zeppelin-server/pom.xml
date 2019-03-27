@@ -400,6 +400,12 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>logger</artifactId>
+      <version>1.0.0-T-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
 
   </dependencies>
 

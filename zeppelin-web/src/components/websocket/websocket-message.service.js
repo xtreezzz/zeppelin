@@ -19,6 +19,17 @@ function WebsocketMessageService($rootScope, websocketEvents) {
 
   return {
 
+    fireEvent: function(eventType, message, description) {
+      websocketEvents.sendNewEvent({
+        op: 'FIRE_EVENT',
+        data: {
+          eventType: eventType,
+          message: message,
+          description: description,
+        },
+      });
+    },
+
     getHomeNote: function() {
       websocketEvents.sendNewEvent({op: 'GET_HOME_NOTE'});
     },

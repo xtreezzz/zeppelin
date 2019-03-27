@@ -17,12 +17,8 @@
 
 package org.apache.zeppelin.websocket;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 public enum Operation {
+  FIRE_EVENT,       // [c-s] log event
   GET_HOME_NOTE,    // [c-s] load note for home screen
 
   GET_NOTE,         // [c-s] client load note

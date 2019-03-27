@@ -16,7 +16,8 @@ import {ParagraphStatus} from '../notebook/paragraph/paragraph.status';
 
 angular.module('zeppelinWebApp').controller('InterpreterCtrl', InterpreterCtrl);
 
-function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeout, $route) {
+function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv, ngToast,
+                         $timeout, $route) {
   'ngInject';
 
   let interpreterSettingsTmp = [];
@@ -509,6 +510,9 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeou
     request.concurrentTasks = 10;
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)
       .then(function(res) {
+        websocketMsgSrv.fireEvent('ADD_INTERPRETER',
+         'Interpreter ' + request.shebang + ' has been added',
+         'New interpreter has been added ' + request);
         $scope.resetNewInterpreterSetting();
         getInterpreterSettings();
         $scope.showAddNewSetting = false;

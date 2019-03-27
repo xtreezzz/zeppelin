@@ -17,11 +17,19 @@
 
 package org.apache.zeppelin.websocket;
 
+import java.io.IOException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.ticket.TicketContainer;
-import org.apache.zeppelin.websocket.handler.*;
+import org.apache.zeppelin.websocket.handler.CompletionHandler;
+import org.apache.zeppelin.websocket.handler.EventLogHandler;
+import org.apache.zeppelin.websocket.handler.NoteFormsHandler;
+import org.apache.zeppelin.websocket.handler.NoteHandler;
+import org.apache.zeppelin.websocket.handler.NoteRevisionHandler;
+import org.apache.zeppelin.websocket.handler.ParagraphHandler;
+import org.apache.zeppelin.websocket.handler.RunnerHandler;
+import org.apache.zeppelin.websocket.handler.SettingsHandler;
+import org.apache.zeppelin.websocket.handler.SpellHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +38,6 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.io.IOException;
 
 @Component
 public class WebsocketDispatcher extends TextWebSocketHandler {
@@ -46,9 +52,19 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   private final RunnerHandler runnerHandler;
   private final CompletionHandler completionHandler;
   private final ConnectionManager sessionectionManager;
+  private final EventLogHandler eventLogHandler;
 
   @Autowired
-  public WebsocketDispatcher(final SettingsHandler settingsService, final ParagraphHandler paragraphService, final NoteHandler noteService, final NoteRevisionHandler noteRevisionService, final NoteFormsHandler noteFormsService,  final SpellHandler spellHandler, final RunnerHandler runnerHandler, final CompletionHandler completionHandler, final ConnectionManager sessionectionManager) {
+  public WebsocketDispatcher(final SettingsHandler settingsService,
+                             final ParagraphHandler paragraphService,
+                             final NoteHandler noteService,
+                             final NoteRevisionHandler noteRevisionService,
+                             final NoteFormsHandler noteFormsService,
+                             final SpellHandler spellHandler,
+                             final RunnerHandler runnerHandler,
+                             final CompletionHandler completionHandler,
+                             final ConnectionManager sessionectionManager,
+                             final EventLogHandler eventLogHandler) {
     this.settingsService = settingsService;
     this.paragraphService = paragraphService;
     this.noteService = noteService;
@@ -58,6 +74,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
     this.runnerHandler = runnerHandler;
     this.completionHandler = completionHandler;
     this.sessionectionManager = sessionectionManager;
+    this.eventLogHandler = eventLogHandler;
   }
 
   @Override
@@ -122,6 +139,9 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
 
       // Lets be elegant here
       switch (messagereceived.op) {
+        case FIRE_EVENT:
+          eventLogHandler.log(messagereceived);
+          break;
         case LIST_NOTES:
           noteService.listNotesInfo(session, messagereceived);
           break;
