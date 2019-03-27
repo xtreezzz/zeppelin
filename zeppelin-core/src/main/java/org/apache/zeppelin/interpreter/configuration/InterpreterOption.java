@@ -68,7 +68,7 @@ public class InterpreterOption implements Serializable {
    */
   private int concurrentTasks;
 
-  private final boolean isEnabled;
+  private boolean isEnabled;
 
   @Nonnull
   private ExistingProcess remoteProcess;
@@ -255,6 +255,10 @@ public class InterpreterOption implements Serializable {
 
   public boolean isEnabled() {
     return isEnabled;
+  }
+
+  public void setEnabled(final boolean enabled) {
+    isEnabled = enabled;
   }
 
   private static boolean isValidShebang(@Nonnull final String shebang) {

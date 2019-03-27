@@ -32,7 +32,6 @@ public class InterpreterProcessServerManager {
     private final InterpreterProcessServerEventHandler eventHandler;
     private final InterpreterOptionRepository interpreterOptionRepository;
 
-    private final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
     private final String remoteServerClassPath;
 
     private final Map<String, InterpreterProcess> registeredInterpreters = new ConcurrentHashMap<>();
@@ -48,6 +47,7 @@ public class InterpreterProcessServerManager {
         );
 
         InterpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+        final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
         interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT", interpreterOptionRepository.getAllRepositories());
         remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
 
@@ -70,8 +70,7 @@ public class InterpreterProcessServerManager {
 
     public InterpreterProcess getRemote(final String shebang, final InterpreterOption interpreterOption) {
         if (registeredInterpreters.containsKey(shebang)) {
-            final InterpreterProcess interpreterProcess = registeredInterpreters.get(shebang);
-            return interpreterProcess;
+            return registeredInterpreters.get(shebang);
         } else {
             if (interpreterOption != null) {
                 final InterpreterArtifactSource artifactSource = interpreterOptionRepository.getSource(interpreterOption.getInterpreterName());
@@ -124,9 +123,9 @@ public class InterpreterProcessServerManager {
     }
 
 
-    public void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
+    private void startInterpreterProcess(final String shebang, final String classpath, final String classname) {
         final String cmd = String.format("java " +
-                        " -agentlib:jdwp=transport=dt_socket,server=n,address=172.27.79.51:5005,suspend=y" +
+                      //  " -agentlib:jdwp=transport=dt_socket,server=n,address=172.27.79.51:5005,suspend=y" +
                         " -cp \"./*:%s/*\"" +
                         " org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer" +
                         " -h %s" +
@@ -187,7 +186,7 @@ public class InterpreterProcessServerManager {
     }
 
     public Map<String, InterpreterProcess> actualizeInterpreters() {
-
+        final Map<String, InterpreterProcess> result = new HashMap<>();
         for (final InterpreterProcess process : registeredInterpreters.values()) {
             if(process.getStatus() == InterpreterProcess.Status.STARTING) {
                 continue;
@@ -199,18 +198,23 @@ public class InterpreterProcessServerManager {
                 switch (pingResult.status) {
                     case OK:
                         process.setStatus(InterpreterProcess.Status.READY);
+                        registeredInterpreters.put(process.getShebang(), process);
                         break;
                     case KILL_ME:
                     default:
                         process.setStatus(InterpreterProcess.Status.DEAD);
+                        registeredInterpreters.remove(process.getShebang());
                         break;
                 }
-                registeredInterpreters.put(process.getShebang(), process);
+
             } catch (final Exception e) {
                 process.setStatus(InterpreterProcess.Status.DEAD);
+                registeredInterpreters.remove(process.getShebang());
             }
+            result.put(process.getShebang(), process);
         }
-        return new HashMap<>(registeredInterpreters);
+
+        return result;
     }
 
     public void forceKillInterpreterProcess(final InterpreterProcess process) {

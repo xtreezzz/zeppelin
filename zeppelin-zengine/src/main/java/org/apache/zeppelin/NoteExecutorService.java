@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,6 +38,8 @@ public class NoteExecutorService {
     private final InterpreterOptionRepository interpreterOptionRepository;
 
     private final InterpreterProcessServerManager serverManager;
+
+    private Map<String, Long> deathStatistic = new ConcurrentHashMap<>();
 
     public NoteExecutorService(final JobBatchDAO jobBatchDAO,
                                final JobDAO jobDAO,
@@ -57,7 +60,7 @@ public class NoteExecutorService {
             while (!Thread.interrupted()) {
                 try {
                     handlePending();
-                    Thread.sleep(1000);
+                    Thread.sleep(250);
                 } catch (final Exception e) {
                     e.printStackTrace();
                 }
@@ -131,8 +134,16 @@ public class NoteExecutorService {
                 continue;
             }
 
+            if(deathStatistic.getOrDefault(shebang, 0L) > 50) {
+                interpreterOption.setEnabled(false);
+                interpreterOptionRepository.updateOption(interpreterOption);
+                deathStatistic.put(interpreterOption.getShebang(), 0L);
+                continue;
+            }
+
             final InterpreterProcess remote = serverManager.getRemote(shebang, interpreterOption);
             if (remote.getStatus() == InterpreterProcess.Status.READY) {
+                deathStatistic.put(remote.getShebang(), 0L);
 
                 // prepare payload
                 final String payload = jobPayloadDAO.getByJobId(job.getId()).getPayload();
@@ -321,6 +332,9 @@ public class NoteExecutorService {
         final Map<String, InterpreterProcess> interpreterProcessMap = serverManager.actualizeInterpreters();
         for (final InterpreterProcess process : interpreterProcessMap.values()) {
             if (process.getStatus() == InterpreterProcess.Status.DEAD) {
+                deathStatistic.putIfAbsent(process.getShebang(), 0L);
+                deathStatistic.computeIfPresent(process.getShebang(), (s, l) -> ++l);
+
                 final List<Job> jobs = jobDAO.loadJobsByInterpreterProcessUUID(process.getInterpreterProcessUUID());
                 for (final Job job : jobs) {
                     job.setStatus(Job.Status.PENDING);
