@@ -18,10 +18,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -102,11 +99,17 @@ public class NoteExecutorService {
 
     private synchronized void handlePending() {
 
+        final Set<String> busyInterpreters = new HashSet<>();
+
         final List<Job> jobs = jobDAO.loadNextPending();
         for (final Job job : jobs) {
             final JobBatch batch = jobBatchDAO.get(job.getBatchId());
 
             final String shebang = job.getShebang();
+
+            if(busyInterpreters.contains(shebang)) {
+                continue;
+            }
 
             final InterpreterOption interpreterOption = interpreterOptionRepository.getOption(shebang);
 
@@ -119,6 +122,8 @@ public class NoteExecutorService {
                         )
                 );
                 setErrorResult(job, batch, pseudoResult);
+
+                busyInterpreters.add(job.getShebang());
                 continue;
             }
 
@@ -131,13 +136,18 @@ public class NoteExecutorService {
                         )
                 );
                 setErrorResult(job, batch, pseudoResult);
+
+                busyInterpreters.add(job.getShebang());
                 continue;
             }
 
             if(deathStatistic.getOrDefault(shebang, 0L) > 50) {
+                deathStatistic.put(interpreterOption.getShebang(), 0L);
+
                 interpreterOption.setEnabled(false);
                 interpreterOptionRepository.updateOption(interpreterOption);
-                deathStatistic.put(interpreterOption.getShebang(), 0L);
+
+                busyInterpreters.add(job.getShebang());
                 continue;
             }
 
@@ -169,9 +179,9 @@ public class NoteExecutorService {
                     result = connection.push(payload, noteContext, userContext, configuration);
                     remote.releaseConnection(connection);
                     Objects.requireNonNull(result);
+
                 } catch (final Exception e) {
-                    //busyInterpreters.add(job.getShebang());
-                    // TODO: shutdown interpreter process
+                    busyInterpreters.add(job.getShebang());
                     continue;
                 }
 
@@ -180,9 +190,9 @@ public class NoteExecutorService {
                         job.setStatus(Job.Status.RUNNING);
                         job.setInterpreterProcessUUID(result.getInterpreterProcessUUID());
                         job.setInterpreterJobUUID(result.getInterpreterJobUUID());
+                        jobDAO.update(job);
 
                         final JobBatch jobBatch = jobBatchDAO.get(job.getBatchId());
-                        jobDAO.update(job);
                         if (jobBatch.getStatus() == JobBatch.Status.PENDING) {
                             jobBatch.setStatus(JobBatch.Status.RUNNING);
                             jobBatch.setStartedAt(LocalDateTime.now());
@@ -191,12 +201,12 @@ public class NoteExecutorService {
                         break;
                     case DECLINE:
                         logger.info("");
+                        busyInterpreters.add(job.getShebang());
                         break;
                     case ERROR:
                     default:
                         logger.info("");
-                        //busyInterpreters.add(job.getShebang());
-                        // TODO: shutdown interpreter process
+                        busyInterpreters.add(job.getShebang());
                 }
             }
 
@@ -348,6 +358,7 @@ public class NoteExecutorService {
     }
 
     private synchronized void handleAbort() {
+
         final List<Job> jobs = jobDAO.loadNextCancelling();
         for (final Job job : jobs) {
             final String shebang = job.getShebang();
