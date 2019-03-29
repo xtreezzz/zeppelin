@@ -54,6 +54,11 @@ public class InterpreterResult implements Serializable {
     msg.addAll(msgs);
   }
 
+  public InterpreterResult(Code code, Message msgs) {
+    this.code = code;
+    msg.add(msgs);
+  }
+
   public InterpreterResult add(Message message) {
     msg.add(message);
     return this;

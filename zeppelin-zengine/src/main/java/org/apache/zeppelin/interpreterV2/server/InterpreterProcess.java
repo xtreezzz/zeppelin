@@ -4,42 +4,78 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
+import org.apache.zeppelin.interpreter.core.thrift.PingResult;
+import org.apache.zeppelin.interpreter.core.thrift.PushResult;
+import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InterpreterProcess {
 
   public enum Status {
-    NOT_FOUND,
     STARTING,
-    READY,
-    DEAD
+    READY
   }
+
+  private static Map<String, InterpreterProcess> processMap = new ConcurrentHashMap<>();
+
+  public static void starting(final String shebang) {
+    processMap.put(shebang, new InterpreterProcess(shebang, Status.STARTING, null, -1));
+  }
+
+  static void handleRegisterEvent(final RegisterInfo registerInfo) {
+    if (processMap.containsKey(registerInfo.getShebang())) {
+      final InterpreterProcess process = processMap.get(registerInfo.getShebang());
+      process.host = registerInfo.getHost();
+      process.port = registerInfo.getPort();
+      process.uuid = registerInfo.getInterpreterProcessUUID();
+      process.status = Status.READY;
+    }
+  }
+
+  static void handleProcessCompleteEvent(final String shebang) {
+    processMap.remove(shebang);
+  }
+
+  public static void remove(final String shebang) {
+    processMap.remove(shebang);
+  }
+
+  public static InterpreterProcess get(final String shebang) {
+    return processMap.get(shebang);
+  }
+
+  public static List<String> getShebangs() {
+    return new ArrayList<>(processMap.keySet());
+  }
+
 
   private String shebang;
   private Status status;
 
   private String host;
   private int port;
-  private String interpreterProcessUUID;
+  private String uuid;
 
+  private InterpreterProcess(final String shebang, final Status status, final String host, final int port) {
+    this.shebang = shebang;
+    this.status = status;
+    this.host = host;
+    this.port = port;
+    this.uuid = null;
+  }
 
   public String getShebang() {
     return shebang;
   }
 
-  public void setShebang(final String shebang) {
-    this.shebang = shebang;
-  }
-
   public Status getStatus() {
     return status;
-  }
-
-  public void setStatus(final Status status) {
-    this.status = status;
   }
 
   public RemoteInterpreterService.Client getConnection() {
@@ -54,32 +90,63 @@ public class InterpreterProcess {
   }
 
   public void releaseConnection(final RemoteInterpreterService.Client connection) {
-    connection.getOutputProtocol().getTransport().close();
+    try {
+      connection.getOutputProtocol().getTransport().close();
+    } catch (final Throwable t) {
+      // skip
+    }
   }
 
-
-  public String getHost() {
-    return host;
+  public String getUuid() {
+    return uuid;
   }
 
-  public void setHost(final String host) {
-    this.host = host;
+  public PushResult push(final String payload,
+                         final Map<String, String> noteContext,
+                         final Map<String, String> userContext,
+                         final Map<String, String> configuration) {
+    final RemoteInterpreterService.Client client = getConnection();
+    if(client == null) {
+      return null;
+    }
+
+    try {
+      return client.push(payload, noteContext, userContext, configuration);
+    } catch (final Throwable throwable) {
+      return null;
+    } finally {
+      releaseConnection(client);
+    }
   }
 
-  public int getPort() {
-    return port;
+  public PingResult ping() {
+    final RemoteInterpreterService.Client client = getConnection();
+    if(client == null) {
+      return null;
+    }
+
+    try {
+      return client.ping();
+    } catch (final Throwable throwable) {
+      return null;
+    } finally {
+      releaseConnection(client);
+    }
   }
 
-  public void setPort(final int port) {
-    this.port = port;
-  }
+  public void forceKill() {
+    final RemoteInterpreterService.Client client = getConnection();
+    if(client == null) {
+      return;
+    }
 
-  public String getInterpreterProcessUUID() {
-    return interpreterProcessUUID;
-  }
-
-  public void setInterpreterProcessUUID(final String interpreterProcessUUID) {
-    this.interpreterProcessUUID = interpreterProcessUUID;
+    try {
+      client.shutdown();
+    } catch (final Throwable throwable) {
+      // log this
+    } finally {
+      releaseConnection(client);
+    }
   }
 
   @Override
@@ -90,11 +157,11 @@ public class InterpreterProcess {
     return port == that.port &&
             shebang.equals(that.shebang) &&
             Objects.equals(host, that.host) &&
-            Objects.equals(interpreterProcessUUID, that.interpreterProcessUUID);
+            Objects.equals(uuid, that.uuid);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(shebang, host, port, interpreterProcessUUID);
+    return Objects.hash(shebang, host, port, uuid);
   }
 }

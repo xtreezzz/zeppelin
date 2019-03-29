@@ -12,6 +12,8 @@ import org.apache.zeppelin.storage.JobPayloadDAO;
 import org.apache.zeppelin.storage.JobResultDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class NoteRunner {
@@ -30,6 +32,7 @@ public class NoteRunner {
         this.jobResultDAO = jobResultDAO;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void run(final Note note) {
         final JobBatch batch = new JobBatch();
         batch.setId(0L);
@@ -70,6 +73,7 @@ public class NoteRunner {
         jobBatchDAO.update(saved);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void runParagraph(final Note note, final Paragraph p) {
         int idx = -1;
         for (int i = 0; i < note.getParagraphs().size(); ++i) {

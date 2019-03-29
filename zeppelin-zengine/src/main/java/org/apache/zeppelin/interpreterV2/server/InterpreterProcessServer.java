@@ -17,22 +17,37 @@
 
 package org.apache.zeppelin.interpreterV2.server;
 
+import com.google.gson.Gson;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterEventService;
+import org.apache.zeppelin.interpreterV2.handler.InterpreterResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class InterpreterProcessServer {
+import java.util.List;
+
+public class InterpreterProcessServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterProcessServer.class);
 
   private TServerSocket serverSocket;
   private TThreadPoolServer thriftServer;
 
+  private String remoteServerClassPath;
 
-  void start(final RemoteInterpreterEventService.Iface facade) throws TTransportException {
+  public void initSources(final List<Repository> repositories) {
+    InterpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+    final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
+    interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT", repositories);
+    remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+  }
+
+  public void start() throws TTransportException {
     this.serverSocket = new TServerSocket(40000);
 
     final Thread startingThread = new Thread(() -> {
@@ -42,7 +57,17 @@ class InterpreterProcessServer {
               serverSocket.getServerSocket().getLocalPort()
       );
       final RemoteInterpreterEventService.Processor<RemoteInterpreterEventService.Iface> processor;
-      processor = new RemoteInterpreterEventService.Processor<>(facade);
+      processor = new RemoteInterpreterEventService.Processor<>(new RemoteInterpreterEventService.Iface() {
+        @Override
+        public void registerInterpreterProcess(final RegisterInfo registerInfo) {
+          InterpreterProcess.handleRegisterEvent(registerInfo);
+        }
+
+        @Override
+        public void handleInterpreterResult(final String UUID, final String payload) {
+          InterpreterResultHandler.getInstance().handle(UUID, new Gson().fromJson(payload, InterpreterResult.class));
+        }
+      });
 
       thriftServer = new TThreadPoolServer(new TThreadPoolServer.Args(serverSocket).processor(processor));
       thriftServer.serve();
@@ -66,14 +91,22 @@ class InterpreterProcessServer {
     LOGGER.info("RemoteInterpreterEventServer is started");
   }
 
-  void stop() {
+  public void stop() {
     if (thriftServer != null) {
       thriftServer.stop();
     }
     LOGGER.info("RemoteInterpreterEventServer is stopped");
   }
 
-  TServerSocket getServerSocket() {
-    return serverSocket;
+  public String getAddr() {
+    return "127.0.0.1";
+  }
+
+  public int getPort() {
+    return 40000;
+  }
+
+  public String getRemoteServerClassPath() {
+    return remoteServerClassPath;
   }
 }
