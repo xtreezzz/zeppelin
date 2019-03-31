@@ -357,8 +357,8 @@ public class JDBCInterpreter extends Interpreter {
       return getDirectory(artifact);
     }
 
-    final File folderToStore = new File(getDestinationFolder(artifact));
     try {
+      final File folderToStore = new File(getDestinationFolder(artifact));
       final List<Repository> repos = Collections.singletonList(
           new Repository(false, "central",
               configuration.getOrDefault(DRIVER_MAVEN_REPO_KEY, "http://repo1.maven.org/maven2/"),
@@ -384,6 +384,12 @@ public class JDBCInterpreter extends Interpreter {
     }
   }
 
+  /**
+   * Gets driver folder, notice that this method should be called after
+   * {@link JDBCInterpreter#isInstalled(String)}.
+   * @param artifact
+   * @return
+   */
   @Nonnull
   private String getDirectory(@Nonnull final String artifact) {
     final File folderToStore = new File(getDestinationFolder(artifact));
