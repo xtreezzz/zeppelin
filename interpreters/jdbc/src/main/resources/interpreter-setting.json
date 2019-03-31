@@ -35,37 +35,44 @@
       "driver.artifact": {
         "envName": null,
         "propertyName": "driver.artifact",
-        "defaultValue": "postgresql:postgresql:9.1-901-1.jdbc4",
-        "description": "JDBC Drivar Maven Artifact",
+        "defaultValue": "org.postgresql:postgresql:jar:42.2.5",
+        "description": "JDBC Driver Maven Artifact",
         "type": "textarea"
       },
-      "default.precode": {
+      "driver.maven.repository.url": {
         "envName": null,
-        "propertyName": "default.precode",
-        "defaultValue": "",
-        "description": "SQL which executes while opening connection",
+        "propertyName": "driver.maven.repository.url",
+        "defaultValue": "http://repo1.maven.org/maven2/",
+        "description": "Maven Repository url to download driver",
         "type": "textarea"
       },
-      "default.statementPrecode": {
+      "query.timeout": {
         "envName": null,
-        "propertyName": "default.statementPrecode",
-        "defaultValue": "",
-        "description": "Runs before each run of the paragraph, in the same connection",
-        "type": "textarea"
-      },
-      "zeppelin.jdbc.auth.type": {
-        "envName": null,
-        "propertyName": "zeppelin.jdbc.auth.type",
-        "defaultValue": "",
-        "description": "If auth type is needed, Example: KERBEROS",
-        "type": "string"
-      },
-      "zeppelin.jdbc.maxConnLifetime": {
-        "envName": null,
-        "propertyName": "zeppelin.jdbc.maxConnLifetime",
-        "defaultValue": "-1",
-        "description": "Maximum of connection lifetime in milliseconds. A value of zero or less means the connection has an infinite lifetime.",
+        "propertyName": "query.timeout",
+        "defaultValue": "0",
+        "description": "The number of seconds the driver will wait for a query to execute, 0 means no limit",
         "type": "number"
+      },
+      "query.rowlimit": {
+        "envName": null,
+        "propertyName": "query.rowlimit",
+        "defaultValue": "0",
+        "description": "Max query row count, 0 means no limit",
+        "type": "number"
+      },
+      "query.precode": {
+        "envName": null,
+        "propertyName": "query.precode",
+        "defaultValue": "",
+        "description": "Query which will be executed before each user query",
+        "type": "textarea"
+      },
+      "query.postcode": {
+        "envName": null,
+        "propertyName": "query.postcode",
+        "defaultValue": "",
+        "description": "Query which will be executed after each user query",
+        "type": "textarea"
       }
     },
     "editor": {

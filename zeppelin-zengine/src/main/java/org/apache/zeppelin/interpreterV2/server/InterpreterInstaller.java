@@ -17,7 +17,6 @@ import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//TODO(egorklimov): pass path as parameter
 public class InterpreterInstaller {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterInstaller.class);
@@ -25,7 +24,7 @@ public class InterpreterInstaller {
 
 
   public static boolean isInstalled(final String name, final String artifact) {
-    final File folderToStore = new File("interpreters/" + name + "/");
+    final File folderToStore = new File(destinationFolder + name + "/");
     return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
   }
 
@@ -34,7 +33,7 @@ public class InterpreterInstaller {
       return getDirectory(name, artifact);
     }
 
-    final File folderToStore = new File("interpreters/" + name + "/");
+    final File folderToStore = new File(destinationFolder + name + "/");
     try {
       final DependencyResolver dependencyResolver = new DependencyResolver(repositories);
       dependencyResolver.load(artifact, folderToStore);
@@ -47,7 +46,7 @@ public class InterpreterInstaller {
   }
 
   public static void uninstallInterpreter(final String name, final String artifact) {
-    final File folderToStore = new File("interpreters/" + name + "/");
+    final File folderToStore = new File(destinationFolder + name + "/");
     try {
       FileUtils.deleteDirectory(folderToStore);
     } catch (final Exception e) {
@@ -56,7 +55,7 @@ public class InterpreterInstaller {
   }
 
   public static List<BaseInterpreterConfig> getDefaultConfig(final String name, final String artifact) {
-    final File folderToStore = new File("interpreters/" + name + "/");
+    final File folderToStore = new File(destinationFolder + name + "/");
 
     try {
       final List<URL> urls = Lists.newArrayList();
@@ -75,7 +74,7 @@ public class InterpreterInstaller {
   }
 
   public static String getDirectory(final String name, final String artifact) {
-      final File folderToStore = new File("interpreters/" + name + "/");
+      final File folderToStore = new File(destinationFolder + name + "/");
       return folderToStore.getAbsolutePath();
   }
 }

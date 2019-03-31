@@ -85,7 +85,10 @@
     <dependency.com.google.code.gson>2.8.5</dependency.com.google.code.gson>
     <dependency.commons-io>2.6</dependency.commons-io>
     <dependency.org.apache.maven.maven-plugin-api>3.6.0</dependency.org.apache.maven.maven-plugin-api>
-    <dependency.org.apache.maven.wagon>3.3.1</dependency.org.apache.maven.wagon>
+
+    <!-- https://stackoverflow.com/questions/28558111/aether-to-fetch-the-artifact-from-repository-at-runtime -->
+    <dependency.org.apache.maven.wagon>1.0</dependency.org.apache.maven.wagon>
+
     <dependency.maven-aether-provider>3.0.3</dependency.maven-aether-provider>
     <jetty.version>9.4.14.v20181114</jetty.version>
 

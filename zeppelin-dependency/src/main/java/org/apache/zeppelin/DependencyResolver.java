@@ -17,6 +17,10 @@
 
 package org.apache.zeppelin;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
@@ -38,22 +42,16 @@ import org.sonatype.aether.util.artifact.JavaScopes;
 import org.sonatype.aether.util.filter.DependencyFilterUtils;
 import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
 
 /**
  * Deps resolver.
  * Add new dependencies from mvn repository (at runtime) to Zeppelin.
  */
-//TODO(egorklimov) @Component?
 public class DependencyResolver {
   private final Logger logger = LoggerFactory.getLogger(DependencyResolver.class);
 
   protected RepositorySystem system = RepositorySystemFactory.newRepositorySystem();
-  protected List<RemoteRepository> repos = new LinkedList<>();
+  protected final List<RemoteRepository> repos = new LinkedList<>();
   protected MavenRepositorySystemSession session;
 
   public DependencyResolver(final List<Repository> remoteRepositories) {
