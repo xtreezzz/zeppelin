@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -140,6 +141,9 @@ public class JDBCInterpreter extends Interpreter {
    */
   @Override
   public void open(@Nonnull final Map<String, String> configuration, @Nonnull final String classPath) {
+    if (this.configuration == null) {
+      this.configuration = new HashMap<>();
+    }
     this.configuration.clear();
     this.configuration.putAll(configuration);
     final String className = configuration.get(DRIVER_CLASS_NAME_KEY);
