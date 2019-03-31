@@ -97,8 +97,8 @@ public class JDBCInterpreter extends Interpreter {
   private static final String DRIVER_ARTIFACT_KEY = "driver.artifact";
   private static final String DRIVER_MAVEN_REPO_KEY = "driver.maven.repository.url";
 
-  private static final String QUERY_TIMEOUT_KEY = "";
-  private static final String QUERY_ROWLIMIT_KEY = "";
+  private static final String QUERY_TIMEOUT_KEY = "query.timeout";
+  private static final String QUERY_ROWLIMIT_KEY = "query.rowlimit";
 
   public JDBCInterpreter() {
     super();
