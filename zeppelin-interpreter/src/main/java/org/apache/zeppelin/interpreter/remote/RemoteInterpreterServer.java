@@ -1,7 +1,6 @@
 package org.apache.zeppelin.interpreter.remote;
 
 import org.apache.commons.cli.*;
-import org.apache.thrift.TException;
 import sun.misc.Signal;
 
 import java.util.Objects;
@@ -44,7 +43,7 @@ public class RemoteInterpreterServer {
       formatter.printHelp("utility-name", options);
     }
 
-    if(Objects.isNull(cmd)) {
+    if (Objects.isNull(cmd)) {
       System.exit(1);
     }
 
@@ -64,13 +63,8 @@ public class RemoteInterpreterServer {
             interpreterClassname
     );
 
-    // add signal handler
     Signal.handle(new Signal("TERM"), signal -> {
-      try {
-        remoteInterpreterServer.shutdown();
-      } catch (TException e) {
-        //logger.error("Error on shutdown RemoteInterpreterServer", e);
-      }
+      remoteInterpreterServer.shutdown();
       System.exit(0);
     });
 

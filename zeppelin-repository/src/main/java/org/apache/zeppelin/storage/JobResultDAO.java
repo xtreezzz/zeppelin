@@ -17,10 +17,6 @@ import java.util.List;
 @Component
 public class JobResultDAO {
 
-    @Autowired
-    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
-
     private static final String PERISIT_PAYLOAD = "" +
             "INSERT INTO JOB_RESULT (JOB_ID,\n" +
             "                        CREATED_AT,\n" +
@@ -46,6 +42,12 @@ public class JobResultDAO {
             "       RESULT\n" +
             "FROM JOB_RESULT\n" +
             "WHERE JOB_ID = :JOB_ID;";
+
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    public JobResultDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
 
     private static JobResult mapRow(ResultSet resultSet, int i) throws SQLException {
         final Long id = resultSet.getLong("ID");

@@ -7,9 +7,7 @@ import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcessStarter;
 import org.apache.zeppelin.notebook.Job;
 import org.apache.zeppelin.notebook.JobBatch;
-import org.apache.zeppelin.storage.JobBatchDAO;
-import org.apache.zeppelin.storage.JobDAO;
-import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +18,12 @@ public class InterpreterStarterHandler extends AbstractHandler {
 
   public InterpreterStarterHandler(final JobBatchDAO jobBatchDAO,
                                    final JobDAO jobDAO,
-                                   final JobResultDAO jobResultDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO);
+                                   final JobResultDAO jobResultDAO,
+                                   final JobPayloadDAO jobPayloadDAO,
+                                   final NotebookDAO notebookDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
   }
+
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handle(final Job job,

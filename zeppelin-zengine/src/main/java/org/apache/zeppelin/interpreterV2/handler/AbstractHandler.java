@@ -1,12 +1,8 @@
 package org.apache.zeppelin.interpreterV2.handler;
 
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.notebook.Job;
-import org.apache.zeppelin.notebook.JobBatch;
-import org.apache.zeppelin.notebook.JobResult;
-import org.apache.zeppelin.storage.JobBatchDAO;
-import org.apache.zeppelin.storage.JobDAO;
-import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.notebook.*;
+import org.apache.zeppelin.storage.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,13 +12,19 @@ abstract class AbstractHandler {
   final JobBatchDAO jobBatchDAO;
   final JobDAO jobDAO;
   private final JobResultDAO jobResultDAO;
+  final JobPayloadDAO jobPayloadDAO;
+  final NotebookDAO notebookDAO;
 
   public AbstractHandler(final JobBatchDAO jobBatchDAO,
                          final JobDAO jobDAO,
-                         final JobResultDAO jobResultDAO) {
+                         final JobResultDAO jobResultDAO,
+                         final JobPayloadDAO jobPayloadDAO,
+                         final NotebookDAO notebookDAO) {
     this.jobBatchDAO = jobBatchDAO;
     this.jobDAO = jobDAO;
     this.jobResultDAO = jobResultDAO;
+    this.jobPayloadDAO = jobPayloadDAO;
+    this.notebookDAO = notebookDAO;
   }
 
 
@@ -118,5 +120,47 @@ abstract class AbstractHandler {
       jobResult.setResult(message.getData());
       jobResultDAO.persist(jobResult);
     }
+  }
+
+  void publishBatch(final Note note, final List<Paragraph> paragraphs) {
+    final JobBatch batch = new JobBatch();
+    batch.setId(0L);
+    batch.setNoteId(note.getDatabaseId());
+    batch.setStatus(JobBatch.Status.SAVING);
+    batch.setCreatedAt(LocalDateTime.now());
+    batch.setStartedAt(null);
+    batch.setEndedAt(null);
+    final JobBatch saved = jobBatchDAO.persist(batch);
+
+    for (int i = 0; i < paragraphs.size(); i++) {
+      final Paragraph p = paragraphs.get(i);
+
+      final Job job = new Job();
+      job.setId(0L);
+      job.setBatchId(saved.getId());
+      job.setNoteId(note.getDatabaseId());
+      job.setParagpaphId(p.getDatabaseId());
+      job.setIndex(i);
+      job.setShebang(p.getShebang());
+      job.setStatus(Job.Status.PENDING);
+      job.setInterpreterProcessUUID(null);
+      job.setInterpreterJobUUID(null);
+      job.setCreatedAt(LocalDateTime.now());
+      job.setStartedAt(null);
+      job.setEndedAt(null);
+      jobDAO.persist(job);
+
+      final JobPayload jobPayload = new JobPayload();
+      jobPayload.setId(0L);
+      jobPayload.setJobId(job.getId());
+      jobPayload.setPayload(p.getText());
+      jobPayloadDAO.persist(jobPayload);
+
+      p.setJobId(job.getId());
+    }
+    saved.setStatus(JobBatch.Status.PENDING);
+    jobBatchDAO.update(saved);
+
+    notebookDAO.updateNote(note);
   }
 }

@@ -15,13 +15,17 @@ import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteRevision;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
+
+@Component
 public class ParagraphDAO {
 
-  private final NamedParameterJdbcTemplate jdbcTemplate;
-  private static final Gson gson = new Gson();
+
 
   private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs WHERE revision_id ISNULL ORDER BY position";
   private static final String GET_NOTE_PARAGRAPHS = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id ISNULL ORDER BY position";
@@ -30,6 +34,9 @@ public class ParagraphDAO {
   private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, shebang=:shebang, username=:username, updated=:updated, config=:config, gui=:gui, job=:job, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
   private static final String DELETE_PARAGRAPHS = "DELETE FROM paragraphs WHERE revision_id ISNULL AND db_note_id=:db_note_id AND paragraph_id NOT IN (:ids)";
 
+  private final NamedParameterJdbcTemplate jdbcTemplate;
+
+  private static final Gson gson = new Gson();
 
   public ParagraphDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;

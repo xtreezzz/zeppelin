@@ -27,7 +27,7 @@ enum PushResultStatus {
 struct PushResult {
   1: PushResultStatus status,
   2: string interpreterJobUUID,
-  3: string interpreterProcessUUID
+  3: string uuid
 }
 
 enum CancelResultStatus {
@@ -39,7 +39,7 @@ enum CancelResultStatus {
 struct CancelResult {
   1: CancelResultStatus status,
   2: string interpreterJobUUID,
-  3: string interpreterProcessUUID
+  3: string uuid
 }
 
 enum PingResultStatus {
@@ -49,7 +49,7 @@ enum PingResultStatus {
 
 struct PingResult {
   1: PingResultStatus status,
-  2: string interpreterProcessUUID
+  2: string uuid
 }
 
 service RemoteInterpreterService {

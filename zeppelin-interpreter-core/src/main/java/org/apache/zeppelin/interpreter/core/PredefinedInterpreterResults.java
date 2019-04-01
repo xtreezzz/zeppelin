@@ -26,4 +26,12 @@ public class PredefinedInterpreterResults {
           )
   );
 
+  public static InterpreterResult ERROR_WHILE_INTERPRET = new InterpreterResult(
+          InterpreterResult.Code.ERROR,
+          new InterpreterResult.Message(
+                  InterpreterResult.Message.Type.TEXT,
+                  "Unknown error while interpret request"
+          )
+  );
+
 }

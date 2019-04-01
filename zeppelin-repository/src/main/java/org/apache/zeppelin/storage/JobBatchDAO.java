@@ -14,9 +14,6 @@ import java.time.LocalDateTime;
 @Component
 public class JobBatchDAO {
 
-    @Autowired
-    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
     private static final String PERSIST_BATCH = "INSERT INTO JOB_BATCH (NOTE_ID,\n" +
             "                       STATUS,\n" +
             "                       CREATED_AT,\n" +
@@ -37,6 +34,11 @@ public class JobBatchDAO {
 
     private static final String LOAD_BATCH_BY_ID = "SELECT * FROM job_batch WHERE ID = :ID;";
 
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    public JobBatchDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
 
     public JobBatch persist(final JobBatch jobBatch) {
         final KeyHolder holder = new GeneratedKeyHolder();

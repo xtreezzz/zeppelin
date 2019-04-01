@@ -58,7 +58,7 @@ public class Note implements Serializable {
 
   private boolean isRunning = false;
 
-  private NoteCronConfiguration noteCronConfiguration;
+  private Scheduler scheduler;
 
   /********************************** user permissions info *************************************/
   private final Set<String> owners;
@@ -84,7 +84,7 @@ public class Note implements Serializable {
     this.writers = new HashSet<>();
 
     this.paragraphs = new ArrayList<>();
-    this.noteCronConfiguration = new NoteCronConfiguration();
+    this.scheduler = null;
   }
 
   public String getNoteId() {
@@ -132,12 +132,12 @@ public class Note implements Serializable {
     isRunning = running;
   }
 
-  public void setNoteCronConfiguration(final NoteCronConfiguration noteCronConfiguration) {
-    this.noteCronConfiguration = noteCronConfiguration;
+  public void setScheduler(final Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
 
-  public NoteCronConfiguration getNoteCronConfiguration() {
-    return noteCronConfiguration;
+  public Scheduler getScheduler() {
+    return scheduler;
   }
 
   public Set<String> getOwners() {
@@ -215,7 +215,7 @@ public class Note implements Serializable {
     if (id != null ? !id.equals(note.id) : note.id != null) {
       return false;
     }
-    if (noteCronConfiguration != null ? !noteCronConfiguration.equals(note.noteCronConfiguration) : note.noteCronConfiguration != null) {
+    if (scheduler != null ? !scheduler.equals(note.scheduler) : note.scheduler != null) {
       return false;
     }
     return isRunning == note.isRunning;
@@ -226,7 +226,7 @@ public class Note implements Serializable {
   public int hashCode() {
     int result = paragraphs != null ? paragraphs.hashCode() : 0;
     result = 31 * result + (id != null ? id.hashCode() : 0);
-    result = 31 * result + (noteCronConfiguration != null ? noteCronConfiguration.hashCode() : 0);
+    result = 31 * result + (scheduler != null ? scheduler.hashCode() : 0);
     return result;
   }
 }

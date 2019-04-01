@@ -17,8 +17,8 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import org.apache.zeppelin.NoteRunner;
+import com.google.common.collect.Lists;
+import org.apache.zeppelin.NoteExecutorService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
@@ -31,18 +31,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
+
 @Component
 public class RunnerHandler extends AbstractHandler {
 
-  private final NoteRunner noteRunner;
+  private final NoteExecutorService noteExecutorService;
 
 
   @Autowired
   public RunnerHandler(final ConnectionManager connectionManager,
                        final DatabaseNoteRepository noteRepository,
-                       final NoteRunner noteRunner) {
+                       final NoteExecutorService noteExecutorService) {
     super(connectionManager, noteRepository);
-    this.noteRunner = noteRunner;
+    this.noteExecutorService = noteExecutorService;
   }
 
 
@@ -69,10 +71,7 @@ public class RunnerHandler extends AbstractHandler {
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
-    for (final Paragraph paragraph : note.getParagraphs()) {
-      noteRunner.runParagraph(note, paragraph);
-    }
-    noteRepository.updateNote(note);
+    noteExecutorService.run(note, note.getParagraphs());
   }
 
 
@@ -83,8 +82,7 @@ public class RunnerHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    noteRunner.runParagraph(note, p);
-    noteRepository.updateNote(note);
+    noteExecutorService.run(note, Lists.newArrayList(p));
     connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 

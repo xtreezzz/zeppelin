@@ -6,9 +6,8 @@ import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.notebook.Job;
 import org.apache.zeppelin.notebook.JobBatch;
-import org.apache.zeppelin.storage.JobBatchDAO;
-import org.apache.zeppelin.storage.JobDAO;
-import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +20,10 @@ public class AbortHandler extends AbstractHandler {
 
   public AbortHandler(final JobBatchDAO jobBatchDAO,
                       final JobDAO jobDAO,
-                      final JobResultDAO jobResultDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO);
+                      final JobResultDAO jobResultDAO,
+                      final JobPayloadDAO jobPayloadDAO,
+                      final NotebookDAO notebookDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
   }
 
   public List<Job> loadJobs() {
@@ -68,6 +69,10 @@ public class AbortHandler extends AbstractHandler {
       default:
         setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
     }
+  }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void abort(final Note note) {
+   /// note.get
   }
 }

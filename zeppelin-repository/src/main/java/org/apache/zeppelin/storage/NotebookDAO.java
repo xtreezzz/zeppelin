@@ -11,26 +11,30 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.stereotype.Component;
 
+@Component
 public class NotebookDAO {
+
+  private static final String GET_ALL_NOTES = "SELECT * FROM notes";
+  private static final String GET_NOTE = "SELECT * FROM notes WHERE note_id = :note_id";
+  private static final String GET_NOTE_BY_ID = "SELECT * FROM notes WHERE id = :id";
+  private static final String INSERT_NOTE = "INSERT INTO notes(note_id, path, permissions, gui) VALUES (:note_id, :path, :permissions, :gui)";
+  private static final String UPDATE_NOTE = "UPDATE notes SET path=:path, permissions=:permissions, gui=:gui WHERE note_id=:note_id";
+  private static final String DELETE_NOTE = "DELETE FROM notes WHERE note_id = :note_id";
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ParagraphDAO paragraphDAO;
 
   private static final Gson gson = new Gson();
 
-  private static final String GET_ALL_NOTES = "SELECT * FROM notes";
-  private static final String GET_NOTE = "SELECT * FROM notes WHERE note_id = :note_id";
-  private static final String INSERT_NOTE = "INSERT INTO notes(note_id, path, permissions, gui) VALUES (:note_id, :path, :permissions, :gui)";
-  private static final String UPDATE_NOTE = "UPDATE notes SET path=:path, permissions=:permissions, gui=:gui WHERE note_id=:note_id";
-  private static final String DELETE_NOTE = "DELETE FROM notes WHERE note_id = :note_id";
-
-
-  public NotebookDAO(final NamedParameterJdbcTemplate jdbcTemplate, final ParagraphDAO paragraphDAO) {
+  public NotebookDAO(final NamedParameterJdbcTemplate jdbcTemplate,
+                     final ParagraphDAO paragraphDAO) {
     this.jdbcTemplate = jdbcTemplate;
     this.paragraphDAO = paragraphDAO;
   }
@@ -42,7 +46,7 @@ public class NotebookDAO {
     paragraphDAO.saveNoteParagraphs(note, null);
   }
 
-  void updateNote(final Note note) {
+  public void updateNote(final Note note) {
 
     if (note.getRevision() != null) {
       throw new RuntimeException("Can't update note revision");
@@ -60,6 +64,26 @@ public class NotebookDAO {
       Note note = jdbcTemplate.queryForObject(
           GET_NOTE,
           new MapSqlParameterSource("note_id", noteId),
+          (resultSet, i) -> convertResultSetToNote(resultSet)
+      );
+
+      if (note == null) {
+        throw new RuntimeException("Can't find note " + noteId);
+      }
+
+      note.getParagraphs().addAll(paragraphDAO.getParagraphs(note, null));
+
+      return note;
+    } catch (EmptyResultDataAccessException ignore) {
+      return null;
+    }
+  }
+
+  public Note getNoteById(final Long noteId) {
+    try {
+      Note note = jdbcTemplate.queryForObject(
+          GET_NOTE,
+          new MapSqlParameterSource("id", noteId),
           (resultSet, i) -> convertResultSetToNote(resultSet)
       );
 

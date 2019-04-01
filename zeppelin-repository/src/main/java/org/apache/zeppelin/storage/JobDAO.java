@@ -167,48 +167,15 @@ public class JobDAO {
           "UPDATE JOB SET STATUS = 'PENDING',\n" +
           "               INTERPRETER_JOB_UUID = NULL,\n" +
           "               INTERPRETER_PROCESS_UUID = NULL\n" +
-          "WHERE JOB.STATUS = 'RUNNING'";
+          "WHERE JOB.STATUS = 'RUNNING'\n" +
+          "  AND INTERPRETER_PROCESS_UUID NOTNULL\n" +
+          "  AND INTERPRETER_PROCESS_UUID NOT IN (:PROCESS_UUID)";
 
 
-  @Autowired
-  private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+  private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-  public Job persist(final Job job) {
-    final KeyHolder holder = new GeneratedKeyHolder();
-    final SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("BATCH_ID", job.getBatchId())
-            .addValue("NOTE_ID", job.getNoteId())
-            .addValue("PARAGRAPH_ID", job.getParagpaphId())
-            .addValue("INDEX_NUMBER", job.getIndex())
-            .addValue("SHEBANG", job.getShebang())
-            .addValue("STATUS", job.getStatus().name())
-            .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
-            .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
-            .addValue("CREATED_AT", job.getCreatedAt())
-            .addValue("STARTED_AT", job.getStartedAt())
-            .addValue("ENDED_AT", job.getEndedAt());
-    namedParameterJdbcTemplate.update(PERSIST_JOB, parameters, holder);
-
-    job.setId((Long) holder.getKeys().get("id"));
-    return job;
-  }
-
-  public Job update(final Job job) {
-    final SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("BATCH_ID", job.getBatchId())
-            .addValue("NOTE_ID", job.getNoteId())
-            .addValue("PARAGRAPH_ID", job.getParagpaphId())
-            .addValue("INDEX_NUMBER", job.getIndex())
-            .addValue("SHEBANG", job.getShebang())
-            .addValue("STATUS", job.getStatus().name())
-            .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
-            .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
-            .addValue("CREATED_AT", job.getCreatedAt())
-            .addValue("STARTED_AT", job.getStartedAt())
-            .addValue("ENDED_AT", job.getEndedAt())
-            .addValue("ID", job.getId());
-    namedParameterJdbcTemplate.update(UPDATE_JOB, parameters);
-    return job;
+  public JobDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+    this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
   }
 
   private static Job mapRow(final ResultSet resultSet, final int i) throws SQLException {
@@ -249,6 +216,44 @@ public class JobDAO {
     job.setCreatedAt(createdAt);
     job.setStartedAt(startedAt);
     job.setEndedAt(endedAt);
+    return job;
+  }
+
+  public Job persist(final Job job) {
+    final KeyHolder holder = new GeneratedKeyHolder();
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("BATCH_ID", job.getBatchId())
+            .addValue("NOTE_ID", job.getNoteId())
+            .addValue("PARAGRAPH_ID", job.getParagpaphId())
+            .addValue("INDEX_NUMBER", job.getIndex())
+            .addValue("SHEBANG", job.getShebang())
+            .addValue("STATUS", job.getStatus().name())
+            .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
+            .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
+            .addValue("CREATED_AT", job.getCreatedAt())
+            .addValue("STARTED_AT", job.getStartedAt())
+            .addValue("ENDED_AT", job.getEndedAt());
+    namedParameterJdbcTemplate.update(PERSIST_JOB, parameters, holder);
+
+    job.setId((Long) holder.getKeys().get("id"));
+    return job;
+  }
+
+  public Job update(final Job job) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("BATCH_ID", job.getBatchId())
+            .addValue("NOTE_ID", job.getNoteId())
+            .addValue("PARAGRAPH_ID", job.getParagpaphId())
+            .addValue("INDEX_NUMBER", job.getIndex())
+            .addValue("SHEBANG", job.getShebang())
+            .addValue("STATUS", job.getStatus().name())
+            .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
+            .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
+            .addValue("CREATED_AT", job.getCreatedAt())
+            .addValue("STARTED_AT", job.getStartedAt())
+            .addValue("ENDED_AT", job.getEndedAt())
+            .addValue("ID", job.getId());
+    namedParameterJdbcTemplate.update(UPDATE_JOB, parameters);
     return job;
   }
 
@@ -318,8 +323,9 @@ public class JobDAO {
             JobDAO::mapRow);
   }
 
-  public void restoreState() {
-    final SqlParameterSource parameters = new MapSqlParameterSource();
+  public void restoreState(final List<String> processUUID) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("PROCESS_UUID", processUUID);
     namedParameterJdbcTemplate.update(
             RESTORE_JOBS_AFTER_SHUTDOWN,
             parameters);

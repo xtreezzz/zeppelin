@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteCronConfiguration;
+import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
@@ -108,10 +108,10 @@ public class NoteHandler extends AbstractHandler {
     final Map config =  fromMessage.getOrDefault("config", null);
 
     note.setPath(path);
-    if (config != null) {
-      note.setNoteCronConfiguration(new NoteCronConfiguration(config));
-    }
-    //if (!note.getNoteCronConfiguration().equals(config)) {
+    //if (config != null) {
+    //  note.setScheduler(new Scheduler(config));
+    //}
+    //if (!note.getScheduler().equals(config)) {
     //  zeppelinRepository.refreshCron(note.getNoteId());
     //}
 

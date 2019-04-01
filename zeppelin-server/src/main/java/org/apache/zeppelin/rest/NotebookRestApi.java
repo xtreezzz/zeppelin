@@ -882,8 +882,8 @@ public class NotebookRestApi extends AbstractRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST, "wrong cron expressions.").build();
     }
 
-    note.getNoteCronConfiguration().setCronExpression(request.getCronString());
-    note.getNoteCronConfiguration().setReleaseResourceFlag(request.getReleaseResource());
+   // note.getScheduler().setExpression(request.getCronString());
+   // note.getScheduler().setReleaseResourceFlag(request.getReleaseResource());
     //zeppelinRepository.refreshCron(note.getNoteId());
 
     return new JsonResponse(HttpStatus.OK).build();
@@ -924,7 +924,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfUserIsOwner(noteId,
             "Insufficient privileges you cannot remove this cron job from this note");
 
-    note.getNoteCronConfiguration().setCronEnabled(false);
+    note.getScheduler().setEnabled(false);
     //zeppelinRepository.refreshCron(note.getNoteId());
     return new JsonResponse(HttpStatus.OK).build();
   }
@@ -947,8 +947,8 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get cron information");
     final Map<String, Object> response = new HashMap<>();
-    response.put("cron", note.getNoteCronConfiguration().getCronExpression());
-    response.put("releaseResource", note.getNoteCronConfiguration().isReleaseResourceFlag());
+    response.put("cron", note.getScheduler().getExpression());
+    //response.put("releaseResource", note.getScheduler().isReleaseResourceFlag());
 
     return new JsonResponse(HttpStatus.OK, response).build();
   }
@@ -1042,7 +1042,7 @@ public class NotebookRestApi extends AbstractRestApi {
     //              user, p.getNoteId(), p.getNote().getNoteId());
     //      throw new BadRequestException("paragraph config cannot be empty");
     //    }
-    //    final Map<String, Object> origConfig = p.getNoteCronConfiguration();
+    //    final Map<String, Object> origConfig = p.getScheduler();
     //    for (final Map.Entry<String, Object> entry : newConfig.entrySet()) {
     //      origConfig.put(entry.getKey(), entry.getValue());
     //    }

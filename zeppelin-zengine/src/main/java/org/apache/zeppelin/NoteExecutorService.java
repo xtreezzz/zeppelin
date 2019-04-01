@@ -8,6 +8,9 @@ import org.apache.zeppelin.interpreterV2.handler.*;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcessServer;
 import org.apache.zeppelin.notebook.Job;
+import org.apache.zeppelin.notebook.Note;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,34 +32,40 @@ public class NoteExecutorService {
   private final InterpreterDeadHandler interpreterDeadHandler;
   private final InterpreterOptionRepository interpreterOptionRepository;
   private final InterpreterStarterHandler interpreterStarterHandler;
+  private final SchedulerHandler schedulerHandler;
+  private final ExecutionHandler executionHandler;
 
   public NoteExecutorService(final AbortHandler abortHandler,
                              final PendingHandler pendingHandler,
                              final InterpreterDeadHandler interpreterDeadHandler,
                              final InterpreterOptionRepository interpreterOptionRepository,
-                             final InterpreterStarterHandler interpreterStarterHandler) {
+                             final InterpreterStarterHandler interpreterStarterHandler,
+                             final SchedulerHandler schedulerHandler,
+                             final ExecutionHandler executionHandler) {
     this.abortHandler = abortHandler;
     this.pendingHandler = pendingHandler;
     this.interpreterDeadHandler = interpreterDeadHandler;
     this.interpreterOptionRepository = interpreterOptionRepository;
     this.interpreterStarterHandler = interpreterStarterHandler;
+    this.schedulerHandler = schedulerHandler;
+    this.executionHandler = executionHandler;
   }
 
   @PostConstruct
-  public void init() throws Exception{
+  private void init() throws Exception{
     server = new InterpreterProcessServer();
     server.initSources(interpreterOptionRepository.getAllRepositories());
     server.start();
   }
 
   @PreDestroy
-  public void destroy() {
+  private void destroy() {
     server.stop();
   }
 
 
-  @Scheduled(fixedDelay = 1000)
-  public void handlePending() {
+  @Scheduled(fixedDelay = 1_000)
+  private void handlePending() {
     final List<Job> jobs = pendingHandler.loadJobs();
     for (final Job job : jobs) {
       try {
@@ -88,8 +97,8 @@ public class NoteExecutorService {
     }
   }
 
-  @Scheduled(fixedDelay = 1000)
-  public void handleAbort() {
+  @Scheduled(fixedDelay = 1_000)
+  private void handleAbort() {
     final List<Job> jobs = abortHandler.loadJobs();
     for (final Job job : jobs) {
       try {
@@ -100,9 +109,9 @@ public class NoteExecutorService {
     }
   }
 
-  @Scheduled(fixedDelay = 5000)
-  public void actualizeInterpreters() {
-    final List<String> liveInterpreters = new ArrayList<>();
+  @Scheduled(fixedDelay = 5_000)
+  private void actualizeInterpreters() {
+    final List<String> liveInterpretersPID = new ArrayList<>();
     final List<String> shebangs = InterpreterProcess.getShebangs();
     for (final String shebang : shebangs) {
       final InterpreterProcess process = InterpreterProcess.get(shebang);
@@ -120,9 +129,26 @@ public class NoteExecutorService {
         process.forceKill();
         InterpreterProcess.remove(process.getShebang());
       } else {
-        liveInterpreters.add(process.getUuid());
+        liveInterpretersPID.add(process.getUuid());
       }
     }
-    interpreterDeadHandler.handle(liveInterpreters);
+    interpreterDeadHandler.handle(liveInterpretersPID);
   }
+
+  @Scheduled(fixedDelay = 10_000)
+  private void notesScheduler() {
+    final List<Scheduler> triggered = schedulerHandler.loadJobs();
+    for (final Scheduler scheduler : triggered) {
+      schedulerHandler.handle(scheduler);
+    }
+  }
+
+  public void run(final Note note, final List<Paragraph> paragraphs) {
+    executionHandler.run(note, paragraphs);
+  }
+
+  public void abort(final Note note) {
+    abortHandler.abort(note);
+  }
+
 }

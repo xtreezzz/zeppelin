@@ -15,16 +15,17 @@ import java.sql.SQLException;
 @Component
 public class JobPayloadDAO {
 
-    @Autowired
-    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
-
     private static final String PERISIT_PAYLOAD = "INSERT INTO JOB_PAYLOAD (JOB_ID, PAYLOAD) VALUES (:JOB_ID, :PAYLOAD);";
 
     private static final String LOAD_PAYLOAD_BY_ID = "SELECT * FROM JOB_PAYLOAD WHERE ID = :ID;";
 
     private static final String LOAD_PAYLOAD_BY_JOB_ID = "SELECT * FROM JOB_PAYLOAD WHERE JOB_ID = :JOB_ID;";
 
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    public JobPayloadDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
 
     public JobPayload persist(final JobPayload jobPayload) {
         final KeyHolder holder = new GeneratedKeyHolder();

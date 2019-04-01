@@ -4,10 +4,7 @@ import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.core.thrift.PushResult;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.notebook.Job;
-import org.apache.zeppelin.storage.JobBatchDAO;
-import org.apache.zeppelin.storage.JobDAO;
-import org.apache.zeppelin.storage.JobPayloadDAO;
-import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +16,13 @@ import java.util.Map;
 @Component
 public class PendingHandler extends AbstractHandler {
 
-  private final JobPayloadDAO jobPayloadDAO;
 
   public PendingHandler(final JobBatchDAO jobBatchDAO,
                         final JobDAO jobDAO,
                         final JobResultDAO jobResultDAO,
-                        final JobPayloadDAO jobPayloadDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO);
-    this.jobPayloadDAO = jobPayloadDAO;
+                        final JobPayloadDAO jobPayloadDAO,
+                        final NotebookDAO notebookDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
   }
 
   public List<Job> loadJobs() {

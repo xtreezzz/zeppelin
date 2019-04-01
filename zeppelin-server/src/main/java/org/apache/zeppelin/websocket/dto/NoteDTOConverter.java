@@ -40,7 +40,7 @@ public class NoteDTOConverter {
             noteDTO.getParagraphs().add(convertParagraphToDTO(p));
         }
         noteDTO.setRunning(note.isRunning());
-        noteDTO.setNoteCronConfiguration(note.getNoteCronConfiguration());
+        noteDTO.setScheduler(note.getScheduler());
         noteDTO.getConfig().put("looknfeel", false);
 
         return noteDTO;

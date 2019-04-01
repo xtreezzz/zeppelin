@@ -142,7 +142,7 @@ public class JobManagerService {
     }
 
     private boolean isCron(final Note note) {
-      return false; //note.getNoteCronConfiguration().isCronEnabled;
+      return false; //note.getScheduler().isEnabled;
     }
 
     public NoteJobInfo(final String noteId, final boolean isRemoved) {

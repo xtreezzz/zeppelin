@@ -1,11 +1,10 @@
 package org.apache.zeppelin.interpreterV2.handler;
 
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
+import org.apache.zeppelin.interpreter.core.PredefinedInterpreterResults;
 import org.apache.zeppelin.notebook.Job;
 import org.apache.zeppelin.notebook.JobBatch;
-import org.apache.zeppelin.storage.JobBatchDAO;
-import org.apache.zeppelin.storage.JobDAO;
-import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +22,10 @@ public class InterpreterResultHandler extends AbstractHandler {
 
   public InterpreterResultHandler(final JobBatchDAO jobBatchDAO,
                                   final JobDAO jobDAO,
-                                  final JobResultDAO jobResultDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO);
+                                  final JobResultDAO jobResultDAO,
+                                  final JobPayloadDAO jobPayloadDAO,
+                                  final NotebookDAO notebookDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
   }
 
   @PostConstruct
@@ -45,6 +46,11 @@ public class InterpreterResultHandler extends AbstractHandler {
 
     if (batch.getStatus() == JobBatch.Status.ABORTING) {
       setAbortResult(job, batch, interpreterResult);
+      return;
+    }
+
+    if(interpreterResult == null) {
+      setErrorResult(job, batch, PredefinedInterpreterResults.ERROR_WHILE_INTERPRET);
       return;
     }
 

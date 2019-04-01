@@ -1,8 +1,7 @@
 package org.apache.zeppelin.websocket.dto;
 
-import org.apache.zeppelin.notebook.NoteCronConfiguration;
+import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.notebook.NoteRevision;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ public class NoteDTO {
 
     private boolean isRunning = false;
 
-    private NoteCronConfiguration noteCronConfiguration;
+    private Scheduler scheduler;
 
     private Map<String, Object> config = new HashMap<>();
 
@@ -96,12 +95,12 @@ public class NoteDTO {
         isRunning = running;
     }
 
-    public NoteCronConfiguration getNoteCronConfiguration() {
-        return noteCronConfiguration;
+    public Scheduler getScheduler() {
+        return scheduler;
     }
 
-    public void setNoteCronConfiguration(NoteCronConfiguration noteCronConfiguration) {
-        this.noteCronConfiguration = noteCronConfiguration;
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
     }
 
     public Map<String, Object> getConfig() {
