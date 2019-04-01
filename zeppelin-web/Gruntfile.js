@@ -311,6 +311,11 @@ module.exports = function(grunt) {
           dest: '<%= yeoman.dist %>/styles/images'
         }, {
           expand: true,
+          cwd: 'bower_components/jstree/dist/themes/default',
+          src: '{,*/}*.{png,jpg,jpeg,gif}',
+          dest: '<%= yeoman.dist %>/styles'
+        }, {
+          expand: true,
           cwd: 'bower_components/ngclipboard',
           src: 'dist/**',
           dest: '<%= yeoman.dist %>'

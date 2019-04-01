@@ -36,7 +36,8 @@
     "moment-duration-format": "^1.3.0",
     "scrollmonitor": "^1.2.3",
     "diff-match-patch": "1.0.0",
-    "svl-tin-sql-formatter": "^1.0.0"
+    "svl-tin-sql-formatter": "^1.0.0",
+    "jstree": "3.3.7"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.7",

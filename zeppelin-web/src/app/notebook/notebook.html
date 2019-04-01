@@ -13,6 +13,12 @@ limitations under the License.
 -->
 <!-- Here the controller <NotebookCtrl> is not needed because explicitly set in the app.js (route) -->
 <div id="actionbar" ng-include src="'app/notebook/notebook-actionBar.html'"></div>
+
+<span ng-controller="DatabaseExplorerCtrl"
+      ng-init="init()"
+      ng-hide="viewOnly"
+      ng-include src="'app/notebook/database-explorer/database-explorer.html'"></span>
+
 <div id="content" class="notebookContent">
   <!-- revisions comparator-->
   <div ng-if="showRevisionsComparator" class="revisions-comparator">

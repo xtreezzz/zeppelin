@@ -19,6 +19,7 @@ package org.apache.zeppelin.rest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.zeppelin.annotation.ZeppelinApi;
+import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.utils.Util;
 import org.springframework.http.HttpStatus;
@@ -79,5 +80,11 @@ public class ZeppelinRestApi {
           "Please check LOG level specified. Valid values: DEBUG, ERROR, FATAL, "
               + "INFO, TRACE, WARN").build();
     }
+  }
+
+  @GetMapping("/metadata_server_url")
+  public ResponseEntity getMetaserverUrl() {
+    String url = ZeppelinConfiguration.create().getZeppelinMetaserverUrlPort();
+    return new JsonResponse(HttpStatus.OK, url).build();
   }
 }

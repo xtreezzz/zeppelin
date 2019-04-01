@@ -631,6 +631,10 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return getRelativeDir(ConfVars.ZEPPELIN_SEARCH_TEMP_PATH);
   }
 
+  public String getZeppelinMetaserverUrlPort() {
+    return getString(ConfVars.ZEPPELIN_METASERVER_URL_AND_PORT);
+  }
+
   public String getClusterAddress() {
     return getString(ConfVars.ZEPPELIN_CLUSTER_ADDR);
   }
@@ -850,7 +854,8 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     ZEPPELIN_PROXY_USER("zeppelin.proxy.user", null),
     ZEPPELIN_PROXY_PASSWORD("zeppelin.proxy.password", null),
     ZEPPELIN_SEARCH_USE_DISK("zeppelin.search.use.disk", false),
-    ZEPPELIN_SEARCH_TEMP_PATH("zeppelin.search.temp.path", System.getProperty("java.io.tmpdir"));
+    ZEPPELIN_SEARCH_TEMP_PATH("zeppelin.search.temp.path", System.getProperty("java.io.tmpdir")),
+    ZEPPELIN_METASERVER_URL_AND_PORT("zeppelin.metaserver.url_port", "http://localhost:9999");
 
     private String varName;
     @SuppressWarnings("rawtypes")

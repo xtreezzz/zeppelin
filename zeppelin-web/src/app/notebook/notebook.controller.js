@@ -241,6 +241,10 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     return favoriteNotesService.noteIsFavorite(noteId);
   };
 
+  $scope.switchDatabaseExplorerDisplay = function() {
+    $rootScope.$broadcast('switchDatabaseExplorer');
+  };
+
   // Export notebook
   let limit = 0;
 
