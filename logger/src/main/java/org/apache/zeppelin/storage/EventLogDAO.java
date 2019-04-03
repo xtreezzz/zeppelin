@@ -21,8 +21,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import javax.annotation.Nonnull;
-import org.apache.zeppelin.Logger.EventType;
 import org.apache.zeppelin.SystemEvent;
+import org.apache.zeppelin.storage.ZLog.ET;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -83,14 +83,8 @@ class EventLogDAO {
           + "        :DESCRIPTION,\n"
           + "        :ACTION_TIME);";
 
-  private static final String ADD_EVENT_TYPE_OR_RETURN_ID =
-      "INSERT INTO SYSTEM_EVENT_TYPE (NAME)\n"
-          + "          SELECT :NAME\n"
-          + "            WHERE NOT EXISTS (\n"
-          + "                   SELECT ID, NAME\n"
-          + "                   FROM SYSTEM_EVENT_TYPE\n"
-          + "                   WHERE NAME = :NAME\n"
-          + "                   );\n";
+  private static final String GET_EVENT_TYPE_ID =
+      "SELECT ID FROM SYSTEM_EVENT_TYPE WHERE NAME = :NAME";
 
   @Autowired
   public EventLogDAO(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
@@ -99,15 +93,13 @@ class EventLogDAO {
     this.keyHolder = new GeneratedKeyHolder();
   }
 
-  private long getOrCreateSystemEventType(@Nonnull final EventType type) {
+  private long getEventType(@Nonnull final ET type) {
     Preconditions.checkNotNull(type);
-    final int affectedRows =
-        jdbcTemplate.update(ADD_EVENT_TYPE_OR_RETURN_ID, convertSystemEventTypeToParameters(type), keyHolder);
-
-    if (affectedRows == 0) {
-      throw new RuntimeException("Fail to save event type " + type.name());
-    }
-    return ((Long) keyHolder.getKeys().get("ID"));
+    return jdbcTemplate.queryForObject(
+        GET_EVENT_TYPE_ID,
+        convertSystemEventTypeToParameters(type),
+        ((resultSet, i) -> Long.parseLong(resultSet.getString("id")))
+    );
   }
 
   SystemEvent log(@Nonnull final SystemEvent event) {
@@ -131,7 +123,7 @@ class EventLogDAO {
     try {
       parameters
           .addValue("USERNAME", event.getUsername())
-          .addValue("EVENT_TYPE", getOrCreateSystemEventType(event.getType()))
+          .addValue("EVENT_TYPE", getEventType(event.getType()))
           .addValue("MESSAGE", event.getMessage())
           .addValue("DESCRIPTION", event.getDescription())
           .addValue("ACTION_TIME", event.getActionTime());
@@ -144,7 +136,7 @@ class EventLogDAO {
 
   @Nonnull
   private MapSqlParameterSource convertSystemEventTypeToParameters(
-      @Nonnull final EventType type) {
+      @Nonnull final ET type) {
     Preconditions.checkNotNull(type);
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
@@ -163,7 +155,7 @@ class EventLogDAO {
 
     final long id = resultSet.getLong("ID");
     final String username = resultSet.getString("USERNAME");
-    final EventType eventType = EventType.valueOf(resultSet.getString("EVENT_TYPE"));
+    final ET eventType = ET.valueOf(resultSet.getString("EVENT_TYPE"));
     final String message = resultSet.getString("MESSAGE");
     final String description = resultSet.getString("DESCRIPTION");
     final LocalDateTime actionTime = resultSet.getObject("ACTION_TIME", LocalDateTime.class);

@@ -52,11 +52,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-//TODO(egorklimov):
-// Добавить табличку на страничку Monitoring с основными системными событиями
-// 1. Запуск интерпретатора
-// 2. Сохранение/создание ноута
-// 3. Добавление сурсов, интерпретаторов и т.п.
 /**
  * Interpreter Rest API.
  */
@@ -210,7 +205,7 @@ public class InterpreterRestApi {
       logger.info("Remove source {}", interpreterName);
       final InterpreterArtifactSource source = interpreterOptionRepository.getSource(interpreterName);
       Preconditions.checkNotNull(source);
-      InterpreterInstaller.uninstallInterpreter(source.getInterpreterName(), source.getArtifact());
+      InterpreterInstaller.uninstallInterpreter(source.getInterpreterName());
 
       interpreterOptionRepository.removeSource(interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
@@ -358,7 +353,7 @@ public class InterpreterRestApi {
       final List<InterpreterArtifactSource> sources= interpreterOptionRepository.getAllSources();
       for (final InterpreterArtifactSource source: sources) {
         final List<BaseInterpreterConfig> configList =
-            InterpreterInstaller.getDefaultConfig(source.getInterpreterName(), source.getArtifact());
+            InterpreterInstaller.getDefaultConfig(source.getInterpreterName());
         if (!configList.isEmpty()) {
           m.put(source.getInterpreterName(), configList.get(0));
         }

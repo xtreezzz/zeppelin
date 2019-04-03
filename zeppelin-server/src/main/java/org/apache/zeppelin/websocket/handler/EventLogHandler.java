@@ -16,10 +16,10 @@
  */
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.Logger.EventType;
 import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.storage.SystemLogger;
+import org.apache.zeppelin.storage.ZLog;
+import org.apache.zeppelin.storage.ZLog.ET;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,22 +28,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class EventLogHandler extends AbstractHandler {
 
-  private final SystemLogger systemLogger;
-
   @Autowired
   public EventLogHandler(final ConnectionManager connectionManager,
-                         final NoteService noteService,
-                         final SystemLogger systemLogger) {
+                         final NoteService noteService) {
     super(connectionManager, noteService);
-    this.systemLogger = systemLogger;
   }
 
   public void log(final SockMessage message) {
     final ServiceContext serviceContext = getServiceContext(message);
-    final EventType eventType = EventType.valueOf(message.getNotNull("eventType"));
     final String eventMessage = message.getNotNull("message");
     final String description = message.getNotNull("description");
 
-    systemLogger.log(eventType, serviceContext.getAutheInfo().getUser(), eventMessage, description);
+    ZLog.log(ET.UI_EVENT, eventMessage, description, serviceContext.getAutheInfo().getUser());
   }
 }

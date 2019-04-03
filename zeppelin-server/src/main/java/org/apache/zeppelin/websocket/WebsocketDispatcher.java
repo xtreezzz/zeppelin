@@ -237,15 +237,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case PING:
           break; //do nothing
-//        case ANGULAR_OBJECT_UPDATED:
-//          angularObjectsHandler.angularObjectUpdated(session, messagereceived);
-//          break;
-//        case ANGULAR_OBJECT_CLIENT_BIND:
-//          angularObjectsHandler.angularObjectClientBind(session, messagereceived);
-//          break;
-//        case ANGULAR_OBJECT_CLIENT_UNBIND:
-//          angularObjectsHandler.angularObjectClientUnbind(session, messagereceived);
-//          break;
         case LIST_CONFIGURATIONS:
           settingsService.sendAllConfigurations(session);
           break;

@@ -41,7 +41,6 @@ public class Paragraph implements Serializable {
   private Long jobId;
   private Long revisionId;
 
-  //TODO(SAN) вернул config :)
   //paragraph configs like isOpen, colWidth, etc
   private Map<String, Object> config;
 

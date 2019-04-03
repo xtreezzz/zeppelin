@@ -1,6 +1,7 @@
 package org.apache.zeppelin.notebook;
 
 import java.time.LocalDateTime;
+import java.util.StringJoiner;
 
 public class Job {
 
@@ -125,4 +126,21 @@ public class Job {
     this.interpreterJobUUID = interpreterJobUUID;
   }
 
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", "{", "}")
+        .add("id=" + id)
+        .add("batchId=" + batchId)
+        .add("noteId=" + noteId)
+        .add("paragpaphId=" + paragpaphId)
+        .add("index=" + index)
+        .add("shebang='" + shebang + "'")
+        .add("status=" + status)
+        .add("interpreterProcessUUID='" + interpreterProcessUUID + "'")
+        .add("interpreterJobUUID='" + interpreterJobUUID + "'")
+        .add("createdAt=" + createdAt)
+        .add("startedAt=" + startedAt)
+        .add("endedAt=" + endedAt)
+        .toString();
+  }
 }

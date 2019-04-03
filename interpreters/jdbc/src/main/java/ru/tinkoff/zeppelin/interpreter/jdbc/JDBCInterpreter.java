@@ -230,7 +230,7 @@ public class JDBCInterpreter extends Interpreter {
    * If interpreter would be canceled on user query {@code queryResult.code()} would be {@code Code.ERROR},
    * but it would be returned only after postcode execution.
    * If interpreter would be canceled on postcode, {@code postcodeResult.code()} would be {@code Code.ERROR}
-   * therefore connection will be closed and ??
+   * therefore connection will be closed and ...??
    *
    * @param st statements to run.
    * @param noteContext Note context
@@ -377,8 +377,10 @@ public class JDBCInterpreter extends Interpreter {
 
   private void uninstallDriver(@Nonnull final String artifact) {
     try {
-      final File folderToStore = new File(getDestinationFolder(artifact));
-      FileUtils.deleteDirectory(folderToStore);
+      if (isInstalled(artifact)) {
+        final File folderToStore = new File(getDirectory(artifact));
+        FileUtils.deleteDirectory(folderToStore);
+      }
     } catch (final Exception e) {
       LOGGER.error("Error while remove interpreter", e);
     }
@@ -386,9 +388,10 @@ public class JDBCInterpreter extends Interpreter {
 
   /**
    * Gets driver folder, notice that this method should be called after
+   *
    * {@link JDBCInterpreter#isInstalled(String)}.
-   * @param artifact
-   * @return
+   * @param artifact driver maven artifact.
+   * @return absolute path to driver folder.
    */
   @Nonnull
   private String getDirectory(@Nonnull final String artifact) {

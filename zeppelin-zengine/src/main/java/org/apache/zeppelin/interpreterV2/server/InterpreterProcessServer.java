@@ -18,6 +18,7 @@
 package org.apache.zeppelin.interpreterV2.server;
 
 import com.google.gson.Gson;
+import java.util.List;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -26,14 +27,10 @@ import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.apache.zeppelin.interpreter.core.thrift.RegisterInfo;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterEventService;
 import org.apache.zeppelin.interpreterV2.handler.InterpreterResultHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
+import org.apache.zeppelin.storage.ZLog;
+import org.apache.zeppelin.storage.ZLog.ET;
 
 public class InterpreterProcessServer {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(InterpreterProcessServer.class);
 
   private TServerSocket serverSocket;
   private TThreadPoolServer thriftServer;
@@ -41,20 +38,23 @@ public class InterpreterProcessServer {
   private String remoteServerClassPath;
 
   public void initSources(final List<Repository> repositories) {
-    InterpreterInstaller.uninstallInterpreter("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+    InterpreterInstaller.uninstallInterpreter("remote-server");
     final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
     interpreterInstaller.install("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT", repositories);
-    remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server", "org.apache.zeppelin:zeppelin-interpreter:1.0.0-T-SNAPSHOT");
+    remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server");
   }
 
   public void start() throws TTransportException {
     this.serverSocket = new TServerSocket(40000);
 
     final Thread startingThread = new Thread(() -> {
-      LOGGER.info(
-              "InterpreterEventServer is starting at {}:{}",
+      ZLog.log(ET.INTERPRETER_EVENT_SERVER_STARTING,
+          String.format("InterpreterEventServer is starting at %s:%s",
               serverSocket.getServerSocket().getInetAddress().getHostAddress(),
-              serverSocket.getServerSocket().getLocalPort()
+              serverSocket.getServerSocket().getLocalPort()),
+          String.format("InterpreterEventServer is starting at %s:%s",
+              serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+              serverSocket.getServerSocket().getLocalPort()), "Unknown"
       );
       final RemoteInterpreterEventService.Processor<RemoteInterpreterEventService.Iface> processor;
       processor = new RemoteInterpreterEventService.Processor<>(new RemoteInterpreterEventService.Iface() {
@@ -81,21 +81,42 @@ public class InterpreterProcessServer {
       try {
         Thread.sleep(500);
       } catch (final InterruptedException e) {
-        // skip
+        ZLog.log(ET.INTERPRETER_EVENT_SERVER_START_FAILED,
+            String.format("Failed to start interpreter event server at %s:%s",
+                serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+                serverSocket.getServerSocket().getLocalPort()),
+            String.format("Error occurred during interpreter event server start at %s:%s, error:%s",
+                serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+                serverSocket.getServerSocket().getLocalPort(), e.getMessage()),
+            "Unknown");
       }
     }
 
     if (thriftServer != null && !thriftServer.isServing()) {
       throw new TTransportException("Fail to start InterpreterEventServer in 30 seconds.");
     }
-    LOGGER.info("RemoteInterpreterEventServer is started");
+    ZLog.log(ET.INTERPRETER_EVENT_SERVER_STARTED,
+        String.format("InterpreterEventServer is started at %s:%s",
+            serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+            serverSocket.getServerSocket().getLocalPort()),
+        String.format("InterpreterEventServer is started at %s:%s",
+            serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+            serverSocket.getServerSocket().getLocalPort()), "Unknown"
+    );
   }
 
   public void stop() {
     if (thriftServer != null) {
       thriftServer.stop();
     }
-    LOGGER.info("RemoteInterpreterEventServer is stopped");
+    ZLog.log(ET.INTERPRETER_EVENT_SERVER_STOPPED,
+        String.format("InterpreterEventServer at %s:%s stopped",
+            serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+            serverSocket.getServerSocket().getLocalPort()),
+        String.format("InterpreterEventServer at %s:%s stopped",
+            serverSocket.getServerSocket().getInetAddress().getHostAddress(),
+            serverSocket.getServerSocket().getLocalPort()), "Unknown"
+    );
   }
 
   public String getAddr() {

@@ -1,10 +1,19 @@
 package org.apache.zeppelin;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
 import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
 import org.apache.zeppelin.interpreter.core.thrift.PingResult;
 import org.apache.zeppelin.interpreter.core.thrift.PingResultStatus;
-import org.apache.zeppelin.interpreterV2.handler.*;
+import org.apache.zeppelin.interpreterV2.handler.AbortHandler;
+import org.apache.zeppelin.interpreterV2.handler.ExecutionHandler;
+import org.apache.zeppelin.interpreterV2.handler.InterpreterDeadHandler;
+import org.apache.zeppelin.interpreterV2.handler.InterpreterStarterHandler;
+import org.apache.zeppelin.interpreterV2.handler.PendingHandler;
+import org.apache.zeppelin.interpreterV2.handler.SchedulerHandler;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcess;
 import org.apache.zeppelin.interpreterV2.server.InterpreterProcessServer;
 import org.apache.zeppelin.notebook.Job;
@@ -15,11 +24,6 @@ import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
 
 @Lazy(false)
 @Component
@@ -143,8 +147,11 @@ public class NoteExecutorService {
     }
   }
 
-  public void run(final Note note, final List<Paragraph> paragraphs) {
-    executionHandler.run(note, paragraphs);
+  public void run(final Note note,
+                  final List<Paragraph> paragraphs,
+                  final String username,
+                  final List<String> roles) {
+    executionHandler.run(note, paragraphs, username, roles);
   }
 
   public void abort(final Note note) {

@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.StringJoiner;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.zeppelin.Logger.EventType;
+import org.apache.zeppelin.storage.ZLog.ET;
 
 public class SystemEvent implements Serializable {
 
@@ -31,7 +31,7 @@ public class SystemEvent implements Serializable {
   private final String username;
 
   @Nonnull
-  private final EventType type;
+  private final ET type;
 
   @Nonnull
   private final String message;
@@ -44,7 +44,7 @@ public class SystemEvent implements Serializable {
 
 
   public SystemEvent(final long databaseId,
-                     @Nonnull final EventType type,
+                     @Nonnull final ET type,
                      @Nonnull final String username,
                      @Nonnull final String message,
                      @Nullable final String description,
@@ -57,7 +57,7 @@ public class SystemEvent implements Serializable {
     this.actionTime = actionTime;
   }
 
-  public SystemEvent(@Nonnull final EventType type,
+  public SystemEvent(@Nonnull final ET type,
                      @Nonnull final String username,
                      @Nonnull final String message,
                      @Nullable final String description) {
@@ -82,7 +82,7 @@ public class SystemEvent implements Serializable {
   }
 
   @Nonnull
-  public EventType getType() {
+  public ET getType() {
     return type;
   }
 

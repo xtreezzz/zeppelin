@@ -59,7 +59,8 @@ public class RunnerHandler extends AbstractHandler {
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
-    noteExecutorService.run(note, noteService.getParapraphs(note));
+    noteExecutorService.run(note, noteService.getParapraphs(note),
+        serviceContext.getAutheInfo().getUser(), serviceContext.getAutheInfo().getRoles());
   }
 
 
@@ -70,7 +71,8 @@ public class RunnerHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    noteExecutorService.run(note, Lists.newArrayList(p));
+    noteExecutorService.run(note, Lists.newArrayList(p), serviceContext.getAutheInfo().getUser(),
+        serviceContext.getAutheInfo().getRoles());
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
