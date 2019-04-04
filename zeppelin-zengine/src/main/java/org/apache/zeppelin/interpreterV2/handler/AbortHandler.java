@@ -22,8 +22,8 @@ public class AbortHandler extends AbstractHandler {
                       final JobDAO jobDAO,
                       final JobResultDAO jobResultDAO,
                       final JobPayloadDAO jobPayloadDAO,
-                      final NotebookDAO notebookDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
+                      final NoteDAO noteDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO);
   }
 
   public List<Job> loadJobs() {

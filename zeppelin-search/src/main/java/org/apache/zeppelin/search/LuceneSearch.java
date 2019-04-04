@@ -195,14 +195,14 @@ public class LuceneSearch extends SearchService {
   @Override
   public void updateIndexDoc(Note note) throws IOException {
     updateIndexNoteName(note);
-    for (Paragraph p : note.getParagraphs()) {
-      updateIndexParagraph(note, p);
-    }
+//    for (Paragraph p : note.getParagraphs()) {
+//      updateIndexParagraph(note, p);
+//    }
   }
 
   private void updateIndexNoteName(Note note) throws IOException {
     String noteName = note.getName();
-    String noteId = note.getNoteId();
+    String noteId = note.getUuid();
     logger.debug("Indexing Notebook {}, '{}'", noteId, noteName);
     if (null == noteName || noteName.isEmpty()) {
       logger.debug("Skipping empty notebook name");
@@ -216,7 +216,7 @@ public class LuceneSearch extends SearchService {
       logger.debug("Skipping empty paragraph");
       return;
     }
-    updateDoc(note.getNoteId(), note.getName(), p);
+    updateDoc(note.getUuid(), note.getName(), p);
   }
 
   /**
@@ -248,7 +248,7 @@ public class LuceneSearch extends SearchService {
     if (null != p) {
       //TODO(egorklimov): fix Paragraph id
 
-      // id = Joiner.on('/').join(id, PARAGRAPH, p.getNoteId());
+      // id = Joiner.on('/').join(id, PARAGRAPH, p.getUuid());
     }
     return id;
   }
@@ -258,7 +258,7 @@ public class LuceneSearch extends SearchService {
     if (null != p) {
       //TODO(egorklimov): fix Paragraph id
 
-      // id = Joiner.on('/').join(id, PARAGRAPH, p.getNoteId());
+      // id = Joiner.on('/').join(id, PARAGRAPH, p.getUuid());
     } else {
       id = id + "*";
     }
@@ -342,14 +342,14 @@ public class LuceneSearch extends SearchService {
    * @throws IOException
    */
   private void addIndexDocAsync(Note note) throws IOException {
-    indexNoteName(indexWriter, note.getNoteId(), note.getName());
-    for (Paragraph doc : note.getParagraphs()) {
-      if (doc.getText() == null) {
-        logger.debug("Skipping empty paragraph");
-        continue;
-      }
-      indexDoc(indexWriter, note.getNoteId(), note.getName(), doc);
-    }
+    indexNoteName(indexWriter, note.getUuid(), note.getName());
+//    for (Paragraph doc : note.getParagraphs()) {
+//      if (doc.getText() == null) {
+//        logger.debug("Skipping empty paragraph");
+//        continue;
+//      }
+//      indexDoc(indexWriter, note.getUuid(), note.getName(), doc);
+//    }
   }
 
   /* (non-Javadoc)

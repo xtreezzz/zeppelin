@@ -19,11 +19,11 @@ package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
 import org.apache.zeppelin.NoteExecutorService;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -41,9 +41,9 @@ public class RunnerHandler extends AbstractHandler {
 
   @Autowired
   public RunnerHandler(final ConnectionManager connectionManager,
-                       final DatabaseNoteRepository noteRepository,
+                       final NoteService noteService,
                        final NoteExecutorService noteExecutorService) {
-    super(connectionManager, noteRepository);
+    super(connectionManager, noteService);
     this.noteExecutorService = noteExecutorService;
   }
 
@@ -71,7 +71,7 @@ public class RunnerHandler extends AbstractHandler {
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
-    noteExecutorService.run(note, note.getParagraphs());
+    noteExecutorService.run(note, noteService.getParapraphs(note));
   }
 
 
@@ -83,7 +83,7 @@ public class RunnerHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     noteExecutorService.run(note, Lists.newArrayList(p));
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
   @ZeppelinApi

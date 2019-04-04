@@ -18,17 +18,12 @@
 package org.apache.zeppelin;
 
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
-import org.apache.zeppelin.storage.NoteRevisionDAO;
-import org.apache.zeppelin.storage.NotebookDAO;
-import org.apache.zeppelin.storage.ParagraphDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.scheduling.TaskScheduler;
@@ -43,15 +38,6 @@ public class ZeppelinBeanConfiguration {
   @Bean
   public ZeppelinConfiguration zeppelinConfiguration() {
     return new ZeppelinConfiguration();
-  }
-
-
-  @Bean
-  @Autowired
-  public DatabaseNoteRepository databaseNoteRepository(final NamedParameterJdbcTemplate jdbcTemplate) {
-    ParagraphDAO paragraphDAO = new ParagraphDAO(jdbcTemplate);
-    NoteRevisionDAO noteRevisionDAO = new NoteRevisionDAO(jdbcTemplate, paragraphDAO);
-    return new DatabaseNoteRepository(new NotebookDAO(jdbcTemplate, paragraphDAO), noteRevisionDAO);
   }
 
   @Bean

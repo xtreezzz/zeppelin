@@ -17,12 +17,10 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import java.util.Map;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -33,13 +31,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
+import java.util.Map;
+
 @Component
 public class NoteFormsHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoteFormsHandler.class);
 
   @Autowired
-  public NoteFormsHandler(final DatabaseNoteRepository noteRepository,
+  public NoteFormsHandler(final NoteService noteRepository,
                           final ConnectionManager connectionManager) {
     super(connectionManager, noteRepository);
   }
@@ -54,7 +55,7 @@ public class NoteFormsHandler extends AbstractHandler {
     //TODO(KOT): wrong field
     note.getGuiConfiguration().setParams(noteParams);
 
-    noteRepository.updateNote(note);
+    noteService.updateNote(note);
     broadcastNoteForms(note);
   }
 
@@ -67,7 +68,7 @@ public class NoteFormsHandler extends AbstractHandler {
 
     note.getGuiConfiguration().getForms().remove(formName);
     note.getGuiConfiguration().getParams().remove(formName);
-    noteRepository.updateNote(note);
+    noteService.updateNote(note);
 
     broadcastNoteForms(note);
   }
@@ -76,6 +77,6 @@ public class NoteFormsHandler extends AbstractHandler {
     final GUI formsSettings = new GUI();
     formsSettings.setForms(note.getGuiConfiguration().getForms());
     formsSettings.setParams(note.getGuiConfiguration().getParams());
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.SAVE_NOTE_FORMS).put("formsData", formsSettings));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.SAVE_NOTE_FORMS).put("formsData", formsSettings));
   }
 }

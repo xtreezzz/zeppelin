@@ -19,24 +19,19 @@ package org.apache.zeppelin.rest;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.helium.HeliumBundleFactory;
 import org.apache.zeppelin.helium.V2.HeliumEnabledRegistries;
 import org.apache.zeppelin.helium.V2.HeliumRegistry;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 
@@ -50,14 +45,14 @@ public class HeliumRestApi {
 
   //private final Helium helium;
   private final Gson gson = new Gson();
-  private final DatabaseNoteRepository noteRepository;
+  private final NoteService noteService;
 
 
   @Autowired
   public HeliumRestApi(//final Helium helium,
-      DatabaseNoteRepository noteRepository) {
+      NoteService noteService) {
     //this.helium = helium;
-    this.noteRepository = noteRepository;
+    this.noteService = noteService;
   }
 
   /**
@@ -109,12 +104,12 @@ public class HeliumRestApi {
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
 
-    final Paragraph paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = null;//note.getParagraph(paragraphId);
     if (paragraph == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
               .build();
@@ -132,12 +127,12 @@ public class HeliumRestApi {
   @PostMapping(value = "/load/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity load(@PathVariable("noteId") final String noteId,
                              @PathVariable("paragraphId") final String paragraphId, final String heliumPackage) {
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     if (note == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
     }
 
-    final Paragraph paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = null;//note.getParagraph(paragraphId);
     if (paragraph == null) {
       return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
               .build();

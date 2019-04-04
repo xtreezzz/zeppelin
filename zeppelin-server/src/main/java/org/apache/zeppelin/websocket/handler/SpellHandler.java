@@ -17,13 +17,9 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -34,6 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+
 
 @Component
 public class SpellHandler extends AbstractHandler {
@@ -41,9 +42,9 @@ public class SpellHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SpellHandler.class);
 
   @Autowired
-  public SpellHandler(final DatabaseNoteRepository fileSystemNoteRepository,
+  public SpellHandler(final NoteService noteService,
                       final ConnectionManager connectionManager) {
-    super(connectionManager, fileSystemNoteRepository);
+    super(connectionManager, noteService);
   }
 
   //TODO(KOT): check "noteId"
@@ -72,8 +73,8 @@ public class SpellHandler extends AbstractHandler {
     p.setUpdated(LocalDateTime.parse(dateFinished, formatter));
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
-    noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
+    noteService.updateNote(note);
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
   }
 
 
@@ -82,7 +83,7 @@ public class SpellHandler extends AbstractHandler {
     //TODO(egorklimov): Should get ParagraphJobContext
     //    if (!(Strings.isNullOrEmpty(p.getText()) ||
     //            Strings.isNullOrEmpty(p.getScriptText())) &&
-    //            note.isLastParagraph(p.getNoteId())) {
+    //            note.isLastParagraph(p.getUuid())) {
     //      note.addParagraph(p.getAuthenticationInfo());
   }
 

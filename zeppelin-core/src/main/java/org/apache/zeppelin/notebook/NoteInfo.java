@@ -31,7 +31,7 @@ public class NoteInfo {
   }
 
   public NoteInfo(Note note) {
-    id = note.getNoteId();
+    id = note.getUuid();
     path = note.getPath();
   }
 

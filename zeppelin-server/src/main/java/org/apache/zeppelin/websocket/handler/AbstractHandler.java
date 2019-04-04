@@ -20,12 +20,10 @@ package org.apache.zeppelin.websocket.handler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.Input;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
@@ -37,6 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public abstract class AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
@@ -47,11 +49,11 @@ public abstract class AbstractHandler {
           .registerTypeAdapterFactory(Input.TypeAdapterFactory).create();
 
   protected final ConnectionManager connectionManager;
-  protected final DatabaseNoteRepository noteRepository;
+  protected final NoteService noteService;
 
-  public AbstractHandler(final ConnectionManager connectionManager, final DatabaseNoteRepository noteRepository) {
+  public AbstractHandler(final ConnectionManager connectionManager, final NoteService noteService) {
     this.connectionManager = connectionManager;
-    this.noteRepository = noteRepository;
+    this.noteService = noteService;
   }
 
   protected ServiceContext getServiceContext(final SockMessage message) {
@@ -79,7 +81,7 @@ public abstract class AbstractHandler {
             : message.getNotNull(paramName);
 
     checkPermission(noteId, permission, serviceContext);
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     if (note == null) {
       throw new NoteNotFoundException("Can't find note with id '" + noteId +"'.");
     }
@@ -90,7 +92,13 @@ public abstract class AbstractHandler {
                                         final SockMessage fromSockMessage,
                                         final Note note) {
     final String paragraphId = fromSockMessage.getNotNull(paramName);
-    final Paragraph p = note.getParagraph(paragraphId);
+    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final Paragraph p = paragraphs
+            .stream()
+            .filter(paragraph -> paragraph.getUuid().equals(paragraphId))
+            .findFirst()
+            .orElse(null);
+
     if (p == null) {
       throw new ParagraphNotFoundException(paragraphId);
     }
@@ -109,7 +117,7 @@ public abstract class AbstractHandler {
   protected void checkPermission(final String noteId,
                                  final Permission permission,
                                  final ServiceContext context) {
-    Note target = noteRepository.getNote(noteId);
+    Note target = noteService.getNote(noteId);
     if (permission == Permission.ANY || target == null) {
       return;
     }

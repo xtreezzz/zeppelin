@@ -20,20 +20,18 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
 import org.apache.zeppelin.rest.message.*;
 import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.service.JobManagerService;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -62,21 +60,18 @@ public class NotebookRestApi extends AbstractRestApi {
 
   private final ZeppelinConfiguration zConf;
   //private final SearchService noteSearchService;
-  private final JobManagerService jobManagerService;
   private final SecurityService securityService;
   private final ConnectionManager connectionManager;
-  private final DatabaseNoteRepository noteRepository;
+  private final NoteService noteRepository;
 
   @Autowired
   public NotebookRestApi(
           //final SearchService search,
           final ZeppelinConfiguration zConf,
           @Qualifier("NoSecurityService") final SecurityService securityService,
-          final JobManagerService jobManagerService,
           final ConnectionManager connectionManager,
-          final DatabaseNoteRepository noteRepository) {
+          final NoteService noteRepository) {
     super(securityService);
-    this.jobManagerService = jobManagerService;
     //this.noteSearchService = search;
     this.zConf = zConf;
     this.securityService = securityService;
@@ -280,7 +275,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity getNoteList() {
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
    // final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     return new JsonResponse(HttpStatus.OK, "", notesInfo).build();
   }
@@ -317,7 +312,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @PostMapping(value = "/import", produces = "application/json")
   public ResponseEntity importNote(final String noteJson) throws IOException {
     final Note note = null;//zeppelinRepository.importNote(null, noteJson, getServiceContext().getAutheInfo());
-    return new JsonResponse(HttpStatus.OK, "", note.getNoteId()).build();
+    return new JsonResponse(HttpStatus.OK, "", note.getUuid()).build();
   }
 
   /**
@@ -340,24 +335,24 @@ public class NotebookRestApi extends AbstractRestApi {
     );
 
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
-    if (request.getParagraphs() != null) {
-      for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
-        final Paragraph paragraph = new Paragraph(
-                paragraphRequest.getTitle(),
-                paragraphRequest.getText(),
-                subject.getUser(),
-                new GUI()
-        );
-        final Map<String, Object> config = paragraphRequest.getConfig();
-        if (config != null && !config.isEmpty()) {
-          configureParagraph(paragraph, config, user);
-        }
-        note.getParagraphs().add(paragraph);
-      }
-    }
+//    if (request.getParagraphs() != null) {
+//      for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
+//        final Paragraph paragraph = new Paragraph(
+//                paragraphRequest.getTitle(),
+//                paragraphRequest.getText(),
+//                subject.getUser(),
+//                new GUI()
+//        );
+//        final Map<String, Object> config = paragraphRequest.getConfig();
+//        if (config != null && !config.isEmpty()) {
+//          configureParagraph(paragraph, config, user);
+//        }
+//        //note.getParagraphs().add(paragraph);
+//      }
+//    }
     noteRepository.persistNote(note);
 
-    return new JsonResponse(HttpStatus.OK, "", note.getNoteId()).build();
+    return new JsonResponse(HttpStatus.OK, "", note.getUuid()).build();
   }
 
 
@@ -372,9 +367,9 @@ public class NotebookRestApi extends AbstractRestApi {
   public ResponseEntity deleteNote(@PathVariable("noteId") final String noteId) throws IOException {
     LOG.info("Delete note {} ", noteId);
 
-    noteRepository.removeNote(noteId);
+    //noteRepository.removeNote(noteId);
 
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
@@ -401,14 +396,14 @@ public class NotebookRestApi extends AbstractRestApi {
     }
     //final Note newNote = zeppelinRepository.cloneNote(noteId, newNoteName, getServiceContext().getAutheInfo());
 
-    //connectionManager.broadcast(newNote.getNoteId(), new SockMessage(Operation.NOTE).put("note", newNote));
+    //connectionManager.broadcast(newNote.getUuid(), new SockMessage(Operation.NOTE).put("note", newNote));
 
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "", null).build();
-    //return new JsonResponse(HttpStatus.OK, "", newNote.getNoteId()).build();
+    //return new JsonResponse(HttpStatus.OK, "", newNote.getUuid()).build();
   }
 
   /**
@@ -434,11 +429,11 @@ public class NotebookRestApi extends AbstractRestApi {
       newName = "/" + name;
     }
 
-    //zeppelinRepository.moveNote(note.getNoteId(), newName);
+    //zeppelinRepository.moveNote(note.getUuid(), newName);
 
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
 
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
+    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
     connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
@@ -465,26 +460,26 @@ public class NotebookRestApi extends AbstractRestApi {
     final AuthenticationInfo subject = new AuthenticationInfo(user);
     final Double indexDouble = request.getIndex();
 
-    final Paragraph paragraph = new Paragraph(request.getTitle(),
-            request.getText(),
-            subject.getUser(),
-            new GUI()
-    );
-    final Map<String, Object> config = request.getConfig();
-    if (config != null && !config.isEmpty()) {
-      configureParagraph(paragraph, config, user);
-    }
-    if (indexDouble == null) {
-      note.getParagraphs().add(paragraph);
-    } else {
-      note.getParagraphs().add(indexDouble.intValue(), paragraph);
-    }
+//    final Paragraph paragraph = new Paragraph(request.getTitle(),
+//            request.getText(),
+//            subject.getUser(),
+//            new GUI()
+//    );
+//    final Map<String, Object> config = request.getConfig();
+//    if (config != null && !config.isEmpty()) {
+//      configureParagraph(paragraph, config, user);
+//    }
+//    if (indexDouble == null) {
+//      note.getParagraphs().add(paragraph);
+//    } else {
+//      note.getParagraphs().add(indexDouble.intValue(), paragraph);
+//    }
 
     noteRepository.updateNote(note);
 
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
     //TODO(egorklimov): fix paragraph id
-    return new JsonResponse(HttpStatus.OK, "", paragraph.getId()).build();
+    return new JsonResponse(HttpStatus.OK, "", "32").build();
   }
 
 
@@ -503,7 +498,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get this paragraph");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final Paragraph p = null;//note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     return new JsonResponse(HttpStatus.OK, "", p).build();
@@ -527,7 +522,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final Paragraph p = null;//note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     final UpdateParagraphRequest updatedParagraph = gson.fromJson(message, UpdateParagraphRequest.class);
@@ -538,7 +533,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
 
     noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
 
@@ -554,7 +549,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final Note note = noteRepository.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph config");
-    final Paragraph p = note.getParagraph(paragraphId);
+    final Paragraph p = null;//note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(p);
 
     final Map<String, Object> newConfig = gson.fromJson(message, HashMap.class);
@@ -575,9 +570,9 @@ public class NotebookRestApi extends AbstractRestApi {
     LOG.info("move paragraph {} {} {}", noteId, paragraphId, index);
 
     final Note note = noteRepository.getNote(noteId);
-    if (index > 0 && index >= note.getParagraphs().size()) {
-      throw new BadRequestException("newIndex " + index + " is out of bounds");
-    }
+//    if (index > 0 && index >= note.getParagraphs().size()) {
+//      throw new BadRequestException("newIndex " + index + " is out of bounds");
+//    }
 
     //note.moveParagraph(paragraphId, index);
     noteRepository.updateNote(note);
@@ -585,8 +580,8 @@ public class NotebookRestApi extends AbstractRestApi {
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", paragraphId)
             .put("index", index);
-    connectionManager.broadcast(note.getNoteId(), message);
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getUuid(), message);
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
 
@@ -608,12 +603,12 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final Note note = noteRepository.getNote(noteId);
 
-    note.getParagraphs().removeIf(paragraph -> paragraph.getId().equals(paragraphId));
+    //note.getParagraphs().removeIf(paragraph -> paragraph.getId().equals(paragraphId));
     //note.removeParagraph(getServiceContext().getAutheInfo().getUser(), paragraphId);
 
     noteRepository.updateNote(note);
 
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -634,7 +629,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     //note.clearAllParagraphOutput();
 
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -736,7 +731,7 @@ public class NotebookRestApi extends AbstractRestApi {
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
-    final Paragraph paragraph = note.getParagraph(paragraphId);
+    final Paragraph paragraph = null;//note.getParagraph(paragraphId);
     checkIfParagraphIsNotNull(paragraph);
 
     return new JsonResponse(HttpStatus.OK, null, null).build();
@@ -884,7 +879,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
    // note.getScheduler().setExpression(request.getCronString());
    // note.getScheduler().setReleaseResourceFlag(request.getReleaseResource());
-    //zeppelinRepository.refreshCron(note.getNoteId());
+    //zeppelinRepository.refreshCron(note.getUuid());
 
     return new JsonResponse(HttpStatus.OK).build();
   }
@@ -925,7 +920,7 @@ public class NotebookRestApi extends AbstractRestApi {
             "Insufficient privileges you cannot remove this cron job from this note");
 
     note.getScheduler().setEnabled(false);
-    //zeppelinRepository.refreshCron(note.getNoteId());
+    //zeppelinRepository.refreshCron(note.getUuid());
     return new JsonResponse(HttpStatus.OK).build();
   }
 
@@ -965,10 +960,10 @@ public class NotebookRestApi extends AbstractRestApi {
   @GetMapping(value = "/jobmanager/", produces = "application/json")
   public ResponseEntity getJobListforNote() throws IOException, IllegalArgumentException {
     LOG.info("Get note jobs for job manager");
-    final List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(0);
+    //final List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(0);
     final Map<String, Object> response = new HashMap<>();
     response.put("lastResponseUnixTime", System.currentTimeMillis());
-    response.put("jobs", noteJobs);
+    response.put("jobs", null);
     return new JsonResponse(HttpStatus.OK, response).build();
   }
 
@@ -986,10 +981,10 @@ public class NotebookRestApi extends AbstractRestApi {
   public ResponseEntity getUpdatedJobListforNote(@PathVariable("lastUpdateUnixtime") long lastUpdateUnixTime)
           throws IOException, IllegalArgumentException {
     LOG.info("Get updated note jobs lastUpdateTime {}", lastUpdateUnixTime);
-    List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(lastUpdateUnixTime);
+    //List<JobManagerService.NoteJobInfo> noteJobs = jobManagerService.getNoteJobInfoByUnixTime(lastUpdateUnixTime);
     Map<String, Object> response = new HashMap<>();
     response.put("lastResponseUnixTime", System.currentTimeMillis());
-    response.put("jobs", noteJobs);
+    response.put("jobs", null);
     return new JsonResponse(HttpStatus.OK, response).build();
   }
 
@@ -1039,7 +1034,7 @@ public class NotebookRestApi extends AbstractRestApi {
     //    LOG.info("Configure Paragraph for user {}", user);
     //    if (newConfig == null || newConfig.isEmpty()) {
     //      LOG.warn("{} is trying to update paragraph {} of note {} with empty config",
-    //              user, p.getNoteId(), p.getNote().getNoteId());
+    //              user, p.getUuid(), p.getNote().getUuid());
     //      throw new BadRequestException("paragraph config cannot be empty");
     //    }
     //    final Map<String, Object> origConfig = p.getScheduler();

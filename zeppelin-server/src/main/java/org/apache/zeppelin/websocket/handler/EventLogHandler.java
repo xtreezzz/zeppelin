@@ -17,8 +17,8 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.Logger.EventType;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.storage.SystemLogger;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -32,9 +32,9 @@ public class EventLogHandler extends AbstractHandler {
 
   @Autowired
   public EventLogHandler(final ConnectionManager connectionManager,
-                         final DatabaseNoteRepository noteRepository,
+                         final NoteService noteService,
                          final SystemLogger systemLogger) {
-    super(connectionManager, noteRepository);
+    super(connectionManager, noteService);
     this.systemLogger = systemLogger;
   }
 

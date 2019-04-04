@@ -17,9 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import java.util.Map;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -30,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
+import java.util.Map;
+
 @Component
 public class SettingsHandler extends AbstractHandler {
 
@@ -39,11 +40,11 @@ public class SettingsHandler extends AbstractHandler {
   //private final InterpreterFactory interpreterFactory;
 
   @Autowired
-  public SettingsHandler(final DatabaseNoteRepository noteRepository,
+  public SettingsHandler(final NoteService noteService,
                          final ConnectionManager connectionManager,
                          final ConfigurationService configurationService) {
                          //final InterpreterFactory interpreterFactory) {
-    super(connectionManager, noteRepository);
+    super(connectionManager, noteService);
     this.configurationService = configurationService;
     //this.interpreterFactory = interpreterFactory;
   }
@@ -68,14 +69,14 @@ public class SettingsHandler extends AbstractHandler {
     //    try {
     //      final Interpreter intp = interpreterFactory.getInterpreter(
     //              serviceContext.getAutheInfo().getUser(),
-    //              note.getNoteId(),
+    //              note.getUuid(),
     //              replName,
     //              note.getDefaultInterpreterGroup());
     //      final Map<String, Object> settings = interpreterSettingRepository.
-    //              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getNoteId(), replName);
+    //              getEditorSetting(intp, serviceContext.getAutheInfo().getUser(), note.getUuid(), replName);
     //
     //      final SockMessage message = new SockMessage(Operation.EDITOR_SETTING)
-    //              .put("paragraphId", p.getNoteId())
+    //              .put("paragraphId", p.getUuid())
     //              .put("editor", settings);
     //      conn.sendMessage(message.toSend());
     //

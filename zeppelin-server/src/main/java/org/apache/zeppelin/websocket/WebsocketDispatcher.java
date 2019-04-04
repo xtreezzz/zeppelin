@@ -146,7 +146,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteService.listNotesInfo(session, messagereceived);
           break;
         case RELOAD_NOTES_FROM_REPO:
-          noteService.broadcastReloadedNoteList(messagereceived);
+          //noteService.broadcastReloadedNoteList(messagereceived);
           break;
         case GET_HOME_NOTE:
           noteService.getHomeNote(session, messagereceived);
@@ -185,7 +185,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteService.cloneNote(session, messagereceived);
           break;
         case IMPORT_NOTE:
-          noteService.importNote(messagereceived);
+          //noteService.importNote(messagereceived);
           break;
         case COMMIT_PARAGRAPH:
           paragraphService.updateParagraph(session, messagereceived);
@@ -230,7 +230,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteService.renameFolder(messagereceived);
           break;
         case UPDATE_PERSONALIZED_MODE:
-          noteService.updatePersonalizedMode(session, messagereceived);
+          //noteService.updatePersonalizedMode(session, messagereceived);
           break;
         case COMPLETION:
           completionHandler.completion(session, messagereceived);
@@ -289,7 +289,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteFormsService.removeNoteForms(session, messagereceived);
           break;
         case PATCH_PARAGRAPH:
-          paragraphService.patchParagraph(session, messagereceived);
+          //paragraphService.patchParagraph(session, messagereceived);
           break;
         default:
           break;

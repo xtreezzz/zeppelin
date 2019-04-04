@@ -19,10 +19,9 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
-import java.util.Collections;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
@@ -39,6 +38,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
+
 /**
  * NoteRepo rest API endpoint.
  */
@@ -47,11 +48,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotebookRepoRestApi extends AbstractRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRepoRestApi.class);
 
-  private final DatabaseNoteRepository noteRepository;
+  private final NoteService noteRepository;
   private final ConnectionManager connectionManager;
 
   @Autowired
-  public NotebookRepoRestApi(final DatabaseNoteRepository noteRepository,
+  public NotebookRepoRestApi(final NoteService noteRepository,
                              @Qualifier("NoSecurityService") final SecurityService securityService,
                              final ConnectionManager connectionManager) {
     super(securityService);

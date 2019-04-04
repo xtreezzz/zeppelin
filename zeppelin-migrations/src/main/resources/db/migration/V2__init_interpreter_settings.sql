@@ -22,7 +22,7 @@ CHECK(VALUE IN ('NOT_INSTALLED', 'INSTALLED', 'IN_PROGRESS'));
 -- Represents org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource
 CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
 (
-    id                BIGSERIAL     PRIMARY KEY,
+    paragraphId                BIGSERIAL     PRIMARY KEY,
     interpreter_name  VARCHAR(255)  NOT NULL UNIQUE,
     artifact          VARCHAR(255)  NOT NULL,
     --TODO(egorklimov ): CHECK (artifact ~* {REGEXP})
@@ -33,7 +33,7 @@ CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
 -- Represents org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig
 CREATE TABLE BASE_INTERPRETER_CONFIG
 (
-    id                BIGSERIAL     PRIMARY KEY,
+    paragraphId                BIGSERIAL     PRIMARY KEY,
     "group"           VARCHAR(100)  REFERENCES INTERPRETER_ARTIFACT_SOURCE(interpreter_name) ON DELETE CASCADE ON UPDATE CASCADE,
     "name"            VARCHAR(100)  NOT NULL,
     class_name        TEXT          NOT NULL,
@@ -48,7 +48,7 @@ CHECK(VALUE IN ('SHARED', 'SCOPED', 'ISOLATED'));
 -- Represents org.apache.zeppelin.interpreter.configuration.InterpreterOption
 CREATE TABLE INTERPRETER_OPTION
 (
-    id                       BIGSERIAL      PRIMARY KEY,
+    paragraphId                       BIGSERIAL      PRIMARY KEY,
     shebang                  VARCHAR(100)   NOT NULL UNIQUE CHECK (shebang ~* '%([\w\.]+)(\(.*?\))?'),
     custom_interpreter_name  VARCHAR(255)   NOT NULL,
     interpreter_name         VARCHAR(255)   NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE INTERPRETER_OPTION
     per_user                 interpreter_process_type,
     jvm_options              VARCHAR(255)   NOT NULL DEFAULT '',
     concurrent_tasks         SMALLINT       NOT NULL DEFAULT 1 CHECK (concurrent_tasks > 0),
-    config_id                BIGINT         REFERENCES BASE_INTERPRETER_CONFIG (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    config_id                BIGINT         REFERENCES BASE_INTERPRETER_CONFIG (paragraphId) ON DELETE CASCADE ON UPDATE CASCADE,
     remote_process           JSON           NOT NULL DEFAULT '{"host": "", "port": -1, "isEnabled": false}'::json,
     permissions              JSON           NOT NULL DEFAULT '{"isEnabled": false, "owners": []}'::json,
     is_enabled               BOOLEAN        NOT NULL DEFAULT FALSE
@@ -65,7 +65,7 @@ CREATE TABLE INTERPRETER_OPTION
 -- Represents org.apache.zeppelin.Repository
 CREATE TABLE REPOSITORY
 (
-    id               BIGSERIAL    PRIMARY KEY,
+    paragraphId               BIGSERIAL    PRIMARY KEY,
     repository_id    VARCHAR(100) NOT NULL UNIQUE,
     snapshot         BOOLEAN      NOT NULL DEFAULT FALSE,
     url              VARCHAR(255) NOT NULL,

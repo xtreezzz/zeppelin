@@ -98,7 +98,7 @@ public abstract class SearchService extends NoteEventAsyncListener {
 
   @Override
   public void handleNoteRemoveEvent(NoteRemoveEvent noteRemoveEvent) {
-    deleteIndexDocs(noteRemoveEvent.getNote().getNoteId());
+    deleteIndexDocs(noteRemoveEvent.getNote().getUuid());
   }
 
   @Override
@@ -112,25 +112,25 @@ public abstract class SearchService extends NoteEventAsyncListener {
 
   @Override
   public void handleParagraphCreateEvent(ParagraphCreateEvent paragraphCreateEvent) {
-    try {
-      updateIndexDoc(paragraphCreateEvent.getParagraph().getNote());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      updateIndexDoc(paragraphCreateEvent.getParagraph().getNote());
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
   }
 
   @Override
   public void handleParagraphRemoveEvent(ParagraphRemoveEvent paragraphRemoveEvent) {
-    Paragraph p = paragraphRemoveEvent.getParagraph();
-    deleteIndexDoc(p.getNote().getNoteId(), p);
+//    Paragraph p = paragraphRemoveEvent.getParagraph();
+//    deleteIndexDoc(p.getNote().getUuid(), p);
   }
 
   @Override
   public void handleParagraphUpdateEvent(ParagraphUpdateEvent paragraphUpdateEvent) {
-    try {
-      updateIndexDoc(paragraphUpdateEvent.getParagraph().getNote());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      updateIndexDoc(paragraphUpdateEvent.getParagraph().getNote());
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
   }
 }

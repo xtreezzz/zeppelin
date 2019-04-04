@@ -329,7 +329,7 @@ public class InterpreterRestApi {
     //    try {
     //      final RestartInterpreterRequest request = RestartInterpreterRequest.fromJson(message);
     //
-    //      final String noteId = request == null ? null : request.getNoteId();
+    //      final String noteId = request == null ? null : request.getUuid();
     //      if (null == noteId) {
     //        interpreterSettingManager.close(settingId);
     //      } else {

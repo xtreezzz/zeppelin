@@ -17,8 +17,7 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
@@ -26,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
 
 @Component
 public class CompletionHandler extends AbstractHandler {
@@ -36,8 +37,8 @@ public class CompletionHandler extends AbstractHandler {
   @Autowired
   public CompletionHandler(final ConnectionManager connectionManager,
                            //final InterpreterFactory interpreterFactory,
-                           final DatabaseNoteRepository noteRepository) {
-    super(connectionManager, noteRepository);
+                           final NoteService noteService) {
+    super(connectionManager, noteService);
     //this.interpreterFactory = interpreterFactory;
   }
 
@@ -58,7 +59,7 @@ public class CompletionHandler extends AbstractHandler {
 //      final Interpreter interpreter =
 //              interpreterFactory.getInterpreter(
 //                      serviceContext.getAutheInfo().getUser(),
-//                      note.getNoteId(),
+//                      note.getUuid(),
 //                      p.getIntpText(),
 //                      note.getDefaultInterpreterGroup()
 //              );
@@ -76,7 +77,7 @@ public class CompletionHandler extends AbstractHandler {
 //    }*/
 //
 //    final SockMessage message = new SockMessage(Operation.COMPLETION_LIST)
-//            .put("id", p.getNoteId())
+//            .put("id", p.getUuid())
 //            .put("completions", completions);
 //    conn.sendMessage(message.toSend());
   }

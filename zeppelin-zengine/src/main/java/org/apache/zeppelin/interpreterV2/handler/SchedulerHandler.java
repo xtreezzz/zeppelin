@@ -17,15 +17,18 @@ import java.util.List;
 public class SchedulerHandler extends AbstractHandler {
 
   private final SchedulerDAO schedulerDAO;
+  private final ParagraphDAO paragraphDAO;
 
   public SchedulerHandler(final JobBatchDAO jobBatchDAO,
                           final JobDAO jobDAO,
                           final JobResultDAO jobResultDAO,
                           final JobPayloadDAO jobPayloadDAO,
-                          final NotebookDAO notebookDAO,
+                          final NoteDAO noteDAO,
+                          final ParagraphDAO paragraphDAO,
                           final SchedulerDAO schedulerDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, notebookDAO);
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO);
     this.schedulerDAO = schedulerDAO;
+    this.paragraphDAO = paragraphDAO;
   }
 
   public List<Scheduler> loadJobs() {
@@ -34,8 +37,9 @@ public class SchedulerHandler extends AbstractHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handle(final Scheduler scheduler) {
-    final Note note = notebookDAO.getNoteById(scheduler.getNoteId());
-    publishBatch(note, note.getParagraphs());
+    final Note note = noteDAO.get(scheduler.getNoteId());
+    final List<Paragraph> paragraphs = paragraphDAO.getByNoteId(note.getId());
+    publishBatch(note, paragraphs);
 
     final CronExpression cronExpression;
     try {

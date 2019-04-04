@@ -20,10 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,17 +54,15 @@ public class FavoriteNotesRestApi {
   private static final Integer SAVE_ON_DISK_INTERVAL = 5; // minutes
 
   private final ZeppelinConfiguration configuration;
-  private final DatabaseNoteRepository noteRepository;
   private final ScheduledExecutorService saveExecServ;
 
   private File dataFile;
   private Map<String, Map<String, Set<String>>> usersNotes;
 
   @Autowired
-  public FavoriteNotesRestApi(final ZeppelinConfiguration configuration, final DatabaseNoteRepository noteRepository) {
+  public FavoriteNotesRestApi(final ZeppelinConfiguration configuration) {
     this.configuration = configuration;
     this.saveExecServ = Executors.newSingleThreadScheduledExecutor();
-    this.noteRepository = noteRepository;
   }
 
   @PostConstruct
@@ -104,11 +100,12 @@ public class FavoriteNotesRestApi {
   }
 
   private boolean noteIdIsCorrect(final String noteId) {
-    Note note = noteRepository.getNote(noteId);
-    if (note == null) {
-      return false;
-    }
-    return !note.isTrashed();
+//    Note note = noteRepository.getNote(noteId);
+//    if (note == null) {
+//      return false;
+//    }
+//    return !note.isTrashed();
+    return false;
   }
 
   private synchronized void clearIncorrectNotesIds() {

@@ -17,16 +17,11 @@
 
 package org.apache.zeppelin.notebook;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.notebook.display.Input;
 import org.apache.zeppelin.utils.IdHashes;
 
 /**
@@ -35,15 +30,11 @@ import org.apache.zeppelin.utils.IdHashes;
  */
 public class Note implements Serializable {
 
-  private static final Gson gson = new GsonBuilder()
-      .setPrettyPrinting()
-      .registerTypeAdapterFactory(Input.TypeAdapterFactory)
-      .create();
-
   private final static String TRASH_FOLDER = "~Trash";
 
-  private long databaseId;
-  private String id;
+  private Long id;
+  private Long batchJobId;
+  private String uuid;
   private String name;
   private String path;
   private NoteRevision revision;
@@ -53,8 +44,6 @@ public class Note implements Serializable {
    * see https://github.com/apache/zeppelin/pull/2641
    */
   private final GUI guiConfiguration;
-
-  private final List<Paragraph> paragraphs;
 
   private boolean isRunning = false;
 
@@ -72,7 +61,7 @@ public class Note implements Serializable {
   }
 
   public Note(final String name, final String path) {
-    this.id = IdHashes.generateId();
+    this.uuid = IdHashes.generateId();
     this.name = name;
     this.path = path;
 
@@ -83,24 +72,23 @@ public class Note implements Serializable {
     this.runners = new HashSet<>();
     this.writers = new HashSet<>();
 
-    this.paragraphs = new ArrayList<>();
     this.scheduler = null;
   }
 
-  public String getNoteId() {
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(final String uuid) {
+    this.uuid = uuid;
+  }
+
+  public long getId() {
     return id;
   }
 
-  public void setNoteId(final String noteId) {
-    this.id = noteId;
-  }
-
-  public long getDatabaseId() {
-    return databaseId;
-  }
-
-  public void setDatabaseId(final long databaseId) {
-    this.databaseId = databaseId;
+  public void setId(final long id) {
+    this.id = id;
   }
 
   public String getName() {
@@ -109,19 +97,6 @@ public class Note implements Serializable {
 
   public GUI getGuiConfiguration() {
     return guiConfiguration;
-  }
-
-  public Paragraph getParagraph(final String paragraphId) {
-    for (final Paragraph p : paragraphs) {
-      if (p.getId().equals(paragraphId)) {
-        return p;
-      }
-    }
-    return null;
-  }
-
-  public List<Paragraph> getParagraphs() {
-    return paragraphs;
   }
 
   public boolean isRunning() {
@@ -177,6 +152,13 @@ public class Note implements Serializable {
     return this.path.startsWith("/" + TRASH_FOLDER);
   }
 
+  public Long getBatchJobId() {
+    return batchJobId;
+  }
+
+  public void setBatchJobId(final Long batchJobId) {
+    this.batchJobId = batchJobId;
+  }
 
   @Override
   public String toString() {
@@ -185,48 +167,5 @@ public class Note implements Serializable {
     } else {
       return "/" + this.name;
     }
-  }
-
-  public static Note fromJson(final String json) {
-    return gson.fromJson(json, Note.class);
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Note note = (Note) o;
-
-    if (databaseId != note.getDatabaseId()) {
-      return false;
-    }
-
-    if (paragraphs != null ? !paragraphs.equals(note.paragraphs) : note.paragraphs != null) {
-      return false;
-    }
-    //TODO(zjffdu) exclude path because FolderView.index use Note as key and consider different path
-    //as same note
-    //    if (path != null ? !path.equals(note.path) : note.path != null) return false;
-
-    if (id != null ? !id.equals(note.id) : note.id != null) {
-      return false;
-    }
-    if (scheduler != null ? !scheduler.equals(note.scheduler) : note.scheduler != null) {
-      return false;
-    }
-    return isRunning == note.isRunning;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = paragraphs != null ? paragraphs.hashCode() : 0;
-    result = 31 * result + (id != null ? id.hashCode() : 0);
-    result = 31 * result + (scheduler != null ? scheduler.hashCode() : 0);
-    return result;
   }
 }

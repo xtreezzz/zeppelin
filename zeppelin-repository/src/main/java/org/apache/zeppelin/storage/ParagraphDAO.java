@@ -1,140 +1,256 @@
 package org.apache.zeppelin.storage;
 
-import static org.apache.zeppelin.storage.Utils.generatePGjson;
-
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.display.GUI;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteRevision;
-import org.apache.zeppelin.notebook.Paragraph;
-import org.apache.zeppelin.notebook.display.GUI;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
+import static org.apache.zeppelin.storage.Utils.generatePGjson;
 
 @Component
 public class ParagraphDAO {
 
+  private final static String PERSIST_PARAGRAPH = "" +
+          "INSERT INTO PARAGRAPHS (NOTE_ID,\n" +
+          "                        UUID,\n" +
+          "                        TITLE,\n" +
+          "                        TEXT,\n" +
+          "                        SHEBANG,\n" +
+          "                        CREATED,\n" +
+          "                        UPDATED,\n" +
+          "                        POSITION,\n" +
+          "                        JOB_ID,\n" +
+          "                        CONFIG,\n" +
+          "                        GUI,\n" +
+          "                        REVISION_ID)\n" +
+          "VALUES (:NOTE_ID,\n" +
+          "        :UUID,\n" +
+          "        :TITLE,\n" +
+          "        :TEXT,\n" +
+          "        :SHEBANG,\n" +
+          "        :CREATED,\n" +
+          "        :UPDATED,\n" +
+          "        :POSITION,\n" +
+          "        :JOB_ID,\n" +
+          "        :CONFIG,\n" +
+          "        :GUI,\n" +
+          "        :REVISION_ID);";
+
+  private final static String UPDATE_PARAGRAPH = "" +
+          "UPDATE PARAGRAPHS\n" +
+          "SET NOTE_ID     = :NOTE_ID,\n" +
+          "    UUID        = :UUID,\n" +
+          "    TITLE       = :TITLE,\n" +
+          "    TEXT        = :TEXT,\n" +
+          "    SHEBANG     = :SHEBANG,\n" +
+          "    CREATED     = :CREATED,\n" +
+          "    UPDATED     = :UPDATED,\n" +
+          "    POSITION    = :POSITION,\n" +
+          "    JOB_ID      = :JOB_ID,\n" +
+          "    CONFIG      = :CONFIG,\n" +
+          "    GUI         = :GUI,\n" +
+          "    REVISION_ID = :REVISION_ID\n" +
+          "WHERE ID = :ID;";
 
 
-  private static final String GET_ALL_PARAGRAPHS = "SELECT * FROM paragraphs WHERE revision_id ISNULL ORDER BY position";
-  private static final String GET_NOTE_PARAGRAPHS = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id ISNULL ORDER BY position";
-  private static final String GET_NOTE_PARAGRAPHS_BY_REVISION = "SELECT * FROM paragraphs WHERE db_note_id=:db_note_id AND revision_id=:revision_id ORDER BY position";
-  private static final String INSERT_PARAGRAPH = "INSERT INTO paragraphs(paragraph_id, db_note_id, revision_id, title, text, shebang, username, created, updated, config, gui, position) VALUES (:paragraph_id, :db_note_id, :revision_id, :title, :text, :shebang, :username, :created, :updated, :config, :gui, :position)";
-  private static final String UPDATE_PARAGRAPH = "UPDATE paragraphs SET title=:title, text=:text, shebang=:shebang, username=:username, updated=:updated, config=:config, gui=:gui, job=:job, position=:position WHERE paragraph_id=:paragraph_id AND revision_id ISNULL";
-  private static final String DELETE_PARAGRAPHS = "DELETE FROM paragraphs WHERE revision_id ISNULL AND db_note_id=:db_note_id AND paragraph_id NOT IN (:ids)";
+  private final static String DELETE_PARAGRAPH = "" +
+          "DELETE\n" +
+          "FROM PARAGRAPHS\n" +
+          "WHERE ID = :ID;";
+
+  private final static String SELECT_PARAGRAPH_BY_ID = "" +
+          "SELECT ID,\n" +
+          "       NOTE_ID,\n" +
+          "       UUID,\n" +
+          "       TITLE,\n" +
+          "       TEXT,\n" +
+          "       SHEBANG,\n" +
+          "       CREATED,\n" +
+          "       UPDATED,\n" +
+          "       POSITION,\n" +
+          "       JOB_ID,\n" +
+          "       CONFIG,\n" +
+          "       GUI,\n" +
+          "       REVISION_ID\n" +
+          "FROM PARAGRAPHS\n" +
+          "  WHERE ID = :ID;";
+
+  private final static String SELECT_PARAGRAPH_BY_UUID = "" +
+          "SELECT ID,\n" +
+          "       NOTE_ID,\n" +
+          "       UUID,\n" +
+          "       TITLE,\n" +
+          "       TEXT,\n" +
+          "       SHEBANG,\n" +
+          "       CREATED,\n" +
+          "       UPDATED,\n" +
+          "       POSITION,\n" +
+          "       JOB_ID,\n" +
+          "       CONFIG,\n" +
+          "       GUI,\n" +
+          "       REVISION_ID\n" +
+          "FROM PARAGRAPHS\n" +
+          "  WHERE UUID = :UUID;";
+
+  private final static String SELECT_PARAGRAPH_BY_NOTE_ID = "" +
+          "SELECT ID,\n" +
+          "       NOTE_ID,\n" +
+          "       UUID,\n" +
+          "       TITLE,\n" +
+          "       TEXT,\n" +
+          "       SHEBANG,\n" +
+          "       CREATED,\n" +
+          "       UPDATED,\n" +
+          "       POSITION,\n" +
+          "       JOB_ID,\n" +
+          "       CONFIG,\n" +
+          "       GUI,\n" +
+          "       REVISION_ID\n" +
+          "FROM PARAGRAPHS\n" +
+          "WHERE NOTE_ID = :NOTE_ID\n" +
+          "ORDER BY POSITION;";
+
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-
-  private static final Gson gson = new Gson();
 
   public ParagraphDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  void loadParagraphsAndFillInNotes(final List<Note> notes) {
-    Map<Long, Note> noteMap = new HashMap<>(notes.size());
-    for (final Note note : notes) {
-      noteMap.put(note.getDatabaseId(), note);
-    }
+  private static Paragraph mapRow(final ResultSet resultSet, final int i) throws SQLException {
 
-    jdbcTemplate
-        .query(GET_ALL_PARAGRAPHS, resultSet -> {
-          Long dbNoteId = resultSet.getLong("db_note_id");
-          Paragraph paragraph = convertResultSetToParagraph(resultSet);
-          noteMap.get(dbNoteId).getParagraphs().add(paragraph);
-        });
+    final Type configType = new TypeToken<Map<String, Object>>() {}.getType();
+
+    final Long id = resultSet.getLong("ID");
+    final Long noteId = resultSet.getLong("NOTE_ID");
+    final String uuid = resultSet.getString("UUID");
+    final String title = resultSet.getString("TITLE");
+    final String text = resultSet.getString("TEXT");
+    final String shebang = resultSet.getString("SHEBANG");
+    final LocalDateTime created =
+            null != resultSet.getTimestamp("CREATED")
+                    ? resultSet.getTimestamp("CREATED").toLocalDateTime()
+                    : null;
+    final LocalDateTime updated =
+            null != resultSet.getTimestamp("UPDATED")
+                    ? resultSet.getTimestamp("UPDATED").toLocalDateTime()
+                    : null;
+    final Integer position = resultSet.getInt("POSITION");
+    final Long jobId =  null != resultSet.getString("JOB_ID")
+            ? resultSet.getLong("JOB_ID")
+            : null;
+
+    final Map<String, Object> config = new Gson().fromJson(resultSet.getString("CONFIG"), configType);
+    final GUI gui = new Gson().fromJson(resultSet.getString("GUI"), GUI.class);
+    final Long revisionId =  null != resultSet.getString("REVISION_ID")
+            ? resultSet.getLong("REVISION_ID")
+            : null;
+
+    return new Paragraph(
+            id,
+            noteId,
+            uuid,
+            title,
+            text,
+            shebang,
+            created,
+            updated,
+            position,
+            jobId,
+            revisionId,
+            config,
+            gui);
   }
 
-  List<Paragraph> getParagraphs(final Note note, final NoteRevision revision) {
-    MapSqlParameterSource params = new MapSqlParameterSource()
-        .addValue("db_note_id", note.getDatabaseId())
-        .addValue("revision_id", revision == null ? null : revision.getId());
+  public Paragraph persist(final Paragraph paragraph) {
+    final KeyHolder holder = new GeneratedKeyHolder();
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("NOTE_ID", paragraph.getNoteId())
+            .addValue("UUID", paragraph.getUuid())
+            .addValue("TITLE", paragraph.getTitle())
+            .addValue("TEXT", paragraph.getText())
+            .addValue("SHEBANG", paragraph.getShebang())
+            .addValue("CREATED", paragraph.getCreated())
+            .addValue("UPDATED", paragraph.getUpdated())
+            .addValue("POSITION", paragraph.getPosition())
+            .addValue("JOB_ID", paragraph.getJobId())
+            .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
+            .addValue("GUI", generatePGjson(paragraph.getSettings()))
+            .addValue("REVISION_ID", paragraph.getRevisionId());
+    jdbcTemplate.update(PERSIST_PARAGRAPH, parameters, holder);
 
-    String sqlScript = revision == null ? GET_NOTE_PARAGRAPHS : GET_NOTE_PARAGRAPHS_BY_REVISION;
-    return jdbcTemplate
-        .query(sqlScript, params, (resultSet, i) -> convertResultSetToParagraph(resultSet));
-  }
-
-  void saveNoteParagraphs(final Note note, final Long revisionId) {
-    for (int i = 0; i < note.getParagraphs().size(); i++) {
-      Paragraph paragraph = note.getParagraphs().get(i);
-
-      MapSqlParameterSource params = convertParagraphToParameters(paragraph)
-          .addValue("db_note_id", note.getDatabaseId())
-          .addValue("revision_id", revisionId)
-          .addValue("position", i);
-
-      boolean paragraphMissing = false;
-      if (revisionId == null) {
-        paragraphMissing = jdbcTemplate.update(UPDATE_PARAGRAPH, params) == 0;
-      }
-
-      if (paragraphMissing || revisionId != null) {
-        jdbcTemplate.update(INSERT_PARAGRAPH, params);
-      }
-    }
-
-    //remove deleted paragraphs from database
-    Set<String> existIds = note.getParagraphs().stream()
-        .map(Paragraph::getId)
-        .collect(Collectors.toSet());
-
-    MapSqlParameterSource params = new MapSqlParameterSource("ids", existIds);
-    params.addValue("db_note_id", note.getDatabaseId());
-    jdbcTemplate.update(DELETE_PARAGRAPHS, params);
-  }
-
-
-  private Paragraph convertResultSetToParagraph(final ResultSet resultSet)
-      throws SQLException {
-    long databaseId = resultSet.getLong("id");
-    String id = resultSet.getString("paragraph_id");
-    String title = resultSet.getString("title");
-    String text = resultSet.getString("text");
-    String shebang = resultSet.getString("shebang");
-    String user = resultSet.getString("username");
-    LocalDateTime created = resultSet.getTimestamp("created").toLocalDateTime();
-    LocalDateTime updated = resultSet.getTimestamp("updated").toLocalDateTime();
-    String configJson = resultSet.getString("config");
-    GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
-      Long jobId = resultSet.getString("job") == null
-              ? null
-              : resultSet.getLong("job");
-
-    Paragraph paragraph = new Paragraph(title, text, user, gui);
-    paragraph.setId(id);
-    paragraph.setDatabaseId(databaseId);
-    paragraph.setShebang(shebang);
-    paragraph.setCreated(created);
-    paragraph.setUpdated(updated);
-    paragraph.setConfig(gson.fromJson(configJson, paragraph.getConfig().getClass()));
-    paragraph.setJobId(jobId);
-
+    paragraph.setId((Long) holder.getKeys().get("id"));
     return paragraph;
   }
 
-  private MapSqlParameterSource convertParagraphToParameters(final Paragraph p) {
-    return new MapSqlParameterSource()
-        .addValue("paragraph_id", p.getId())
-        .addValue("title", p.getTitle())
-        .addValue("text", p.getText())
-        .addValue("shebang", p.getShebang())
-        .addValue("username", p.getUser())
-        .addValue("created", p.getCreated())
-        .addValue("updated", p.getUpdated())
-        .addValue("config", generatePGjson(p.getConfig()))
-        .addValue("gui", generatePGjson(p.getSettings()))
-        .addValue("job", p.getJobId());
+  public Paragraph update(final Paragraph paragraph) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("NOTE_ID", paragraph.getNoteId())
+            .addValue("UUID", paragraph.getUuid())
+            .addValue("TITLE", paragraph.getTitle())
+            .addValue("TEXT", paragraph.getText())
+            .addValue("SHEBANG", paragraph.getShebang())
+            .addValue("CREATED", paragraph.getCreated())
+            .addValue("UPDATED", paragraph.getUpdated())
+            .addValue("POSITION", paragraph.getPosition())
+            .addValue("JOB_ID", paragraph.getJobId())
+            .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
+            .addValue("GUI", generatePGjson(paragraph.getSettings()))
+            .addValue("REVISION_ID", paragraph.getRevisionId())
+            .addValue("ID", paragraph.getId());
+    jdbcTemplate.update(UPDATE_PARAGRAPH, parameters);
+    return paragraph;
+  }
+
+  public Paragraph get(final Long id) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("ID", id);
+
+    return jdbcTemplate.query(
+            SELECT_PARAGRAPH_BY_ID,
+            parameters,
+            ParagraphDAO::mapRow)
+            .stream()
+            .findFirst()
+            .orElse(null);
+  }
+
+  public Paragraph get(final String uuid) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("UUID", uuid);
+
+    return jdbcTemplate.query(
+            SELECT_PARAGRAPH_BY_UUID,
+            parameters,
+            ParagraphDAO::mapRow)
+            .stream()
+            .findFirst()
+            .orElse(null);
+  }
+
+  public void remove(final Paragraph paragraph) {
+    jdbcTemplate.update(DELETE_PARAGRAPH, new MapSqlParameterSource("ID", paragraph.getId()));
+  }
+
+  public List<Paragraph> getByNoteId(final Long noteId) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("NOTE_ID", noteId);
+    return jdbcTemplate.query(
+            SELECT_PARAGRAPH_BY_NOTE_ID,
+            parameters,
+            ParagraphDAO::mapRow);
   }
 }

@@ -17,34 +17,29 @@
 
 package org.apache.zeppelin.notebook;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.zeppelin.notebook.display.GUI;
 
 import java.io.Serializable;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * Paragraph is a POJO which represents Note's sub-element.
  */
 public class Paragraph implements Serializable {
 
-  //TODO(egorklimov):
-  //  * Убрал конфиг, так как видимо в нем хранилось только isEnabled - думаю стоит вынести это в джобу
-  //  * Убрал InterpreterResult - надо сделать сервис по загрузке
-  //  * Убрал ApplicationState - надо сделать сервис по загрузке
-  private long databaseId;
-  private String id;
+  private Long id;
+  private Long noteId;
+  private final String uuid;
   private String title;
   private String text;
-  private String user;
   private String shebang;
   private LocalDateTime created;
   private LocalDateTime updated;
+  private Integer position;
+  private Long jobId;
+  private Long revisionId;
 
   //TODO(SAN) вернул config :)
   //paragraph configs like isOpen, colWidth, etc
@@ -53,36 +48,57 @@ public class Paragraph implements Serializable {
   // form and parameter settings
   private GUI settings;
 
-  private Long jobId;
 
-  public Paragraph(final String title,
-      final String text,
-      final String user,
-      final GUI settings) {
-    this.id = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
+  public Paragraph() {
+    this.uuid = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
+  }
+
+  public Paragraph(final Long id,
+                   final Long noteId,
+                   final String uuid,
+                   final String title,
+                   final String text,
+                   final String shebang,
+                   final LocalDateTime created,
+                   final LocalDateTime updated,
+                   final Integer position,
+                   final Long jobId,
+                   final Long revisionId,
+                   final Map<String, Object> config,
+                   final GUI settings) {
+    this.id = id;
+    this.noteId = noteId;
+    this.uuid = uuid;
     this.title = title;
     this.text = text;
-    this.user = user;
-    this.created = LocalDateTime.now();
-    this.updated = LocalDateTime.now();
-    this.config = new HashMap<>();
+    this.shebang = shebang;
+    this.created = created;
+    this.updated = updated;
+    this.position = position;
+    this.jobId = jobId;
+    this.revisionId = revisionId;
+    this.config = config;
     this.settings = settings;
   }
 
-  public String getId() {
+  public Long getId() {
     return id;
   }
 
-  public void setId(final String id) {
+  public void setId(final Long id) {
     this.id = id;
   }
 
-  public long getDatabaseId() {
-    return databaseId;
+  public Long getNoteId() {
+    return noteId;
   }
 
-  public void setDatabaseId(final long databaseId) {
-    this.databaseId = databaseId;
+  public void setNoteId(final Long noteId) {
+    this.noteId = noteId;
+  }
+
+  public String getUuid() {
+    return uuid;
   }
 
   public String getTitle() {
@@ -91,7 +107,6 @@ public class Paragraph implements Serializable {
 
   public void setTitle(final String title) {
     this.title = title;
-    this.updated = LocalDateTime.now();
   }
 
   public String getText() {
@@ -100,7 +115,6 @@ public class Paragraph implements Serializable {
 
   public void setText(final String text) {
     this.text = text;
-    this.updated = LocalDateTime.now();
   }
 
   public String getShebang() {
@@ -109,15 +123,6 @@ public class Paragraph implements Serializable {
 
   public void setShebang(final String shebang) {
     this.shebang = shebang;
-  }
-
-  public String getUser() {
-    return user;
-  }
-
-  public void setUser(final String user) {
-    this.user = user;
-    this.updated = LocalDateTime.now();
   }
 
   public LocalDateTime getCreated() {
@@ -136,6 +141,22 @@ public class Paragraph implements Serializable {
     this.updated = updated;
   }
 
+  public Integer getPosition() {
+    return position;
+  }
+
+  public void setPosition(final Integer position) {
+    this.position = position;
+  }
+
+  public Long getJobId() {
+    return jobId;
+  }
+
+  public void setJobId(final Long jobId) {
+    this.jobId = jobId;
+  }
+
   public Map<String, Object> getConfig() {
     return config;
   }
@@ -150,54 +171,13 @@ public class Paragraph implements Serializable {
 
   public void setSettings(final GUI settings) {
     this.settings = settings;
-    this.updated = LocalDateTime.now();
   }
 
-  public Long getJobId() {
-    return jobId;
+  public Long getRevisionId() {
+    return revisionId;
   }
 
-  public void setJobId(Long jobId) {
-    this.jobId = jobId;
+  public void setRevisionId(final Long revisionId) {
+    this.revisionId = revisionId;
   }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    final Paragraph paragraph = (Paragraph) o;
-
-    return new EqualsBuilder()
-        .append(title, paragraph.title)
-        .append(text, paragraph.text)
-        .append(user, paragraph.user)
-        .append(created, paragraph.created)
-        .append(config, paragraph.config)
-        .append(settings, paragraph.settings)
-        .isEquals();
-  }
-
-  @Override
-  public int hashCode() {
-    return new HashCodeBuilder(17, 37)
-        .append(title)
-        .append(text)
-        .append(user)
-        .append(created)
-        .append(config)
-        .append(settings)
-        .toHashCode();
-  }
-
-  // Много где вызывается, проще сделать такую заглушку
-  public Note getNote() {
-    throw new NotImplementedException("Parent note has been removed from paragraph");
-  }
-
 }

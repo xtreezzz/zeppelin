@@ -17,22 +17,15 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.notebook.NoteInfo;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.storage.DatabaseNoteRepository;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -43,6 +36,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -55,11 +56,11 @@ public class NoteHandler extends AbstractHandler {
   private final NoteDTOConverter noteDTOConverter;
 
   @Autowired
-  public NoteHandler(final DatabaseNoteRepository noteRepository,
+  public NoteHandler(final NoteService noteService,
                      final ConnectionManager connectionManager,
                      final ZeppelinConfiguration zeppelinConfiguration,
                      final NoteDTOConverter noteDTOConverter) {
-    super(connectionManager, noteRepository);
+    super(connectionManager, noteService);
     this.zeppelinConfiguration = zeppelinConfiguration;
     this.noteDTOConverter = noteDTOConverter;
   }
@@ -68,13 +69,15 @@ public class NoteHandler extends AbstractHandler {
   public void listNotesInfo(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
-    conn.sendMessage(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo).toSend());
-  }
+    final List<Note> notes = noteService.getAllNotes();
+    // TODO: filter by access rights
 
-  public void broadcastReloadedNoteList(final SockMessage fromMessage) {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    final List<NoteInfo> notesInfo = notes
+            .stream()
+            .map(NoteInfo::new)
+            .collect(Collectors.toList());
+
+    conn.sendMessage(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo).toSend());
   }
 
   public void getHomeNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -83,9 +86,9 @@ public class NoteHandler extends AbstractHandler {
     final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
     checkPermission(noteId, Permission.READER, serviceContext);
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     if (note != null) {
-      connectionManager.addSubscriberToNode(note.getNoteId(), conn);
+      connectionManager.addSubscriberToNode(note.getUuid(), conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
     } else {
       connectionManager.removeSubscribersFromAllNote(conn);
@@ -96,7 +99,7 @@ public class NoteHandler extends AbstractHandler {
   public void getNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    connectionManager.addSubscriberToNode(note.getNoteId(), conn);
+    connectionManager.addSubscriberToNode(note.getUuid(), conn);
     final NoteDTO noteDTO = noteDTOConverter.convertNoteToDTO(note);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", noteDTO).toSend());
   }
@@ -105,35 +108,21 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
     final String path = fromMessage.getNotNull("path");
-    final Map config =  fromMessage.getOrDefault("config", null);
+    final Map config = fromMessage.getOrDefault("config", null);
 
     note.setPath(path);
-    //if (config != null) {
-    //  note.setScheduler(new Scheduler(config));
-    //}
-    //if (!note.getScheduler().equals(config)) {
-    //  zeppelinRepository.refreshCron(note.getNoteId());
-    //}
 
-    noteRepository.updateNote(note);
-
-    final SockMessage message = new SockMessage(Operation.NOTE_UPDATED)
-            .put("path", path)
-            .put("config", config)
-            .put("runningStatus", note.isRunning());
-    connectionManager.broadcast(note.getNoteId(), message);
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    noteService.updateNote(note);
   }
 
   public void deleteNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
-    noteRepository.removeNote(note.getNoteId());
-    connectionManager.removeNoteSubscribers(note.getNoteId());
-    broadcastNoteList(serviceContext.getUserAndRoles());
-  }
+    noteService.deleteNote(note);
 
+    connectionManager.removeNoteSubscribers(note.getUuid());
+  }
 
   @ZeppelinApi
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -146,16 +135,27 @@ public class NoteHandler extends AbstractHandler {
 
     try {
       final Note note = new Note(notePath);
+      noteService.persistNote(note);
 
       // it's an empty note. so add one paragraph
-      final Paragraph paragraph = new Paragraph("", "", serviceContext.getAutheInfo().getUser(), new GUI());
-      note.getParagraphs().add(paragraph);
+      final Paragraph paragraph = new Paragraph();
+      paragraph.setId(null);
+      paragraph.setNoteId(note.getId());
+      paragraph.setTitle(StringUtils.EMPTY);
+      paragraph.setText(StringUtils.EMPTY);
+      paragraph.setShebang(null);
+      paragraph.setCreated(LocalDateTime.now());
+      paragraph.setUpdated(LocalDateTime.now());
+      paragraph.setPosition(0);
+      paragraph.setJobId(null);
+      paragraph.setConfig(new HashMap<>());
+      paragraph.setSettings(new GUI());
+      noteService.persistParapraph(note, paragraph);
 
-      noteRepository.persistNote(note);
-      connectionManager.addSubscriberToNode(note.getNoteId(), conn);
-      publishNote(note, conn, serviceContext);
-    } catch (final IOException e) {
-      throw new IOException("Failed to create note.", e);
+      connectionManager.addSubscriberToNode(note.getUuid(), conn);
+      conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
+    } catch (final Exception e) {
+      throw new IllegalStateException("Failed to create note.", e);
     }
   }
 
@@ -170,39 +170,30 @@ public class NoteHandler extends AbstractHandler {
     }
 
     final Note cloneNote = new Note(path);
+    cloneNote.setPath(path);
+    cloneNote.setScheduler(note.getScheduler());
+    noteService.persistNote(cloneNote);
 
-    // clone all paragraphs
-    note.getParagraphs().forEach(p -> {
-      final Paragraph newParag =
-          new Paragraph(p.getTitle(), p.getText(), p.getUser(), p.getSettings());
-      newParag.setConfig(p.getConfig());
-      newParag.setCreated(p.getCreated());
-      newParag.setUpdated(p.getUpdated());
-      cloneNote.getParagraphs().add(newParag);
-    });
+    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    for (final Paragraph paragraph : paragraphs) {
+      final Paragraph cloneParagraph = new Paragraph();
+      cloneParagraph.setId(null);
+      cloneParagraph.setNoteId(cloneNote.getId());
+      cloneParagraph.setTitle(paragraph.getTitle());
+      cloneParagraph.setText(paragraph.getText());
+      cloneParagraph.setShebang(paragraph.getShebang());
+      cloneParagraph.setCreated(LocalDateTime.now());
+      cloneParagraph.setUpdated(LocalDateTime.now());
+      cloneParagraph.setPosition(paragraph.getPosition());
+      cloneParagraph.setJobId(null);
+      cloneParagraph.setConfig(paragraph.getConfig());
+      cloneParagraph.setSettings(paragraph.getSettings());
+      noteService.persistParapraph(note, cloneParagraph);
+    }
 
-    noteRepository.persistNote(cloneNote);
-
-    connectionManager.addSubscriberToNode(cloneNote.getNoteId(), conn);
-    publishNote(cloneNote, conn, serviceContext);
+    connectionManager.addSubscriberToNode(cloneNote.getUuid(), conn);
   }
 
-  //TODO(SAN) not complete yet
-  public void importNote(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
-    final String noteName = (String) ((Map) fromMessage.getNotNull("note")).get("name");
-    final String noteJson = gson.toJson(fromMessage.getNotNull("note"));
-
-    final String resultNoteName = noteName == null
-            ? noteName
-            : normalizeNotePath(noteName);
-
-    //final Note note = zeppelinRepository.importNote(noteJson, resultNoteName, serviceContext.getAutheInfo());
-
-    //connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
-    //broadcastNoteList(serviceContext.getUserAndRoles());
-  }
 
   public void moveNoteToTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
@@ -210,9 +201,8 @@ public class NoteHandler extends AbstractHandler {
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
 
     note.setPath("/" + TRASH_FOLDER + note.getPath());
-    noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getUserAndRoles());
+
+    noteService.updateNote(note);
   }
 
   public void restoreNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -225,10 +215,9 @@ public class NoteHandler extends AbstractHandler {
     }
 
     final String destNotePath = note.getPath().replace("/" + TRASH_FOLDER, "");
+
     note.setPath(destNotePath);
-    noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    noteService.updateNote(note);
   }
 
   public void restoreFolder(final SockMessage fromMessage) throws IOException {
@@ -236,16 +225,20 @@ public class NoteHandler extends AbstractHandler {
 
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
     if (!folderPath.startsWith("/" + TRASH_FOLDER)) {
-      throw new IOException("Can't restore folder: '" + folderPath
-          + "' as it is not in trash folder");
+      throw new IOException("Can't restore folder: '" + folderPath + "' as it is not in trash folder");
     }
 
-    noteRepository.getAllNotes().stream()
-        .filter(n -> n.getPath().startsWith(folderPath))
-        .peek(n -> n.setPath(n.getPath().substring(TRASH_FOLDER.length() + 1)))
-        .forEach(noteRepository::updateNote);
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith(folderPath))
+            .collect(Collectors.toList());
+    //TODO: add check for permission
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    for (final Note note : notes) {
+      final String notePath = note.getPath().substring(TRASH_FOLDER.length() + 1);
+      note.setPath(notePath);
+      noteService.updateNote(note);
+    }
   }
 
   public void renameFolder(final SockMessage fromMessage) throws IOException {
@@ -254,71 +247,85 @@ public class NoteHandler extends AbstractHandler {
     final String oldFolderPath = "/" + fromMessage.getNotNull("id");
     final String newFolderPath = "/" + fromMessage.getNotNull("name");
 
-    noteRepository.getAllNotes().stream()
-        .filter(n -> n.getPath().startsWith(oldFolderPath + "/"))
-        .peek(n -> n.setPath(n.getPath().replaceFirst(oldFolderPath, newFolderPath)))
-        .forEach(noteRepository::updateNote);
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith(oldFolderPath + "/"))
+            .collect(Collectors.toList());
+    //TODO: add check for permission
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
+
+    for (final Note note : notes) {
+      final String notePath = note.getPath().replaceFirst(oldFolderPath, newFolderPath);
+      note.setPath(notePath);
+      noteService.updateNote(note);
+    }
   }
 
   public void moveFolderToTrash(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
-
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
-    noteRepository.getAllNotes().stream()
-        .filter(n -> n.getPath().startsWith(folderPath))
-        .peek(n -> n.setPath("/" + TRASH_FOLDER + n.getPath()))
-        .forEach(noteRepository::updateNote);
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith(folderPath))
+            .collect(Collectors.toList());
+    //TODO: add check for permission
+
+
+    for (final Note note : notes) {
+      final String notePath = "/" + TRASH_FOLDER + note.getPath();
+      note.setPath(notePath);
+      noteService.updateNote(note);
+    }
   }
 
   public void removeFolder(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
-    noteRepository.getNotesInfo().stream()
-        .filter(n -> n.getPath().contains(folderPath))
-        .forEach(n -> {
-          noteRepository.removeNote(n.getId());
-          connectionManager.removeNoteSubscribers(n.getId());
-        });
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith(folderPath))
+            .collect(Collectors.toList());
+
+    //TODO: add check for permission
+
+    for (final Note note : notes) {
+      noteService.deleteNote(note);
+    }
   }
 
   public void emptyTrash(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    noteRepository.getNotesInfo().stream()
-        .filter(n -> n.getPath().startsWith("/" + TRASH_FOLDER + "/"))
-        .forEach(n -> noteRepository.removeNote(n.getId()));
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+            .collect(Collectors.toList());
+    //TODO: add check for permission
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
+
+    for (final Note note : notes) {
+      noteService.deleteNote(note);
+    }
   }
 
   public void restoreAll(final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
-    noteRepository.getAllNotes().stream()
-        .filter(n -> n.getPath().startsWith("/" + TRASH_FOLDER + "/"))
-        .peek(n -> n.setPath(n.getPath().substring(TRASH_FOLDER.length() + 1)))
-        .forEach(noteRepository::updateNote);
+    final List<Note> notes = noteService.getAllNotes()
+            .stream()
+            .filter(note -> !note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+            .collect(Collectors.toList());
 
-    broadcastNoteList(serviceContext.getUserAndRoles());
-  }
+    //TODO: add check for permission
 
-  public void updatePersonalizedMode(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    throw new NotImplementedException("Personalized mode removed");
-    //    final ServiceContext serviceContext = getServiceContext(fromMessage);
-    //
-    //    final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
-    //    final boolean isPersonalized = fromMessage.getType("personalized", LOG).equals("true");
-    //
-    //    note.setPersonalizedMode(isPersonalized);
-    //    zeppelinRepository.saveNote(note);
-    //    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
+    for (final Note note : notes) {
+      final String notePath = note.getPath().substring(TRASH_FOLDER.length() + 1);
+      note.setPath(notePath);
+      noteService.updateNote(note);
+    }
   }
 
   //TODO(SAN) not complete yet
@@ -326,13 +333,11 @@ public class NoteHandler extends AbstractHandler {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
     final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
-    //note.clearAllParagraphOutput();
-    connectionManager.broadcast(note.getNoteId(), new SockMessage(Operation.NOTE).put("note", note));
-  }
 
-  private void broadcastNoteList(final Set<String> userAndRoles) {
-    final List<NoteInfo> notesInfo = noteRepository.getNotesInfo();
-    connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
+    for (final Paragraph paragraph : noteService.getParapraphs(note)) {
+      paragraph.setJobId(null);
+      noteService.updateParapraph(note, paragraph);
+    }
   }
 
   private String normalizeNotePath(String notePath) throws IOException {
@@ -353,12 +358,5 @@ public class NoteHandler extends AbstractHandler {
       throw new IOException("Note name can not contain '..'");
     }
     return notePath;
-  }
-
-  private void publishNote(final Note note,
-                           final WebSocketSession conn,
-                           final ServiceContext serviceContext) throws IOException {
-    conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
-    broadcastNoteList(serviceContext.getUserAndRoles());
   }
 }

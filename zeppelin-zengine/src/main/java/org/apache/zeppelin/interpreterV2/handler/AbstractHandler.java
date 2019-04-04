@@ -13,18 +13,18 @@ abstract class AbstractHandler {
   final JobDAO jobDAO;
   private final JobResultDAO jobResultDAO;
   final JobPayloadDAO jobPayloadDAO;
-  final NotebookDAO notebookDAO;
+  final NoteDAO noteDAO;
 
   public AbstractHandler(final JobBatchDAO jobBatchDAO,
                          final JobDAO jobDAO,
                          final JobResultDAO jobResultDAO,
                          final JobPayloadDAO jobPayloadDAO,
-                         final NotebookDAO notebookDAO) {
+                         final NoteDAO noteDAO) {
     this.jobBatchDAO = jobBatchDAO;
     this.jobDAO = jobDAO;
     this.jobResultDAO = jobResultDAO;
     this.jobPayloadDAO = jobPayloadDAO;
-    this.notebookDAO = notebookDAO;
+    this.noteDAO = noteDAO;
   }
 
 
@@ -125,7 +125,7 @@ abstract class AbstractHandler {
   void publishBatch(final Note note, final List<Paragraph> paragraphs) {
     final JobBatch batch = new JobBatch();
     batch.setId(0L);
-    batch.setNoteId(note.getDatabaseId());
+    batch.setNoteId(note.getId());
     batch.setStatus(JobBatch.Status.SAVING);
     batch.setCreatedAt(LocalDateTime.now());
     batch.setStartedAt(null);
@@ -138,8 +138,8 @@ abstract class AbstractHandler {
       final Job job = new Job();
       job.setId(0L);
       job.setBatchId(saved.getId());
-      job.setNoteId(note.getDatabaseId());
-      job.setParagpaphId(p.getDatabaseId());
+      job.setNoteId(note.getId());
+      job.setParagpaphId(p.getId());
       job.setIndex(i);
       job.setShebang(p.getShebang());
       job.setStatus(Job.Status.PENDING);
@@ -161,6 +161,6 @@ abstract class AbstractHandler {
     saved.setStatus(JobBatch.Status.PENDING);
     jobBatchDAO.update(saved);
 
-    notebookDAO.updateNote(note);
+    noteDAO.update(note);
   }
 }
