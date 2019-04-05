@@ -1,6 +1,7 @@
 package org.apache.zeppelin.websocket.dto;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.notebook.Job;
@@ -78,6 +79,8 @@ public class NoteDTOConverter {
                 interpreterResultDTO.getMsg().add(new InterpreterResultDTO.Message(jobResult.getType(), jobResult.getResult()));
             }
             paragraphDTO.setResults(interpreterResultDTO);
+        } else {
+            paragraphDTO.setStatus(Job.Status.DONE);
         }
         return paragraphDTO;
     }

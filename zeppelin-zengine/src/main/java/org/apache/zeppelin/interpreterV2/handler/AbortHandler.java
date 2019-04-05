@@ -1,5 +1,6 @@
 package org.apache.zeppelin.interpreterV2.handler;
 
+import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.interpreter.core.PredefinedInterpreterResults;
 import org.apache.zeppelin.interpreter.core.thrift.CancelResult;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
@@ -22,8 +23,9 @@ public class AbortHandler extends AbstractHandler {
                       final JobDAO jobDAO,
                       final JobResultDAO jobResultDAO,
                       final JobPayloadDAO jobPayloadDAO,
-                      final NoteDAO noteDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO);
+                      final NoteDAO noteDAO,
+                      final ParagraphDAO paragraphDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
   }
 
   public List<Job> loadJobs() {
@@ -59,8 +61,12 @@ public class AbortHandler extends AbstractHandler {
 
     switch (cancelResult.status) {
       case ACCEPT:
+        final Job.Status prevJobStatus = job.getStatus();
+
         job.setStatus(Job.Status.ABORTING);
         jobDAO.update(job);
+
+        EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, prevJobStatus, Job.Status.ABORTING);
         break;
       case NOT_FOUND:
         setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);

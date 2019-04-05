@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class Job {
 
   public enum Status {
+    READY,
     PENDING,
     RUNNING,
     DONE,

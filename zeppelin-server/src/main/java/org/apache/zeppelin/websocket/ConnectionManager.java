@@ -18,11 +18,13 @@
 package org.apache.zeppelin.websocket;
 
 
+import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -41,11 +43,8 @@ public class ConnectionManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
 
-  private final Queue<WebSocketSession> activeSessions = new ConcurrentLinkedQueue<>();
   // noteId -> connection
   private final Map<String, Queue<WebSocketSession>> noteSocketMap = new ConcurrentHashMap<>();
-
-  private final Boolean collaborativeModeEnable = false;
 
 
   public String getAssociatedNoteId(final WebSocketSession socket) {
@@ -59,15 +58,6 @@ public class ConnectionManager {
     return null;
   }
 
-
-  public void addSession(final WebSocketSession session) {
-    activeSessions.add(session);
-  }
-
-  public void removeSession(final WebSocketSession session) {
-    activeSessions.remove(session);
-  }
-
   public void addSubscriberToNode(final String noteId, final WebSocketSession socket) {
     LOGGER.debug("Add connection {} to note: {}", socket, noteId);
     // make sure a socket relates only an single note.
@@ -77,7 +67,6 @@ public class ConnectionManager {
     if (!sessions.contains(socket)) {
       sessions.add(socket);
     }
-    checkCollaborativeStatus(noteId, sessions);
   }
 
   public void removeSubscriberFromNote(final String noteId, final WebSocketSession socket) {
@@ -86,7 +75,6 @@ public class ConnectionManager {
     if (sessions != null) {
       sessions.remove(socket);
     }
-    checkCollaborativeStatus(noteId, sessions);
   }
 
   public void removeNoteSubscribers(final String noteId) {
@@ -97,37 +85,6 @@ public class ConnectionManager {
     final Set<String> noteIds = noteSocketMap.keySet();
     for (final String noteId : noteIds) {
       removeSubscriberFromNote(noteId, socket);
-    }
-  }
-
-  private void checkCollaborativeStatus(final String noteId, final Queue<WebSocketSession> socketList) {
-    if (!collaborativeModeEnable) {
-      return;
-    }
-
-    final boolean collaborativeStatusNew = socketList.size() > 1;
-
-    final SockMessage message = new SockMessage(Operation.COLLABORATIVE_MODE_STATUS)
-            .put("status", collaborativeStatusNew);
-
-    if (collaborativeStatusNew) {
-      final HashSet<String> userList = new HashSet<>();
-      for (final WebSocketSession noteSocket : socketList) {
-        //TODO(SAN) NPE(noteSocket.getPrincipal()) if open note in two tabs
-        //userList.add(noteSocket.getPrincipal().getName());
-      }
-      message.put("users", userList);
-    }
-    broadcast(noteId, message);
-  }
-
-  public void broadcast(final SockMessage m) {
-    for (final WebSocketSession session : activeSessions) {
-      try {
-        session.sendMessage(m.toSend());
-      } catch (final Exception e) {
-        LOGGER.error("Send error: " + m, e);
-      }
     }
   }
 
@@ -146,13 +103,8 @@ public class ConnectionManager {
     }
   }
 
-
-  //TODO(KOT): вернуть обратно
-  private void broadcastNoteForms(final Note note) {
-    final GUI formsSettings = new GUI();
-    formsSettings.setForms(note.getGuiConfiguration().getForms());
-    formsSettings.setParams(note.getGuiConfiguration().getParams());
-  //broadcast(note.getUuid(), new Message(Message.OP.SAVE_NOTE_FORMS)
-  //          .put("formsData", formsSettings));
+  @Scheduled(fixedDelay = 20)
+  private void getEvents() {
+    EventService.getEvent();
   }
 }

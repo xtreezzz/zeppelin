@@ -16,8 +16,9 @@ public class ExecutionHandler extends AbstractHandler{
                           final JobDAO jobDAO,
                           final JobResultDAO jobResultDAO,
                           final JobPayloadDAO jobPayloadDAO,
-                          final NoteDAO noteDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO);
+                          final NoteDAO noteDAO,
+                          final ParagraphDAO paragraphDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)

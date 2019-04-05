@@ -371,7 +371,6 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-    connectionManager.broadcast(new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -400,7 +399,6 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-    connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "", null).build();
     //return new JsonResponse(HttpStatus.OK, "", newNote.getUuid()).build();
@@ -435,7 +433,6 @@ public class NotebookRestApi extends AbstractRestApi {
 
     final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-    connectionManager.broadcast( new SockMessage(Operation.NOTES_INFO).put("notes", notesInfo));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }

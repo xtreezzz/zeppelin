@@ -17,12 +17,18 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
+import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
+import org.apache.zeppelin.websocket.dto.NoteDTOConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +36,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,13 +47,14 @@ public class ParagraphHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParagraphHandler.class);
 
-  private final Boolean collaborativeModeEnable;
+  private final NoteDTOConverter noteDTOConverter;
 
   @Autowired
   public ParagraphHandler(final NoteService noteService,
-                          final ConnectionManager connectionManager) {
+                          final ConnectionManager connectionManager,
+                          final NoteDTOConverter noteDTOConverter) {
     super(connectionManager, noteService);
-    this.collaborativeModeEnable = false;
+    this.noteDTOConverter = noteDTOConverter;
   }
 
   public void updateParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -67,6 +76,11 @@ public class ParagraphHandler extends AbstractHandler {
     paragraph.setShebang(shebang);
 
     noteService.updateParapraph(note, paragraph);
+
+    connectionManager.broadcast(
+            note.getUuid(), new SockMessage(Operation.PARAGRAPH)
+                    .put("paragraph", noteDTOConverter.convertParagraphToDTO(paragraph)));
+
   }
 
   public void removeParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -87,6 +101,11 @@ public class ParagraphHandler extends AbstractHandler {
       paragraph.setPosition(i);
       noteService.updateParapraph(note, paragraph);
     }
+
+    connectionManager.broadcast(
+            note.getUuid(), new SockMessage(Operation.PARAGRAPH_REMOVED)
+                    .put("id", p.getUuid())
+                    .put("index", p.getPosition()));
   }
 
   public void clearParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -100,53 +119,87 @@ public class ParagraphHandler extends AbstractHandler {
   }
 
   public void moveParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-//    final ServiceContext serviceContext = getServiceContext(fromMessage);
-//
-//    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-//    final Paragraph p = safeLoadParagraph("id", fromMessage, note);
-//    final int index = ((Double) fromMessage.getNotNull("index")).intValue();
-//
-//    if (index < 0 || index > note.getParagraphs().size()) {
-//      throw new BadRequestException("newIndex " + index + " is out of bounds");
-//    }
-//
-//    final List<Paragraph> paragraphs = note.getParagraphs();
-//    Collections.swap(paragraphs, index, paragraphs.indexOf(p));
-//    noteService.update(note);
-//
-//    final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
-//            .put("id", p.getParagraphId())
-//            .put("index", index);
-//    connectionManager.broadcast(note.getUuid(), message);
+    final ServiceContext serviceContext = getServiceContext(fromMessage);
+
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Paragraph paragraphFrom = safeLoadParagraph("id", fromMessage, note);
+    final int indexFrom = paragraphFrom.getPosition();
+    final int indexTo = ((Double) fromMessage.getNotNull("index")).intValue();
+
+    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    if (indexTo < 0 || indexTo > paragraphs.size()) {
+      throw new BadRequestException("newIndex " + indexTo + " is out of bounds");
+    }
+
+    paragraphs.forEach(p -> p.setPosition(p.getPosition() * 10));
+    paragraphs.stream()
+            .filter(p -> p.getId().equals(paragraphFrom.getId()))
+            .forEach(p -> p.setPosition(indexTo * 10 - (indexFrom - indexTo) % 10));
+    paragraphs.sort(Comparator.comparingInt(Paragraph::getPosition));
+
+    for (int i = 0; i < paragraphs.size(); i++) {
+      final Paragraph paragraph = paragraphs.get(i);
+      paragraph.setPosition(i);
+      noteService.updateParapraph(note, paragraph);
+    }
+
+    connectionManager.broadcast(
+            note.getUuid(),
+            new SockMessage(Operation.PARAGRAPH_MOVED)
+                    .put("id", paragraphFrom.getUuid())
+                    .put("index", indexTo)
+    );
   }
 
   public String insertParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-//    final ServiceContext serviceContext = getServiceContext(fromMessage);
-//
-//    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
-//    final int index = ((Double) fromMessage.getNotNull("index")).intValue();
-//
-//    if (index < 0 || index > note.getParagraphs().size()) {
-//      throw new BadRequestException("newIndex " + index + " is out of bounds");
-//    }
-//
-//    final Paragraph p = new Paragraph("", "", serviceContext.getAutheInfo().getUser(), new GUI());
-//    note.getParagraphs().add(index, p);
-//
-//    noteService.update(note);
-//    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.PARAGRAPH_ADDED).put("paragraph", p).put("index", index));
-//    return p.getParagraphId();
-    return "3";
+    final ServiceContext serviceContext = getServiceContext(fromMessage);
+
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final int index = ((Double) fromMessage.getNotNull("index")).intValue();
+
+    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    if (index < 0 || index > paragraphs.size()) {
+      throw new BadRequestException("newIndex " + index + " is out of bounds");
+    }
+
+    for (int i = index; i < paragraphs.size(); i++) {
+      final Paragraph p = paragraphs.get(i);
+      p.setPosition(i + 1);
+      noteService.updateParapraph(note, p);
+    }
+
+    final Paragraph paragraph = new Paragraph();
+    paragraph.setId(null);
+    paragraph.setNoteId(note.getId());
+    paragraph.setTitle(StringUtils.EMPTY);
+    paragraph.setText(StringUtils.EMPTY);
+    paragraph.setShebang(null);
+    paragraph.setCreated(LocalDateTime.now());
+    paragraph.setUpdated(LocalDateTime.now());
+    paragraph.setPosition(index);
+    paragraph.setJobId(null);
+    paragraph.setConfig(new HashMap<>());
+    paragraph.setSettings(new GUI());
+    noteService.persistParagraph(note, paragraph);
+
+    connectionManager.broadcast(
+            note.getUuid(),
+            new SockMessage(Operation.PARAGRAPH_ADDED)
+                    .put("paragraph", noteDTOConverter.convertParagraphToDTO(paragraph))
+                    .put("index", paragraph.getPosition())
+    );
+
+    return paragraph.getUuid();
   }
 
   public void copyParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-//    final String paragraphId = insertParagraph(conn, fromMessage);
-//
-//    if (paragraphId == null) {
-//      throw new BadRequestException("paragraphId is not defined");
-//    }
-//    fromMessage.put("id", paragraphId);
-//
-//    updateParagraph(conn, fromMessage);
+    final String paragraphId = insertParagraph(conn, fromMessage);
+
+    if (paragraphId == null) {
+      throw new BadRequestException("paragraphId is not defined");
+    }
+    fromMessage.put("id", paragraphId);
+
+    updateParagraph(conn, fromMessage);
   }
 }

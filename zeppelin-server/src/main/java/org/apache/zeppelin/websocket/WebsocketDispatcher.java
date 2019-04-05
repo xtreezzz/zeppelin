@@ -79,18 +79,18 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionEstablished(final WebSocketSession session) throws Exception {
-    sessionectionManager.addSession(session);
+    //sessionectionManager.addSession(session);
   }
 
   @Override
   public void handleTransportError(final WebSocketSession session, final Throwable exception) throws Exception {
-    sessionectionManager.removeSession(session);
+    //sessionectionManager.removeSession(session);
     sessionectionManager.removeSubscribersFromAllNote(session);
   }
 
   @Override
   public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
-    sessionectionManager.removeSession(session);
+    //sessionectionManager.removeSession(session);
     sessionectionManager.removeSubscribersFromAllNote(session);
   }
 

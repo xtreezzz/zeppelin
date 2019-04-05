@@ -1,5 +1,6 @@
 package org.apache.zeppelin.interpreterV2.handler;
 
+import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.apache.zeppelin.notebook.*;
 import org.apache.zeppelin.storage.*;
@@ -14,34 +15,44 @@ abstract class AbstractHandler {
   private final JobResultDAO jobResultDAO;
   final JobPayloadDAO jobPayloadDAO;
   final NoteDAO noteDAO;
+  final ParagraphDAO paragraphDAO;
 
   public AbstractHandler(final JobBatchDAO jobBatchDAO,
                          final JobDAO jobDAO,
                          final JobResultDAO jobResultDAO,
                          final JobPayloadDAO jobPayloadDAO,
-                         final NoteDAO noteDAO) {
+                         final NoteDAO noteDAO,
+                         final ParagraphDAO paragraphDAO) {
     this.jobBatchDAO = jobBatchDAO;
     this.jobDAO = jobDAO;
     this.jobResultDAO = jobResultDAO;
     this.jobPayloadDAO = jobPayloadDAO;
     this.noteDAO = noteDAO;
+    this.paragraphDAO = paragraphDAO;
   }
-
 
   void setRunningState(final Job job,
                         final String interpreterProcessUUID,
                         final String interpreterJobUUID) {
+
+    final Job.Status prevJobStatus = job.getStatus();
 
     job.setStatus(Job.Status.RUNNING);
     job.setInterpreterProcessUUID(interpreterProcessUUID);
     job.setInterpreterJobUUID(interpreterJobUUID);
     jobDAO.update(job);
 
+    EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, prevJobStatus, job.getStatus());
+
     final JobBatch jobBatch = jobBatchDAO.get(job.getBatchId());
     if (jobBatch.getStatus() == JobBatch.Status.PENDING) {
+      final JobBatch.Status prevJobBatchStatus = jobBatch.getStatus();
+
       jobBatch.setStatus(JobBatch.Status.RUNNING);
       jobBatch.setStartedAt(LocalDateTime.now());
       jobBatchDAO.update(jobBatch);
+
+      EventService.publish(EventService.Type.JOB_BATCH_STATUS_CHANGED, jobBatch, prevJobBatchStatus, jobBatch.getStatus());
     }
   }
 
@@ -51,18 +62,26 @@ abstract class AbstractHandler {
 
     persistMessages(job, interpreterResult.message());
 
+    final Job.Status prevJobStatus = job.getStatus();
+
     job.setStatus(Job.Status.DONE);
     job.setEndedAt(LocalDateTime.now());
     job.setInterpreterJobUUID(null);
     job.setInterpreterProcessUUID(null);
     jobDAO.update(job);
 
+    EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, prevJobStatus, job.getStatus());
+
     final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
     final boolean isDone = jobs.stream().noneMatch(j -> j.getStatus() != Job.Status.DONE);
     if (isDone) {
+      final JobBatch.Status prevJobBatchStatus = batch.getStatus();
+
       batch.setStatus(JobBatch.Status.DONE);
       batch.setEndedAt(LocalDateTime.now());
       jobBatchDAO.update(batch);
+
+      EventService.publish(EventService.Type.JOB_BATCH_STATUS_CHANGED, batch, prevJobBatchStatus, batch.getStatus());
     }
   }
 
@@ -89,9 +108,13 @@ abstract class AbstractHandler {
 
     persistMessages(job, interpreterResult.message());
 
+    final Job.Status prevJobStatus = job.getStatus();
+
     job.setStatus(jobStatus);
     job.setEndedAt(LocalDateTime.now());
     jobDAO.update(job);
+
+    EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, prevJobStatus, job.getStatus());
 
     final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
     for (final Job j : jobs) {
@@ -99,14 +122,21 @@ abstract class AbstractHandler {
         j.setStatus(Job.Status.CANCELED);
         j.setStartedAt(LocalDateTime.now());
         j.setEndedAt(LocalDateTime.now());
+
+        EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, Job.Status.PENDING, Job.Status.CANCELED);
       }
       j.setInterpreterJobUUID(null);
       j.setInterpreterProcessUUID(null);
       jobDAO.update(j);
     }
+
+    final JobBatch.Status prevJobBatchStatus = batch.getStatus();
+
     batch.setStatus(jobBatchStatus);
     batch.setEndedAt(LocalDateTime.now());
     jobBatchDAO.update(batch);
+
+    EventService.publish(EventService.Type.JOB_BATCH_STATUS_CHANGED, batch, prevJobBatchStatus, batch.getStatus());
   }
 
   private void persistMessages(final Job job,
@@ -120,6 +150,7 @@ abstract class AbstractHandler {
       jobResult.setResult(message.getData());
       jobResultDAO.persist(jobResult);
     }
+    EventService.publish(EventService.Type.JOB_RESULT_RECEIVED, job, messages);
   }
 
   void publishBatch(final Note note, final List<Paragraph> paragraphs) {
@@ -157,9 +188,14 @@ abstract class AbstractHandler {
       jobPayloadDAO.persist(jobPayload);
 
       p.setJobId(job.getId());
+      paragraphDAO.update(p);
+
+      EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, Job.Status.READY, Job.Status.PENDING);
     }
     saved.setStatus(JobBatch.Status.PENDING);
     jobBatchDAO.update(saved);
+
+    EventService.publish(EventService.Type.JOB_BATCH_STATUS_CHANGED, batch, JobBatch.Status.SAVING, JobBatch.Status.PENDING);
 
     noteDAO.update(note);
   }

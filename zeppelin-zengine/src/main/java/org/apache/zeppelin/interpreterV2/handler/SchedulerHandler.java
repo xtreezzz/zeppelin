@@ -17,7 +17,6 @@ import java.util.List;
 public class SchedulerHandler extends AbstractHandler {
 
   private final SchedulerDAO schedulerDAO;
-  private final ParagraphDAO paragraphDAO;
 
   public SchedulerHandler(final JobBatchDAO jobBatchDAO,
                           final JobDAO jobDAO,
@@ -26,9 +25,8 @@ public class SchedulerHandler extends AbstractHandler {
                           final NoteDAO noteDAO,
                           final ParagraphDAO paragraphDAO,
                           final SchedulerDAO schedulerDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO);
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
     this.schedulerDAO = schedulerDAO;
-    this.paragraphDAO = paragraphDAO;
   }
 
   public List<Scheduler> loadJobs() {
