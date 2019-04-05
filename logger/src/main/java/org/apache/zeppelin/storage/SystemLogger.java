@@ -42,6 +42,6 @@ public class SystemLogger implements Logger {
                   @Nonnull final String message,
                   @Nullable final String description,
                   @Nonnull final String username) {
-    storage.log(new SystemEvent(eventType, username, message, description));
+    //storage.log(new SystemEvent(eventType, username, message, description));
   }
 }

@@ -76,6 +76,8 @@ public class AbortHandler extends AbstractHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void abort(final Note note) {
+
+    final String str = "";
    /// note.get
   }
 }

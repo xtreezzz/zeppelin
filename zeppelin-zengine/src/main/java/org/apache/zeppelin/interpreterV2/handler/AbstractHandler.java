@@ -117,7 +117,7 @@ abstract class AbstractHandler {
 
     final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
     for (final Job j : jobs) {
-      final ParagraphDTO beforeInner = fullParagraphDAO.getById(job.getParagpaphId());
+      final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagpaphId());
 
       if (j.getStatus() == Job.Status.PENDING) {
         j.setStatus(Job.Status.CANCELED);
@@ -128,7 +128,7 @@ abstract class AbstractHandler {
       j.setInterpreterProcessUUID(null);
       jobDAO.update(j);
 
-      final ParagraphDTO afterInner = fullParagraphDAO.getById(job.getParagpaphId());
+      final ParagraphDTO afterInner = fullParagraphDAO.getById(j.getParagpaphId());
       EventService.publish(job.getNoteId(), beforeInner, afterInner);
     }
 

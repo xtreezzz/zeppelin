@@ -39,7 +39,20 @@ public class InterpreterResultHandler extends AbstractHandler {
   public void handle(final String interpreterJobUUID,
                      final InterpreterResult interpreterResult) {
 
-    final Job job = jobDAO.getByInterpreterJobUUID(interpreterJobUUID);
+    Job job = null;
+    // задержка на закрытие транзакций
+    for (int i = 0; i < 2 * 60 ; i++ ) {
+      job = jobDAO.getByInterpreterJobUUID(interpreterJobUUID);
+      if (job != null) {
+        break;
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (final Exception e) {
+        // SKIp
+      }
+    }
+
     if (job == null) {
       return;
     }

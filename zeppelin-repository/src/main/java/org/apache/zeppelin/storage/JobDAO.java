@@ -123,7 +123,8 @@ public class JobDAO {
           "FROM JOB_BATCH JB\n" +
           "  LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
           "WHERE JB.STATUS IN ('PENDING', 'RUNNING')\n" +
-          "      AND NOT EXISTS(SELECT * FROM JOB WHERE J.BATCH_ID = JB.ID AND J.STATUS IN('RUNNING', 'ERROR'))\n" +
+          "      AND J.STATUS != 'DONE'" +
+          "      AND NOT EXISTS(SELECT * FROM JOB J2 WHERE J2.BATCH_ID = JB.ID AND J2.STATUS IN('RUNNING', 'ERROR'))\n" +
           "ORDER BY J.BATCH_ID, J.INDEX_NUMBER;";
 
 
