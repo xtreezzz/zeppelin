@@ -24,8 +24,9 @@ public class SchedulerHandler extends AbstractHandler {
                           final JobPayloadDAO jobPayloadDAO,
                           final NoteDAO noteDAO,
                           final ParagraphDAO paragraphDAO,
+                          final FullParagraphDAO fullParagraphDAO,
                           final SchedulerDAO schedulerDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
     this.schedulerDAO = schedulerDAO;
   }
 

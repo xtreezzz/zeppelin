@@ -20,11 +20,13 @@ package org.apache.zeppelin.websocket.handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.NoteService;
+import org.apache.zeppelin.externalDTO.ParagraphDTO;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -47,14 +49,14 @@ public class ParagraphHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParagraphHandler.class);
 
-  private final NoteDTOConverter noteDTOConverter;
+  private final FullParagraphDAO fullParagraphDAO;
 
   @Autowired
   public ParagraphHandler(final NoteService noteService,
                           final ConnectionManager connectionManager,
-                          final NoteDTOConverter noteDTOConverter) {
+                          final FullParagraphDAO fullParagraphDAO) {
     super(connectionManager, noteService);
-    this.noteDTOConverter = noteDTOConverter;
+    this.fullParagraphDAO = fullParagraphDAO;
   }
 
   public void updateParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -62,6 +64,8 @@ public class ParagraphHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
     final Paragraph paragraph = safeLoadParagraph("id", fromMessage, note);
+
+    //final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
 
     final String title = fromMessage.getNotNull("title");
     final String shebang = fromMessage.getNotNull("shebang");
@@ -76,11 +80,6 @@ public class ParagraphHandler extends AbstractHandler {
     paragraph.setShebang(shebang);
 
     noteService.updateParapraph(note, paragraph);
-
-    connectionManager.broadcast(
-            note.getUuid(), new SockMessage(Operation.PARAGRAPH)
-                    .put("paragraph", noteDTOConverter.convertParagraphToDTO(paragraph)));
-
   }
 
   public void removeParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -101,11 +100,6 @@ public class ParagraphHandler extends AbstractHandler {
       paragraph.setPosition(i);
       noteService.updateParapraph(note, paragraph);
     }
-
-    connectionManager.broadcast(
-            note.getUuid(), new SockMessage(Operation.PARAGRAPH_REMOVED)
-                    .put("id", p.getUuid())
-                    .put("index", p.getPosition()));
   }
 
   public void clearParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -142,13 +136,6 @@ public class ParagraphHandler extends AbstractHandler {
       paragraph.setPosition(i);
       noteService.updateParapraph(note, paragraph);
     }
-
-    connectionManager.broadcast(
-            note.getUuid(),
-            new SockMessage(Operation.PARAGRAPH_MOVED)
-                    .put("id", paragraphFrom.getUuid())
-                    .put("index", indexTo)
-    );
   }
 
   public String insertParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -181,13 +168,6 @@ public class ParagraphHandler extends AbstractHandler {
     paragraph.setConfig(new HashMap<>());
     paragraph.setSettings(new GUI());
     noteService.persistParagraph(note, paragraph);
-
-    connectionManager.broadcast(
-            note.getUuid(),
-            new SockMessage(Operation.PARAGRAPH_ADDED)
-                    .put("paragraph", noteDTOConverter.convertParagraphToDTO(paragraph))
-                    .put("index", paragraph.getPosition())
-    );
 
     return paragraph.getUuid();
   }

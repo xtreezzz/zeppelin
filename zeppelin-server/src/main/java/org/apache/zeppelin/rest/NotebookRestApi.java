@@ -429,7 +429,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     //zeppelinRepository.moveNote(note.getUuid(), newName);
 
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
     final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
     //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
@@ -474,7 +474,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     noteRepository.updateNote(note);
 
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
     //TODO(egorklimov): fix paragraph id
     return new JsonResponse(HttpStatus.OK, "", "32").build();
   }
@@ -530,7 +530,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
 
     noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
 
@@ -577,8 +577,7 @@ public class NotebookRestApi extends AbstractRestApi {
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", paragraphId)
             .put("index", index);
-    connectionManager.broadcast(note.getUuid(), message);
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getId(), message);
 
     return new JsonResponse(HttpStatus.OK, "").build();
 
@@ -605,7 +604,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     noteRepository.updateNote(note);
 
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }
@@ -626,7 +625,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
     //note.clearAllParagraphOutput();
 
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.NOTE).put("note", note));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
     return new JsonResponse(HttpStatus.OK, "").build();
   }

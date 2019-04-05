@@ -83,7 +83,7 @@ public class RunnerHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     noteExecutorService.run(note, Lists.newArrayList(p));
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
   @ZeppelinApi

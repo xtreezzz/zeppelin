@@ -1,11 +1,14 @@
-package org.apache.zeppelin.websocket.dto;
+package org.apache.zeppelin.externalDTO;
+
+import org.apache.zeppelin.notebook.display.GUI;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import org.apache.zeppelin.notebook.Job.Status;
-import org.apache.zeppelin.notebook.display.GUI;
 
 public class ParagraphDTO {
+
+
+    private long jobId;
 
     private long databaseId;
     private String id;
@@ -15,7 +18,8 @@ public class ParagraphDTO {
     private String shebang;
     private LocalDateTime created;
     private LocalDateTime updated;
-    private Status status;
+    private String status;
+    private int position;
 
     //TODO(SAN) вернул config :)
     //paragraph configs like isOpen, colWidth, etc
@@ -25,6 +29,14 @@ public class ParagraphDTO {
     private GUI settings;
 
     private InterpreterResultDTO results;
+
+    public long getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(final long jobId) {
+        this.jobId = jobId;
+    }
 
     public long getDatabaseId() {
         return databaseId;
@@ -114,11 +126,19 @@ public class ParagraphDTO {
         this.results = results;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(final Status status) {
+    public void setStatus(final String status) {
         this.status = status;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(final int position) {
+        this.position = position;
     }
 }

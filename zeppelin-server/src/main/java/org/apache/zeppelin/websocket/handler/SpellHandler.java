@@ -74,7 +74,7 @@ public class SpellHandler extends AbstractHandler {
 
     addNewParagraphIfLastParagraphIsExecuted(note, p);
     noteService.updateNote(note);
-    connectionManager.broadcast(note.getUuid(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.RUN_PARAGRAPH_USING_SPELL).put("paragraph", p));
   }
 
 

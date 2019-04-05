@@ -1,4 +1,4 @@
-package org.apache.zeppelin.websocket.dto;
+package org.apache.zeppelin.externalDTO;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +17,14 @@ public class InterpreterResultDTO {
 
     private String code;
     private List<Message> msg = new LinkedList<>();
+
+    public InterpreterResultDTO() {
+    }
+
+    public InterpreterResultDTO(final String code, final List<Message> msg) {
+        this.code = code;
+        this.msg = msg;
+    }
 
     public String getCode() {
         return code;

@@ -1,4 +1,4 @@
-package org.apache.zeppelin.websocket.dto;
+package org.apache.zeppelin.externalDTO;
 
 import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.notebook.NoteRevision;

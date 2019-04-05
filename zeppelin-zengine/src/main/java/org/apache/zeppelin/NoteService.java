@@ -1,7 +1,9 @@
 package org.apache.zeppelin;
 
+import org.apache.zeppelin.externalDTO.ParagraphDTO;
 import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.Paragraph;
+import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.storage.NoteDAO;
 import org.apache.zeppelin.storage.ParagraphDAO;
 import org.springframework.stereotype.Component;
@@ -13,11 +15,14 @@ public class NoteService {
 
   private final NoteDAO noteDAO;
   private final ParagraphDAO paragraphDAO;
+  private final FullParagraphDAO fullParagraphDAO;
 
   public NoteService(final NoteDAO noteDAO,
-                     final ParagraphDAO paragraphDAO) {
+                     final ParagraphDAO paragraphDAO,
+                     final FullParagraphDAO fullParagraphDAO) {
     this.noteDAO = noteDAO;
     this.paragraphDAO = paragraphDAO;
+    this.fullParagraphDAO = fullParagraphDAO;
   }
 
   public List<Note> getAllNotes() {
@@ -58,24 +63,34 @@ public class NoteService {
   }
 
   public Paragraph persistParagraph(final Note note, final Paragraph paragraph) {
+    final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
+
     final Paragraph savedParagraph = paragraphDAO.persist(paragraph);
 
-    EventService.publish(EventService.Type.PARAGRAPH_ADDED, note, savedParagraph);
+    final ParagraphDTO after = fullParagraphDAO.getById(paragraph.getId());
+    EventService.publish(note.getId(), before, after);
 
     return savedParagraph;
   }
 
   public Paragraph updateParapraph(final Note note, final Paragraph paragraph) {
+    final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
+
     final Paragraph savedParagraph = paragraphDAO.update(paragraph);
 
-    EventService.publish(EventService.Type.PARAGRAPH_UPDATED, note, savedParagraph);
+    final ParagraphDTO after = fullParagraphDAO.getById(paragraph.getId());
+    EventService.publish(note.getId(), before, after);
 
-    return paragraphDAO.update(paragraph);
+    return savedParagraph;
   }
 
   public void removeParagraph(final Note note, final Paragraph paragraph) {
+    final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
+
     paragraphDAO.remove(paragraph);
-    EventService.publish(EventService.Type.PARAGRAPH_REMOVED, note, paragraph);
+
+    final ParagraphDTO after = fullParagraphDAO.getById(paragraph.getId());
+    EventService.publish(note.getId(), before, after);
   }
 
 }

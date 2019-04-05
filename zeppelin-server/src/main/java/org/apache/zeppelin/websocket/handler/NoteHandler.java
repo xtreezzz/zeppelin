@@ -29,7 +29,7 @@ import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
-import org.apache.zeppelin.websocket.dto.NoteDTO;
+import org.apache.zeppelin.externalDTO.NoteDTO;
 import org.apache.zeppelin.websocket.dto.NoteDTOConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,10 +85,10 @@ public class NoteHandler extends AbstractHandler {
 
     final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
-    checkPermission(noteId, Permission.READER, serviceContext);
+    checkPermission(0L, Permission.READER, serviceContext);
     final Note note = noteService.getNote(noteId);
     if (note != null) {
-      connectionManager.addSubscriberToNode(note.getUuid(), conn);
+      connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NOTE).put("note", note).toSend());
     } else {
       connectionManager.removeSubscribersFromAllNote(conn);
@@ -99,7 +99,7 @@ public class NoteHandler extends AbstractHandler {
   public void getNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
-    connectionManager.addSubscriberToNode(note.getUuid(), conn);
+    connectionManager.addSubscriberToNode(note.getId(), conn);
     final NoteDTO noteDTO = noteDTOConverter.convertNoteToDTO(note);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", noteDTO).toSend());
   }
@@ -121,7 +121,7 @@ public class NoteHandler extends AbstractHandler {
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
     noteService.deleteNote(note);
 
-    connectionManager.removeNoteSubscribers(note.getUuid());
+    connectionManager.removeNoteSubscribers(note.getId());
   }
 
   @ZeppelinApi
@@ -152,7 +152,7 @@ public class NoteHandler extends AbstractHandler {
       paragraph.setSettings(new GUI());
       noteService.persistParagraph(note, paragraph);
 
-      connectionManager.addSubscriberToNode(note.getUuid(), conn);
+      connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
     } catch (final Exception e) {
       throw new IllegalStateException("Failed to create note.", e);
@@ -191,7 +191,7 @@ public class NoteHandler extends AbstractHandler {
       noteService.persistParagraph(note, cloneParagraph);
     }
 
-    connectionManager.addSubscriberToNode(cloneNote.getUuid(), conn);
+    connectionManager.addSubscriberToNode(cloneNote.getId(), conn);
   }
 
 

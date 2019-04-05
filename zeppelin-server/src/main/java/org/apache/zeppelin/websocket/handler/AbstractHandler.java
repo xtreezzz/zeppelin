@@ -76,9 +76,9 @@ public abstract class AbstractHandler {
                               final Permission permission,
                               final ServiceContext serviceContext,
                               final WebSocketSession conn) {
-    final String noteId = connectionManager.getAssociatedNoteId(conn) != null
+    final Long noteId = connectionManager.getAssociatedNoteId(conn) != null
             ? connectionManager.getAssociatedNoteId(conn)
-            : message.getNotNull(paramName);
+            : noteService.getNote((String)message.getNotNull(paramName)).getId();
 
     checkPermission(noteId, permission, serviceContext);
     final Note note = noteService.getNote(noteId);
@@ -114,7 +114,7 @@ public abstract class AbstractHandler {
     ANY
   }
 
-  protected void checkPermission(final String noteId,
+  protected void checkPermission(final Long noteId,
                                  final Permission permission,
                                  final ServiceContext context) {
     Note target = noteService.getNote(noteId);

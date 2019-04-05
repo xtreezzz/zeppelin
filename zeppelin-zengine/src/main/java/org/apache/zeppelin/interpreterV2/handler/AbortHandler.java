@@ -24,8 +24,9 @@ public class AbortHandler extends AbstractHandler {
                       final JobResultDAO jobResultDAO,
                       final JobPayloadDAO jobPayloadDAO,
                       final NoteDAO noteDAO,
-                      final ParagraphDAO paragraphDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
+                      final ParagraphDAO paragraphDAO,
+                      final FullParagraphDAO fullParagraphDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
   }
 
   public List<Job> loadJobs() {
@@ -61,12 +62,8 @@ public class AbortHandler extends AbstractHandler {
 
     switch (cancelResult.status) {
       case ACCEPT:
-        final Job.Status prevJobStatus = job.getStatus();
-
         job.setStatus(Job.Status.ABORTING);
         jobDAO.update(job);
-
-        EventService.publish(EventService.Type.JOB_STATUS_CHANGED, job, prevJobStatus, Job.Status.ABORTING);
         break;
       case NOT_FOUND:
         setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);

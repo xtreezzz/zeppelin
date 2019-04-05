@@ -15,8 +15,9 @@ public class InterpreterDeadHandler extends AbstractHandler {
                                 final JobResultDAO jobResultDAO,
                                 final JobPayloadDAO jobPayloadDAO,
                                 final NoteDAO noteDAO,
-                                final ParagraphDAO paragraphDAO) {
-    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO);
+                                final ParagraphDAO paragraphDAO,
+                                final FullParagraphDAO fullParagraphDAO) {
+    super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)

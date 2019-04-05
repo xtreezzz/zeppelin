@@ -18,17 +18,14 @@
 package org.apache.zeppelin.websocket;
 
 
+import org.apache.hadoop.mapreduce.jobhistory.Event;
 import org.apache.zeppelin.EventService;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -44,12 +41,12 @@ public class ConnectionManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionManager.class);
 
   // noteId -> connection
-  private final Map<String, Queue<WebSocketSession>> noteSocketMap = new ConcurrentHashMap<>();
+  private final Map<Long, Queue<WebSocketSession>> noteSocketMap = new ConcurrentHashMap<>();
 
 
-  public String getAssociatedNoteId(final WebSocketSession socket) {
-    final Set<String> noteIds = noteSocketMap.keySet();
-    for (final String noteId : noteIds) {
+  public Long getAssociatedNoteId(final WebSocketSession socket) {
+    final Set<Long> noteIds = noteSocketMap.keySet();
+    for (final Long noteId : noteIds) {
       final Queue<WebSocketSession> sockets = noteSocketMap.get(noteId);
       if (sockets.contains(socket)) {
         return noteId;
@@ -58,7 +55,7 @@ public class ConnectionManager {
     return null;
   }
 
-  public void addSubscriberToNode(final String noteId, final WebSocketSession socket) {
+  public void addSubscriberToNode(final Long noteId, final WebSocketSession socket) {
     LOGGER.debug("Add connection {} to note: {}", socket, noteId);
     // make sure a socket relates only an single note.
     removeSubscribersFromAllNote(socket);
@@ -69,7 +66,7 @@ public class ConnectionManager {
     }
   }
 
-  public void removeSubscriberFromNote(final String noteId, final WebSocketSession socket) {
+  public void removeSubscriberFromNote(final Long noteId, final WebSocketSession socket) {
     LOGGER.debug("Remove connection {} from note: {}", socket, noteId);
     final Queue<WebSocketSession> sessions = noteSocketMap.get(noteId);
     if (sessions != null) {
@@ -77,18 +74,18 @@ public class ConnectionManager {
     }
   }
 
-  public void removeNoteSubscribers(final String noteId) {
+  public void removeNoteSubscribers(final Long noteId) {
     noteSocketMap.remove(noteId);
   }
 
   public void removeSubscribersFromAllNote(final WebSocketSession socket) {
-    final Set<String> noteIds = noteSocketMap.keySet();
-    for (final String noteId : noteIds) {
+    final Set<Long> noteIds = noteSocketMap.keySet();
+    for (final Long noteId : noteIds) {
       removeSubscriberFromNote(noteId, socket);
     }
   }
 
-  public void broadcast(final String noteId, final SockMessage m) {
+  public void broadcast(final Long noteId, final SockMessage m) {
     final Queue<WebSocketSession> sessions = noteSocketMap.get(noteId);
     if (sessions == null || sessions.size() == 0) {
       return;
@@ -105,6 +102,40 @@ public class ConnectionManager {
 
   @Scheduled(fixedDelay = 20)
   private void getEvents() {
-    EventService.getEvent();
+    final EventService.Event event = EventService.getEvent();
+
+    if(event == null) {
+      return;
+    }
+
+    if (event.getBefore() != null && event.getAfter() != null
+    && event.getBefore().getPosition() != event.getAfter().getPosition()) {
+      broadcast(
+            event.getNoteId(),
+            new SockMessage(Operation.PARAGRAPH_MOVED)
+                    .put("id", event.getAfter().getId())
+                    .put("index", event.getAfter().getPosition())
+    );
+    } else if (event.getBefore() != null && event.getAfter() != null) {
+      broadcast(
+              event.getNoteId(),
+              new SockMessage(Operation.PARAGRAPH)
+                      .put("paragraph", event.getAfter())
+      );
+    } else if (event.getBefore() == null && event.getAfter() != null) {
+      broadcast(
+              event.getNoteId(),
+              new SockMessage(Operation.PARAGRAPH_ADDED)
+                      .put("paragraph", event.getAfter())
+                      .put("index", event.getAfter().getPosition())
+      );
+    } else if (event.getBefore() != null && event.getAfter() == null) {
+      broadcast(
+              event.getNoteId(),
+              new SockMessage(Operation.PARAGRAPH_REMOVED)
+                      .put("id", event.getBefore().getId())
+                      .put("index", event.getBefore().getPosition())
+      );
+    }
   }
 }

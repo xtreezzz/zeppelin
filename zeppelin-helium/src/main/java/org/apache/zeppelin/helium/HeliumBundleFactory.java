@@ -385,53 +385,55 @@ public class HeliumBundleFactory {
     File bundleDir = getHeliumPackageDirectory(pkgName);
     File bundleCache = getHeliumPackageBundleCache(pkgName);
 
-    if (!rebuild && bundleCache.exists() && !bundleCache.isDirectory()) {
+    synchronized (this) {
+      if (!rebuild && bundleCache.exists() && !bundleCache.isDirectory()) {
+        return bundleCache;
+      }
+
+      // 0. install node, npm (should be called before `downloadPackage`
+      try {
+        installNodeAndNpm();
+      } catch (TaskRunnerException e) {
+        throw new IOException(e);
+      }
+
+      // 1. prepare directories
+      if (!heliumLocalRepoDirectory.exists() || !heliumLocalRepoDirectory.isDirectory()) {
+        FileUtils.deleteQuietly(heliumLocalRepoDirectory);
+        FileUtils.forceMkdir(heliumLocalRepoDirectory);
+      }
+      FrontendPluginFactory fpf = new FrontendPluginFactory(
+              bundleDir, nodeInstallationDirectory);
+
+      // resources: webpack.js, package.json
+      String templateWebpackConfig = Resources.toString(
+              Resources.getResource("helium/webpack.config.js"), Charsets.UTF_8);
+      String templatePackageJson = Resources.toString(
+              Resources.getResource("helium/" + PACKAGE_JSON), Charsets.UTF_8);
+
+      // 2. download helium package using `npm pack`
+      String mainFileName = null;
+      try {
+        mainFileName = downloadPackage(pkg, moduleNameVersion, bundleDir,
+                templateWebpackConfig, templatePackageJson, fpf);
+      } catch (TaskRunnerException e) {
+        throw new IOException(e);
+      }
+
+      // 3. prepare bundle source
+      prepareSource(pkg, moduleNameVersion, mainFileName);
+
+      // 4. install node and local modules for a bundle
+      copyFrameworkModulesToInstallPath(recopyLocalModule); // should copy local modules first
+      installNodeModules(fpf);
+
+      // 5. let's bundle and update cache
+      File heliumBundle = bundleHeliumPackage(fpf, bundleDir);
+      bundleCache.delete();
+      FileUtils.moveFile(heliumBundle, bundleCache);
+
       return bundleCache;
     }
-
-    // 0. install node, npm (should be called before `downloadPackage`
-    try {
-      installNodeAndNpm();
-    } catch (TaskRunnerException e) {
-      throw new IOException(e);
-    }
-
-    // 1. prepare directories
-    if (!heliumLocalRepoDirectory.exists() || !heliumLocalRepoDirectory.isDirectory()) {
-      FileUtils.deleteQuietly(heliumLocalRepoDirectory);
-      FileUtils.forceMkdir(heliumLocalRepoDirectory);
-    }
-    FrontendPluginFactory fpf = new FrontendPluginFactory(
-            bundleDir, nodeInstallationDirectory);
-
-    // resources: webpack.js, package.json
-    String templateWebpackConfig = Resources.toString(
-            Resources.getResource("helium/webpack.config.js"), Charsets.UTF_8);
-    String templatePackageJson = Resources.toString(
-            Resources.getResource("helium/" + PACKAGE_JSON), Charsets.UTF_8);
-
-    // 2. download helium package using `npm pack`
-    String mainFileName = null;
-    try {
-      mainFileName = downloadPackage(pkg, moduleNameVersion, bundleDir,
-              templateWebpackConfig, templatePackageJson, fpf);
-    } catch (TaskRunnerException e) {
-      throw new IOException(e);
-    }
-
-    // 3. prepare bundle source
-    prepareSource(pkg, moduleNameVersion, mainFileName);
-
-    // 4. install node and local modules for a bundle
-    copyFrameworkModulesToInstallPath(recopyLocalModule); // should copy local modules first
-    installNodeModules(fpf);
-
-    // 5. let's bundle and update cache
-    File heliumBundle = bundleHeliumPackage(fpf, bundleDir);
-    bundleCache.delete();
-    FileUtils.moveFile(heliumBundle, bundleCache);
-
-    return bundleCache;
   }
 
   private synchronized void buildAllPackages(List<HeliumRegistry.HeliumPackage> pkgs, boolean rebuild)
