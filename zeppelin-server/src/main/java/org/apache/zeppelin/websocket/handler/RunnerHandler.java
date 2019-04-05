@@ -51,21 +51,9 @@ public class RunnerHandler extends AbstractHandler {
   public void stopNoteExecution(final WebSocketSession conn,
                                 final SockMessage fromMessage) {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
-    /*
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
-
-    // prevent the run of new paragraphs
-    note.abortExecution();
-
-    // abort running paragraphs
-    for (final Paragraph paragraph : note.getParagraphs()) {
-      if (paragraph.isRunning()) {
-        paragraph.abort();
-        break;
-      }
-    }
-    */
+    noteExecutorService.abort(note);
   }
 
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
@@ -88,24 +76,8 @@ public class RunnerHandler extends AbstractHandler {
 
   @ZeppelinApi
   public void cancelParagraph(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
-    /*
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
-
-    final String paragraphId = (String) fromSockMessage.get("id");
-    final String noteId = connectionManager.getAssociatedNoteId(conn) != null
-            ? connectionManager.getAssociatedNoteId(conn)
-            : (String) fromSockMessage.get("noteId");
-    checkPermission(noteId, Permission.RUNNER, serviceContext);
-    final Note note = notebook.getNote(noteId);
-    if (note == null) {
-      throw new NoteNotFoundException(noteId, conn);
-    }
-
-    Paragraph p = note.getParagraph(paragraphId);
-    if (p == null) {
-      throw new ParagraphNotFoundException(paragraphId);
-    }
-    p.abort();
-    */
+    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.RUNNER, serviceContext, conn);
+    noteExecutorService.abort(note);
   }
 }

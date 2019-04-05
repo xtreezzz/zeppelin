@@ -1,6 +1,5 @@
 package org.apache.zeppelin.interpreterV2.handler;
 
-import org.apache.zeppelin.EventService;
 import org.apache.zeppelin.interpreter.core.PredefinedInterpreterResults;
 import org.apache.zeppelin.interpreter.core.thrift.CancelResult;
 import org.apache.zeppelin.interpreter.core.thrift.RemoteInterpreterService;
@@ -76,8 +75,6 @@ public class AbortHandler extends AbstractHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void abort(final Note note) {
-
-    final String str = "";
-   /// note.get
+    abortingBatch(note);
   }
 }

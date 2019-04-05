@@ -194,5 +194,13 @@ abstract class AbstractHandler {
     }
     saved.setStatus(JobBatch.Status.PENDING);
     jobBatchDAO.update(saved);
+    note.setBatchJobId(batch.getId());
+    noteDAO.update(note);
+  }
+
+  void abortingBatch(final Note note) {
+    final JobBatch jobBatch = jobBatchDAO.get(note.getBatchJobId());
+    jobBatch.setStatus(JobBatch.Status.ABORTING);
+    jobBatchDAO.update(jobBatch);
   }
 }

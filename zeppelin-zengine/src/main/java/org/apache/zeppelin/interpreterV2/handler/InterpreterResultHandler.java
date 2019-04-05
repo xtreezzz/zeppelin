@@ -41,13 +41,13 @@ public class InterpreterResultHandler extends AbstractHandler {
 
     Job job = null;
     // задержка на закрытие транзакций
-    for (int i = 0; i < 2 * 60 ; i++ ) {
+    for (int i = 0; i < 2 * 10 * 60 ; i++ ) {
       job = jobDAO.getByInterpreterJobUUID(interpreterJobUUID);
       if (job != null) {
         break;
       }
       try {
-        Thread.sleep(1000);
+        Thread.sleep(100);
       } catch (final Exception e) {
         // SKIp
       }
@@ -59,7 +59,7 @@ public class InterpreterResultHandler extends AbstractHandler {
 
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
 
-    if (batch.getStatus() == JobBatch.Status.ABORTING) {
+    if (batch.getStatus() == JobBatch.Status.ABORTING || batch.getStatus() == JobBatch.Status.ABORTED) {
       setAbortResult(job, batch, interpreterResult);
       return;
     }

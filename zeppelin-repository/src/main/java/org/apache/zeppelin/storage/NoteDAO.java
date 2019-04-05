@@ -97,6 +97,9 @@ public class NoteDAO {
     GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
     Map<String, Set<String>> permission = new HashMap<>(4);
     permission = gson.fromJson(resultSet.getString("permissions"), permission.getClass());
+    final Long jobBatchId = resultSet.getString("JOB_BATCH_ID") != null
+            ? resultSet.getLong("JOB_BATCH_ID")
+            : null;
 
     Note note = new Note(notePath);
     note.setId(dbNoteId);
@@ -107,6 +110,7 @@ public class NoteDAO {
     note.getOwners().addAll(permission.get("writers"));
     note.getGuiConfiguration().setParams(gui.getParams());
     note.getGuiConfiguration().setForms(gui.getForms());
+    note.setBatchJobId(jobBatchId);
     return note;
   }
 

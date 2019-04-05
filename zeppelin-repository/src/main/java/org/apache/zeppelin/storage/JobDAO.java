@@ -162,7 +162,7 @@ public class JobDAO {
           "FROM JOB_BATCH JB\n" +
           "       LEFT JOIN JOB J ON JB.ID = J.BATCH_ID\n" +
           "WHERE JB.STATUS IN ('ABORTING')\n" +
-          "  AND J.STATUS IN('RUNNING');";
+          "  AND J.STATUS IN('RUNNING', 'PENDING', 'ABORTING');";
 
   private final static String RESTORE_JOBS_AFTER_SHUTDOWN = "" +
           "UPDATE JOB SET STATUS = 'PENDING',\n" +
