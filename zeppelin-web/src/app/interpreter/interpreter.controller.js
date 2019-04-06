@@ -365,7 +365,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
           }
 
           let request = angular.copy(setting);
-          console.error('request', request);
           thisConfirm.$modalFooter.find('button').addClass('disabled');
           thisConfirm.$modalFooter.find('button:contains("OK")')
             .html('<i class="fa fa-circle-o-notch fa-spin"></i> Saving Setting');
@@ -506,8 +505,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     request.config.properties = newProperties;
     request.perNote = request.perNote.toUpperCase();
     request.perUser = request.perUser.toUpperCase();
-    request.jvmOptions = '';
-    request.concurrentTasks = 10;
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)
       .then(function(res) {
         websocketMsgSrv.fireEvent('ADD_INTERPRETER',
@@ -515,12 +512,17 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
          'New interpreter has been added ' + request);
         $scope.resetNewInterpreterSetting();
         getInterpreterSettings();
-        $scope.showAddNewSetting = false;
+        getAvailableInterpreters();
+        angular.element('#interpreterModal').modal('hide');
       }).catch(function(res) {
         const errorMsg = res.data ? res.data.message : 'Could not connect to server.';
         console.log('Error %o %o', res.status, errorMsg);
         ngToast.danger({content: errorMsg, verticalPosition: 'bottom'});
       });
+  };
+
+  $scope.setDefaultInterpreterGroup = function(interpreterName) {
+    $scope.defaultInterpreterGroup = interpreterName;
   };
 
   $scope.cancelInterpreterSetting = function() {
@@ -537,8 +539,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       perNote: undefined,
       perUser: undefined,
       config: {},
-      jvmOptions: undefined,
-      concurrentTasks: undefined,
+      jvmOptions: '',
+      concurrentTasks: 10,
       isEnabled: false,
       remoteProcess: {
         host: undefined,
@@ -552,57 +554,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       editor: {},
     };
     emptyNewProperty($scope.newInterpreterSetting);
-  };
-
-  $scope.removeInterpreterProperty = function(key, shebang) {
-    if (shebang === undefined) {
-      delete $scope.newInterpreterSetting.config.properties[key];
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      delete $scope.interpreterSettings[index].properties[key];
-    }
-  };
-
-  $scope.removeInterpreterDependency = function(artifact, shebang) {
-    if (shebang === undefined) {
-      $scope.newInterpreterSetting.dependencies = _.reject($scope.newInterpreterSetting.dependencies,
-        function(el) {
-          return el.groupArtifactVersion === artifact;
-        });
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      $scope.interpreterSettings[index].dependencies = _.reject($scope.interpreterSettings[index].dependencies,
-        function(el) {
-          return el.groupArtifactVersion === artifact;
-        });
-    }
-  };
-
-  $scope.addNewInterpreterProperty = function(shebang) {
-    if (shebang === undefined) {
-      // Add new property from create form
-      if (!$scope.newInterpreterSetting.propertyKey || $scope.newInterpreterSetting.propertyKey === '') {
-        return;
-      }
-      $scope.newInterpreterSetting.config.properties[$scope.newInterpreterSetting.propertyKey] = {
-        value: $scope.newInterpreterSetting.propertyValue,
-        type: $scope.newInterpreterSetting.propertyType,
-      };
-      emptyNewProperty($scope.newInterpreterSetting);
-    } else {
-      // Add new property from edit form
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-
-      if (!setting.propertyKey || setting.propertyKey === '') {
-        return;
-      }
-
-      setting.properties[setting.propertyKey] =
-        {value: setting.propertyValue, type: setting.propertyType};
-
-      emptyNewProperty(setting);
-    }
   };
 
   $scope.resetNewRepositorySetting = function() {
@@ -691,6 +642,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source', request)
       .then(function(res) {
         getSources();
+        getAvailableInterpreters();
         $scope.resetNewSourceSetting();
         angular.element('#srcModal').modal('hide');
       }).catch(function(res) {
