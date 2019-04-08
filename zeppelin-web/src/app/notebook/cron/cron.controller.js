@@ -15,10 +15,15 @@
 angular.module('zeppelinWebApp').controller('CronCtrl', CronCtrl);
 
 function CronCtrl($scope, $http, baseUrlSrv) {
-  $scope.init = function(initExpression) {
-    $scope.initCron(initExpression);
-  };
+  $scope.$on('setNoteContent', function(event, note) {
+    noteId = note.databaseId;
+    $http.get(`${baseUrlSrv.getRestApiBase()}/notebook/cron/` + noteId).then((response) => {
+      $scope.cron.enable = response.data.body.enable;
+      $scope.initCron(response.data.body.cron);
+    });
+  });
 
+  let noteId;
   $scope.cron = {
     timePeriod: {
       list: ['Hourly', 'Daily', 'Weekly', 'Monthly', 'Custom'],
@@ -49,6 +54,8 @@ function CronCtrl($scope, $http, baseUrlSrv) {
       periodPrefix: 'day of the month and run every',
       periodPostfix: 'day',
     },
+    expression: '',
+    enable: false,
     dirtyExpression: '',
     isValidCronExpression: false,
 
@@ -82,6 +89,7 @@ function CronCtrl($scope, $http, baseUrlSrv) {
       month,
       dayOfW,
     ] = initExpression.split(' ');
+    $scope.cron.expression = initExpression;
     $scope.cron.dirtyExpression = initExpression;
 
     // Custom
@@ -297,24 +305,24 @@ function CronCtrl($scope, $http, baseUrlSrv) {
     });
   };
 
-  $scope.saveExpression = function() {
+  $scope.confirmNewExpression = function() {
     if ($scope.cron.isValidCronExpression) {
-      $scope.setCronScheduler($scope.cron.dirtyExpression);
+      $scope.updateCron($scope.cron.dirtyExpression, true);
     }
   };
 
-  $scope.dropCron = function() {
-    BootstrapDialog.confirm({
-      closable: true,
-      title: false,
-      btnOKLabel: 'Yes, disable it',
-      btnCancelLabel: 'No',
-      message: 'Disable scheduled execution?',
-      callback: function(result) {
-        if (result) {
-          $scope.setCronScheduler(undefined);
-        }
-      },
+  $scope.updateCron = function(expression, isEnable) {
+    $http.post(
+      `${baseUrlSrv.getRestApiBase()}/notebook/cron/` + noteId,
+      {
+        expression: expression,
+        enable: isEnable,
+      }
+    ).then((response) => {
+      if (response.data.status === 'OK') {
+        $scope.cron.expression = response.data.body.newCronExpression;
+        $scope.cron.enable = response.data.body.enable;
+      }
     });
   };
 }

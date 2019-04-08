@@ -12,14 +12,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<div class="labelBtn btn-group" ng-if="note.config.isZeppelinNotebookCronEnable">
+<div class="labelBtn btn-group">
   <div class="btn btn-default btn-xs dropdown-toggle"
        type="button"
        data-toggle="dropdown"
-       ng-class="{ 'btn-info' : note.config.cron, 'btn-danger' : note.info.cron, 'btn-default' : !note.config.cron}"
+       ng-class="{ 'btn-info' : cron.enable, 'btn-warning' : !cron.enable && cron.expression, 'btn-default' : !cron.expression}"
        tooltip-placement="bottom" uib-tooltip="Run scheduler"
        ng-disabled="revisionView || isTrash(note)">
-    <span class="fa fa-clock-o"></span> {{note.config.cron}}
+    <span class="fa fa-clock-o"></span>
+    <span>{{cron.expression}}</span>
   </div>
 
   <!--cron menu-->
@@ -90,8 +91,15 @@ limitations under the License.
           <!--cron expression-->
           <div ng-if="cron.cronExpressionVisible"
                style="padding-top: 6px; display: block; text-align: center">
-                  <span>Enter custom <a target="_blank" rel="noopener noreferrer"
-                                        href="http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger">cron expression</a>: </span>
+                  <span>Enter custom
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href="http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger">
+                      cron expression
+                    </a>
+                    :
+                  </span>
             <div>
               <input style="margin: 20px auto; width: 300px; font-weight: normal"
                      placeholder="example: 0 0/15 10,12,13 ? * MON-FRI"
@@ -106,18 +114,21 @@ limitations under the License.
           </div>
 
           <!--buttons-->
-          <div style="position: absolute; bottom: 5px; right: 5px">
-            <!--disable button-->
-            <button type="button" class="btn btn-danger"
-                    style="margin-right: 5px"
-                    ng-if="note.config.cron !== undefined"
-                    ng-click="dropCron()">Disable
-            </button>
+          <div style="position: absolute; bottom: 5px; right: 5px;">
+            <!--cron enable/disable checkbox-->
+            <div style="margin-right: 10px; font-size: 1.2em; display: inline-block;" >
+              <label for="cron-status-checkbox">Enabled</label>
+              <input id="cron-status-checkbox"
+                     class="big-checkbox"
+                     type="checkbox"
+                     ng-model="cron.enable"
+                     ng-disabled="!cron.expression"
+                     ng-click="updateCron(cron.expression, cron.enable)"/>
+            </div>
             <!--save button-->
             <button type="button" class="btn btn-primary"
-                    ng-class="{'disabled' : !cron.isValidCronExpression || note.config.cron === cron.dirtyExpression}"
-                    ng-click="saveExpression()">{{note.config.cron === undefined ? 'Enable' :
-              'Save changes'}}
+                    ng-class="{'disabled' : !cron.isValidCronExpression || cron.expression === cron.dirtyExpression}"
+                    ng-click="confirmNewExpression()">{{cron.expression === undefined ? 'Enable' : 'Save changes'}}
             </button>
           </div>
 

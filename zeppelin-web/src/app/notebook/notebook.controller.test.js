@@ -40,7 +40,7 @@ describe('Controller: NotebookCtrl', function() {
 
   let functions = ['removeNote', 'runAllParagraphs', 'saveNote', 'toggleAllEditor',
     'showAllEditor', 'hideAllEditor', 'toggleAllTable', 'hideAllTable', 'showAllTable', 'isNoteRunning',
-    'killSaveTimer', 'startSaveTimer', 'setLookAndFeel', 'setCronScheduler', 'setConfig', 'updateNoteName',
+    'killSaveTimer', 'startSaveTimer', 'setLookAndFeel', 'setConfig', 'updateNoteName',
     'openSetting', 'closeSetting', 'saveSetting', 'toggleSetting'];
 
   functions.forEach(function(fn) {

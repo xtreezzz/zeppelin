@@ -508,23 +508,6 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     $scope.setConfig();
   };
 
-  /** Set cron expression for this note **/
-  $scope.setCronScheduler = function(cronExpr) {
-    if (cronExpr) {
-      if (!$scope.note.config.cronExecutingUser) {
-        $scope.note.config.cronExecutingUser = $rootScope.ticket.principal;
-      }
-      if (!$scope.note.config.cronExecutingRoles) {
-        $scope.note.config.cronExecutingRoles = $rootScope.ticket.roles;
-      }
-    } else {
-      $scope.note.config.cronExecutingUser = '';
-      $scope.note.config.cronExecutingRoles = '';
-    }
-    $scope.note.config.cron = cronExpr;
-    $scope.setConfig();
-  };
-
   /** Set release resource for this note **/
   $scope.setReleaseResource = function(value) {
     $scope.note.config.releaseresource = value;

@@ -20,6 +20,14 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
@@ -30,24 +38,30 @@ import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
-import org.apache.zeppelin.rest.message.*;
+import org.apache.zeppelin.rest.message.NewNoteRequest;
+import org.apache.zeppelin.rest.message.NewParagraphRequest;
+import org.apache.zeppelin.rest.message.RenameNoteRequest;
+import org.apache.zeppelin.rest.message.UpdateParagraphRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
-import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Rest api endpoint for the zeppelinRepository.
@@ -849,100 +863,6 @@ public class NotebookRestApi extends AbstractRestApi {
   }
   */
 
-  /**
-   * Register cron job REST API.
-   *
-   * @param message - JSON with cron expressions.
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
-   */
-  @ZeppelinApi
-  @PostMapping(value = "/cron/{noteId}", produces = "application/json")
-  public ResponseEntity registerCronJob(@PathVariable("noteId") final String noteId, final String message)
-          throws IllegalArgumentException {
-    LOG.info("Register cron job note={} request cron msg={}", noteId, message);
-
-    final CronRequest request = CronRequest.fromJson(message);
-
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserCanRun(noteId, "Insufficient privileges you cannot set a cron job for this note");
-
-    if (!CronExpression.isValidExpression(request.getCronString())) {
-      return new JsonResponse(HttpStatus.BAD_REQUEST, "wrong cron expressions.").build();
-    }
-
-   // note.getScheduler().setExpression(request.getCronString());
-   // note.getScheduler().setReleaseResourceFlag(request.getReleaseResource());
-    //zeppelinRepository.refreshCron(note.getUuid());
-
-    return new JsonResponse(HttpStatus.OK).build();
-  }
-
-  /**
-   * Check valid cron expression REST API.
-   *
-   * @return JSON with status.OK
-   * @throws IllegalArgumentException
-   */
-  @ZeppelinApi
-  @PostMapping(value = "/cron/check_valid", produces = "application/json")
-  public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
-          throws IllegalArgumentException {
-    if (!CronExpression.isValidExpression(expression)) {
-      return new JsonResponse(HttpStatus.OK, "invalid").build();
-    }
-    return new JsonResponse(HttpStatus.OK, "valid").build();
-  }
-
-  /**
-   * Remove cron job REST API.
-   *
-   * @param noteId ID of Note
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
-   */
-  @ZeppelinApi
-  @DeleteMapping(value = "/cron/{noteId}", produces = "application/json")
-  public ResponseEntity removeCronJob(@PathVariable("noteId") final String noteId)
-          throws IOException, IllegalArgumentException {
-    LOG.info("Remove cron job note {}", noteId);
-
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserIsOwner(noteId,
-            "Insufficient privileges you cannot remove this cron job from this note");
-
-    note.getScheduler().setEnabled(false);
-    //zeppelinRepository.refreshCron(note.getUuid());
-    return new JsonResponse(HttpStatus.OK).build();
-  }
-
-  /**
-   * Get cron job REST API.
-   *
-   * @param noteId ID of Note
-   * @return JSON with status.OK
-   * @throws IOException
-   * @throws IllegalArgumentException
-   */
-  @ZeppelinApi
-  @GetMapping(value = "/cron/{noteId}", produces = "application/json")
-  public ResponseEntity getCronJob(@PathVariable("noteId") final String noteId)
-          throws IOException, IllegalArgumentException {
-    LOG.info("Get cron job note {}", noteId);
-
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserCanRead(noteId, "Insufficient privileges you cannot get cron information");
-    final Map<String, Object> response = new HashMap<>();
-    response.put("cron", note.getScheduler().getExpression());
-    //response.put("releaseResource", note.getScheduler().isReleaseResourceFlag());
-
-    return new JsonResponse(HttpStatus.OK, response).build();
-  }
 
   /**
    * Get note jobs for job manager.

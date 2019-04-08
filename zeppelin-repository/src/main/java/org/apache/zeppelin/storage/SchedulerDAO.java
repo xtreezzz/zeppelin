@@ -80,9 +80,12 @@ public class SchedulerDAO {
           "       LAST_EXECUTION,\n" +
           "       NEXT_EXECUTION\n" +
           "FROM SCHEDULER\n" +
-          "WHERE NEXT_EXECUTION < :NEXT_EXECUTION;";
+          "WHERE NEXT_EXECUTION < :NEXT_EXECUTION\n" +
+          "AND ENABLED = 'TRUE'";
 
   private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+  private final static Gson gson = new Gson();
 
   public SchedulerDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
     this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
@@ -127,7 +130,7 @@ public class SchedulerDAO {
             .addValue("ENABLED", scheduler.isEnabled())
             .addValue("EXPRESSION", scheduler.getExpression())
             .addValue("USER_NAME", scheduler.getUser())
-            .addValue("USER_ROLES", scheduler.getRoles())
+            .addValue("USER_ROLES", gson.toJson(scheduler.getRoles()))
             .addValue("LAST_EXECUTION", scheduler.getLastExecution())
             .addValue("NEXT_EXECUTION", scheduler.getNextExecution());
     namedParameterJdbcTemplate.update(PERSIST, parameters, holder);
@@ -149,7 +152,7 @@ public class SchedulerDAO {
             .addValue("ENABLED", scheduler.isEnabled())
             .addValue("EXPRESSION", scheduler.getExpression())
             .addValue("USER_NAME", scheduler.getUser())
-            .addValue("USER_ROLES", scheduler.getRoles())
+            .addValue("USER_ROLES", gson.toJson(scheduler.getRoles()))
             .addValue("LAST_EXECUTION", scheduler.getLastExecution())
             .addValue("NEXT_EXECUTION", scheduler.getNextExecution())
             .addValue("ID", scheduler.getId());
