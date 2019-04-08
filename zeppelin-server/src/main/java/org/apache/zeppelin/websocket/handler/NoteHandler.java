@@ -18,24 +18,23 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
-import org.apache.zeppelin.externalDTO.NoteDTO;
 import org.apache.zeppelin.websocket.dto.NoteDTOConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.File;
 import java.io.IOException;
@@ -124,7 +123,6 @@ public class NoteHandler extends AbstractHandler {
     connectionManager.removeNoteSubscribers(note.getId());
   }
 
-  @ZeppelinApi
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 
@@ -159,7 +157,6 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
-  @ZeppelinApi
   public void cloneNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromMessage);
 

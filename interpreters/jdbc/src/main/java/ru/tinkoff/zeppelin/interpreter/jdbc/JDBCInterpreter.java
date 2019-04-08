@@ -39,11 +39,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.Repository;
-import org.apache.zeppelin.interpreter.core.Interpreter;
-import org.apache.zeppelin.interpreter.core.InterpreterResult;
-import org.apache.zeppelin.interpreter.core.InterpreterResult.Code;
-import org.apache.zeppelin.interpreter.core.InterpreterResult.Message;
-import org.apache.zeppelin.interpreter.core.InterpreterResult.Message.Type;
+import ru.tinkoff.zeppelin.interpreter.Interpreter;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

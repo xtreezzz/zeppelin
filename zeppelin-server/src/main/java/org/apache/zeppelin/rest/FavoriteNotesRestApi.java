@@ -20,7 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
@@ -116,7 +115,6 @@ public class FavoriteNotesRestApi {
     }
   }
 
-  @ZeppelinApi
   @GetMapping(value = "/get_notes_ids", produces = "application/json")
   public ResponseEntity getNotesIds(@RequestParam("username") final String username) {
     try {
@@ -139,7 +137,6 @@ public class FavoriteNotesRestApi {
     }
   }
 
-  @ZeppelinApi
   @GetMapping(value = "/set_note_status", produces = "application/json")
   public ResponseEntity setNoteStatus(@RequestParam("username") final String username,
                                       @RequestParam("note_id") final String noteId,

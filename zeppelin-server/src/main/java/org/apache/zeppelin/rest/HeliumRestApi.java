@@ -19,12 +19,9 @@ package org.apache.zeppelin.rest;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.helium.HeliumBundleFactory;
 import org.apache.zeppelin.helium.V2.HeliumEnabledRegistries;
 import org.apache.zeppelin.helium.V2.HeliumRegistry;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.server.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.File;
 

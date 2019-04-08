@@ -385,7 +385,7 @@ public class HeliumBundleFactory {
     File bundleDir = getHeliumPackageDirectory(pkgName);
     File bundleCache = getHeliumPackageBundleCache(pkgName);
 
-    synchronized (this) {
+    synchronized (this.getClass()) {
       if (!rebuild && bundleCache.exists() && !bundleCache.isDirectory()) {
         return bundleCache;
       }

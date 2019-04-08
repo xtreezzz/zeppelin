@@ -16,7 +16,6 @@
  */
 package org.apache.zeppelin.rest;
 
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.ConfigurationService;
 import org.apache.zeppelin.service.SecurityService;
@@ -48,7 +47,6 @@ public class ConfigurationsRestApi extends AbstractRestApi {
     this.configurationService = configurationService;
   }
 
-  @ZeppelinApi
   @GetMapping(value = "/all", produces = "application/json")
   public ResponseEntity getAll() {
     try {
@@ -59,7 +57,6 @@ public class ConfigurationsRestApi extends AbstractRestApi {
     }
   }
 
-  @ZeppelinApi
   @GetMapping(value = "/prefix/{prefix}", produces = "application/json")
   public ResponseEntity getByPrefix(@PathVariable("prefix") final String prefix) {
     try {

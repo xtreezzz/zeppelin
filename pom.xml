@@ -52,23 +52,21 @@
   <inceptionYear>2013</inceptionYear>
 
   <modules>
-    <module>zeppelin-interpreter</module>
-    <module>zeppelin-zengine</module>
-    <module>interpreters/markdown</module>
+    <module>T-zeppelin-core</module>
+    <module>T-zeppelin-engine</module>
+    <module>T-zeppelin-migrations</module>
+    <module>T-zeppelin-repository</module>
+    <module>T-zeppelin-remote</module>
+    <module>T-zeppelin-interpreter</module>
 
+    <module>interpreters/markdown</module>
     <module>zeppelin-web</module>
     <module>zeppelin-server</module>
-    <module>zeppelin-jupyter</module>
-
     <module>zeppelin-dependency</module>
-    <module>zeppelin-core</module>
     <module>zeppelin-helium</module>
     <module>zeppelin-search</module>
-    <module>zeppelin-migrations</module>
-    <module>zeppelin-repository</module>
     <module>logger</module>
 
-    <module>zeppelin-interpreter-core</module>
     <module>interpreters/t-python</module>
     <module>interpreters/jdbc</module>
   </modules>

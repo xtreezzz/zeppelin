@@ -17,11 +17,10 @@
 
 package org.apache.zeppelin.markdown;
 
-import org.apache.zeppelin.interpreter.core.Interpreter;
-import org.apache.zeppelin.interpreter.core.InterpreterException;
-import org.apache.zeppelin.interpreter.core.InterpreterResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.zeppelin.interpreter.Interpreter;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 import java.util.Map;
 
@@ -55,7 +54,7 @@ public class Markdown extends Interpreter {
     }
 
     @Override
-    public void open(final Map<String, String> configuration, final String classPath) throws InterpreterException {
+    public void open(final Map<String, String> configuration, final String classPath) {
         this.configuration = configuration;
         this.classPath = classPath;
         this.parserType = configuration.get(MARKDOWN_PARSER_TYPE);
@@ -78,12 +77,12 @@ public class Markdown extends Interpreter {
     }
 
     @Override
-    public void cancel() throws InterpreterException {
+    public void cancel() {
 
     }
 
     @Override
-    public void close() throws InterpreterException {
+    public void close() {
 
     }
 

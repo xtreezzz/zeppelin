@@ -17,7 +17,6 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.NoteService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.IOException;
 

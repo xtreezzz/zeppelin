@@ -1,18 +1,6 @@
 package org.apache.zeppelin.rest;
 
 import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Scheduler;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
@@ -26,14 +14,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Scheduler;
+import ru.tinkoff.zeppelin.engine.NoteService;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 
 @RestController
 @RequestMapping("api/notebook/cron")
@@ -62,7 +51,6 @@ public class CronRestApi {
    *
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @PostMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity registerCronJob(
       @PathVariable("noteId") final String noteIdParam,
@@ -125,7 +113,6 @@ public class CronRestApi {
    *
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @GetMapping(value = "/check_valid", produces = "application/json")
   public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
       throws IllegalArgumentException {
@@ -141,7 +128,6 @@ public class CronRestApi {
    * @param noteIdParam ID of Note
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @DeleteMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity removeCronJob(@PathVariable("noteId") final String noteIdParam)
       throws IOException, IllegalArgumentException {
@@ -165,7 +151,6 @@ public class CronRestApi {
    * @param noteIdParam ID of Note
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @GetMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity getCronJob(@PathVariable("noteId") final String noteIdParam)
       throws IllegalArgumentException {

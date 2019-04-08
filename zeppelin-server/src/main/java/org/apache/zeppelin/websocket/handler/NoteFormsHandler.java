@@ -17,9 +17,6 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.notebook.Note;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -30,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -45,7 +44,6 @@ public class NoteFormsHandler extends AbstractHandler {
     super(connectionManager, noteRepository);
   }
 
-  @ZeppelinApi
   public void saveNoteForms(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 
@@ -59,7 +57,6 @@ public class NoteFormsHandler extends AbstractHandler {
     broadcastNoteForms(note);
   }
 
-  @ZeppelinApi
   public void removeNoteForms(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
 

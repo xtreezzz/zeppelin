@@ -21,13 +21,7 @@ import com.google.gson.Gson;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
-import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.realm.jwt.JWTAuthenticationToken;
-import org.apache.zeppelin.realm.jwt.KnoxJwtRealm;
-import org.apache.zeppelin.realm.kerberos.KerberosRealm;
-import org.apache.zeppelin.realm.kerberos.KerberosToken;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.ticket.TicketContainer;
@@ -41,8 +35,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import java.text.ParseException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created for org.apache.zeppelin.rest.message.
@@ -59,104 +55,27 @@ public class LoginRestApi {
     this.securityService = securityService;
   }
 
-  @ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity getLogin(final HttpServletRequest request) {
     JsonResponse response = null;
     final Map<String, Cookie> cookieMap = Maps.uniqueIndex(Arrays.asList(request.getCookies()), Cookie::getName);
-    if (isKnoxSSOEnabled()) {
-      final KnoxJwtRealm knoxJwtRealm = getJTWRealm();
-      final Cookie cookie = cookieMap.get(knoxJwtRealm.getCookieName());
-      if (cookie != null && cookie.getValue() != null) {
-        final Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
-        final JWTAuthenticationToken token = new JWTAuthenticationToken(null, cookie.getValue());
-        try {
-          final String name = knoxJwtRealm.getName(token);
-          if (!currentUser.isAuthenticated() || !currentUser.getPrincipal().equals(name)) {
-            response = proceedToLogin(currentUser, token);
-          }
-        } catch (final ParseException e) {
-          LOG.error("ParseException in LoginRestApi: ", e);
+
+      try {
+          final Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
+          response = proceedToLogin(currentUser, null);
+
+
+        if (null == response) {
+          LOG.warn("No Kerberos token received");
+          response = new JsonResponse(HttpStatus.UNAUTHORIZED, "", null);
         }
+        return response.build();
+      } catch (final AuthenticationException e) {
+        LOG.error("Error in Login: " + e);
       }
-      if (response == null) {
-        final Map<String, String> data = new HashMap<>();
-        data.put("redirectURL", constructKnoxUrl(knoxJwtRealm, knoxJwtRealm.getLogin()));
-        response = new JsonResponse(HttpStatus.OK, "", data);
-      }
-      return response.build();
-    } else {
-      final KerberosRealm kerberosRealm = getKerberosRealm();
-      if (null != kerberosRealm) {
-        try {
-          final KerberosToken kerberosToken = KerberosRealm.getKerberosTokenFromCookies(cookieMap);
-          if (null != kerberosToken) {
-            final Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();
-            final String name = (String) kerberosToken.getPrincipal();
-            if (!currentUser.isAuthenticated() || !currentUser.getPrincipal().equals(name)) {
-              response = proceedToLogin(currentUser, kerberosToken);
-            }
-          }
-          if (null == response) {
-            LOG.warn("No Kerberos token received");
-            response = new JsonResponse(HttpStatus.UNAUTHORIZED, "", null);
-          }
-          return response.build();
-        } catch (final AuthenticationException e){
-          LOG.error("Error in Login: " + e);
-        }
-      }
-    }
+
+
     return new JsonResponse(HttpStatus.METHOD_NOT_ALLOWED).build();
-  }
-
-  private KerberosRealm getKerberosRealm() {
-    final Collection realmsList = securityService.getRealmsList();
-    if (realmsList != null) {
-      for (final Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-        final Realm realm = iterator.next();
-        final String name = realm.getClass().getName();
-
-        LOG.debug("RealmClass.getName: " + name);
-
-        if (name.equals("org.apache.zeppelin.realm.kerberos.KerberosRealm")) {
-          return (KerberosRealm) realm;
-        }
-      }
-    }
-    return null;
-  }
-
-  private KnoxJwtRealm getJTWRealm() {
-    final Collection realmsList = securityService.getRealmsList();
-    if (realmsList != null) {
-      for (final Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-        final Realm realm = iterator.next();
-        final String name = realm.getClass().getName();
-
-        LOG.debug("RealmClass.getName: " + name);
-
-        if (name.equals("org.apache.zeppelin.realm.jwt.KnoxJwtRealm")) {
-          return (KnoxJwtRealm) realm;
-        }
-      }
-    }
-    return null;
-  }
-
-  private boolean isKnoxSSOEnabled() {
-    final Collection realmsList = securityService.getRealmsList();
-    if (realmsList != null) {
-      for (final Iterator<Realm> iterator = realmsList.iterator(); iterator.hasNext(); ) {
-        final Realm realm = iterator.next();
-        final String name = realm.getClass().getName();
-        LOG.debug("RealmClass.getName: " + name);
-        if (name.equals("org.apache.zeppelin.realm.jwt.KnoxJwtRealm")) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   private JsonResponse proceedToLogin(final Subject currentUser, final AuthenticationToken token) {
@@ -200,10 +119,9 @@ public class LoginRestApi {
    *
    * @return 200 response
    */
-  @ZeppelinApi
   @PostMapping(produces = "application/json")
   public ResponseEntity postLogin(@RequestParam("userName") final String userName,
-      @RequestParam("password") final String password) {
+                                  @RequestParam("password") final String password) {
     LOG.debug("userName:" + userName);
     JsonResponse response = null;
     // ticket set to anonymous for anonymous user. Simplify testing.
@@ -227,33 +145,19 @@ public class LoginRestApi {
     return response.build();
   }
 
-  @ZeppelinApi
   @PostMapping(value = "/logout", produces = "application/json")
   public ResponseEntity logout() {
     final JsonResponse response;
     logoutCurrentUser();
     HttpStatus status = null;
     final Map<String, String> data = new HashMap<>();
-    if (isKnoxSSOEnabled()) {
-      final KnoxJwtRealm knoxJwtRealm = getJTWRealm();
-      data.put("redirectURL", constructKnoxUrl(knoxJwtRealm, knoxJwtRealm.getLogout()));
-      data.put("isLogoutAPI", knoxJwtRealm.getLogoutAPI().toString());
-      response = new JsonResponse(status, "", data);
-    } else {
-      response = new JsonResponse(status, "", data);
-    }
+
+    response = new JsonResponse(status, "", data);
+
     LOG.warn(response.toString());
     return response.build();
   }
 
-  private String constructKnoxUrl(final KnoxJwtRealm knoxJwtRealm, final String path) {
-    final StringBuilder redirectURL = new StringBuilder(knoxJwtRealm.getProviderUrl());
-    redirectURL.append(path);
-    if (knoxJwtRealm.getRedirectParam() != null) {
-      redirectURL.append("?").append(knoxJwtRealm.getRedirectParam()).append("=");
-    }
-    return redirectURL.toString();
-  }
 
   private void logoutCurrentUser() {
     final Subject currentUser = org.apache.shiro.SecurityUtils.getSubject();

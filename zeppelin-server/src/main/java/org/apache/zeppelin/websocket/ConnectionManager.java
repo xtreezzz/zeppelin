@@ -18,13 +18,12 @@
 package org.apache.zeppelin.websocket;
 
 
-import org.apache.hadoop.mapreduce.jobhistory.Event;
-import org.apache.zeppelin.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.engine.EventService;
 
 import java.util.Map;
 import java.util.Queue;

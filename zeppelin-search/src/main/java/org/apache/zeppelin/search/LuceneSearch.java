@@ -38,10 +38,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * new IndexReader every time. Index is thread-safe, as re-uses single IndexWriter, which is
  * thread-safe.
  */
-public class LuceneSearch extends SearchService {
+public class LuceneSearch {
   private static final Logger logger = LoggerFactory.getLogger(LuceneSearch.class);
 
   private static final String SEARCH_FIELD_TEXT = "contents";
@@ -74,7 +74,6 @@ public class LuceneSearch extends SearchService {
   private IndexWriter indexWriter;
 
   public LuceneSearch(ZeppelinConfiguration zeppelinConfiguration) {
-    super("LuceneSearch-Thread");
     this.zeppelinConfiguration = zeppelinConfiguration;
     if (zeppelinConfiguration.isZeppelinSearchUseDisk()) {
       try {
@@ -101,7 +100,6 @@ public class LuceneSearch extends SearchService {
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search#query(java.lang.String)
    */
-  @Override
   public List<Map<String, String>> query(String queryStr) {
     if (null == directory) {
       throw new IllegalStateException(
@@ -190,9 +188,8 @@ public class LuceneSearch extends SearchService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.zeppelin.search.Search#updateIndexDoc(org.apache.zeppelin.notebook.Note)
+   * @see org.apache.zeppelin.search.Search#updateIndexDoc(Note)
    */
-  @Override
   public void updateIndexDoc(Note note) throws IOException {
     updateIndexNoteName(note);
 //    for (Paragraph p : note.getParagraphs()) {
@@ -297,7 +294,6 @@ public class LuceneSearch extends SearchService {
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search#addIndexDocs(java.util.Collection)
    */
-  @Override
   public void addIndexDocs(Collection<Note> collection) {
     int docsIndexed = 0;
     long start = System.nanoTime();
@@ -323,9 +319,8 @@ public class LuceneSearch extends SearchService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.zeppelin.search.Search#addIndexDoc(org.apache.zeppelin.notebook.Note)
+   * @see org.apache.zeppelin.search.Search#addIndexDoc(Note)
    */
-  @Override
   public void addIndexDoc(Note note) {
     try {
       addIndexDocAsync(note);
@@ -353,18 +348,16 @@ public class LuceneSearch extends SearchService {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.zeppelin.search.Search#deleteIndexDocs(org.apache.zeppelin.notebook.Note)
+   * @see org.apache.zeppelin.search.Search#deleteIndexDocs(Note)
    */
-  @Override
   public void deleteIndexDocs(String noteId) {
     deleteDoc(noteId, null);
   }
 
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search
-   *  #deleteIndexDoc(org.apache.zeppelin.notebook.Note, org.apache.zeppelin.notebook.Paragraph)
+   *  #deleteIndexDoc(Note, Paragraph)
    */
-  @Override
   public void deleteIndexDoc(String noteId, Paragraph p) {
     deleteDoc(noteId, p);
   }
@@ -384,7 +377,6 @@ public class LuceneSearch extends SearchService {
   /* (non-Javadoc)
    * @see org.apache.zeppelin.search.Search#close()
    */
-  @Override
   public void close() {
     try {
       indexWriter.close();

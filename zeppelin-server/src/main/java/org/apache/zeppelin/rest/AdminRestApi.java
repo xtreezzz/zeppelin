@@ -19,7 +19,6 @@ package org.apache.zeppelin.rest;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.LoggerRequest;
 import org.apache.zeppelin.rest.message.SchedulerConfigRequest;
 import org.apache.zeppelin.server.JsonResponse;
@@ -55,7 +54,6 @@ public class AdminRestApi {
    * @return List of current loggers' name and level with json format. It returns all of loggers'
    * name and level without name. With name, it returns only specific logger's name and level.
    */
-  @ZeppelinApi
   @GetMapping(produces = "application/json")
   public List<org.apache.log4j.Logger> getLoggerSetting(@RequestParam("name") final String name) {
     logger.debug("name: {}", name);
@@ -70,7 +68,6 @@ public class AdminRestApi {
    * @param loggerRequest logger's name and level with json format
    * @return The changed logger's name and level.
    */
-  @ZeppelinApi
   @PostMapping(produces = "application/json")
   public List<org.apache.log4j.Logger> setLoggerLevel(final LoggerRequest loggerRequest) {
     if (null == loggerRequest
@@ -93,7 +90,6 @@ public class AdminRestApi {
    * @param message - JSON with poolSize value.
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @PostMapping(value = "cron/pool/{id}", produces = "application/json")
   public ResponseEntity changeScheduler(@PathVariable("id") final String schedulerId, final String message) {
     logger.info("Change cron pool size with msg={}", message);
@@ -110,7 +106,6 @@ public class AdminRestApi {
    * @return JSON with status.OK
    */
   @GetMapping(value = "cron/pool", produces = "application/json")
-  @ZeppelinApi
   public ResponseEntity getQuartzSchedulerPoolInfo() {
     final List<SchedulerConfigRequest> settings = adminService.getSchedulersInfoList();
     if (settings == null) {

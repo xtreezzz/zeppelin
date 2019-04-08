@@ -20,20 +20,7 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.NoteInfo;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
@@ -54,14 +41,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.NoteService;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Rest api endpoint for the zeppelinRepository.
@@ -96,7 +83,6 @@ public class NotebookRestApi extends AbstractRestApi {
   /**
    * Get note authorization information.
    */
-  @ZeppelinApi
   @GetMapping(value = "/{noteId}/permissions", produces = "application/json")
   public ResponseEntity getNotePermissions(@PathVariable("noteId") final String noteId) throws IOException {
     checkIfUserIsAnon(getBlockNotAuthenticatedUserErrorMsg());
@@ -206,7 +192,6 @@ public class NotebookRestApi extends AbstractRestApi {
   /**
    * Set note authorization information.
    */
-  @ZeppelinApi
   @PutMapping(value = "/{noteId}/permissions", produces = "application/json")
   public ResponseEntity putNotePermissions(@PathVariable("noteId") final String noteId,
                                            final String req)
@@ -286,7 +271,6 @@ public class NotebookRestApi extends AbstractRestApi {
     return new JsonResponse(HttpStatus.OK).build();
   }
 
-  @ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity getNoteList() {
     final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
@@ -294,7 +278,6 @@ public class NotebookRestApi extends AbstractRestApi {
     return new JsonResponse(HttpStatus.OK, "", notesInfo).build();
   }
 
-  @ZeppelinApi
   @GetMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity getNote(@PathVariable("noteId") final String noteId) {
     return new JsonResponse(HttpStatus.OK, "", noteRepository.getNote(noteId)).build();
@@ -307,7 +290,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return note JSON with status.OK
    * @throws IOException
    */
-  @ZeppelinApi
   @GetMapping(value = "/export/{noteId}", produces = "application/json")
   public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) throws IOException {
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot export this note");
@@ -322,7 +304,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with new note ID
    * @throws IOException
    */
-  @ZeppelinApi
   @PostMapping(value = "/import", produces = "application/json")
   public ResponseEntity importNote(final String noteJson) throws IOException {
     final Note note = null;//zeppelinRepository.importNote(null, noteJson, getServiceContext().getAutheInfo());
@@ -336,7 +317,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with new note ID
    * @throws IOException
    */
-  @ZeppelinApi
   @PostMapping(produces = "application/json")
   public ResponseEntity createNote(final String message) throws IOException {
     final String user = securityService.getPrincipal();
@@ -376,7 +356,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param noteId ID of Note
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @DeleteMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity deleteNote(@PathVariable("noteId") final String noteId) throws IOException {
     LOG.info("Delete note {} ", noteId);
@@ -395,7 +374,6 @@ public class NotebookRestApi extends AbstractRestApi {
    *
    * @param noteId ID of Note
    */
-  @ZeppelinApi
   @PostMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity cloneNote(@PathVariable("noteId") final String noteId, final String message)
           throws IOException, IllegalArgumentException {
@@ -424,7 +402,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param message - JSON containing new name
    * @return JSON with status.OK
    */
-  @ZeppelinApi
   @PutMapping(value = "/{noteId}/rename", produces = "application/json")
   public ResponseEntity renameNote(@PathVariable("noteId") final String noteId,
                                    final String message) throws IOException {
@@ -456,7 +433,6 @@ public class NotebookRestApi extends AbstractRestApi {
    *
    * @param message - JSON containing paragraph's information
    */
-  @ZeppelinApi
   @PostMapping(value = "/{noteId}/paragraph", produces = "application/json")
   public ResponseEntity insertParagraph(@PathVariable("noteId") final String noteId, final String message)
           throws IOException {
@@ -500,7 +476,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param noteId ID of Note
    * @return JSON with information of the paragraph
    */
-  @ZeppelinApi
   @GetMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
   public ResponseEntity getParagraph(@PathVariable("noteId") final String noteId,
                                      @PathVariable("paragraphId") final String paragraphId) {
@@ -521,8 +496,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param message json containing the "text" and optionally the "title" of the paragraph, e.g.
    *                {"text" : "updated text", "title" : "Updated title" }
    */
-  //TODO(KOT): FIX
-  @ZeppelinApi
   @PutMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
   public ResponseEntity updateParagraph(@PathVariable("noteId") final String noteId,
                                         @PathVariable("paragraphId") final String paragraphId,
@@ -549,7 +522,6 @@ public class NotebookRestApi extends AbstractRestApi {
   }
 
 
-  @ZeppelinApi
   @PutMapping(value = "/{noteId}/paragraph/{paragraphId}/config", produces = "application/json")
   public ResponseEntity updateParagraphConfig(@PathVariable("noteId") final String noteId,
                                               @PathVariable("paragraphId") final String paragraphId,
@@ -572,7 +544,6 @@ public class NotebookRestApi extends AbstractRestApi {
   /**
    * Move paragraph REST API.
    */
-  @ZeppelinApi
   @PostMapping(value = "/{noteId}/paragraph/{paragraphId}/move/{newIndex}", produces = "application/json")
   public ResponseEntity moveParagraph(@PathVariable("noteId") final String noteId,
                                 @PathVariable("paragraphId") final String paragraphId,
@@ -605,7 +576,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @return JSON with status.OK
    * @throws IOException
    */
-  @ZeppelinApi
   @DeleteMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
   public ResponseEntity deleteParagraph(@PathVariable("noteId") final String noteId,
                                   @PathVariable("paragraphId") final String paragraphId) throws IOException {
@@ -629,7 +599,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @param noteId ID of Note
    * @return JSON with status.ok
    */
-  @ZeppelinApi
   @PutMapping(value = "/{noteId}/clear", produces = "application/json")
   public ResponseEntity clearAllParagraphOutput(@PathVariable("noteId") final String noteId)
           throws IOException {
@@ -652,7 +621,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @ZeppelinApi
   @PostMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity runNoteJobs(@PathVariable("noteId") final String noteId,
                                     @RequestParam("waitToFinish") final Boolean waitToFinish)
@@ -684,7 +652,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @ZeppelinApi
   @DeleteMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity stopNoteJobs(@PathVariable("noteId") final String noteId) throws IllegalArgumentException {
     LOG.info("stop note jobs {} ", noteId);
@@ -709,7 +676,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @ZeppelinApi
   @GetMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity getNoteJobStatus(@PathVariable("noteId") final String noteId)
           throws IOException, IllegalArgumentException {
@@ -731,7 +697,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @ZeppelinApi
   @GetMapping(value = "/job/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity getNoteParagraphStatus(@PathVariable("noteId") final String noteId,
                                                   @PathVariable("paragraphId") final String paragraphId)
@@ -872,7 +837,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IllegalArgumentException
    */
   //TODO(KOT): FIX
-  @ZeppelinApi
   @GetMapping(value = "/jobmanager/", produces = "application/json")
   public ResponseEntity getJobListforNote() throws IOException, IllegalArgumentException {
     LOG.info("Get note jobs for job manager");
@@ -892,7 +856,6 @@ public class NotebookRestApi extends AbstractRestApi {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  @ZeppelinApi
   @GetMapping(value = "/jobmanager/{lastUpdateUnixtime}/", produces = "application/json")
   public ResponseEntity getUpdatedJobListforNote(@PathVariable("lastUpdateUnixtime") long lastUpdateUnixTime)
           throws IOException, IllegalArgumentException {
@@ -907,7 +870,6 @@ public class NotebookRestApi extends AbstractRestApi {
   /**
    * Search for a Notes with permissions.
    */
-  @ZeppelinApi
   @GetMapping(value = "/search", produces = "application/json")
   public ResponseEntity search(@RequestParam("q") final String queryTerm) {
     LOG.info("Searching notes for: {}", queryTerm);

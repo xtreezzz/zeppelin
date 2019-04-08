@@ -18,11 +18,6 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
-import org.apache.zeppelin.NoteExecutorService;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -30,6 +25,10 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.NoteExecutorService;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.IOException;
 
@@ -76,7 +75,6 @@ public class RunnerHandler extends AbstractHandler {
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
-  @ZeppelinApi
   public void cancelParagraph(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
     final ServiceContext serviceContext = getServiceContext(fromSockMessage);
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.RUNNER, serviceContext, conn);

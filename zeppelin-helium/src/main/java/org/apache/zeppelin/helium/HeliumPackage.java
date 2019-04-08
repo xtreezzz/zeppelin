@@ -17,14 +17,12 @@
 package org.apache.zeppelin.helium;
 
 import com.google.gson.Gson;
-import org.apache.zeppelin.annotation.Experimental;
 
 import java.util.Map;
 
 /**
  * Helium package definition
  */
-@Experimental
 public class HeliumPackage {
   private static final Gson gson = new Gson();
 

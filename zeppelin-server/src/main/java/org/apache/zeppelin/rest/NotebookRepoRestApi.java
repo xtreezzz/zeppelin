@@ -20,8 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.annotation.ZeppelinApi;
 import org.apache.zeppelin.rest.message.NotebookRepoSettingsRequest;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
@@ -37,6 +35,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.util.Collections;
 
@@ -63,7 +62,6 @@ public class NotebookRepoRestApi extends AbstractRestApi {
   /**
    * List all notebook repository.
    */
-  @ZeppelinApi
   @GetMapping(produces = "application/json")
   public ResponseEntity listRepoSettings() {
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
@@ -76,7 +74,6 @@ public class NotebookRepoRestApi extends AbstractRestApi {
   /**
    * Reload notebook repository.
    */
-  @ZeppelinApi
   @GetMapping(value = "/reload", produces = "application/json")
   public ResponseEntity refreshRepo() {
     final AuthenticationInfo subject = new AuthenticationInfo(securityService.getPrincipal());
@@ -92,7 +89,6 @@ public class NotebookRepoRestApi extends AbstractRestApi {
   /**
    * Update a specific note repository.
    */
-  @ZeppelinApi
   @PutMapping(produces = "application/json")
   public ResponseEntity updateRepoSetting(final String payload) {
     if (StringUtils.isBlank(payload)) {

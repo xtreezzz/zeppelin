@@ -20,11 +20,13 @@ package org.apache.zeppelin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 
 @SpringBootApplication
 @EnableScheduling
+@ComponentScan(basePackages = {"org.apache.zeppelin", "ru.tinkoff.zeppelin"})
 public class Server {
   public static void main(final String[] args) {
     SpringApplication.run(Server.class, args);

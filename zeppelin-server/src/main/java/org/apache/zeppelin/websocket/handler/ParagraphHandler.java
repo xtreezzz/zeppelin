@@ -18,24 +18,20 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.EventService;
-import org.apache.zeppelin.NoteService;
-import org.apache.zeppelin.externalDTO.ParagraphDTO;
-import org.apache.zeppelin.notebook.Note;
-import org.apache.zeppelin.notebook.Paragraph;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
-import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
-import org.apache.zeppelin.websocket.dto.NoteDTOConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

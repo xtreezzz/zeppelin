@@ -19,20 +19,10 @@ package org.apache.zeppelin.rest;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.Repository.ProxyProtocol;
-import org.apache.zeppelin.annotation.ZeppelinApi;
-import org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig;
-import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource;
-import org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource.Status;
-import org.apache.zeppelin.interpreter.configuration.InterpreterOption;
-import org.apache.zeppelin.interpreter.configuration.InterpreterProperty;
-import org.apache.zeppelin.interpreterV2.server.InterpreterInstaller;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
@@ -44,14 +34,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
+import ru.tinkoff.zeppelin.engine.server.InterpreterInstaller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -95,7 +87,6 @@ public class InterpreterRestApi {
   /**
    * List of dependency resolving repositories.
    */
-  @ZeppelinApi
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
     try {
@@ -112,7 +103,6 @@ public class InterpreterRestApi {
    *
    * @param message Repository
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/repository", produces = "application/json")
   public ResponseEntity addRepository(@RequestBody final String message) {
@@ -133,7 +123,6 @@ public class InterpreterRestApi {
    *
    * @param repoId ID of repository
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
   public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
@@ -151,7 +140,6 @@ public class InterpreterRestApi {
   /**
    * List of all sources.
    */
-  @ZeppelinApi
   @GetMapping(value = "/source", produces = "application/json")
   public ResponseEntity listSources() {
     try {
@@ -168,7 +156,6 @@ public class InterpreterRestApi {
    *
    * @param message InterpreterArtifactSource
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/source", produces = "application/json")
   public ResponseEntity addSource(@RequestBody final String message) {
@@ -183,9 +170,9 @@ public class InterpreterRestApi {
       );
       if (!StringUtils.isAllBlank(installationDir)) {
         request.setPath(installationDir);
-        request.setStatus(Status.INSTALLED);
+        request.setStatus(InterpreterArtifactSource.Status.INSTALLED);
       } else {
-        request.setStatus(Status.NOT_INSTALLED);
+        request.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
       }
       interpreterOptionRepository.saveSource(request);
 
@@ -203,7 +190,6 @@ public class InterpreterRestApi {
    *
    * @param interpreterName of interpreter
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/source/{name}", produces = "application/json")
   public ResponseEntity removeSource(@PathVariable("name") final String interpreterName) {
@@ -225,7 +211,6 @@ public class InterpreterRestApi {
   /**
    * List all interpreter settings.
    */
-  @ZeppelinApi
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
     try {
@@ -240,7 +225,6 @@ public class InterpreterRestApi {
   /**
    * Get a setting.
    */
-  @ZeppelinApi
   @GetMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity getSetting(@PathVariable("shebang") final String shebang) {
     try {
@@ -262,7 +246,6 @@ public class InterpreterRestApi {
    *
    * @param message NewInterpreterSettingRequest
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(@RequestBody final String message) {
@@ -283,7 +266,6 @@ public class InterpreterRestApi {
     }
   }
 
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity updateSetting(@RequestBody final String message, @PathVariable("shebang") final String shebang) {
@@ -306,7 +288,6 @@ public class InterpreterRestApi {
   /**
    * Remove interpreter setting.
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity removeSetting(@PathVariable("shebang") final String shebang) {
@@ -324,7 +305,6 @@ public class InterpreterRestApi {
   /**
    * Restart interpreter setting.
    */
-  @ZeppelinApi
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
   public ResponseEntity restartSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
