@@ -190,7 +190,7 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   /**
-   * May be called form another thread.
+   * May be called from another thread.
    **/
   @Override
   public void cancel() {
@@ -204,7 +204,7 @@ public class JDBCInterpreter extends Interpreter {
   }
 
   /**
-   * May be called form another thread.
+   * May be called from another thread.
    */
   @Override
   public void close() {
@@ -246,7 +246,7 @@ public class JDBCInterpreter extends Interpreter {
                                        @Nonnull final Map<String, String> configuration) {
     if (isOpened() && isAlive()) {
       final String precode = configuration.get("query.precode");
-      if (precode != null && !precode.equals("")) {
+      if (precode != null && !precode.trim().equals("")) {
         final InterpreterResult precodeResult = executeQuery(precode, false);
         if (precodeResult.code().equals(Code.ERROR)) {
           return precodeResult;
@@ -256,7 +256,7 @@ public class JDBCInterpreter extends Interpreter {
       final InterpreterResult queryResult = executeQuery(st, true);
 
       final String postcode = configuration.get("query.postcode");
-      if (postcode != null && !postcode.equals("")) {
+      if (postcode != null && !postcode.trim().equals("")) {
         final InterpreterResult postcodeResult = executeQuery(postcode, false);
         if (postcodeResult.code().equals(Code.ERROR)) {
           LOGGER.error("Postcode query failed: {}", postcodeResult.message());
@@ -272,33 +272,54 @@ public class JDBCInterpreter extends Interpreter {
   /**
    * Util method to execute a single query.
    *
-   * @param queryString - Query to execute.
+   * @param queryString - Query to execute, may consist of multiple statements, never {@code null}.
    * @param processResult - Flag of result processing, if {@code true} - result
    *                        will be converted to table format, otherwise result has no message.
-   * @return Result of query execution.
+   * @return Result of query execution, never {@code null}.
    */
+  @Nonnull
   private InterpreterResult executeQuery(@Nonnull final String queryString, final boolean processResult) {
     ResultSet resultSet = null;
     final StringBuilder exception = new StringBuilder();
     try {
       this.query = Objects.requireNonNull(connection).createStatement();
       prepareQuery();
-      resultSet = Objects.requireNonNull(this.query).executeQuery(queryString);
-      if (processResult) {
-        final String processedTable = getResults(resultSet);
-        if (processedTable == null) {
-          return new InterpreterResult(Code.ERROR,
-              Collections.singletonList(new Message(Type.TEXT, "Failed to process query result")));
+
+      final InterpreterResult queryResult = new InterpreterResult(Code.SUCCESS);
+      // queryString may consist of multiple statements, so it's needed to process all results.
+      boolean results = Objects.requireNonNull(this.query).execute(queryString);
+      int updateCount = 0;
+      do {
+        if (results) {
+          // if result is ResultSet.
+          resultSet = Objects.requireNonNull(this.query).getResultSet();
+          if (resultSet != null && processResult) {
+            // if it is needed to process result to table format.
+            final String processedTable = getResults(resultSet);
+            if (processedTable == null) {
+              queryResult.add(new Message(Type.TEXT, "Failed to process query result"));
+            }
+            queryResult.add(new Message(Type.TABLE, processedTable));
+          }
+        } else {
+          // if result is empty or if it is update statement, e.g. insert.
+          updateCount = Objects.requireNonNull(this.query).getUpdateCount();
+          if (updateCount != -1) {
+            queryResult.add(new Message(Type.TEXT,
+                "Query executed successfully. Affected rows: " + updateCount));
+          }
         }
-        return new InterpreterResult(Code.SUCCESS,
-            Collections.singletonList(new Message(Type.TABLE, processedTable)));
-      }
-      return new InterpreterResult(Code.SUCCESS);
+        // go to the next result set, previous would be closed.
+        results = Objects.requireNonNull(this.query).getMoreResults();
+      } while (results || updateCount != -1);
+      return queryResult;
     } catch (final Exception e) {
+      // increment exception message if smth went wrong.
       exception.append("Exception during processing the query:\n")
           .append(ExceptionUtils.getStackTrace(e))
           .append("\n");
     } finally {
+      // cleanup.
       try {
         if (resultSet != null) {
           resultSet.close();
@@ -307,10 +328,12 @@ public class JDBCInterpreter extends Interpreter {
           Objects.requireNonNull(this.query).close();
         }
       } catch (final Exception e) {
+        // increment exception message if smth went wrong.
         exception.append("Exception during connection closing:\n")
             .append(ExceptionUtils.getStackTrace(e));
       }
     }
+    // reachable if smth went wrong during query processing.
     return new InterpreterResult(Code.ERROR, Collections.singletonList(
         new Message(Type.TEXT, exception.toString())));
   }
@@ -348,7 +371,7 @@ public class JDBCInterpreter extends Interpreter {
   /**
    * Downloads driver by the maven artifact.
    *
-   * @param artifact Driver artifact.
+   * @param artifact Driver artifact, never {@code null}.
    * @return Absolute path to driver directory, {@code null} if installation failed.
    */
   @Nullable
@@ -390,7 +413,7 @@ public class JDBCInterpreter extends Interpreter {
    * Gets driver folder, notice that this method should be called after
    *
    * {@link JDBCInterpreter#isInstalled(String)}.
-   * @param artifact driver maven artifact.
+   * @param artifact driver maven artifact, never {@code null}.
    * @return absolute path to driver folder.
    */
   @Nonnull
