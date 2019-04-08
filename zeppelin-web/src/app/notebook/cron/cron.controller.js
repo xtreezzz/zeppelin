@@ -17,11 +17,19 @@ angular.module('zeppelinWebApp').controller('CronCtrl', CronCtrl);
 function CronCtrl($scope, $http, baseUrlSrv) {
   $scope.$on('setNoteContent', function(event, note) {
     noteId = note.databaseId;
+    loadCronConfiguration();
+  });
+
+  $scope.$on('updateNote', function() {
+    loadCronConfiguration();
+  });
+
+  function loadCronConfiguration() {
     $http.get(`${baseUrlSrv.getRestApiBase()}/notebook/cron/` + noteId).then((response) => {
       $scope.cron.enable = response.data.body.enable;
       $scope.initCron(response.data.body.cron);
     });
-  });
+  }
 
   let noteId;
   $scope.cron = {
@@ -108,9 +116,7 @@ function CronCtrl($scope, $http, baseUrlSrv) {
       $scope.cron.timePeriod.selected = 'Weekly';
       let cronDays = dayOfW.split(',');
       $scope.cron.daysOfWeek.forEach((day) => {
-        if (cronDays.includes(day.name.substr(0, 3).toUpperCase())) {
-          day.checked = true;
-        }
+        day.checked = cronDays.includes(day.name.substr(0, 3).toUpperCase());
       });
 
     // Daily

@@ -17,6 +17,9 @@ import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.storage.SchedulerDAO;
+import org.apache.zeppelin.websocket.ConnectionManager;
+import org.apache.zeppelin.websocket.Operation;
+import org.apache.zeppelin.websocket.SockMessage;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,14 +44,17 @@ public class CronRestApi {
   private final NoteService noteRepository;
   private final SecurityService securityService;
   private final SchedulerDAO schedulerDAO;
+  private final ConnectionManager connectionManager;
 
   public CronRestApi(
       final NoteService noteRepository,
       @Qualifier("NoSecurityService") final SecurityService securityService,
-      final SchedulerDAO schedulerDAO) {
+      final SchedulerDAO schedulerDAO,
+      ConnectionManager connectionManager) {
     this.noteRepository = noteRepository;
     this.securityService = securityService;
     this.schedulerDAO = schedulerDAO;
+    this.connectionManager = connectionManager;
   }
 
   /**
@@ -60,7 +66,7 @@ public class CronRestApi {
   @PostMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity registerCronJob(
       @PathVariable("noteId") final String noteIdParam,
-      @RequestBody  Map<String, String> params
+      @RequestBody Map<String, String> params
   ) throws IllegalArgumentException {
 
     String expression = params.get("expression");
@@ -88,7 +94,8 @@ public class CronRestApi {
       scheduler = schedulerDAO.update(scheduler);
     } else {
       final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
-      final LocalDateTime nextExecution = LocalDateTime.ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
+      final LocalDateTime nextExecution = LocalDateTime
+          .ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
       scheduler = new Scheduler(
           null,
           note.getId(),
@@ -105,6 +112,11 @@ public class CronRestApi {
     HashMap<String, Object> responce = new HashMap<>(2);
     responce.put("newCronExpression", scheduler.getExpression());
     responce.put("enable", scheduler.isEnabled());
+    SockMessage message = new SockMessage(Operation.NOTE_UPDATED);
+    message.put("path", note.getPath());
+    message.put("config", note.getGuiConfiguration());
+    message.put("info", null);
+    connectionManager.broadcast(note.getId(), message);
     return new JsonResponse(HttpStatus.OK, responce).build();
   }
 
@@ -114,7 +126,7 @@ public class CronRestApi {
    * @return JSON with status.OK
    */
   @ZeppelinApi
-  @PostMapping(value = "/check_valid", produces = "application/json")
+  @GetMapping(value = "/check_valid", produces = "application/json")
   public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
       throws IllegalArgumentException {
     if (!CronExpression.isValidExpression(expression)) {
@@ -156,7 +168,7 @@ public class CronRestApi {
   @ZeppelinApi
   @GetMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity getCronJob(@PathVariable("noteId") final String noteIdParam)
-      throws IOException, IllegalArgumentException {
+      throws IllegalArgumentException {
     LOG.info("Get cron job note {}", noteIdParam);
 
     long noteId = Long.parseLong(noteIdParam);
