@@ -42,6 +42,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,6 +113,7 @@ public class InterpreterRestApi {
    * @param message Repository
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/repository", produces = "application/json")
   public ResponseEntity addRepository(@RequestBody final String message) {
     try {
@@ -131,6 +134,7 @@ public class InterpreterRestApi {
    * @param repoId ID of repository
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
   public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
     try {
@@ -165,6 +169,7 @@ public class InterpreterRestApi {
    * @param message InterpreterArtifactSource
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/source", produces = "application/json")
   public ResponseEntity addSource(@RequestBody final String message) {
     try {
@@ -199,6 +204,7 @@ public class InterpreterRestApi {
    * @param interpreterName of interpreter
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/source/{name}", produces = "application/json")
   public ResponseEntity removeSource(@PathVariable("name") final String interpreterName) {
     try {
@@ -257,6 +263,7 @@ public class InterpreterRestApi {
    * @param message NewInterpreterSettingRequest
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/setting", produces = "application/json")
   public ResponseEntity newSettings(@RequestBody final String message) {
     logger.info("Trying to add option via msg: {}", message);
@@ -277,6 +284,7 @@ public class InterpreterRestApi {
   }
 
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity updateSetting(@RequestBody final String message, @PathVariable("shebang") final String shebang) {
     logger.info("Update interpreterSetting {}", shebang);
@@ -299,6 +307,7 @@ public class InterpreterRestApi {
    * Remove interpreter setting.
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @DeleteMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity removeSetting(@PathVariable("shebang") final String shebang) {
     try {
@@ -316,6 +325,7 @@ public class InterpreterRestApi {
    * Restart interpreter setting.
    */
   @ZeppelinApi
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
   public ResponseEntity restartSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
     logger.info("Restart interpreterSetting {}, msg={}", settingId, message);
