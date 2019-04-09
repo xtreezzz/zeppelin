@@ -16,6 +16,7 @@
  */
 package org.apache.zeppelin.rest;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,8 @@ import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helium Rest Api.
@@ -104,23 +107,26 @@ public class HeliumRestApi {
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
-    final Note note = noteService.getNote(noteId);
-    if (note == null) {
-      return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
-    }
 
-    final Paragraph paragraph = null;//note.getParagraph(paragraphId);
-    if (paragraph == null) {
-      return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
-              .build();
-    }
-    try {
-      //return new JsonResponse(HttpStatus.OK, "", helium.suggestApp(paragraph)).build();
-      return null;
-    } catch (final RuntimeException e) {
-      logger.error(e.getMessage(), e);
-      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
-    }
+    return new JsonResponse(HttpStatus.OK, "", new ArrayList<String>()).build();
+
+//    final Note note = noteService.getNote(noteId);
+//    if (note == null) {
+//      return new JsonResponse(HttpStatus.NOT_FOUND, "Note " + noteId + " not found").build();
+//    }
+//
+//    final Paragraph paragraph = null;//note.getParagraph(paragraphId);
+//    if (paragraph == null) {
+//      return new JsonResponse(HttpStatus.NOT_FOUND, "Paragraph " + paragraphId + " not found")
+//              .build();
+//    }
+//    try {
+//      //return new JsonResponse(HttpStatus.OK, "", helium.suggestApp(paragraph)).build();
+//      return null;
+//    } catch (final RuntimeException e) {
+//      logger.error(e.getMessage(), e);
+//      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
+//    }
 
   }
 
@@ -322,16 +328,29 @@ public class HeliumRestApi {
 
   @GetMapping(value = "/order/visualization", produces = "application/json")
   public ResponseEntity getVisualizationPackageOrder() {
-    /*
+
     try {
-      final List<String> order = helium.getVisualizationPackageOrder();
+      final List<String> order = Lists.newArrayList("zeppelin-highmaps",
+              "ultimate-heatmap-chart",
+              "ultimate-column-chart",
+              "ultimate-column-chart-negative-values",
+              "ultimate-dual-column-chart",
+              "zeppelin-aggrid",
+              "ultimate-area-chart",
+              "ultimate-scatter-chart",
+              "zeppelin-highcharts-scatterplot",
+              "ultimate-range-chart",
+              "ultimate-pie-chart",
+              "ultimate-line-chart",
+              "zeppelin-highcharts-bubble",
+              "zeppelin-bubblechart",
+              "zeppelin-highcharts-heatmap");
+
       return new JsonResponse(HttpStatus.OK, order).build();
     } catch (final RuntimeException e) {
       logger.error(e.getMessage(), e);
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()).build();
     }
-    */
-    return null;
   }
 
   @PostMapping(value = "/order/visualization", produces = "application/json")

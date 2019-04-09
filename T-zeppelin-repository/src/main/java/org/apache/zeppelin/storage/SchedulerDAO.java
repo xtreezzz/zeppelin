@@ -97,7 +97,7 @@ public class SchedulerDAO {
           "       NEXT_EXECUTION\n" +
           "FROM SCHEDULER\n" +
           "WHERE NEXT_EXECUTION < :NEXT_EXECUTION\n" +
-          "AND ENABLED = 'TRUE'";
+          "AND ENABLED = 'true'";
 
   private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
