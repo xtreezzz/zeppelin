@@ -77,7 +77,7 @@ function FavoriteNotesService($rootScope, $http, baseUrlSrv) {
 
   function generaNameFromPath(notes) {
     notes.forEach((note) => {
-      note.name = note.path.substring(note.path.lastIndexOf('/') + 1);
+      note.name = note.path;
     });
   }
 
