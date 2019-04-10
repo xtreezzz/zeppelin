@@ -25,6 +25,7 @@ import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import ru.tinkoff.zeppelin.engine.handler.InterpreterResultHandler;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
+import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.ZeppelinThriftService;
 
@@ -72,7 +73,13 @@ public class InterpreterProcessServer {
 
         @Override
         public void handleInterpreterResult(final String UUID, final String payload) {
-          InterpreterResultHandler.getInstance().handle(UUID, new Gson().fromJson(payload, InterpreterResult.class));
+          try {
+            InterpreterResultHandler.getInstance().handle(UUID, new Gson().fromJson(payload, InterpreterResult.class));
+          } catch (final Exception e) {
+            final InterpreterResult error = PredefinedInterpreterResults.ERROR_WHILE_INTERPRET;
+            error.add(new InterpreterResult.Message(InterpreterResult.Message.Type.TEXT, e.getMessage()));
+            InterpreterResultHandler.getInstance().handle(UUID, error);
+          }
         }
       });
 

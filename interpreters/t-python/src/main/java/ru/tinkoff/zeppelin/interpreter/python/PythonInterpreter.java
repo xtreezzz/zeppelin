@@ -25,10 +25,11 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PythonInterpreter extends Interpreter {
 
@@ -79,8 +80,8 @@ public class PythonInterpreter extends Interpreter {
                                        Map<String, String> userContext,
                                        Map<String, String> configuration) {
     final Map<String, String> params = new HashMap<>();
-    params.put("Z_ENV_name", "test");
-    params.put("Z_ENV_name2", "test2");
+    //params.put("Z_ENV_name", "test");
+    //params.put("Z_ENV_name2", "test2");
 
 
     final String pythonWorkingDir = configuration.get("python.working.dir");
@@ -214,11 +215,15 @@ public class PythonInterpreter extends Interpreter {
       if (files != null) {
         for (final File file : files) {
           final InterpreterResult.Message.Type type;
-          switch (FilenameUtils.getExtension(file.getName()).toLowerCase()) {
+          final String extension = FilenameUtils.getExtension(file.getName()).toLowerCase();
+          switch (extension) {
             case "html":
               type = InterpreterResult.Message.Type.HTML;
               break;
             case "img":
+            case "jpeg":
+            case "jpg":
+            case "png":
               type = InterpreterResult.Message.Type.IMG;
               break;
             case "table":
@@ -232,8 +237,15 @@ public class PythonInterpreter extends Interpreter {
             default:
               type = null;
           }
-
-          if (type != null) {
+          if (type == InterpreterResult.Message.Type.IMG) {
+            String payload = String.format(
+                    "<div style='width:auto;height:auto'>" +
+                            "<img src=data:image/%s;base64,%s  style='width=auto;height:auto'/>" +
+                     "</div>",
+                    extension,
+                    new String(Base64.getEncoder().encode(FileUtils.readFileToByteArray(file))));
+            result.add(new InterpreterResult.Message(InterpreterResult.Message.Type.HTML, payload));
+          } else if (type != null) {
             result.add(new InterpreterResult.Message(type, FileUtils.readFileToString(file, "UTF-8")));
           }
         }

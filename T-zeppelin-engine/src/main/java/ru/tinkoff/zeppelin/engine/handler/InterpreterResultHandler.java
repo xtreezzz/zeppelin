@@ -18,6 +18,7 @@ package ru.tinkoff.zeppelin.engine.handler;
 
 import org.apache.zeppelin.storage.*;
 import org.apache.zeppelin.storage.ZLog.ET;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,8 @@ import javax.annotation.PostConstruct;
 @Component
 public class InterpreterResultHandler extends AbstractHandler {
 
+  private ApplicationContext applicationContext;
+
   private static InterpreterResultHandler instance;
 
   public static InterpreterResultHandler getInstance() {
@@ -50,13 +53,15 @@ public class InterpreterResultHandler extends AbstractHandler {
                                   final JobPayloadDAO jobPayloadDAO,
                                   final NoteDAO noteDAO,
                                   final ParagraphDAO paragraphDAO,
-                                  final FullParagraphDAO fullParagraphDAO) {
+                                  final FullParagraphDAO fullParagraphDAO,
+                                  final ApplicationContext applicationContext) {
     super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
+    this.applicationContext = applicationContext;
   }
 
   @PostConstruct
-  public void postConstruct() {
-    instance = this;
+  private void init() {
+    instance = applicationContext.getBean(InterpreterResultHandler.class);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
