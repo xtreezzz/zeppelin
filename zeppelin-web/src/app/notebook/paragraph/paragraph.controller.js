@@ -1120,17 +1120,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     matches = matches.filter(function(item) {
       let caption = item.snippet || item.caption || item.value;
-      let isTjdbc = $scope.paragraph.shebang === '%tjdbc';
-      $scope.editor.setOptions({
-        enableLiveAutocompletion: isTjdbc,
-      });
-      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
+      if (caption === prev) {
         return false;
       }
-      if (item.meta === 'keyword-tinkoff') {
-        item.meta = 'keyword';
-      }
-
       prev = caption;
       return true;
     });
@@ -1158,13 +1150,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           return false;
         }
       }
-      let isTjdbc = $scope.paragraph.shebang === '%tjdbc';
       let caption = item.snippet || item.caption || item.value;
-      if (caption === prev || (isTjdbc && item.meta === 'keyword')) {
+      if (caption === prev) {
         return false;
-      }
-      if (item.meta === 'keyword-tinkoff') {
-        item.meta = 'keyword';
       }
       prev = caption;
       return true;

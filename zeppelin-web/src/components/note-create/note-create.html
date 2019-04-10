@@ -36,16 +36,6 @@ limitations under the License.
                    id="notePath" ng-model="note.path"
                    ng-enter="noteCreateCtrl.handleNameEnter()" />
           </div>
-          <!-- default interpreter -->
-          <div class="btn-group default-interpreter-select" ng-show="!noteCreateCtrl.clone">
-            <label for="defaultInterpreter">Default Interpreter</label>
-            <select id="defaultInterpreter"
-                    name="defaultInterpreter"
-                    class="form-control"
-                    ng-model="note.defaultInterpreter"
-                    ng-options="option.name for option in interpreterSettings">
-            </select>
-          </div>
         </div> <!-- end: form-group -->
         <div class="panel panel-default note-name-desc-panel">
           <div class="panel-heading">

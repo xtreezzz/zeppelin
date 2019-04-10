@@ -12,8 +12,6 @@
  * limitations under the License.
  */
 
-import {ParagraphStatus} from '../notebook/paragraph/paragraph.status';
-
 angular.module('zeppelinWebApp').controller('InterpreterCtrl', InterpreterCtrl);
 
 function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv, ngToast,
@@ -23,9 +21,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   let interpreterSettingsTmp = [];
   $scope.interpreterSettings = [];
   $scope.availableInterpreters = {};
-  $scope.showAddNewSetting = false;
   $scope.showRepositoryInfo = false;
-  $scope.showSourcesInfo = false;
   $scope.searchInterpreter = '';
   $scope._ = _;
   $scope.interpreterPropertyTypes = [];
@@ -114,7 +110,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
-        checkDownloadingDependencies();
       }).catch(function(res) {
         if (res.status === 401) {
           ngToast.danger({
@@ -128,32 +123,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         }
         console.log('Error %o %o', res.status, res.data ? res.data.message : '');
       });
-  };
-
-  const checkDownloadingDependencies = function() {
-    let isDownloading = false;
-    for (let index = 0; index < $scope.interpreterSettings.length; index++) {
-      let setting = $scope.interpreterSettings[index];
-      if (setting.status === 'DOWNLOADING_DEPENDENCIES') {
-        isDownloading = true;
-      }
-
-      if (setting.status === ParagraphStatus.ERROR || setting.errorReason) {
-        ngToast.danger({content: 'Error setting properties for interpreter \'' +
-        setting.group + '.' + setting.name + '\': ' + setting.errorReason,
-          verticalPosition: 'top',
-          dismissOnTimeout: false,
-        });
-      }
-    }
-
-    if (isDownloading) {
-      $timeout(function() {
-        if ($route.current.$$route.originalPath === '/interpreter') {
-          getInterpreterSettings();
-        }
-      }, 2000);
-    }
   };
 
   let getAvailableInterpreters = function() {
@@ -209,15 +178,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option.session = false;
       option.process = false;
     }
-  };
-
-  $scope.defaultValueByType = function(setting) {
-    if (setting.propertyType === 'checkbox') {
-      setting.propertyValue = false;
-      return;
-    }
-
-    setting.propertyValue = '';
   };
 
   $scope.setPerUserOption = function(shebang, sessionOption) {
@@ -348,7 +308,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       callback: function(result) {
         if (result) {
           let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-          let setting = $scope.interpreterSettings[index];
+          let setting = angular.copy($scope.interpreterSettings[index]);
           // add missing field of option
           if (!setting.config) {
             setting.config = {};
@@ -364,16 +324,15 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
             setting.permissions.owners[i] = setting.permissions.owners[i].trim();
           }
 
-          let request = angular.copy(setting);
           thisConfirm.$modalFooter.find('button').addClass('disabled');
           thisConfirm.$modalFooter.find('button:contains("OK")')
             .html('<i class="fa fa-circle-o-notch fa-spin"></i> Saving Setting');
 
-          $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1), request)
+          $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1), setting)
             .then(function(res) {
               $scope.interpreterSettings[index] = res.data.body;
               removeTMPSettings(index);
-              thisConfirm.close();
+              // thisConfirm.close();
             })
             .catch(function(res) {
               const message = res.data ? res.data.message : 'Could not connect to server.';
@@ -498,7 +457,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
     let request = angular.copy($scope.newInterpreterSetting);
 
-    // Change properties to proper request format
     let newProperties = angular.copy(
     $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName].properties);
 
@@ -526,7 +484,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   };
 
   $scope.cancelInterpreterSetting = function() {
-    $scope.showAddNewSetting = false;
     $scope.resetNewInterpreterSetting();
   };
 

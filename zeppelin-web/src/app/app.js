@@ -107,10 +107,6 @@ let zeppelinWebApp = angular.module('zeppelinWebApp', requiredModules)
         controller: 'NotebookCtrl',
         resolve: visBundleLoad,
       })
-      .when('/jobmanager', {
-        templateUrl: 'app/jobmanager/jobmanager.html',
-        controller: 'JobManagerCtrl',
-      })
       .when('/interpreter', {
         templateUrl: 'app/interpreter/interpreter.html',
         controller: 'InterpreterCtrl',
@@ -118,19 +114,6 @@ let zeppelinWebApp = angular.module('zeppelinWebApp', requiredModules)
       .when('/monitoring', {
         templateUrl: 'app/monitoring/monitoring.html',
         controller: 'MonitoringCtrl',
-      })
-      .when('/notebookRepos', {
-        templateUrl: 'app/notebook-repository/notebook-repository.html',
-        controller: 'NotebookRepositoryCtrl',
-        controllerAs: 'noterepo',
-      })
-      .when('/credential', {
-        templateUrl: 'app/credential/credential.html',
-        controller: 'CredentialCtrl',
-      })
-      .when('/helium', {
-        templateUrl: 'app/helium/helium.html',
-        controller: 'HeliumCtrl',
       })
       .when('/configuration', {
         templateUrl: 'app/configuration/configuration.html',
