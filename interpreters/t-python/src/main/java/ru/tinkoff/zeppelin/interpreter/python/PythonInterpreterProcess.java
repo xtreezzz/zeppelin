@@ -22,10 +22,10 @@ import jep.JepException;
 import org.apache.commons.cli.*;
 import sun.misc.Signal;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class PythonInterpreterProcess {
 
@@ -48,6 +48,14 @@ public class PythonInterpreterProcess {
     outputFilePath.setRequired(true);
     options.addOption(outputFilePath);
 
+    final Option paramsFilePath = new Option("params_file",
+            "params_file",
+            true,
+            "path to python params file"
+    );
+    paramsFilePath.setRequired(true);
+    options.addOption(paramsFilePath);
+
     CommandLine cmd = null;
     try {
       cmd = new DefaultParser().parse(options, args);
@@ -58,6 +66,7 @@ public class PythonInterpreterProcess {
 
     final String pathToScript = cmd.getOptionValue("py_script");
     final String pathToOutput = cmd.getOptionValue("output_file");
+    final String pathToParamsFile = cmd.getOptionValue("params_file");
 
     final JepConfig jepConfig = new JepConfig()
             .setRedirectOutputStreams(true);
@@ -65,8 +74,7 @@ public class PythonInterpreterProcess {
     final File output = new File(pathToOutput);
     try (final FileOutputStream fis = new FileOutputStream(output, true);
          final BufferedOutputStream bos = new BufferedOutputStream(fis);
-         final PrintStream ps = new PrintStream(bos);
-         final Jep jep = new Jep(jepConfig)) {
+         final PrintStream ps = new PrintStream(bos)) {
 
       System.getenv("PYTHONPATH");
       System.setOut(ps);
@@ -77,8 +85,32 @@ public class PythonInterpreterProcess {
         System.exit(1);
       });
 
-      try {
+      try(final Jep jep = new Jep(jepConfig)) {
+        jep.setInteractive(true);
+
+        // load runtime properties from file
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(pathToParamsFile));
+
+        // inject values into python
+        final Map<String, Object> params = new HashMap<>();
+        for (String key : properties.stringPropertyNames()) {
+          params.put(key, properties.get(key).toString());
+          if(properties.get(key).toString().equals("ZEPPPELIN_NULL")) {
+            continue;
+          }
+          jep.set(key, properties.get(key).toString());
+        }
+
+        // execute script
         jep.runScript(pathToScript);
+
+        // read updated valuest from pythin process
+        for (Map.Entry<String,Object> entry : params.entrySet()) {
+          properties.put(entry.getKey(), jep.getValue(entry.getKey()).toString());
+        }
+        // store updated properties into file
+        properties.store(new FileOutputStream(pathToParamsFile), null);
 
       } catch (final JepException je) {
         ps.println(je.getLocalizedMessage());

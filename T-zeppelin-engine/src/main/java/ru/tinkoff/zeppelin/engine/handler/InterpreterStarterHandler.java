@@ -83,7 +83,8 @@ public class InterpreterStarterHandler extends AbstractHandler {
             option.getConfig().getClassName(),
             remoteServerClassPath,
             thriftAddr,
-            thriftPort);
+            thriftPort,
+            option.getJvmOptions());
   }
 
 }

@@ -338,11 +338,6 @@ public class JDBCInterpreter extends Interpreter {
         new Message(Type.TEXT, exception.toString())));
   }
 
-  @Override
-  public FormType getFormType() {
-    return null;
-  }
-
   /**
    * Sets query timeout and max row count.
    */

@@ -42,6 +42,7 @@
       <groupId>org.apache.zeppelin</groupId>
       <artifactId>T-zeppelin-interpreter</artifactId>
       <version>1.0.0-T-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -66,13 +67,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>${dependency.commons-io}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dependency.junit}</version>
-      <scope>test</scope>
     </dependency>
 
   </dependencies>

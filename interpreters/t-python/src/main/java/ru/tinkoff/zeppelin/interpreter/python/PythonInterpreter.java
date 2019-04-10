@@ -24,9 +24,11 @@ import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.FileOutputStream;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PythonInterpreter extends Interpreter {
 
@@ -76,6 +78,10 @@ public class PythonInterpreter extends Interpreter {
                                        Map<String, String> noteContext,
                                        Map<String, String> userContext,
                                        Map<String, String> configuration) {
+    final Map<String, String> params = new HashMap<>();
+    params.put("Z_ENV_name", "test");
+    params.put("Z_ENV_name2", "test2");
+
 
     final String pythonWorkingDir = configuration.get("python.working.dir");
     final String instanceTempFolder = pythonWorkingDir + "/" + getSessionUUID();
@@ -123,6 +129,20 @@ public class PythonInterpreter extends Interpreter {
       final File scriptFile = new File(scriptDest);
       FileUtils.write(new File(scriptDest), st, "UTF-8");
 
+      // write params
+      final Map<String, String> overridedParams = new HashMap<>();
+      getAllEnvVeriables(st).forEach(s -> overridedParams.put(s, "ZEPPPELIN_NULL"));
+      overridedParams.putAll(params);
+
+      final String paramsDest = instanceTempDir.getAbsolutePath() + "/" + getSessionUUID() + ".params";
+      final File paramsFile = new File(paramsDest);
+      final Properties properties = new Properties();
+      for (Map.Entry<String, String> entry : overridedParams.entrySet()) {
+        properties.put(entry.getKey(), entry.getValue());
+      }
+      properties.store(new FileOutputStream(paramsFile), null);
+
+      // create out
       final String outputDest = instanceTempDir.getAbsolutePath() + "/" + getSessionUUID() + ".out";
       final File outputFile = new File(outputDest);
 
@@ -133,12 +153,14 @@ public class PythonInterpreter extends Interpreter {
                       " -Djava.library.path=\"%s\"" +
                       " ru.tinkoff.zeppelin.interpreter.python.PythonInterpreterProcess" +
                       " -py_script \"%s\"" +
-                      " -output_file \"%s\"",
+                      " -output_file \"%s\"" +
+                      " -params_file \"%s\"",
               additionalJvmArgs,
               classPath,
               jepDestFile.getParentFile().getAbsolutePath(),
               scriptFile.getAbsolutePath(),
-              outputFile.getAbsolutePath()
+              outputFile.getAbsolutePath(),
+              paramsFile.getAbsolutePath()
       );
 
       // start server process
@@ -204,6 +226,7 @@ public class PythonInterpreter extends Interpreter {
               break;
             case "txt":
             case "out":
+            case "params":
               type = InterpreterResult.Message.Type.TEXT;
               break;
             default:
@@ -229,10 +252,5 @@ public class PythonInterpreter extends Interpreter {
         // SKIP
       }
     }
-  }
-
-  @Override
-  public FormType getFormType() {
-    return null;
   }
 }

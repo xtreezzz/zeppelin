@@ -34,6 +34,7 @@
             <groupId>org.apache.zeppelin</groupId>
             <artifactId>T-zeppelin-interpreter</artifactId>
             <version>1.0.0-T-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -54,7 +55,6 @@
             <version>3.8.2</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

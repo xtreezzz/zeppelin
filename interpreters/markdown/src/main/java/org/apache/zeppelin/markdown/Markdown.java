@@ -103,10 +103,4 @@ public class Markdown extends Interpreter {
             return result;
         }
     }
-
-    @Override
-    public FormType getFormType() {
-        return FormType.SIMPLE;
-    }
-
 }

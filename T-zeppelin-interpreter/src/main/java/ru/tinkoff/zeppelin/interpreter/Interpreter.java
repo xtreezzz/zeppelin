@@ -16,9 +16,15 @@
  */
 package ru.tinkoff.zeppelin.interpreter;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class Interpreter {
+
+  private Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[a-zA-Z0-9]+" + "))");
 
   protected Map<String, String> configuration;
   protected String classPath;
@@ -41,7 +47,6 @@ public abstract class Interpreter {
 
   public abstract void open(final Map<String, String> configuration, final String classPath);
 
-
   public abstract boolean isReusableForConfiguration(final Map<String, String> configuration);
 
   public abstract void  cancel();
@@ -53,22 +58,12 @@ public abstract class Interpreter {
                                                 final Map<String, String> userContext,
                                                 final Map<String, String> configuration);
 
-
-  /**
-   * Dynamic form handling
-   * see http://zeppelin.apache.org/docs/dynamicform.html
-   *
-   * @return FormType.SIMPLE enables simple pattern replacement (eg. Hello ${name=world}),
-   * FormType.NATIVE handles form in API
-   */
-  public abstract FormType getFormType();
-
-
-  /**
-   * Type of interpreter.
-   */
-  public enum FormType {
-    NATIVE, SIMPLE, NONE
+  protected Set<String> getAllEnvVeriables(final String st) {
+    Set<String> matches = new HashSet<>();
+    Matcher m = envVariables.matcher(st);
+    while (m.find()) {
+      matches.add(m.group(1));
+    }
+    return matches;
   }
-
 }

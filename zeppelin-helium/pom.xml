@@ -36,14 +36,11 @@
       <version>1.0.0-T-SNAPSHOT</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>21.0</version>
+      <version>${com.google.guava}</version>
     </dependency>
-
-
 
     <dependency>
       <groupId>com.github.eirslett</groupId>

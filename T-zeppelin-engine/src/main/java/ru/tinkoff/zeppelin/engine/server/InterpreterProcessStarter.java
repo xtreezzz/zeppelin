@@ -43,10 +43,11 @@ public class InterpreterProcessStarter {
                            final String interpreterClassName,
                            final String remoteServerClassPath,
                            final String thriftAddr,
-                           final long thriftPort) {
+                           final long thriftPort,
+                           final String jvmOptions) {
 
     final String cmd = String.format("java " +
-                    //" -agentlib:jdwp=transport=dt_socket,server=n,address=5005,suspend=y" +
+                    " %s" +
                     " -cp \"./*:%s/*\"" +
                     " ru.tinkoff.zeppelin.remote.RemoteInterpreterServer" +
                     " -h %s" +
@@ -54,6 +55,7 @@ public class InterpreterProcessStarter {
                     " -sb %s" +
                     " -cp %s" +
                     " -cn %s ",
+            jvmOptions,
             remoteServerClassPath,
             thriftAddr,
             thriftPort,

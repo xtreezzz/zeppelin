@@ -38,6 +38,7 @@
       <groupId>org.apache.zeppelin</groupId>
       <artifactId>T-zeppelin-interpreter</artifactId>
       <version>1.0.0-T-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
