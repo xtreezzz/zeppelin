@@ -77,8 +77,15 @@ public class CronRestApi {
     Scheduler scheduler = schedulerDAO.getByNote(note.getId());
 
     if (scheduler != null) {
+
       scheduler.setExpression(expression);
       scheduler.setEnabled(isEnable);
+      if(isEnable) {
+        final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
+        final LocalDateTime nextExecution = LocalDateTime
+                .ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
+        scheduler.setNextExecution(nextExecution);
+      }
       scheduler = schedulerDAO.update(scheduler);
     } else {
       final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
