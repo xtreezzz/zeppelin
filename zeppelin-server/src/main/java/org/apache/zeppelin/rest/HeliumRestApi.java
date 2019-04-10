@@ -104,11 +104,15 @@ public class HeliumRestApi {
     }
   }
 
+  public static class Suggestion {
+    private final List<String> available = new ArrayList<>();
+  }
+
   @GetMapping(value = "/suggest/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity suggest(@PathVariable("noteId") final String noteId,
                           @PathVariable("paragraphId") final String paragraphId) {
 
-    return new JsonResponse(HttpStatus.OK, "", new ArrayList<String>()).build();
+    return new JsonResponse(HttpStatus.OK, "", new Suggestion()).build();
 
 //    final Note note = noteService.getNote(noteId);
 //    if (note == null) {
@@ -188,7 +192,7 @@ public class HeliumRestApi {
         return new JsonResponse(HttpStatus.OK).build();
       } else {
         final String stringified = FileUtils.readFileToString(bundle);
-        return new JsonResponse(HttpStatus.OK, stringified).build();
+        return new ResponseEntity<>(stringified, HttpStatus.OK);
       }
 
     } catch (final Exception e) {

@@ -165,6 +165,10 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
     return $http.get(url)
       .then(function(response, status) {
         const bundle = response.data;
+        if (bundle.substring(0, 'ERROR:'.length) === 'ERROR:') {
+          console.error(`Failed to get bundle: ${pkgName}`, bundle);
+          return ''; // empty bundle will be filtered later
+        }
 
         return bundle;
       })
@@ -254,7 +258,6 @@ export default function HeliumService($http, $sce, baseUrlSrv) {
       return merged;
     });
   };
-
 
   const p = this.getAllEnabledPackages()
     .then((enabledPackageSearchResults) => {
