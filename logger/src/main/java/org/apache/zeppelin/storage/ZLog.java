@@ -22,7 +22,7 @@ import javax.annotation.PostConstruct;
 import org.apache.zeppelin.SystemEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 
@@ -93,19 +93,21 @@ public class ZLog {
 
   private static final Logger logger = LoggerFactory.getLogger(ZLog.class);
 
+  private final ApplicationContext applicationContext;
+
   private static ZLog instance;
 
   @Nonnull
   private final EventLogDAO storage;
 
-  @Autowired
-  public ZLog(@Nonnull final EventLogDAO storage) {
+  public ZLog(@Nonnull final EventLogDAO storage, final ApplicationContext applicationContext) {
     this.storage = storage;
+    this.applicationContext = applicationContext;
   }
 
   @PostConstruct
-  public void postConstruct() {
-    instance = this;
+  public void init() {
+    instance = applicationContext.getBean(ZLog.class);
   }
 
 
