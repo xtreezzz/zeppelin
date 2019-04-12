@@ -513,14 +513,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     return path.matches("^[A-Za-z]:\\\\.*");
   }
 
-  public boolean isAnonymousAllowed() {
-    return getBoolean(ConfVars.ZEPPELIN_ANONYMOUS_ALLOWED);
-  }
-
-  public boolean isUsernameForceLowerCase() {
-    return getBoolean(ConfVars.ZEPPELIN_USERNAME_FORCE_LOWERCASE);
-  }
-
   public boolean isNotebookPublic() {
     return getBoolean(ConfVars.ZEPPELIN_NOTEBOOK_PUBLIC);
   }
@@ -807,7 +799,6 @@ public class ZeppelinConfiguration extends XMLConfiguration {
     // Allows a way to specify a ',' separated list of allowed origins for rest and websockets
     // i.e. http://localhost:8080
     ZEPPELIN_ALLOWED_ORIGINS("zeppelin.server.allowed.origins", "*"),
-    ZEPPELIN_ANONYMOUS_ALLOWED("zeppelin.anonymous.allowed", true),
     ZEPPELIN_USERNAME_FORCE_LOWERCASE("zeppelin.username.force.lowercase", false),
     ZEPPELIN_CREDENTIALS_PERSIST("zeppelin.credentials.persist", true),
     ZEPPELIN_CREDENTIALS_ENCRYPT_KEY("zeppelin.credentials.encryptKey", null),

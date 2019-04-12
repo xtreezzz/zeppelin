@@ -15,23 +15,38 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.service;
 
-import java.util.Collection;
-import java.util.List;
+package org.apache.zeppelin.realm;
+
+import com.google.gson.Gson;
+
 import java.util.Set;
 
-public interface SecurityService {
+public class AuthenticationInfo {
+  private static final Gson gson = new Gson();
 
-  String getPrincipal();
+  String user;
+  Set<String> roles;
 
-  Set<String> getAssociatedRoles();
+  public AuthenticationInfo(String user) {
+    this.user = user;
+  }
 
-  Collection getRealmsList();
+  public AuthenticationInfo(String user, Set<String> roles) {
+    this.user = user;
+    this.roles = roles;
+  }
 
-  boolean isAuthenticated();
+  public AuthenticationInfo(String user, String roles) {
+    this.user = user;
+    this.roles = gson.fromJson(roles, Set.class);
+  }
 
-  List<String> getMatchedUsers(String searchText, int numUsersToFetch);
+  public String getUser() {
+    return user;
+  }
 
-  List<String> getMatchedRoles();
+  public Set<String> getRoles() {
+    return roles;
+  }
 }

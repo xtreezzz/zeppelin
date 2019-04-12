@@ -19,8 +19,9 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.notebook.display.GUI;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.BadRequestException;
-import org.apache.zeppelin.service.ServiceContext;
 import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -45,20 +46,16 @@ public class ParagraphHandler extends AbstractHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParagraphHandler.class);
 
-  private final FullParagraphDAO fullParagraphDAO;
-
   @Autowired
   public ParagraphHandler(final NoteService noteService,
-                          final ConnectionManager connectionManager,
-                          final FullParagraphDAO fullParagraphDAO) {
+                          final ConnectionManager connectionManager) {
     super(connectionManager, noteService);
-    this.fullParagraphDAO = fullParagraphDAO;
   }
 
   public void updateParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph paragraph = safeLoadParagraph("id", fromMessage, note);
 
     //final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
@@ -79,9 +76,9 @@ public class ParagraphHandler extends AbstractHandler {
   }
 
   public void removeParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     noteService.removeParagraph(note, p);
@@ -99,9 +96,9 @@ public class ParagraphHandler extends AbstractHandler {
   }
 
   public void clearParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     p.setJobId(null);
@@ -109,9 +106,9 @@ public class ParagraphHandler extends AbstractHandler {
   }
 
   public void moveParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph paragraphFrom = safeLoadParagraph("id", fromMessage, note);
     final int indexFrom = paragraphFrom.getPosition();
     final int indexTo = ((Double) fromMessage.getNotNull("index")).intValue();
@@ -135,9 +132,9 @@ public class ParagraphHandler extends AbstractHandler {
   }
 
   public String insertParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final int index = ((Double) fromMessage.getNotNull("index")).intValue();
 
     final List<Paragraph> paragraphs = noteService.getParapraphs(note);

@@ -16,7 +16,8 @@
  */
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -35,10 +36,10 @@ public class EventLogHandler extends AbstractHandler {
   }
 
   public void log(final SockMessage message) {
-    final ServiceContext serviceContext = getServiceContext(message);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final String eventMessage = message.getNotNull("message");
     final String description = message.getNotNull("description");
 
-    ZLog.log(ET.UI_EVENT, eventMessage, description, serviceContext.getAutheInfo().getUser());
+    ZLog.log(ET.UI_EVENT, eventMessage, description, authenticationInfo.getUser());
   }
 }

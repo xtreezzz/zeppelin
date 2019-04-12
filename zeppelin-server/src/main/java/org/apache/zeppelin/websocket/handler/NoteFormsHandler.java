@@ -18,7 +18,8 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -45,9 +46,9 @@ public class NoteFormsHandler extends AbstractHandler {
   }
 
   public void saveNoteForms(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromSockMessage);
+    AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, authenticationInfo, conn);
     final Map<String, Object> noteParams = fromSockMessage.getNotNull("noteParams");
 
     //TODO(KOT): wrong field
@@ -58,9 +59,9 @@ public class NoteFormsHandler extends AbstractHandler {
   }
 
   public void removeNoteForms(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromSockMessage);
+    AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.WRITER, authenticationInfo, conn);
     final String formName = fromSockMessage.getNotNull("formName");
 
     note.getGuiConfiguration().getForms().remove(formName);

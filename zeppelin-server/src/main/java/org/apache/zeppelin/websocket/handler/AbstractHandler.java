@@ -19,13 +19,11 @@ package org.apache.zeppelin.websocket.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.zeppelin.notebook.display.Input;
+import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
-import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.user.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
@@ -56,31 +54,16 @@ public abstract class AbstractHandler {
     this.noteService = noteService;
   }
 
-  protected ServiceContext getServiceContext(final SockMessage message) {
-    final AuthenticationInfo authInfo = new AuthenticationInfo(message.principal, message.roles, message.ticket);
-    final Set<String> userAndRoles = new HashSet<>();
-    userAndRoles.add(message.principal);
-    if (message.roles != null && !"".equals(message.roles)) {
-      final HashSet<String> roles = gson.fromJson(message.roles, new TypeToken<HashSet<String>>() {
-      }.getType());
-      if (roles != null) {
-        userAndRoles.addAll(roles);
-      }
-    }
-    return new ServiceContext(authInfo, userAndRoles);
-  }
-
-
   protected Note safeLoadNote(final String paramName,
                               final SockMessage message,
                               final Permission permission,
-                              final ServiceContext serviceContext,
+                              final AuthenticationInfo authenticationInfo,
                               final WebSocketSession conn) {
     final Long noteId = connectionManager.getAssociatedNoteId(conn) != null
             ? connectionManager.getAssociatedNoteId(conn)
             : noteService.getNote((String)message.getNotNull(paramName)).getId();
 
-    checkPermission(noteId, permission, serviceContext);
+    checkPermission(noteId, permission, authenticationInfo);
     final Note note = noteService.getNote(noteId);
     if (note == null) {
       throw new NoteNotFoundException("Can't find note with id '" + noteId +"'.");
@@ -116,35 +99,39 @@ public abstract class AbstractHandler {
 
   protected void checkPermission(final Long noteId,
                                  final Permission permission,
-                                 final ServiceContext context) {
+                                 final AuthenticationInfo authenticationInfo) {
     Note target = noteService.getNote(noteId);
     if (permission == Permission.ANY || target == null) {
       return;
     }
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
     boolean isAllowed = false;
     Set<String> allowed = null;
     switch (permission) {
       case READER:
-        isAllowed = true;//target.getReaders().contains(noteId, context.getUserAndRoles());
+        isAllowed = userRoles.removeAll(target.getReaders());
         allowed = target.getReaders();
         break;
       case WRITER:
-        isAllowed = true;//notePermissionsService.isWriter(noteId, context.getUserAndRoles());
+        isAllowed = userRoles.removeAll(target.getWriters());
         allowed = target.getWriters();
         break;
       case RUNNER:
-        isAllowed = true;//notePermissionsService.isRunner(noteId, context.getUserAndRoles());
+        isAllowed = userRoles.removeAll(target.getRunners());
         allowed = target.getRunners();
         break;
       case OWNER:
-        isAllowed = true;//notePermissionsService.isOwner(noteId, context.getUserAndRoles());
+        isAllowed = userRoles.removeAll(target.getOwners());
         allowed = target.getOwners();
         break;
     }
     if (!isAllowed) {
       final String errorMsg = "Insufficient privileges to " + permission + " note.\n" +
               "Allowed users or roles: " + allowed + "\n" + "But the user " +
-              context.getAutheInfo().getUser() + " belongs to: " + context.getUserAndRoles();
+              authenticationInfo.getUser() + " belongs to: " + authenticationInfo.getRoles();
       throw new ForbiddenException(errorMsg);
     }
   }

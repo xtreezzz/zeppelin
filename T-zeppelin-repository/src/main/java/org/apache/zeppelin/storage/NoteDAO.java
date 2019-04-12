@@ -118,9 +118,9 @@ public class NoteDAO {
     note.setId(dbNoteId);
     note.setUuid(noteId);
     note.getOwners().addAll(permission.get("owners"));
-    note.getOwners().addAll(permission.get("readers"));
-    note.getOwners().addAll(permission.get("runners"));
-    note.getOwners().addAll(permission.get("writers"));
+    note.getReaders().addAll(permission.get("readers"));
+    note.getRunners().addAll(permission.get("runners"));
+    note.getWriters().addAll(permission.get("writers"));
     note.getGuiConfiguration().setParams(gui.getParams());
     note.getGuiConfiguration().setForms(gui.getForms());
     note.setBatchJobId(jobBatchId);

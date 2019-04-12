@@ -65,23 +65,10 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
 
   private static final String ROLE_NAMES_DELIMETER = ",";
 
-  final String keystorePass = "activeDirectoryRealm.systemPassword";
-
   private String userSearchAttributeName = "sAMAccountName";
-
-  private String hadoopSecurityCredentialPath;
 
   public String getUserSearchAttributeName() {
     return userSearchAttributeName;
-  }
-
-  public void setUserSearchAttributeName(final String userSearchAttributeName) {
-    this.userSearchAttributeName = userSearchAttributeName;
-  }
-
-
-  public void setHadoopSecurityCredentialPath(final String hadoopSecurityCredentialPath) {
-    this.hadoopSecurityCredentialPath = hadoopSecurityCredentialPath;
   }
 
   /**
@@ -113,7 +100,7 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
       defaultFactory.setSearchBase(this.searchBase);
       defaultFactory.setUrl(this.url);
       defaultFactory.setSystemUsername(this.systemUsername);
-      defaultFactory.setSystemPassword(getSystemPassword());
+      defaultFactory.setSystemPassword(this.systemPassword);
       this.ldapContextFactory = defaultFactory;
     }
 
@@ -144,16 +131,6 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
           "retrieve authorization for user [" + principals + "].";
       throw new AuthorizationException(msg, var5);
     }
-  }
-
-  private String getSystemPassword() {
-    String password = "";
-    if (StringUtils.isEmpty(this.hadoopSecurityCredentialPath)) {
-      password = this.systemPassword;
-    } else {
-      password = LdapRealm.getSystemPassword(hadoopSecurityCredentialPath, keystorePass);
-    }
-    return password;
   }
 
   /**
@@ -227,6 +204,11 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
   protected AuthorizationInfo queryForAuthorizationInfo(final PrincipalCollection principals,
                                                         final LdapContextFactory ldapContextFactory) throws NamingException {
     final String username = (String) getAvailablePrincipal(principals);
+    return queryForAuthorizationInfo(username, ldapContextFactory);
+  }
+
+  protected AuthorizationInfo queryForAuthorizationInfo(final String principal,
+                                                        final LdapContextFactory ldapContextFactory) throws NamingException {
 
     // Perform context search
     final LdapContext ldapContext = ldapContextFactory.getSystemLdapContext();
@@ -234,7 +216,7 @@ public class ActiveDirectoryGroupRealm extends AbstractLdapRealm {
     Set<String> roleNames;
 
     try {
-      roleNames = getRoleNamesForUser(username, ldapContext);
+      roleNames = getRoleNamesForUser(principal, ldapContext);
     } finally {
       LdapUtils.closeContext(ldapContext);
     }

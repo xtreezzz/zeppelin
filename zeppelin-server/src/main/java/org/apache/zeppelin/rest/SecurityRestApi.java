@@ -17,14 +17,11 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.service.SecurityService;
-import org.apache.zeppelin.ticket.TicketContainer;
+import org.apache.shiro.SecurityUtils;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,13 +40,6 @@ public class SecurityRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(SecurityRestApi.class);
   private static final Gson gson = new Gson();
 
-  private final SecurityService securityService;
-
-  @Autowired
-  public SecurityRestApi(@Qualifier("NoSecurityService") final SecurityService securityService) {
-    this.securityService = securityService;
-  }
-
   /**
    * Get ticket
    * Returns username & ticket
@@ -60,23 +50,14 @@ public class SecurityRestApi {
    */
   @GetMapping(value = "/ticket", produces = "application/json")
   public ResponseEntity ticket() {
-    final String principal = securityService.getPrincipal();
-    final Set<String> roles = securityService.getAssociatedRoles();
-    final JsonResponse response;
-    // ticket set to anonymous for anonymous user. Simplify testing.
-    final String ticket;
-    if ("anonymous".equals(principal)) {
-      ticket = "anonymous";
-    } else {
-      ticket = TicketContainer.instance.getTicket(principal);
-    }
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final Map<String, String> data = new HashMap<>();
-    data.put("principal", principal);
-    data.put("roles", gson.toJson(roles));
-    data.put("ticket", ticket);
+    data.put("principal", authenticationInfo.getUser());
+    data.put("roles", gson.toJson(authenticationInfo.getRoles()));
+    data.put("ticket", UUID.randomUUID().toString());
 
-    response = new JsonResponse(HttpStatus.OK, "", data);
+    final JsonResponse response = new JsonResponse(HttpStatus.OK, "", data);
     LOG.warn(response.toString());
     return response.build();
   }
@@ -91,12 +72,16 @@ public class SecurityRestApi {
   @GetMapping(value = "/userlist/{searchText}", produces = "application/json")
   public ResponseEntity getUserList(@PathVariable("searchText") final String searchText) {
 
-    final int numUsersToFetch = 5;
+
+    /*final int numUsersToFetch = 5;
     final List<String> usersList = securityService.getMatchedUsers(searchText, numUsersToFetch);
     final List<String> rolesList = securityService.getMatchedRoles();
 
+*/
     final List<String> autoSuggestUserList = new ArrayList<>();
     final List<String> autoSuggestRoleList = new ArrayList<>();
+
+    /*
     Collections.sort(usersList);
     Collections.sort(rolesList);
     usersList.sort((o1, o2) -> {
@@ -123,11 +108,12 @@ public class SecurityRestApi {
         autoSuggestRoleList.add(role);
       }
     }
-
+    */
     final Map<String, List> returnListMap = new HashMap<>();
     returnListMap.put("users", autoSuggestUserList);
     returnListMap.put("roles", autoSuggestRoleList);
 
     return new JsonResponse(HttpStatus.OK, "", returnListMap).build();
+
   }
 }

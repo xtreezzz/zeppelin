@@ -139,6 +139,11 @@
       <artifactId>shiro-web</artifactId>
       <version>${org.apache.shiro}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-spring</artifactId>
+      <version>${org.apache.shiro}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.commons</groupId>

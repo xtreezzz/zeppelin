@@ -18,9 +18,9 @@
 package org.apache.zeppelin.websocket;
 
 import java.io.IOException;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
-import org.apache.zeppelin.ticket.TicketContainer;
 import org.apache.zeppelin.websocket.handler.CompletionHandler;
 import org.apache.zeppelin.websocket.handler.EventLogHandler;
 import org.apache.zeppelin.websocket.handler.NoteFormsHandler;
@@ -78,64 +78,28 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   }
 
   @Override
-  public void afterConnectionEstablished(final WebSocketSession session) throws Exception {
-    //sessionectionManager.addSession(session);
+  public void afterConnectionEstablished(final WebSocketSession session) {
   }
 
   @Override
-  public void handleTransportError(final WebSocketSession session, final Throwable exception) throws Exception {
-    //sessionectionManager.removeSession(session);
+  public void handleTransportError(final WebSocketSession session, final Throwable exception) {
     sessionectionManager.removeSubscribersFromAllNote(session);
   }
 
   @Override
-  public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
-    //sessionectionManager.removeSession(session);
+  public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) {
     sessionectionManager.removeSubscribersFromAllNote(session);
   }
 
   @Override
-  protected void handleTextMessage(final WebSocketSession session, final TextMessage message) throws Exception {
+  protected void handleTextMessage(final WebSocketSession session, final TextMessage message) {
     LOG.info("Start handle message: " + message.getPayload());
     try {
+      if (session.getPrincipal() != null) {
+        AuthorizationService.setThreadLocalPrincipal(session.getPrincipal().getName());
+      }
+
       final SockMessage messagereceived = SockMessage.fromJson(message.getPayload());
-      if (messagereceived.op != Operation.PING) {
-        LOG.debug("RECEIVE: " + messagereceived.op +
-                ", RECEIVE PRINCIPAL: " + messagereceived.principal +
-                ", RECEIVE TICKET: " + messagereceived.ticket +
-                ", RECEIVE ROLES: " + messagereceived.roles +
-                ", RECEIVE DATA: " + messagereceived.data);
-      }
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("RECEIVE MSG = " + messagereceived);
-      }
-
-      final String ticket = TicketContainer.instance.getTicket(messagereceived.principal);
-      if (ticket != null && (messagereceived.ticket == null || !ticket.equals(messagereceived.ticket))) {
-        if (StringUtils.isEmpty(messagereceived.ticket)) {
-          LOG.debug("{} message: invalid ticket {} != {}", messagereceived.op, messagereceived.ticket, ticket);
-        } else {
-          if (!messagereceived.op.equals(Operation.PING)) {
-            session.sendMessage(new SockMessage(Operation.SESSION_LOGOUT).put("info", "Your ticket is invalid possibly due to server restart. Please login again.").toSend());
-          }
-        }
-        return;
-      }
-
-      //final ZeppelinConfiguration conf = ZeppelinConfiguration.create();
-      final boolean allowAnonymous = true;
-      if (!allowAnonymous && messagereceived.principal.equals("anonymous")) {
-        throw new Exception("Anonymous access not allowed ");
-      }
-
-     /* if (SockMessage.isDisabledForRunningNotes(messagereceived.op)) {
-        Note note = notebook.getNote((String) messagereceived.get("noteId"));
-        if (note != null && note.isRunning()) {
-          throw new Exception("Note is now running sequentially. Can not be performed: " +
-                  messagereceived.op);
-        }
-      }
-      */
 
       // Lets be elegant here
       switch (messagereceived.op) {
@@ -144,9 +108,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case LIST_NOTES:
           noteService.listNotesInfo(session, messagereceived);
-          break;
-        case RELOAD_NOTES_FROM_REPO:
-          //noteService.broadcastReloadedNoteList(messagereceived);
           break;
         case GET_HOME_NOTE:
           noteService.getHomeNote(session, messagereceived);
@@ -183,9 +144,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case CLONE_NOTE:
           noteService.cloneNote(session, messagereceived);
-          break;
-        case IMPORT_NOTE:
-          //noteService.importNote(messagereceived);
           break;
         case COMMIT_PARAGRAPH:
           paragraphService.updateParagraph(session, messagereceived);
@@ -229,9 +187,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
         case FOLDER_RENAME:
           noteService.renameFolder(messagereceived);
           break;
-        case UPDATE_PERSONALIZED_MODE:
-          //noteService.updatePersonalizedMode(session, messagereceived);
-          break;
         case COMPLETION:
           completionHandler.completion(session, messagereceived);
           break;
@@ -269,9 +224,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case GET_INTERPRETER_SETTINGS:
           settingsService.getInterpreterSettings(session);
-          break;
-        case WATCHER:
-          //sessionectionManager.switchConnectionToWatcher(session);
           break;
         case SAVE_NOTE_FORMS:
           noteFormsService.saveNoteForms(session, messagereceived);

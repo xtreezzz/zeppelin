@@ -18,6 +18,7 @@
 package ru.tinkoff.zeppelin.engine;
 
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Core class of logic
@@ -171,7 +173,7 @@ public class NoteExecutorService {
   public void run(final Note note,
                   final List<Paragraph> paragraphs,
                   final String username,
-                  final List<String> roles) {
+                  final Set<String> roles) {
     executionHandler.run(note, paragraphs, username, roles);
   }
 

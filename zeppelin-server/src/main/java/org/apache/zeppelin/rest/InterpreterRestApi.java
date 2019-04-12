@@ -23,13 +23,10 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.Repository.ProxyProtocol;
-import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.service.SecurityService;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
@@ -55,22 +52,17 @@ public class InterpreterRestApi {
 
   private static final Logger logger = LoggerFactory.getLogger(InterpreterRestApi.class);
 
-  private final SecurityService securityService;
   private final InterpreterOptionRepository interpreterOptionRepository;
 
   @Autowired
-  public InterpreterRestApi(
-          @Qualifier("NoSecurityService") final SecurityService securityService,
-          final InterpreterOptionRepository interpreterOptionRepository) {
+  public InterpreterRestApi(final InterpreterOptionRepository interpreterOptionRepository) {
     this.interpreterOptionRepository = interpreterOptionRepository;
-    this.securityService = securityService;
 
     try {
       tempRepositoryInit();
     } catch (final Exception e) {
       logger.error("Failed to init interpreter settings", e);
     }
-
   }
 
   /**

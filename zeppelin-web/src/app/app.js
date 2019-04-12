@@ -153,7 +153,16 @@ let zeppelinWebApp = angular.module('zeppelinWebApp', requiredModules)
           },
         };
       });
+      $provide.factory('authorizationHeaderInterceptor', function() {
+        return {
+          request: function(config) {
+            delete config.headers.authorization;
+            return config;
+          },
+        };
+      });
       $httpProvider.interceptors.push('httpInterceptor');
+      $httpProvider.interceptors.push('authorizationHeaderInterceptor');
     })
   .constant('TRASH_FOLDER_ID', '~Trash');
 

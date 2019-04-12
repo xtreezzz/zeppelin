@@ -19,7 +19,6 @@ package org.apache.zeppelin.rest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
-import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.utils.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

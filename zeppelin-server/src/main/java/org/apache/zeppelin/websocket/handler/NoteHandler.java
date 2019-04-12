@@ -20,7 +20,8 @@ package org.apache.zeppelin.websocket.handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.display.GUI;
-import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -39,9 +40,7 @@ import ru.tinkoff.zeppelin.engine.NoteService;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -66,13 +65,16 @@ public class NoteHandler extends AbstractHandler {
 
 
   public void listNotesInfo(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final List<Note> notes = noteService.getAllNotes();
-    // TODO: filter by access rights
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
 
     final List<NoteInfo> notesInfo = notes
             .stream()
+            .filter(note -> new HashSet(userRoles).removeAll(note.getReaders()))
             .map(NoteInfo::new)
             .collect(Collectors.toList());
 
@@ -80,11 +82,11 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void getHomeNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
 
-    checkPermission(0L, Permission.READER, serviceContext);
+    checkPermission(0L, Permission.READER, authenticationInfo);
     final Note note = noteService.getNote(noteId);
     if (note != null) {
       connectionManager.addSubscriberToNode(note.getId(), conn);
@@ -96,16 +98,16 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void getNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-    final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
     connectionManager.addSubscriberToNode(note.getId(), conn);
     final NoteDTO noteDTO = noteDTOConverter.convertNoteToDTO(note);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", noteDTO).toSend());
   }
 
   public void updateNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-    final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
     final String path = fromMessage.getNotNull("path");
     final Map config = fromMessage.getOrDefault("config", null);
 
@@ -115,16 +117,16 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void deleteNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
+    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
     noteService.deleteNote(note);
 
     connectionManager.removeNoteSubscribers(note.getId());
   }
 
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     String notePath = fromMessage.getNotNull("path");
     if (!notePath.startsWith(File.separator)) {
@@ -133,6 +135,10 @@ public class NoteHandler extends AbstractHandler {
 
     try {
       final Note note = new Note(notePath);
+      note.getReaders().add(authenticationInfo.getUser());
+      note.getRunners().add(authenticationInfo.getUser());
+      note.getWriters().add(authenticationInfo.getUser());
+      note.getOwners().add(authenticationInfo.getUser());
       noteService.persistNote(note);
 
       // it's an empty note. so add one paragraph
@@ -158,9 +164,9 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void cloneNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("id", fromMessage, Permission.READER, serviceContext, conn);
+    final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
     String path = fromMessage.getNotNull("name");
     if (!path.startsWith(File.separator)) {
       path = File.separator + path;
@@ -169,6 +175,14 @@ public class NoteHandler extends AbstractHandler {
     final Note cloneNote = new Note(path);
     cloneNote.setPath(path);
     cloneNote.setScheduler(note.getScheduler());
+    note.getReaders().clear();
+    note.getRunners().clear();
+    note.getWriters().clear();
+    note.getOwners().clear();
+    note.getReaders().add(authenticationInfo.getUser());
+    note.getRunners().add(authenticationInfo.getUser());
+    note.getWriters().add(authenticationInfo.getUser());
+    note.getOwners().add(authenticationInfo.getUser());
     noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParapraphs(note);
@@ -193,9 +207,9 @@ public class NoteHandler extends AbstractHandler {
 
 
   public void moveNoteToTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
+    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
 
     note.setPath("/" + TRASH_FOLDER + note.getPath());
 
@@ -203,9 +217,9 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void restoreNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, serviceContext, conn);
+    final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
 
     if (!note.getPath().startsWith("/" + TRASH_FOLDER)) {
       throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
@@ -218,7 +232,7 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void restoreFolder(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
     if (!folderPath.startsWith("/" + TRASH_FOLDER)) {
@@ -238,8 +252,10 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
+
+  // TODO: ??????
   public void renameFolder(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String oldFolderPath = "/" + fromMessage.getNotNull("id");
     final String newFolderPath = "/" + fromMessage.getNotNull("name");
@@ -258,8 +274,9 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
+  // TODO: ??????
   public void moveFolderToTrash(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
 
     final List<Note> notes = noteService.getAllNotes()
@@ -276,8 +293,9 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
+  // TODO: ??????
   public void removeFolder(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
 
@@ -293,8 +311,9 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
+  // TODO: ??????
   public void emptyTrash(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final List<Note> notes = noteService.getAllNotes()
             .stream()
@@ -308,8 +327,9 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
+  // TODO: ??????
   public void restoreAll(final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final List<Note> notes = noteService.getAllNotes()
             .stream()
@@ -327,33 +347,13 @@ public class NoteHandler extends AbstractHandler {
 
   //TODO(SAN) not complete yet
   public void clearAllParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, authenticationInfo, conn);
 
     for (final Paragraph paragraph : noteService.getParapraphs(note)) {
       paragraph.setJobId(null);
       noteService.updateParapraph(note, paragraph);
     }
-  }
-
-  private String normalizeNotePath(String notePath) throws IOException {
-    if (StringUtils.isBlank(notePath)) {
-      notePath = "/Untitled Note";
-    }
-    if (!notePath.startsWith("/")) {
-      notePath = "/" + notePath;
-    }
-
-    notePath = notePath.replace("\r", " ").replace("\n", " ");
-    final int pos = notePath.lastIndexOf("/");
-    if ((notePath.length() - pos) > 255) {
-      throw new IOException("Note name must be less than 255");
-    }
-
-    if (notePath.contains("..")) {
-      throw new IOException("Note name can not contain '..'");
-    }
-    return notePath;
   }
 }

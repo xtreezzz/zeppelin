@@ -17,26 +17,14 @@
 
 package org.apache.zeppelin.rest;
 
-import com.google.common.collect.Sets;
-import org.apache.zeppelin.service.SecurityService;
-import org.apache.zeppelin.service.ServiceContext;
-import org.apache.zeppelin.user.AuthenticationInfo;
-
-import java.util.Set;
+import org.apache.zeppelin.realm.ShiroSecurityService;
 
 public class AbstractRestApi {
 
-  protected SecurityService securityService;
+  protected ShiroSecurityService securityService;
 
-  protected AbstractRestApi(final SecurityService securityService) {
+  protected AbstractRestApi(final ShiroSecurityService securityService) {
     this.securityService = securityService;
   }
 
-  protected ServiceContext getServiceContext() {
-    final AuthenticationInfo authInfo = new AuthenticationInfo(securityService.getPrincipal());
-    final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(securityService.getPrincipal());
-    userAndRoles.addAll(securityService.getAssociatedRoles());
-    return new ServiceContext(authInfo, userAndRoles);
-  }
 }

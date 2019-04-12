@@ -1,9 +1,10 @@
 package org.apache.zeppelin.rest;
 
 import com.google.common.collect.Sets;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
-import org.apache.zeppelin.server.JsonResponse;
-import org.apache.zeppelin.service.SecurityService;
+import org.apache.zeppelin.realm.ShiroSecurityService;
 import org.apache.zeppelin.storage.SchedulerDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -11,7 +12,6 @@ import org.apache.zeppelin.websocket.SockMessage;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,17 +31,14 @@ public class CronRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(CronRestApi.class);
 
   private final NoteService noteRepository;
-  private final SecurityService securityService;
   private final SchedulerDAO schedulerDAO;
   private final ConnectionManager connectionManager;
 
   public CronRestApi(
       final NoteService noteRepository,
-      @Qualifier("NoSecurityService") final SecurityService securityService,
       final SchedulerDAO schedulerDAO,
       ConnectionManager connectionManager) {
     this.noteRepository = noteRepository;
-    this.securityService = securityService;
     this.schedulerDAO = schedulerDAO;
     this.connectionManager = connectionManager;
   }
@@ -57,6 +54,7 @@ public class CronRestApi {
       @RequestBody Map<String, String> params
   ) throws IllegalArgumentException {
 
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     String expression = params.get("expression");
     String isEnableParam = params.get("enable");
     long noteId = Long.parseLong(noteIdParam);
@@ -96,8 +94,8 @@ public class CronRestApi {
           note.getId(),
           isEnable,
           expression,
-          securityService.getPrincipal(),
-          new ArrayList<>(securityService.getAssociatedRoles()),
+          authenticationInfo.getUser(),
+          new ArrayList<>(authenticationInfo.getRoles()),
           nextExecution,
           nextExecution
       );
@@ -179,9 +177,10 @@ public class CronRestApi {
    * Check if the current user own the given note.
    */
   private void checkIfUserIsOwner(final Long noteId, final String errorMsg) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(securityService.getPrincipal());
-    userAndRoles.addAll(securityService.getAssociatedRoles());
+    userAndRoles.add(authenticationInfo.getUser());
+    userAndRoles.addAll(authenticationInfo.getRoles());
     //if (!notePermissionsService.isOwner(userAndRoles, noteId)) {
     //  throw new ForbiddenException(errorMsg);
     //}
@@ -191,9 +190,10 @@ public class CronRestApi {
    * Check if the current user can access (at least he have to be reader) the given note.
    */
   private void checkIfUserCanRead(final Long noteId, final String errorMsg) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(securityService.getPrincipal());
-    userAndRoles.addAll(securityService.getAssociatedRoles());
+    userAndRoles.add(authenticationInfo.getUser());
+    userAndRoles.addAll(authenticationInfo.getRoles());
     //if (!notePermissionsService.hasReadAuthorization(userAndRoles, noteId)) {
     //  throw new ForbiddenException(errorMsg);
     //}
@@ -203,9 +203,10 @@ public class CronRestApi {
    * Check if the current user can run the given note.
    */
   private void checkIfUserCanRun(final Long noteId, final String errorMsg) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(securityService.getPrincipal());
-    userAndRoles.addAll(securityService.getAssociatedRoles());
+    userAndRoles.add(authenticationInfo.getUser());
+    userAndRoles.addAll(authenticationInfo.getRoles());
     //if (!notePermissionsService.hasRunAuthorization(userAndRoles, noteId)) {
     // throw new ForbiddenException(errorMsg);
     //}

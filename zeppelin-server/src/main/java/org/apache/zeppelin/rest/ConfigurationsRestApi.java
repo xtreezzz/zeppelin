@@ -16,11 +16,9 @@
  */
 package org.apache.zeppelin.rest;
 
-import org.apache.zeppelin.server.JsonResponse;
 import org.apache.zeppelin.service.ConfigurationService;
-import org.apache.zeppelin.service.SecurityService;
+import org.apache.zeppelin.realm.ShiroSecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,15 +33,13 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/configurations")
-public class ConfigurationsRestApi extends AbstractRestApi {
+public class ConfigurationsRestApi {
 
   private final ConfigurationService configurationService;
 
   @Autowired
   public ConfigurationsRestApi(
-          @Qualifier("NoSecurityService") final SecurityService securityService,
           final ConfigurationService configurationService) {
-    super(securityService);
     this.configurationService = configurationService;
   }
 

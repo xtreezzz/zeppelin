@@ -18,7 +18,8 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
-import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -49,35 +50,40 @@ public class RunnerHandler extends AbstractHandler {
 
   public void stopNoteExecution(final WebSocketSession conn,
                                 final SockMessage fromMessage) {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, authenticationInfo, conn);
     noteExecutorService.abort(note);
   }
 
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, conn);
-    noteExecutorService.run(note, noteService.getParapraphs(note),
-        serviceContext.getAutheInfo().getUser(), serviceContext.getAutheInfo().getRoles());
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, authenticationInfo, conn);
+    noteExecutorService.run(note,
+            noteService.getParapraphs(note),
+            authenticationInfo.getUser(),
+            authenticationInfo.getRoles());
   }
 
 
   public void runParagraph(final WebSocketSession conn, final SockMessage fromMessage)
-      throws InterruptedException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+          throws InterruptedException {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, serviceContext, conn);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
-    noteExecutorService.run(note, Lists.newArrayList(p), serviceContext.getAutheInfo().getUser(),
-        serviceContext.getAutheInfo().getRoles());
+    noteExecutorService.run(note,
+            Lists.newArrayList(p),
+            authenticationInfo.getUser(),
+            authenticationInfo.getRoles()
+    );
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
   public void cancelParagraph(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromSockMessage);
-    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.RUNNER, serviceContext, conn);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    final Note note = safeLoadNote("noteId", fromSockMessage, Permission.RUNNER, authenticationInfo, conn);
     noteExecutorService.abort(note);
   }
 }

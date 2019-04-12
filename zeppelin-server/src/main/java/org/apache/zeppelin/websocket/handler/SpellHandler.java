@@ -17,7 +17,8 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import org.apache.zeppelin.service.ServiceContext;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -50,9 +51,9 @@ public class SpellHandler extends AbstractHandler {
   //TODO(KOT): check "noteId"
   //TODO(egorklimov): authInfo, config, result removed fron paragraph
   public void broadcastSpellExecution(final WebSocketSession session, final SockMessage fromMessage) throws IOException {
-    final ServiceContext serviceContext = getServiceContext(fromMessage);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, serviceContext, session);
+    final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, authenticationInfo, session);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     final String text = fromMessage.getNotNull("paragraph");
