@@ -81,7 +81,7 @@ public class NoteService {
     EventService.publish(EventService.Type.NOTE_REMOVED, note);
   }
 
-  public List<Paragraph> getParapraphs(final Note note) {
+  public List<Paragraph> getParagraphs(final Note note) {
     return paragraphDAO.getByNoteId(note.getId());
   }
 
@@ -96,7 +96,7 @@ public class NoteService {
     return savedParagraph;
   }
 
-  public Paragraph updateParapraph(final Note note, final Paragraph paragraph) {
+  public Paragraph updateParagraph(final Note note, final Paragraph paragraph) {
     final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
 
     final Paragraph savedParagraph = paragraphDAO.update(paragraph);

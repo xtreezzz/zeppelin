@@ -66,7 +66,7 @@ public class SpellHandler extends AbstractHandler {
 
     p.setText(text);
     p.setTitle(title);
-    p.getSettings().setParams(params);
+    p.getGUI().setParams(params);
 
     // Spell uses ISO 8601 formatted string generated from moment
     p.setCreated(LocalDateTime.parse(dateStarted, formatter));

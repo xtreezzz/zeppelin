@@ -164,7 +164,7 @@ public class Paragraph implements Serializable {
     this.config = config;
   }
 
-  public GUI getSettings() {
+  public GUI getGUI() {
     return settings;
   }
 

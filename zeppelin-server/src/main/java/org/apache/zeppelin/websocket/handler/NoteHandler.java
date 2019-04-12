@@ -185,7 +185,7 @@ public class NoteHandler extends AbstractHandler {
     note.getOwners().add(authenticationInfo.getUser());
     noteService.persistNote(cloneNote);
 
-    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     for (final Paragraph paragraph : paragraphs) {
       final Paragraph cloneParagraph = new Paragraph();
       cloneParagraph.setId(null);
@@ -198,7 +198,7 @@ public class NoteHandler extends AbstractHandler {
       cloneParagraph.setPosition(paragraph.getPosition());
       cloneParagraph.setJobId(null);
       cloneParagraph.setConfig(paragraph.getConfig());
-      cloneParagraph.setSettings(paragraph.getSettings());
+      cloneParagraph.setSettings(paragraph.getGUI());
       noteService.persistParagraph(note, cloneParagraph);
     }
 
@@ -351,9 +351,9 @@ public class NoteHandler extends AbstractHandler {
 
     final Note note = safeLoadNote("id", fromMessage, Permission.WRITER, authenticationInfo, conn);
 
-    for (final Paragraph paragraph : noteService.getParapraphs(note)) {
+    for (final Paragraph paragraph : noteService.getParagraphs(note)) {
       paragraph.setJobId(null);
-      noteService.updateParapraph(note, paragraph);
+      noteService.updateParagraph(note, paragraph);
     }
   }
 }

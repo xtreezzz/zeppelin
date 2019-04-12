@@ -60,7 +60,7 @@ public class RunnerHandler extends AbstractHandler {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, authenticationInfo, conn);
     noteExecutorService.run(note,
-            noteService.getParapraphs(note),
+            noteService.getParagraphs(note),
             authenticationInfo.getUser(),
             authenticationInfo.getRoles());
   }

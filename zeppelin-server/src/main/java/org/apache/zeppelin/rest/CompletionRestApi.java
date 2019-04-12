@@ -69,7 +69,7 @@ public class CompletionRestApi {
     final List<InterpreterCompletion> completions = new ArrayList<>();
 
     final Note note = noteService.getNote(noteId);
-    final Optional<Paragraph> p = noteService.getParapraphs(note).stream()
+    final Optional<Paragraph> p = noteService.getParagraphs(note).stream()
         .filter(e -> e.getUuid().equals(paragraphId)).findAny();
 
     final Map<String, String> params = new Gson().fromJson(message,

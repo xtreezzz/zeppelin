@@ -811,6 +811,34 @@ public class NotebookRestApi {
   }
   */
 
+  /**
+   * Set paragraph form value
+   *
+   * @return JSON with status.OK
+   */
+  @PostMapping(value = "/{noteId}/{paragraphId}/form_values", produces = "application/json")
+  public ResponseEntity setFormValue(
+      @PathVariable("noteId") String noteIdParam,
+      @PathVariable("paragraphId") String paragraphIdIdParam,
+      @RequestBody Map<String, Object> formValues
+  ) {
+    long noteId = Long.valueOf(noteIdParam);
+    long paragraphId = Long.valueOf(paragraphIdIdParam);
+//    checkIfUserCanWrite(noteId, "Insufficient privileges you cannot change form values");
+    Note note = noteRepository.getNote(noteId);
+    noteRepository.getParagraphs(note)
+        .stream()
+        .filter(p -> p.getId() == paragraphId)
+        .findAny()
+        .ifPresent(p -> {
+          Map<String, Object> params = p.getGUI().getParams();
+          params.clear();
+          params.putAll(formValues);
+          noteRepository.updateParagraph(note, p);
+        });
+    return new JsonResponse(HttpStatus.OK).build();
+  }
+
 
   /**
    * Get note jobs for job manager.

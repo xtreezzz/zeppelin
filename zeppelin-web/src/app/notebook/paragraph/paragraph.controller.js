@@ -171,6 +171,45 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   // Controller init
   $scope.init = function(newParagraph, note) {
     $scope.paragraph = newParagraph;
+
+    $scope.paragraph.settings.forms2 = {
+      TEXT_FORM: {
+        type: 'TextBox',
+        name: 'TEXT_FORM',
+        displayName: 'DISPLAY NAME',
+        defaultValue: 'Enter some text here...',
+        hidden: false,
+      },
+      CHECKBOX_FORM: {
+        type: 'CheckBox',
+        name: 'CHECKBOX_FORM',
+        displayName: 'DISPLAY NAME',
+        defaultValue: ['apple'],
+        hidden: false,
+        options: [
+          {value: 'apple', displayName: 'Green Apple'},
+          {value: 'banana', displayName: 'Yellow  Banana'},
+          {value: 'orange', displayName: 'Orange Orange'},
+        ],
+      },
+      SELECT_FORM: {
+        type: 'Select',
+        name: 'SELECT_FORM',
+        displayName: 'DISPLAY NAME',
+        defaultValue: '3',
+        hidden: false,
+        options: [
+          {value: '1', displayName: 'mon'},
+          {value: '2', displayName: 'tur'},
+          {value: '3', displayName: 'wed'},
+          {value: '4', displayName: 'thr'},
+          {value: '5', displayName: 'fri'},
+          {value: '6', displayName: 'sat'},
+          {value: '7', displayName: 'sun'},
+        ],
+      },
+    };
+
     $scope.parentNote = note;
     $scope.originalText = angular.copy(newParagraph.text);
     $scope.chart = {};
@@ -809,6 +848,108 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       editor.moveCursorToPosition($scope.cursorPosition);
       $scope.cursorPosition = null;
     }
+    parseForm(dirtyText);
+  };
+
+
+  let formsTextSize = 0;
+
+  function parseForm(text, forcedUpdate) {
+    let RUS = '([А-ЯЁа-яё\\w]+)'; // Any latin or russian word
+    /* eslint no-invalid-regexp: "error"*/
+    let ALL_FORMS_REG = /%FORM([\s\S]*)%FORM/;
+    let FORM_NAME = new RegExp('#define ' + RUS + ' ');
+    let PROP_AND_VALUE = /(\w+)<([^>]+)>/g;
+
+    try {
+      let formsText = text.match(ALL_FORMS_REG);
+      // check forms exists
+      if (!formsText) {
+        setForms({});
+        formsTextSize = 0;
+        return;
+      }
+      formsText = formsText[1];
+
+      // stop parsing if no changes
+      if (formsTextSize === formsText.length && !forcedUpdate) {
+        return;
+      }
+
+      setForms({});
+      formsTextSize = formsText.length;
+
+      let formsArray = formsText.trim().split('\n');
+      formsArray = formsArray.map((formText) => {
+        let form = {name: formText.match(FORM_NAME)[1]};
+        for (let match; (match = PROP_AND_VALUE.exec(formText)) !== null;) {
+          let propName = match[1];
+          let propValue = match[2];
+          if (propName === 'options') {
+            propValue = propValue.split(';').map((option) => {
+              return {value: option, displayName: option};
+            });
+          }
+          form[propName] = propValue;
+        }
+        return form;
+      });
+      let formMap = {};
+      formsArray.forEach((f) => {
+        formMap[f.name] = {
+          name: f.name,
+          type: f.type,
+          displayName: f.title,
+          options: f.options,
+          runOnChange: f.autorun ? f.autorun === 'true' : f.options !== undefined,
+          hidden: false,
+        };
+      });
+      setForms(formMap);
+    } catch (e) {
+      console.log('Parse form error' + e);
+      setForms({});
+      formsTextSize = 0;
+    }
+  }
+
+  function setForms(newForms) {
+    $scope.paragraph.settings.forms = newForms;
+    $scope.$apply();
+  }
+
+  $scope.formValueChange = function(changedForm) {
+    let forms = $scope.paragraph.settings.forms;
+    let params = $scope.paragraph.settings.params;
+    let formNames = Object.keys(forms);
+    let paramNames = Object.keys(params);
+
+    // delete parameters for removed forms
+    for (let paramName of paramNames) {
+      if (!formNames.includes(paramName)) {
+        delete params[paramName];
+      }
+    }
+
+    // delete removed checkbox's options
+    for (let formName of formNames) {
+      let form = forms[formName];
+      if (form.type === 'CheckBox') {
+        let validValues = form.options.map((option) => option.value);
+        params[form.name] = params[form.name].filter((param) => validValues.includes(param));
+      }
+    }
+
+    $http.post(
+      baseUrlSrv.getRestApiBase() + '/notebook/' +
+      $scope.parentNote.databaseId + '/' +
+      $scope.paragraph.databaseId + '/form_values',
+      params
+    ).then(() => {
+      if (changedForm.runOnChange) {
+        $scope.runParagraphFromButton();
+      }
+    });
   };
 
   $scope.sendPatch = function() {
@@ -1624,6 +1765,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         }, 500);
       }
     }
+
+    // 7. update form
+    parseForm(newPara.text, true);
   };
 
   /** $scope.$on */

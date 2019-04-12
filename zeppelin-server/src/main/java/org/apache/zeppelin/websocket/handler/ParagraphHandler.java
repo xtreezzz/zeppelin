@@ -67,12 +67,12 @@ public class ParagraphHandler extends AbstractHandler {
     final Map<String, Object> params = fromMessage.getNotNull("params");
 
     paragraph.setConfig(config);
-    paragraph.getSettings().setParams(params);
+    paragraph.getGUI().setParams(params);
     paragraph.setTitle(title);
     paragraph.setText(text);
     paragraph.setShebang(shebang);
 
-    noteService.updateParapraph(note, paragraph);
+    noteService.updateParagraph(note, paragraph);
   }
 
   public void removeParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -82,7 +82,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     noteService.removeParagraph(note, p);
-    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     paragraphs.sort(Comparator.comparingInt(Paragraph::getPosition));
 
     for (int i = 0; i < paragraphs.size(); i++) {
@@ -91,7 +91,7 @@ public class ParagraphHandler extends AbstractHandler {
         continue;
       }
       paragraph.setPosition(i);
-      noteService.updateParapraph(note, paragraph);
+      noteService.updateParagraph(note, paragraph);
     }
   }
 
@@ -102,7 +102,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
     p.setJobId(null);
-    noteService.updateParapraph(note, p);
+    noteService.updateParagraph(note, p);
   }
 
   public void moveParagraph(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -113,7 +113,7 @@ public class ParagraphHandler extends AbstractHandler {
     final int indexFrom = paragraphFrom.getPosition();
     final int indexTo = ((Double) fromMessage.getNotNull("index")).intValue();
 
-    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     if (indexTo < 0 || indexTo > paragraphs.size()) {
       throw new BadRequestException("newIndex " + indexTo + " is out of bounds");
     }
@@ -127,7 +127,7 @@ public class ParagraphHandler extends AbstractHandler {
     for (int i = 0; i < paragraphs.size(); i++) {
       final Paragraph paragraph = paragraphs.get(i);
       paragraph.setPosition(i);
-      noteService.updateParapraph(note, paragraph);
+      noteService.updateParagraph(note, paragraph);
     }
   }
 
@@ -137,7 +137,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final int index = ((Double) fromMessage.getNotNull("index")).intValue();
 
-    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     if (index < 0 || index > paragraphs.size()) {
       throw new BadRequestException("newIndex " + index + " is out of bounds");
     }
@@ -145,7 +145,7 @@ public class ParagraphHandler extends AbstractHandler {
     for (int i = index; i < paragraphs.size(); i++) {
       final Paragraph p = paragraphs.get(i);
       p.setPosition(i + 1);
-      noteService.updateParapraph(note, p);
+      noteService.updateParagraph(note, p);
     }
 
     final Paragraph paragraph = new Paragraph();

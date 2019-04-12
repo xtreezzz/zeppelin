@@ -50,6 +50,9 @@ function DynamicFormDirective($templateRequest, $compile) {
     },
 
     toggleCheckbox: function(formulaire, option, params) {
+      if (!params[formulaire.name]) {
+        params[formulaire.name] = [];
+      }
       let idx = params[formulaire.name].indexOf(option.value);
       if (idx > -1) {
         params[formulaire.name].splice(idx, 1);

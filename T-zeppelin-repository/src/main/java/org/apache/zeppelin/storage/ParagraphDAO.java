@@ -204,7 +204,7 @@ public class ParagraphDAO {
             .addValue("POSITION", paragraph.getPosition())
             .addValue("JOB_ID", paragraph.getJobId())
             .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
-            .addValue("GUI", generatePGjson(paragraph.getSettings()))
+            .addValue("GUI", generatePGjson(paragraph.getGUI()))
             .addValue("REVISION_ID", paragraph.getRevisionId());
     jdbcTemplate.update(PERSIST_PARAGRAPH, parameters, holder);
 
@@ -224,7 +224,7 @@ public class ParagraphDAO {
             .addValue("POSITION", paragraph.getPosition())
             .addValue("JOB_ID", paragraph.getJobId())
             .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
-            .addValue("GUI", generatePGjson(paragraph.getSettings()))
+            .addValue("GUI", generatePGjson(paragraph.getGUI()))
             .addValue("REVISION_ID", paragraph.getRevisionId())
             .addValue("ID", paragraph.getId());
     jdbcTemplate.update(UPDATE_PARAGRAPH, parameters);

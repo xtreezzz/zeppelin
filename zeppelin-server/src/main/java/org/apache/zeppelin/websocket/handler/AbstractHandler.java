@@ -75,7 +75,7 @@ public abstract class AbstractHandler {
                                         final SockMessage fromSockMessage,
                                         final Note note) {
     final String paragraphId = fromSockMessage.getNotNull(paramName);
-    final List<Paragraph> paragraphs = noteService.getParapraphs(note);
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     final Paragraph p = paragraphs
             .stream()
             .filter(paragraph -> paragraph.getUuid().equals(paragraphId))

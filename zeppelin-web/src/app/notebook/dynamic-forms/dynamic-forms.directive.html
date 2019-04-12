@@ -27,7 +27,7 @@ limitations under the License.
     <div ng-if="actiononchange === true">
       <input class="form-control input-sm"
              ng-if="forms[formulaire.name].type == 'TextBox'"
-             ng-change="action()"
+             ng-change="action(formulaire)"
              ng-model-options='{ debounce: 1000 }'
              ng-model="params[formulaire.name]"
              ng-class="{'disable': disable}"
@@ -36,7 +36,7 @@ limitations under the License.
     <div ng-if="!actiononchange">
       <input class="form-control input-sm"
              ng-if="forms[formulaire.name].type == 'TextBox'"
-             ng-enter="action()"
+             ng-enter="action(formulaire)"
              ng-model="params[formulaire.name]"
              ng-class="{'disable': disable}"
              name="{{formulaire.name}}" />
@@ -44,7 +44,7 @@ limitations under the License.
     <div ng-if="actiononchange === true">
       <input class="form-control input-sm"
              ng-if="forms[formulaire.name].type == 'Password'"
-             ng-change="action()"
+             ng-change="action(formulaire)"
              ng-model-options='{ debounce: 1000 }'
              ng-model="params[formulaire.name]"
              ng-class="{'disable': disable}"
@@ -54,7 +54,7 @@ limitations under the License.
     <div ng-if="!actiononchange">
       <input class="form-control input-sm"
              ng-if="forms[formulaire.name].type == 'Password'"
-             ng-enter="action()"
+             ng-enter="action(formulaire)"
              ng-model="params[formulaire.name]"
              ng-class="{'disable': disable}"
              type="password"
@@ -63,7 +63,7 @@ limitations under the License.
     <div ng-if="actiononchange === true">
       <select class="form-control input-sm"
               ng-if="forms[formulaire.name].type == 'Select'"
-              ng-change="action()"
+              ng-change="action(formulaire)"
               ng-model="params[formulaire.name]"
               ng-class="{'disable': disable}"
               name="{{formulaire.name}}"
@@ -73,7 +73,7 @@ limitations under the License.
     <div ng-if="!actiononchange">
       <select class="form-control input-sm"
               ng-if="forms[formulaire.name].type == 'Select'"
-              ng-enter="action()"
+              ng-enter="action(formulaire)"
               ng-model="params[formulaire.name]"
               ng-class="{'disable': disable}"
               name="{{formulaire.name}}"
@@ -87,7 +87,7 @@ limitations under the License.
         <input type="checkbox"
                ng-checked="params[formulaire.name].indexOf(option.value) > -1"
                ng-class="{'disable': disable}"
-               ng-click="toggleCheckbox(formulaire, option, params); action()"/> {{option.displayName||option.value}}
+               ng-click="toggleCheckbox(formulaire, option, params); action(formulaire)"/> {{option.displayName||option.value}}
       </label>
     </div>
     <div ng-if="!actiononchange &&
@@ -97,7 +97,7 @@ limitations under the License.
         <input type="checkbox"
                ng-checked="params[formulaire.name].indexOf(option.value) > -1"
                ng-class="{'disable': disable}"
-               ng-enter="action()"
+               ng-enter="action(formulaire)"
                ng-click="toggleCheckbox(formulaire, option, params)"/> {{option.displayName||option.value}}
       </label>
     </div>

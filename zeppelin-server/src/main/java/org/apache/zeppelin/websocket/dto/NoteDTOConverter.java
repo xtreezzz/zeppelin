@@ -57,7 +57,7 @@ public class NoteDTOConverter {
         noteDTO.setPath(note.getPath());
         noteDTO.setRevision(note.getRevision());
         noteDTO.setGuiConfiguration(note.getGuiConfiguration());
-        for (final Paragraph p : noteService.getParapraphs(note)) {
+        for (final Paragraph p : noteService.getParagraphs(note)) {
             noteDTO.getParagraphs().add(fullParagraphDAO.getById(p.getId()));
         }
         noteDTO.setRunning(note.isRunning());
