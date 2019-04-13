@@ -66,10 +66,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   let currentRange = getCurrentRangeDefault();
 
   let editorSetting = {};
-  // flag that is used to set editor setting on paste percent sign
-  let pastePercentSign = false;
-  // flag that is used to set editor setting on save interpreter bindings
-  let setInterpreterBindings = false;
   let paragraphScope = $rootScope.$new(true, $rootScope);
 
   // to keep backward compatibility
@@ -136,6 +132,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
+        if (!$scope.paragraph.shebang) {
+          // set default shebang if interpreter exist, disable editor otherwise.
+          if ($scope.interpreterSettings && $scope.interpreterSettings.length > 0) {
+            $scope.paragraph.shebang = $scope.interpreterSettings[0].shebang;
+            $scope.commitParagraph($scope.paragraph);
+          } else {
+            if ($scope.editor) {
+              $scope.editor.setReadOnly(true);
+            }
+          }
+        }
       }).catch(function(res) {
         if (res.status === 401) {
           ngToast.danger({
@@ -968,12 +975,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.saveParagraph($scope.paragraph);
       });
 
-      $scope.editor.on('paste', function(e) {
-        if (e.text.indexOf('%') === 0) {
-          pastePercentSign = true;
-        }
-      });
-
       $scope.editor.getSession().on('change', function(e, editSession) {
         autoAdjustEditorHeight(_editor);
       });
@@ -1183,6 +1184,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.$digest();
       });
     }
+
+    // block editor if there is no interpreters available
+    if ($scope.editor && !$scope.editor.getReadOnly() && (!$scope.interpreterSettings
+    || $scope.interpreterSettings.length === 0)) {
+      $scope.editor.setReadOnly(true);
+    }
   };
 
   let getEditorSetting = function(paragraph, interpreterName) {
@@ -1210,13 +1217,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
   const setParagraphMode = function(session, paragraphText, pos) {
     // Evaluate the mode only if the the position is undefined
-    // or the first 30 characters of the paragraph have been modified
-    // or cursor position is at beginning of second line.(in case user hit enter after typing %magic)
-    if ((typeof pos === 'undefined') || (pos.row === 0 && pos.column < 30) ||
-      (pos.row === 1 && pos.column === 0) || pastePercentSign) {
+    if (typeof pos === 'undefined') {
       // If paragraph loading, use config value if exists
-      if ((typeof pos === 'undefined') && $scope.paragraph.config.editorMode &&
-        !setInterpreterBindings) {
+      if ((typeof pos === 'undefined') && $scope.paragraph.config.editorMode) {
         session.setMode($scope.paragraph.config.editorMode);
       } else {
         let magic = $scope.paragraph.shebang.substring(1);
@@ -1230,8 +1233,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         }
       }
     }
-    pastePercentSign = false;
-    setInterpreterBindings = false;
   };
 
   const autoAdjustEditorHeight = function(editor) {
@@ -1829,13 +1830,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       }
       let isDigestPass = true;
       handleFocus(false, isDigestPass);
-    }
-  });
-
-  $scope.$on('saveInterpreterBindings', function(event, paragraphId) {
-    if ($scope.paragraph.id === paragraphId && $scope.editor) {
-      setInterpreterBindings = true;
-      setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
     }
   });
 
