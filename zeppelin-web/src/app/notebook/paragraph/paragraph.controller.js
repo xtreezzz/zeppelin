@@ -863,8 +863,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
 
       $scope.$on('callCompletion', function(event, data) {
+        console.error('callCompletion');
         if($scope.paragraphFocused) {
-          websocketMsgSrv.completion($scope.paragraph.id, data.buf, data.pos);
+          websocketMsgSrv.completion($scope.note.id, $scope.paragraph.id, data.buf, data.pos);
         }
       });
 

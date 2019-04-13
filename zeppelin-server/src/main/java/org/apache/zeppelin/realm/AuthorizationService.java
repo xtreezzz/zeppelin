@@ -1,22 +1,20 @@
 package org.apache.zeppelin.realm;
 
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.mgt.DefaultSecurityManager;
-import org.apache.shiro.session.Session;
-import org.apache.shiro.session.mgt.DefaultSessionManager;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.ThreadContext;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
+import org.apache.shiro.util.ThreadContext;
 
 public class AuthorizationService {
 
-  private static final ThreadLocal<String> principalThreadLocal = new  ThreadLocal<>();
+  private static final ThreadLocal<String> principalThreadLocal = new ThreadLocal<>();
   private static final Map<String, AuthenticationInfo> cache = new ConcurrentHashMap<>();
 
   public static void setThreadLocalPrincipal(final String principal) {

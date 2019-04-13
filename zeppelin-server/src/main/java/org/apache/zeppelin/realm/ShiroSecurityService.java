@@ -16,24 +16,27 @@
  */
 package org.apache.zeppelin.realm;
 
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.naming.ldap.LdapContext;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.naming.ldap.LdapContext;
-import java.security.Principal;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Tools for securing Zeppelin.
  */
+@Component
 public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
 
   private final Logger LOGGER = LoggerFactory.getLogger(ShiroSecurityService.class);
 
   private static ShiroSecurityService instance = null;
+
   public static ShiroSecurityService get() {return instance;}
 
   public ShiroSecurityService() {
