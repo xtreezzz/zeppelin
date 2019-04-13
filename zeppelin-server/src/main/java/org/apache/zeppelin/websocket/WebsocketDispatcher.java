@@ -18,10 +18,8 @@
 package org.apache.zeppelin.websocket;
 
 import java.io.IOException;
-
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
-import org.apache.zeppelin.websocket.handler.CompletionHandler;
 import org.apache.zeppelin.websocket.handler.EventLogHandler;
 import org.apache.zeppelin.websocket.handler.NoteFormsHandler;
 import org.apache.zeppelin.websocket.handler.NoteHandler;
@@ -50,7 +48,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   private final NoteFormsHandler noteFormsService;
   private final SpellHandler spellHandler;
   private final RunnerHandler runnerHandler;
-  private final CompletionHandler completionHandler;
   private final ConnectionManager sessionectionManager;
   private final EventLogHandler eventLogHandler;
 
@@ -62,7 +59,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
                              final NoteFormsHandler noteFormsService,
                              final SpellHandler spellHandler,
                              final RunnerHandler runnerHandler,
-                             final CompletionHandler completionHandler,
                              final ConnectionManager sessionectionManager,
                              final EventLogHandler eventLogHandler) {
     this.settingsService = settingsService;
@@ -72,7 +68,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
     this.noteFormsService = noteFormsService;
     this.spellHandler = spellHandler;
     this.runnerHandler = runnerHandler;
-    this.completionHandler = completionHandler;
     this.sessionectionManager = sessionectionManager;
     this.eventLogHandler = eventLogHandler;
   }
@@ -186,9 +181,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case FOLDER_RENAME:
           noteService.renameFolder(messagereceived);
-          break;
-        case COMPLETION:
-          completionHandler.completion(session, messagereceived);
           break;
         case PING:
           break; //do nothing

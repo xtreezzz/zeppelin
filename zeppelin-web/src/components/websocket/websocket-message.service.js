@@ -240,18 +240,6 @@ function WebsocketMessageService($rootScope, websocketEvents) {
       websocketEvents.sendNewEvent({op: 'PARAGRAPH_CLEAR_ALL_OUTPUT', data: {id: noteId}});
     },
 
-    completion: function(noteId, paragraphId, buf, cursor) {
-      websocketEvents.sendNewEvent({
-        op: 'COMPLETION',
-        data: {
-          noteId: noteId,
-          paragraphId: paragraphId,
-          buf: buf,
-          cursor: cursor,
-        },
-      });
-    },
-
     commitParagraph: function(paragraphId, paragraphTitle, shebang,
     paragraphData, paragraphConfig, paragraphParams, noteId) {
       return websocketEvents.sendNewEvent({

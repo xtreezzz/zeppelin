@@ -124,8 +124,6 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv, ng
       $rootScope.$broadcast('updateParagraphOutput', data);
     } else if (op === 'PROGRESS') {
       $rootScope.$broadcast('updateProgress', data);
-    } else if (op === 'COMPLETION_LIST') {
-      $rootScope.$broadcast('completionList', data);
     } else if (op === 'EDITOR_SETTING') {
       $rootScope.$broadcast('editorSetting', data);
     } else if (op === 'ANGULAR_OBJECT_UPDATE') {

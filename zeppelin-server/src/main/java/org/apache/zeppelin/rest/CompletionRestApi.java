@@ -14,8 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.zeppelin.websocket.handler;
+package org.apache.zeppelin.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,74 +29,75 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
-import org.apache.zeppelin.realm.AuthenticationInfo;
-import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
-import org.apache.zeppelin.websocket.ConnectionManager;
-import org.apache.zeppelin.websocket.Operation;
-import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
-@Component
-public class CompletionHandler extends AbstractHandler {
+@RestController
+@RequestMapping("/api/completion")
+public class CompletionRestApi {
 
   private final InterpreterOptionRepository interpreterRepo;
 
+  private final NoteService noteService;
+
   @Autowired
-  public CompletionHandler(final ConnectionManager connectionManager,
-                           final NoteService noteService,
-                           final InterpreterOptionRepository interpreterRepo) {
-    super(connectionManager, noteService);
+  public CompletionRestApi(final InterpreterOptionRepository interpreterRepo,
+                           final NoteService noteService) {
     this.interpreterRepo = interpreterRepo;
+    this.noteService = noteService;
   }
 
-
-  public void completion(final WebSocketSession conn, final SockMessage fromMessage) {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+  @GetMapping(value = "/{noteId}/{paragraphId}/{buf}/{cursor}", produces = "application/json")
+  public ResponseEntity completion(@PathVariable("noteId") final String noteId,
+                                   @PathVariable("paragraphId") final String paragraphId,
+                                   @PathVariable("buf") final String buf,
+                                   @PathVariable("cursor") final String cursor) {
     final List<InterpreterCompletion> completions = new ArrayList<>();
 
-    final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
-    final Paragraph p = safeLoadParagraph("paragraphId", fromMessage, note);
-    final String buf = fromMessage.getNotNull("buf");
-    final int cursor = (int) Double.parseDouble(fromMessage.getNotNull("cursor").toString());
+    final Note note = noteService.getNote(noteId);
+    final Optional<Paragraph> p = noteService.getParapraphs(note).stream()
+        .filter(e -> e.getUuid().equals(paragraphId)).findAny();
 
-    if (cursor < 0) {
-      return;
-    }
+    final int cur = (int) Double.parseDouble(cursor);
 
-    final Optional<InterpreterOption> option = interpreterRepo.getAllOptions().stream()
-        .filter(o -> o.getShebang().equals(p.getShebang()))
-        .findFirst();
+    if (p.isPresent()) {
+      final Optional<InterpreterOption> option = interpreterRepo.getAllOptions().stream()
+          .filter(o -> o.getShebang().equals(p.get().getShebang()))
+          .findAny();
 
-    if (option.isPresent()) {
-      if (option.get().getConfig().getGroup().equals("jdbc")) {
-        completions.addAll(JDBCCompleter.complete(buf, cursor));
+      if (option.isPresent()) {
+        if (option.get().getConfig().getGroup().equals("jdbc")) {
+          completions.addAll(JDBCCompleter.complete(buf, cur));
+        } else {
+          completions.add(
+              new InterpreterCompletion(
+                  "warning",
+                  "",
+                  "keyword",
+                  "Completion for this interpreter is not supported yet."
+              )
+          );
+        }
       } else {
-        completions.add(
-            new InterpreterCompletion(
-                "warning",
-                "",
-                "keyword",
-                "Completion for this interpreter is not supported yet."
-            )
-        );
+        //LOGIC ERROR
+        return null;
       }
     } else {
       //LOGIC ERROR
-      return;
+      return null;
     }
-    connectionManager.broadcast(note.getId(),
-        new SockMessage(Operation.COMPLETION_LIST)
-            .put("id", p.getId())
-            .put("completions", completions));
+    return new JsonResponse<>(HttpStatus.OK, "", completions).build();
   }
-
 
   private static class InterpreterCompletion {
 
@@ -165,8 +165,8 @@ public class CompletionHandler extends AbstractHandler {
           completions.add("from");
         }
       }
-      return completions.stream().map(c -> new InterpreterCompletion(c, c, "keyword", "")).collect(Collectors.toList());
+      return completions.stream().map(c -> new InterpreterCompletion(c, c, "keyword", "")).collect(
+          Collectors.toList());
     }
   }
-
 }

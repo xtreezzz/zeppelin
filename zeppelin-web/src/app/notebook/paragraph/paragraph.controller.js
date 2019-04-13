@@ -863,9 +863,16 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
 
       $scope.$on('callCompletion', function(event, data) {
-        console.error('callCompletion');
+        console.error('callCompletion', event, data);
         if($scope.paragraphFocused) {
-          websocketMsgSrv.completion($scope.note.id, $scope.paragraph.id, data.buf, data.pos);
+          $http.get(baseUrlSrv.getRestApiBase() + '/completion/' + $scope.note.id + '/'
+          + $scope.paragraph.id + '/' + data.buf + '/' + data.pos)
+            .success(function(data, status, headers, config) {
+              $scope.$broadcast('completionList', data.body);
+            })
+            .error(function(err, status, headers, config) {
+              console.log('Error %o', err);
+            });
         }
       });
 
@@ -917,11 +924,11 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                 return 300;
               }
             };
-            if (data.completions) {
+            if (data) {
               let completions = [];
-              for (let c in data.completions) {
-                if (data.completions.hasOwnProperty(c)) {
-                  let v = data.completions[c];
+              for (let c in data) {
+                if (data.hasOwnProperty(c)) {
+                  let v = data[c];
                   if (v.meta !== undefined && v.meta === 'keyword' && defaultKeywords.has(v.value.trim())) {
                     continue;
                   }
