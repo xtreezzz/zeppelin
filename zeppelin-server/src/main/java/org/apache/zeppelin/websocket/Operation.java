@@ -86,10 +86,6 @@ public enum Operation {
   // @param config paragraph config
   // @param params paragraph params
 
-  EDITOR_SETTING,   // [c-s] ask paragraph editor setting
-  // @param magic magic keyword written in paragraph
-  // ex) spark.spark or spark
-
   COMPLETION,       // [c-s] ask completion candidates
   // @param id
   // @param buf current code

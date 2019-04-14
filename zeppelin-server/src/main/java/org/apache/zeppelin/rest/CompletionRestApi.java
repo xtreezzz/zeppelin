@@ -16,9 +16,13 @@
  */
 package org.apache.zeppelin.rest;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,8 +37,9 @@ import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
@@ -57,18 +62,21 @@ public class CompletionRestApi {
     this.noteService = noteService;
   }
 
-  @GetMapping(value = "/{noteId}/{paragraphId}/{buf}/{cursor}", produces = "application/json")
+  @PostMapping(value = "/{noteId}/{paragraphId}", produces = "application/json")
   public ResponseEntity completion(@PathVariable("noteId") final String noteId,
                                    @PathVariable("paragraphId") final String paragraphId,
-                                   @PathVariable("buf") final String buf,
-                                   @PathVariable("cursor") final String cursor) {
+                                   @RequestBody final String message) {
     final List<InterpreterCompletion> completions = new ArrayList<>();
 
     final Note note = noteService.getNote(noteId);
     final Optional<Paragraph> p = noteService.getParapraphs(note).stream()
         .filter(e -> e.getUuid().equals(paragraphId)).findAny();
 
-    final int cur = (int) Double.parseDouble(cursor);
+    final Map<String, String> params = new Gson().fromJson(message,
+        new TypeToken<HashMap<String, String>>() {}.getType());
+
+    final String buf = params.get("buf");
+    final int cur = (int) Double.parseDouble(params.get("cursor"));
 
     if (p.isPresent()) {
       final Optional<InterpreterOption> option = interpreterRepo.getAllOptions().stream()
@@ -90,11 +98,11 @@ public class CompletionRestApi {
         }
       } else {
         //LOGIC ERROR
-        return null;
+        return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Interpreter not found").build();
       }
     } else {
       //LOGIC ERROR
-      return null;
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Paragraph not found").build();
     }
     return new JsonResponse<>(HttpStatus.OK, "", completions).build();
   }

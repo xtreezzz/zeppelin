@@ -379,6 +379,10 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   $scope.newInterpreterGroupChange = function() {
     $scope.newInterpreterSetting.config =
     $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName];
+
+    $scope.newInterpreterSetting.editor =
+    angular.copy($scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName].editor);
+
     for (let key in $scope.newInterpreterSetting.config.properties) {
       if ($scope.newInterpreterSetting.config.properties.hasOwnProperty(key)) {
         $scope.newInterpreterSetting.config.properties[key].currentValue =
@@ -455,12 +459,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       newSetting.permissions.isEnabled = false;
     }
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
+
     let request = angular.copy($scope.newInterpreterSetting);
-
-    let newProperties = angular.copy(
-    $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName].properties);
-
-    request.config.properties = newProperties;
     request.perNote = request.perNote.toUpperCase();
     request.perUser = request.perUser.toUpperCase();
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)

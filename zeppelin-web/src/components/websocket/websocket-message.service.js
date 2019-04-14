@@ -329,16 +329,6 @@ function WebsocketMessageService($rootScope, websocketEvents) {
       });
     },
 
-    getEditorSetting: function(paragraphId, replName) {
-      websocketEvents.sendNewEvent({
-        op: 'EDITOR_SETTING',
-        data: {
-          paragraphId: paragraphId,
-          magic: replName,
-        },
-      });
-    },
-
     isConnected: function() {
       return websocketEvents.isConnected();
     },

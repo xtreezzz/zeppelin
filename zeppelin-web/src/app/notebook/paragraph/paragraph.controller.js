@@ -796,7 +796,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.startSaveTimer();
       }
     }
-    setParagraphMode(session, dirtyText, editor.getCursorPosition());
+    setParagraphMode(session);
     if ($scope.cursorPosition) {
       editor.moveCursorToPosition($scope.cursorPosition);
       $scope.cursorPosition = null;
@@ -863,15 +863,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
 
       $scope.$on('callCompletion', function(event, data) {
-        console.error('callCompletion', event, data);
         if($scope.paragraphFocused) {
-          $http.get(baseUrlSrv.getRestApiBase() + '/completion/' + $scope.note.id + '/'
-          + $scope.paragraph.id + '/' + data.buf + '/' + data.pos)
+          $http.post(baseUrlSrv.getRestApiBase() + '/completion/' + $scope.note.id + '/'
+          + $scope.paragraph.id, {
+            buf: data.buf,
+            cursor: data.pos,
+          })
             .success(function(data, status, headers, config) {
-              $scope.$broadcast('completionList', data.body);
+              $rootScope.$broadcast('completionList', data.body);
             })
             .error(function(err, status, headers, config) {
-              console.log('Error %o', err);
+              console.error('Error %o', err);
             });
         }
       });
@@ -1200,22 +1202,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
   };
 
-  let getEditorSetting = function(paragraph, interpreterName) {
-    let deferred = $q.defer();
-    if (!$scope.revisionView) {
-      websocketMsgSrv.getEditorSetting(paragraph.id, interpreterName);
-      $timeout(
-        $scope.$on('editorSetting', function(event, data) {
-          if (paragraph.id === data.paragraphId) {
-            deferred.resolve(data);
-            $scope.editor.setReadOnly(!$scope.userHasWritePermission());
-          }
-        }
-      ), 1000);
-    }
-    return deferred.promise;
-  };
-
   let setEditorLanguage = function(session, language) {
     let mode = 'ace/mode/';
     mode += language;
@@ -1223,22 +1209,16 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     session.setMode(mode);
   };
 
-  const setParagraphMode = function(session, paragraphText, pos) {
-    // Evaluate the mode only if the the position is undefined
-    if (typeof pos === 'undefined') {
-      // If paragraph loading, use config value if exists
-      if ((typeof pos === 'undefined') && $scope.paragraph.config.editorMode) {
-        session.setMode($scope.paragraph.config.editorMode);
-      } else {
-        let magic = $scope.paragraph.shebang.substring(1);
-        if (editorSetting.magic !== magic) {
-          editorSetting.magic = magic;
-          getEditorSetting($scope.paragraph, magic)
-            .then(function(setting) {
-              setEditorLanguage(session, setting.editor.language);
-              _.merge($scope.paragraph.config.editorSetting, setting.editor);
-            });
-        }
+  const setParagraphMode = function(session) {
+    // use config value if exists
+    if ($scope.paragraph.config.editorMode) {
+      session.setMode($scope.paragraph.config.editorMode);
+    } else {
+      let index = _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang});
+      if ($scope.interpreterSettings[index].config.editor.language) {
+        setEditorLanguage(session, $scope.interpreterSettings[index].config.editor.language);
+        _.merge($scope.paragraph.config.editorSetting,
+        $scope.interpreterSettings[index].config.editor.language);
       }
     }
   };

@@ -20,6 +20,12 @@ package org.apache.zeppelin.storage;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.zeppelin.Repository;
 import org.postgresql.util.PGobject;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -33,15 +39,6 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.option.ExistingProcess;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.option.Permissions;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.lang.reflect.Type;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Data Access Object for:
@@ -349,11 +346,17 @@ class InterpreterOptionDAO {
     final String group = resultSet.getString("group");
     final String className = resultSet.getString("class_name");
 
-    final Type type = new TypeToken<Map<String, InterpreterProperty>>(){}.getType();
     final Map<String, InterpreterProperty> properties =
-        gson.fromJson(resultSet.getString("properties"), type);
-
-    return new BaseInterpreterConfig(name, group, className, properties, new HashMap<>());
+        gson.fromJson(
+            resultSet.getString("properties"),
+            new TypeToken<Map<String, InterpreterProperty>>(){}.getType()
+        );
+    final Map<String, Object> editor =
+        gson.fromJson(
+            resultSet.getString("editor"),
+            new TypeToken<Map<String, Object>>() {}.getType()
+        );
+    return new BaseInterpreterConfig(name, group, className, properties, editor);
   }
 
   @Nonnull
