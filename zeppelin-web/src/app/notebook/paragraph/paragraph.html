@@ -42,7 +42,7 @@ limitations under the License.
        style="float: left;width: fit-content;max-width: 30%; border: none !important; margin: 0; padding: 0;">
     <div id="{{paragraph.id}}_shebang" ng-if="!paragraph.config.editorHide && !viewOnly">
       <select
-        ng-change="editor.setReadOnly(false);commitParagraph(paragraph)"
+        ng-change="editor.setReadOnly(false);commitParagraph(paragraph);setParagraphMode(editor.getSession());"
         ng-if="!paragraph.config.editorHide && !viewOnly"
         ng-model="paragraph.shebang"
         ng-options="setting.shebang as setting.shebang for setting in interpreterSettings | orderBy: 'interpreterName'">

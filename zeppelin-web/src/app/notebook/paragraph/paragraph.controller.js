@@ -132,6 +132,14 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
+        // if shebang exists, but interpreter not found - block input
+        if ($scope.paragraph.shebang && $scope.interpreterSettings
+        && _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang}) === -1) {
+          if ($scope.editor) {
+            $scope.editor.setReadOnly(true);
+          }
+        }
+
         if (!$scope.paragraph.shebang) {
           // set default shebang if interpreter exist, disable editor otherwise.
           if ($scope.interpreterSettings && $scope.interpreterSettings.length > 0) {
@@ -989,7 +997,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         autoAdjustEditorHeight(_editor);
       });
 
-      setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
+      setParagraphMode($scope.editor.getSession());
 
       // autocomplete on '.'
       /*
@@ -1210,16 +1218,11 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   const setParagraphMode = function(session) {
-    // use config value if exists
-    if ($scope.paragraph.config.editorMode) {
-      session.setMode($scope.paragraph.config.editorMode);
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang});
-      if ($scope.interpreterSettings[index].config.editor.language) {
-        setEditorLanguage(session, $scope.interpreterSettings[index].config.editor.language);
-        _.merge($scope.paragraph.config.editorSetting,
-        $scope.interpreterSettings[index].config.editor.language);
-      }
+    let index = _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang});
+    if ($scope.interpreterSettings[index].config.editor.language) {
+      setEditorLanguage(session, $scope.interpreterSettings[index].config.editor.language);
+      _.merge($scope.paragraph.config.editorSetting,
+      $scope.interpreterSettings[index].config.editor);
     }
   };
 
