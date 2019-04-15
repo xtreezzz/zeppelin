@@ -171,45 +171,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   // Controller init
   $scope.init = function(newParagraph, note) {
     $scope.paragraph = newParagraph;
-
-    $scope.paragraph.settings.forms2 = {
-      TEXT_FORM: {
-        type: 'TextBox',
-        name: 'TEXT_FORM',
-        displayName: 'DISPLAY NAME',
-        defaultValue: 'Enter some text here...',
-        hidden: false,
-      },
-      CHECKBOX_FORM: {
-        type: 'CheckBox',
-        name: 'CHECKBOX_FORM',
-        displayName: 'DISPLAY NAME',
-        defaultValue: ['apple'],
-        hidden: false,
-        options: [
-          {value: 'apple', displayName: 'Green Apple'},
-          {value: 'banana', displayName: 'Yellow  Banana'},
-          {value: 'orange', displayName: 'Orange Orange'},
-        ],
-      },
-      SELECT_FORM: {
-        type: 'Select',
-        name: 'SELECT_FORM',
-        displayName: 'DISPLAY NAME',
-        defaultValue: '3',
-        hidden: false,
-        options: [
-          {value: '1', displayName: 'mon'},
-          {value: '2', displayName: 'tur'},
-          {value: '3', displayName: 'wed'},
-          {value: '4', displayName: 'thr'},
-          {value: '5', displayName: 'fri'},
-          {value: '6', displayName: 'sat'},
-          {value: '7', displayName: 'sun'},
-        ],
-      },
-    };
-
     $scope.parentNote = note;
     $scope.originalText = angular.copy(newParagraph.text);
     $scope.chart = {};
