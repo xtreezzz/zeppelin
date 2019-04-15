@@ -24,6 +24,7 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSou
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcessStarter;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
@@ -84,7 +85,8 @@ public class InterpreterStarterHandler extends AbstractHandler {
             remoteServerClassPath,
             thriftAddr,
             thriftPort,
-            option.getJvmOptions());
+            option.getJvmOptions(),
+            Configuration.getInstanceMarkerPrefix());
   }
 
 }

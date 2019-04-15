@@ -23,6 +23,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.handler.InterpreterResultHandler;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
@@ -53,7 +54,7 @@ public class InterpreterProcessServer {
   }
 
   public void start() throws TTransportException {
-    this.serverSocket = new TServerSocket(40000);
+    this.serverSocket = new TServerSocket(Configuration.getThriftPort());
 
     final Thread startingThread = new Thread(() -> {
       ZLog.log(ET.INTERPRETER_EVENT_SERVER_STARTING,
@@ -134,11 +135,11 @@ public class InterpreterProcessServer {
   }
 
   public String getAddr() {
-    return "127.0.0.1";
+    return Configuration.getThriftAddress();
   }
 
   public int getPort() {
-    return 40000;
+    return Configuration.getThriftPort();
   }
 
   public String getRemoteServerClassPath() {

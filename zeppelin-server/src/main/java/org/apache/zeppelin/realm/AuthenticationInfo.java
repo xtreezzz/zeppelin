@@ -25,12 +25,8 @@ import java.util.Set;
 public class AuthenticationInfo {
   private static final Gson gson = new Gson();
 
-  String user;
-  Set<String> roles;
-
-  public AuthenticationInfo(String user) {
-    this.user = user;
-  }
+  private final String user;
+  private final Set<String> roles;
 
   public AuthenticationInfo(String user, Set<String> roles) {
     this.user = user;

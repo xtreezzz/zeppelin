@@ -99,42 +99,43 @@ public class ConnectionManager {
     }
   }
 
-  @Scheduled(fixedDelay = 20)
+  @Scheduled(fixedDelay = 50)
   private void getEvents() {
-    final EventService.Event event = EventService.getEvent();
+    while (true) {
+      final EventService.Event event = EventService.getEvent();
+      if (event == null) {
+        return;
+      }
 
-    if(event == null) {
-      return;
-    }
-
-    if (event.getBefore() != null && event.getAfter() != null
-    && event.getBefore().getPosition() != event.getAfter().getPosition()) {
-      broadcast(
-            event.getNoteId(),
-            new SockMessage(Operation.PARAGRAPH_MOVED)
-                    .put("id", event.getAfter().getId())
-                    .put("index", event.getAfter().getPosition())
-    );
-    } else if (event.getBefore() != null && event.getAfter() != null) {
-      broadcast(
-              event.getNoteId(),
-              new SockMessage(Operation.PARAGRAPH)
-                      .put("paragraph", event.getAfter())
-      );
-    } else if (event.getBefore() == null && event.getAfter() != null) {
-      broadcast(
-              event.getNoteId(),
-              new SockMessage(Operation.PARAGRAPH_ADDED)
-                      .put("paragraph", event.getAfter())
-                      .put("index", event.getAfter().getPosition())
-      );
-    } else if (event.getBefore() != null && event.getAfter() == null) {
-      broadcast(
-              event.getNoteId(),
-              new SockMessage(Operation.PARAGRAPH_REMOVED)
-                      .put("id", event.getBefore().getId())
-                      .put("index", event.getBefore().getPosition())
-      );
+      if (event.getBefore() != null && event.getAfter() != null
+              && event.getBefore().getPosition() != event.getAfter().getPosition()) {
+        broadcast(
+                event.getNoteId(),
+                new SockMessage(Operation.PARAGRAPH_MOVED)
+                        .put("id", event.getAfter().getId())
+                        .put("index", event.getAfter().getPosition())
+        );
+      } else if (event.getBefore() != null && event.getAfter() != null) {
+        broadcast(
+                event.getNoteId(),
+                new SockMessage(Operation.PARAGRAPH)
+                        .put("paragraph", event.getAfter())
+        );
+      } else if (event.getBefore() == null && event.getAfter() != null) {
+        broadcast(
+                event.getNoteId(),
+                new SockMessage(Operation.PARAGRAPH_ADDED)
+                        .put("paragraph", event.getAfter())
+                        .put("index", event.getAfter().getPosition())
+        );
+      } else if (event.getBefore() != null && event.getAfter() == null) {
+        broadcast(
+                event.getNoteId(),
+                new SockMessage(Operation.PARAGRAPH_REMOVED)
+                        .put("id", event.getBefore().getId())
+                        .put("index", event.getBefore().getPosition())
+        );
+      }
     }
   }
 }

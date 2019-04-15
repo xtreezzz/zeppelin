@@ -24,7 +24,9 @@ public class AuthorizationService {
   public static AuthenticationInfo getAuthenticationInfo() {
     final String principal = principalThreadLocal.get() != null
             ? principalThreadLocal.get()
-            : ShiroSecurityService.get().getPrincipal();
+            : ShiroSecurityService.get() != null
+              ? ShiroSecurityService.get().getPrincipal()
+              : null;
     if(principal == null || "anonymous".equals(principal)) {
       final AuthenticationInfo authenticationInfo = new AuthenticationInfo("anonymous", new HashSet<>());
       cache.put("anonymous", authenticationInfo);

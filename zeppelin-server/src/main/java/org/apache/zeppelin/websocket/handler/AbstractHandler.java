@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.util.HashSet;
@@ -104,6 +105,11 @@ public abstract class AbstractHandler {
     if (permission == Permission.ANY || target == null) {
       return;
     }
+
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
     final Set<String> userRoles = new HashSet<>();
     userRoles.addAll(authenticationInfo.getRoles());
     userRoles.add(authenticationInfo.getUser());
@@ -112,19 +118,19 @@ public abstract class AbstractHandler {
     Set<String> allowed = null;
     switch (permission) {
       case READER:
-        isAllowed = userRoles.removeAll(target.getReaders());
+        isAllowed = userRoles.removeAll(target.getReaders()) || userRoles.removeAll(admin);
         allowed = target.getReaders();
         break;
       case WRITER:
-        isAllowed = userRoles.removeAll(target.getWriters());
+        isAllowed = userRoles.removeAll(target.getWriters()) || userRoles.removeAll(admin);
         allowed = target.getWriters();
         break;
       case RUNNER:
-        isAllowed = userRoles.removeAll(target.getRunners());
+        isAllowed = userRoles.removeAll(target.getRunners()) || userRoles.removeAll(admin);
         allowed = target.getRunners();
         break;
       case OWNER:
-        isAllowed = userRoles.removeAll(target.getOwners());
+        isAllowed = userRoles.removeAll(target.getOwners()) || userRoles.removeAll(admin);
         allowed = target.getOwners();
         break;
     }

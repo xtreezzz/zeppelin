@@ -35,6 +35,7 @@ import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
 import java.io.File;
@@ -68,13 +69,17 @@ public class NoteHandler extends AbstractHandler {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final List<Note> notes = noteService.getAllNotes();
 
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
     final Set<String> userRoles = new HashSet<>();
     userRoles.addAll(authenticationInfo.getRoles());
     userRoles.add(authenticationInfo.getUser());
 
     final List<NoteInfo> notesInfo = notes
             .stream()
-            .filter(note -> new HashSet(userRoles).removeAll(note.getReaders()))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .map(NoteInfo::new)
             .collect(Collectors.toList());
 

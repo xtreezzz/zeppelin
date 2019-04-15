@@ -17,9 +17,10 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import org.apache.shiro.SecurityUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
+import org.apache.zeppelin.realm.ShiroSecurityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -64,7 +65,7 @@ public class SecurityRestApi {
 
   /**
    * Get userlist.
-   *
+   * <p>
    * Returns list of all user from available realms
    *
    * @return 200 response
@@ -72,16 +73,23 @@ public class SecurityRestApi {
   @GetMapping(value = "/userlist/{searchText}", produces = "application/json")
   public ResponseEntity getUserList(@PathVariable("searchText") final String searchText) {
 
-
-    /*final int numUsersToFetch = 5;
-    final List<String> usersList = securityService.getMatchedUsers(searchText, numUsersToFetch);
-    final List<String> rolesList = securityService.getMatchedRoles();
-
-*/
     final List<String> autoSuggestUserList = new ArrayList<>();
     final List<String> autoSuggestRoleList = new ArrayList<>();
 
-    /*
+    if (ShiroSecurityService.get() == null) {
+      final Map<String, List> returnListMap = new HashMap<>();
+      returnListMap.put("users", autoSuggestUserList);
+      returnListMap.put("roles", autoSuggestRoleList);
+      return new JsonResponse(HttpStatus.OK, "", returnListMap).build();
+    }
+
+    final int numUsersToFetch = 5;
+    final List<String> usersList = ShiroSecurityService.get().getMatchedUsers(searchText, numUsersToFetch);
+    final List<String> rolesList = ShiroSecurityService.get().getMatchedRoles();
+
+
+
+
     Collections.sort(usersList);
     Collections.sort(rolesList);
     usersList.sort((o1, o2) -> {
@@ -108,7 +116,7 @@ public class SecurityRestApi {
         autoSuggestRoleList.add(role);
       }
     }
-    */
+
     final Map<String, List> returnListMap = new HashMap<>();
     returnListMap.put("users", autoSuggestUserList);
     returnListMap.put("roles", autoSuggestRoleList);

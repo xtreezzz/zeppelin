@@ -16,21 +16,20 @@
  */
 package org.apache.zeppelin.realm;
 
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.naming.ldap.LdapContext;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.naming.ldap.LdapContext;
-import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 /**
  * Tools for securing Zeppelin.
  */
-@Component
 public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
 
   private final Logger LOGGER = LoggerFactory.getLogger(ShiroSecurityService.class);
@@ -60,9 +59,6 @@ public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
     return principal;
   }
 
-  public boolean isAuthenticated() {
-    return org.apache.shiro.SecurityUtils.getSubject().isAuthenticated();
-  }
 
   public List<String> getMatchedUsers(final String searchText, final int numUsersToFetch) {
     final List<String> usersList = new ArrayList<>();
