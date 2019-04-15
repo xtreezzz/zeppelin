@@ -30,7 +30,6 @@ import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroWebFilterConfiguration;
 import org.apache.shiro.web.env.IniWebEnvironment;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,11 +54,6 @@ import java.util.concurrent.Executor;
         ShiroWebFilterConfiguration.class
 })
 public class ZeppelinBeanConfiguration {
-
-  @Bean
-  public ZeppelinConfiguration zeppelinConfiguration() {
-    return new ZeppelinConfiguration();
-  }
 
   @Bean
   @Autowired

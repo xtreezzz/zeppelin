@@ -16,13 +16,13 @@
  */
 package org.apache.zeppelin.rest;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.utils.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.tinkoff.zeppelin.engine.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +32,6 @@ import java.util.Map;
  *
  * @since 0.3.4
  */
-//@Path("/")
-//@Singleton
 @RestController
 @RequestMapping("/api/")
 public class ZeppelinRestApi {
@@ -43,14 +41,12 @@ public class ZeppelinRestApi {
    *
    * @return 200 response
    */
-  //@GET
   @GetMapping(produces = "application/json")
   public ResponseEntity getRoot() {
     return new JsonResponse(HttpStatus.OK).build();
   }
 
-  //@GET
-  //@Path("version")
+
   @GetMapping(value = "/version", produces = "application/json")
   public ResponseEntity getVersion() {
     final Map<String, String> versionInfo = new HashMap<>();
@@ -61,27 +57,9 @@ public class ZeppelinRestApi {
     return new JsonResponse(HttpStatus.OK, "Zeppelin version", versionInfo).build();
   }
 
-  /**
-   * Set the log level for root logger.
-   *
-   * @param logLevel new log level for Rootlogger
-   */
-  @PutMapping(value = "/log/level/{logLevel}", produces = "application/json")
-  public ResponseEntity changeRootLogLevel(@PathVariable("logLevel") final String logLevel) {
-    final Level level = Level.toLevel(logLevel);
-    if (logLevel.toLowerCase().equalsIgnoreCase(level.toString().toLowerCase())) {
-      Logger.getRootLogger().setLevel(level);
-      return new JsonResponse(HttpStatus.OK).build();
-    } else {
-      return new JsonResponse(HttpStatus.NOT_ACCEPTABLE,
-          "Please check LOG level specified. Valid values: DEBUG, ERROR, FATAL, "
-              + "INFO, TRACE, WARN").build();
-    }
-  }
-
   @GetMapping("/metadata_server_url")
   public ResponseEntity getMetaserverUrl() {
-    String url = ZeppelinConfiguration.create().getZeppelinMetaserverUrlPort();
+    String url = Configuration.getMetaserverLocation();
     return new JsonResponse(HttpStatus.OK, url).build();
   }
 }

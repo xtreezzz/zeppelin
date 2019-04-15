@@ -173,24 +173,4 @@ public enum Operation {
   NOTE_RUNNING_STATUS,        // [s-c] sequential run status will be change
   NOTICE,                        // [s-c] Notice
   ;
-
-
-  /*public static Set<Operation> getDisabledForRunningNoteMessages() {
-    return Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(
-                    SCOMMIT_PARAGRAPH,
-                    SRUN_PARAGRAPH,
-                    SRUN_PARAGRAPH_USING_SPELL,
-                    SRUN_ALL_PARAGRAPHS,
-                    SPARAGRAPH_CLEAR_OUTPUT,
-                    SPARAGRAPH_CLEAR_ALL_OUTPUT,
-                    SINSERT_PARAGRAPH,
-                    SMOVE_PARAGRAPH,
-                    SCOPY_PARAGRAPH,
-                    SPARAGRAPH_REMOVE,
-                    SMOVE_NOTE_TO_TRASH,
-                    SDEL_NOTE,
-                    SPATCH_PARAGRAPH)));
-  }
-  */
 }

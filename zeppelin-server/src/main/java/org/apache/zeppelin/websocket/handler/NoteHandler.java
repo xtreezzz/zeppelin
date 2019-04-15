@@ -18,7 +18,6 @@
 package org.apache.zeppelin.websocket.handler;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
 import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
@@ -51,16 +50,13 @@ public class NoteHandler extends AbstractHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NoteHandler.class);
   private static final String TRASH_FOLDER = "~Trash";
 
-  private final ZeppelinConfiguration zeppelinConfiguration;
   private final NoteDTOConverter noteDTOConverter;
 
   @Autowired
   public NoteHandler(final NoteService noteService,
                      final ConnectionManager connectionManager,
-                     final ZeppelinConfiguration zeppelinConfiguration,
                      final NoteDTOConverter noteDTOConverter) {
     super(connectionManager, noteService);
-    this.zeppelinConfiguration = zeppelinConfiguration;
     this.noteDTOConverter = noteDTOConverter;
   }
 
@@ -89,7 +85,7 @@ public class NoteHandler extends AbstractHandler {
   public void getHomeNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    final String noteId = zeppelinConfiguration.getString(ZeppelinConfiguration.ConfVars.ZEPPELIN_NOTEBOOK_HOMESCREEN);
+    final String noteId = Configuration.getHomeNodeId();
 
     checkPermission(0L, Permission.READER, authenticationInfo);
     final Note note = noteService.getNote(noteId);

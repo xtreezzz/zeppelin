@@ -20,18 +20,15 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.zeppelin.configuration.ZeppelinConfiguration;
+import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.BadRequestException;
-import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
 import org.apache.zeppelin.rest.message.NewNoteRequest;
 import org.apache.zeppelin.rest.message.NewParagraphRequest;
 import org.apache.zeppelin.rest.message.RenameNoteRequest;
 import org.apache.zeppelin.rest.message.UpdateParagraphRequest;
-import org.apache.zeppelin.realm.ShiroSecurityService;
-import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
@@ -45,6 +42,7 @@ import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
+import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
 
 import java.io.IOException;
 import java.util.*;
@@ -58,17 +56,16 @@ public class NotebookRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRestApi.class);
   private static final Gson gson = new Gson();
 
-  //private final SearchService noteSearchService;
+  private final LuceneSearch luceneSearch;
   private final ConnectionManager connectionManager;
   private final NoteService noteRepository;
 
   @Autowired
   public NotebookRestApi(
-          //final SearchService search,
-          final ZeppelinConfiguration zConf,
+          final LuceneSearch luceneSearch,
           final ConnectionManager connectionManager,
           final NoteService noteRepository) {
-    //this.noteSearchService = search;
+    this.luceneSearch = luceneSearch;
     this.connectionManager = connectionManager;
     this.noteRepository = noteRepository;
   }
@@ -889,7 +886,8 @@ public class NotebookRestApi {
     final HashSet<String> userAndRoles = new HashSet<>();
     userAndRoles.add(authenticationInfo.getUser());
     userAndRoles.addAll(authenticationInfo.getRoles());
-   /* final List<Map<String, String>> notesFound = noteSearchService.query(queryTerm);
+
+    final List<Map<String, String>> notesFound = luceneSearch.query(queryTerm);
     for (int i = 0; i < notesFound.size(); i++) {
       final String[] ids = notesFound.get(i).get("id").split("/", 2);
       final String noteId = ids[0];
@@ -901,9 +899,6 @@ public class NotebookRestApi {
       //  i--;
       //}
     }
-    LOG.info("{} notes found", notesFound.size());
-    */
-    final List<Map<String, String>> notesFound = new ArrayList<>();
     return new JsonResponse(HttpStatus.OK, notesFound).build();
   }
 

@@ -15,14 +15,18 @@ public class ConfigurationLoader {
                              @Value("${zeppelin.admin_group}") final String admin_group,
                              @Value("${zeppelin.thrift.address}") final String thriftAddress,
                              @Value("${zeppelin.thrift.port}") final int thriftPort,
-                             @Value("${zeppelin.instance.markerPrefix}") final String instanceMarkerPrefix) {
+                             @Value("${zeppelin.instance.markerPrefix}") final String instanceMarkerPrefix,
+                             @Value("${zeppelin.metaserver.address}") final String metaserverLocation,
+                             @Value("${zeppelin.home_node}") final String homeNodeId) {
 
     Configuration.create(
             parseString(admin_users, ","),
             parseString(admin_group, ","),
             thriftAddress,
             thriftPort,
-            instanceMarkerPrefix
+            instanceMarkerPrefix,
+            metaserverLocation,
+            homeNodeId
     );
   }
 

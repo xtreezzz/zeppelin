@@ -31,8 +31,6 @@ import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteExecutorService;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
-import java.io.IOException;
-
 @Component
 public class RunnerHandler extends AbstractHandler {
 
@@ -66,8 +64,7 @@ public class RunnerHandler extends AbstractHandler {
   }
 
 
-  public void runParagraph(final WebSocketSession conn, final SockMessage fromMessage)
-          throws InterruptedException {
+  public void runParagraph(final WebSocketSession conn, final SockMessage fromMessage) {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
@@ -81,7 +78,7 @@ public class RunnerHandler extends AbstractHandler {
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
   }
 
-  public void cancelParagraph(final WebSocketSession conn, final SockMessage fromSockMessage) throws IOException {
+  public void cancelParagraph(final WebSocketSession conn, final SockMessage fromSockMessage) {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("noteId", fromSockMessage, Permission.RUNNER, authenticationInfo, conn);
     noteExecutorService.abort(note);

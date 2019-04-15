@@ -86,6 +86,27 @@
       <artifactId>quartz</artifactId>
       <version>${org.quartz-scheduler.quartz}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-analyzers-common</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-queryparser</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-highlighter</artifactId>
+      <version>${org.apache.lucene}</version>
+    </dependency>
   </dependencies>
 
 </project>

@@ -87,6 +87,22 @@ public class ParagraphDAO {
           "FROM PARAGRAPHS\n" +
           "WHERE ID = :ID;";
 
+  private final static String SELECT_PARAGRAPHS = "" +
+          "SELECT ID,\n" +
+          "       NOTE_ID,\n" +
+          "       UUID,\n" +
+          "       TITLE,\n" +
+          "       TEXT,\n" +
+          "       SHEBANG,\n" +
+          "       CREATED,\n" +
+          "       UPDATED,\n" +
+          "       POSITION,\n" +
+          "       JOB_ID,\n" +
+          "       CONFIG,\n" +
+          "       GUI,\n" +
+          "       REVISION_ID\n" +
+          "FROM PARAGRAPHS\n";
+
   private final static String SELECT_PARAGRAPH_BY_ID = "" +
           "SELECT ID,\n" +
           "       NOTE_ID,\n" +
@@ -229,6 +245,15 @@ public class ParagraphDAO {
             .addValue("ID", paragraph.getId());
     jdbcTemplate.update(UPDATE_PARAGRAPH, parameters);
     return paragraph;
+  }
+
+  public List<Paragraph> getAll() {
+    final SqlParameterSource parameters = new MapSqlParameterSource();
+
+    return jdbcTemplate.query(
+            SELECT_PARAGRAPHS,
+            parameters,
+            ParagraphDAO::mapRow);
   }
 
   public Paragraph get(final Long id) {

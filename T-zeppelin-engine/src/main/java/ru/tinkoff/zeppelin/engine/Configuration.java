@@ -11,6 +11,8 @@ public class Configuration {
   private final int thriftPort;
 
   private final String instanceMarkerPrefix;
+  private final String metaserverLocation;
+  private final String homeNodeId;
 
   private static Configuration instance;
 
@@ -18,7 +20,9 @@ public class Configuration {
                         final Set<String> adminGroups,
                         final String thriftAddress,
                         final int thriftPort,
-                        final String instanceMarkerPrefix) {
+                        final String instanceMarkerPrefix,
+                        final String metaserverLocation,
+                        final String homeNodeId) {
     this.adminGroups = adminGroups;
     this.adminUsers = adminUsers;
 
@@ -26,6 +30,8 @@ public class Configuration {
     this.thriftPort = thriftPort;
 
     this.instanceMarkerPrefix = instanceMarkerPrefix;
+    this.metaserverLocation = metaserverLocation;
+    this.homeNodeId = homeNodeId;
     instance = this;
   }
 
@@ -33,7 +39,9 @@ public class Configuration {
                                          final Set<String> adminGroups,
                                          final String thriftAddress,
                                          final int thriftPort,
-                                         final String instanceMarkerPrefix) {
+                                         final String instanceMarkerPrefix,
+                                         final String metaserverLocation,
+                                         final String homeNodeId) {
     if (instance != null) {
       return;
     }
@@ -42,7 +50,9 @@ public class Configuration {
             adminGroups,
             thriftAddress,
             thriftPort,
-            instanceMarkerPrefix);
+            instanceMarkerPrefix,
+            metaserverLocation,
+            homeNodeId);
   }
 
 
@@ -64,5 +74,13 @@ public class Configuration {
 
   public static String getInstanceMarkerPrefix() {
     return instance.instanceMarkerPrefix;
+  }
+
+  public static String getMetaserverLocation() {
+    return instance.metaserverLocation;
+  }
+
+  public static String getHomeNodeId() {
+    return instance.homeNodeId;
   }
 }

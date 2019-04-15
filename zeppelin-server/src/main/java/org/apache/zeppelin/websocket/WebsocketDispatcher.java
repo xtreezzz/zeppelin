@@ -211,9 +211,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
         case GET_INTERPRETER_BINDINGS:
           // getInterpreterBindings(session, messagereceived);
           break;
-        case GET_INTERPRETER_SETTINGS:
-          settingsService.getInterpreterSettings(session);
-          break;
         case SAVE_NOTE_FORMS:
           noteFormsService.saveNoteForms(session, messagereceived);
           break;
