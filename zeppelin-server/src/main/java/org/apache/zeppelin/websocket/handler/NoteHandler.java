@@ -239,10 +239,18 @@ public class NoteHandler extends AbstractHandler {
     if (!folderPath.startsWith("/" + TRASH_FOLDER)) {
       throw new IOException("Can't restore folder: '" + folderPath + "' as it is not in trash folder");
     }
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
 
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith(folderPath))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
     //TODO: add check for permission
 
@@ -254,19 +262,25 @@ public class NoteHandler extends AbstractHandler {
   }
 
 
-  // TODO: ??????
   public void renameFolder(final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String oldFolderPath = "/" + fromMessage.getNotNull("id");
     final String newFolderPath = "/" + fromMessage.getNotNull("name");
 
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith(oldFolderPath + "/"))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
-    //TODO: add check for permission
-
 
     for (final Note note : notes) {
       final String notePath = note.getPath().replaceFirst(oldFolderPath, newFolderPath);
@@ -275,17 +289,23 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
-  // TODO: ??????
   public void moveFolderToTrash(final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
 
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith(folderPath))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
-    //TODO: add check for permission
-
 
     for (final Note note : notes) {
       final String notePath = "/" + TRASH_FOLDER + note.getPath();
@@ -294,18 +314,24 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
-  // TODO: ??????
   public void removeFolder(final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final String folderPath = "/" + fromMessage.getNotNull("id") + "/";
 
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith(folderPath))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
-
-    //TODO: add check for permission
 
     for (final Note note : notes) {
       noteService.deleteNote(note);
@@ -316,28 +342,41 @@ public class NoteHandler extends AbstractHandler {
   public void emptyTrash(final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
-    //TODO: add check for permission
-
 
     for (final Note note : notes) {
       noteService.deleteNote(note);
     }
   }
 
-  // TODO: ??????
   public void restoreAll(final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
 
     final List<Note> notes = noteService.getAllNotes()
             .stream()
             .filter(note -> !note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+            .filter(note -> new HashSet<>(userRoles).removeAll(note.getReaders()) || new HashSet<>(admin).removeAll(userRoles))
             .collect(Collectors.toList());
-
-    //TODO: add check for permission
 
     for (final Note note : notes) {
       final String notePath = note.getPath().substring(TRASH_FOLDER.length() + 1);
@@ -346,7 +385,6 @@ public class NoteHandler extends AbstractHandler {
     }
   }
 
-  //TODO(SAN) not complete yet
   public void clearAllParagraphOutput(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 

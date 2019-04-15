@@ -64,7 +64,6 @@
     <module>zeppelin-server</module>
     <module>zeppelin-dependency</module>
     <module>zeppelin-helium</module>
-    <module>zeppelin-search</module>
     <module>logger</module>
 
     <module>interpreters/t-python</module>
