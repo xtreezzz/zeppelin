@@ -24,10 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
-import ru.tinkoff.zeppelin.core.notebook.Job;
-import ru.tinkoff.zeppelin.core.notebook.Note;
-import ru.tinkoff.zeppelin.core.notebook.Paragraph;
-import ru.tinkoff.zeppelin.core.notebook.Scheduler;
+import ru.tinkoff.zeppelin.core.notebook.*;
 import ru.tinkoff.zeppelin.engine.handler.*;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcessServer;
@@ -126,10 +123,10 @@ public class NoteExecutorService {
 
   @Scheduled(fixedDelay = 1_000)
   private void handleAbort() {
-    final List<Job> jobs = abortHandler.loadJobs();
-    for (final Job job : jobs) {
+    final List<JobBatch> batches = abortHandler.loadJobs();
+    for (final JobBatch batch : batches) {
       try {
-        abortHandler.handle(job);
+        abortHandler.handle(batch);
       } catch (final Exception e) {
         //log this
       }

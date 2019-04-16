@@ -18,6 +18,7 @@ package ru.tinkoff.zeppelin.engine;
 
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -73,10 +74,11 @@ public class EventService {
   }
 
   public static void publish(Type type, Object ... args) {
-
   }
 
   public static void publish(final long noteId, final ParagraphDTO before, final ParagraphDTO after) {
-    paragraphEvents.add(new Event(noteId, before, after));
+    if(! Objects.equals(before, after)) {
+      paragraphEvents.add(new Event(noteId, before, after));
+    }
   }
 }

@@ -16,6 +16,7 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import com.google.common.collect.Sets;
 import org.apache.zeppelin.storage.*;
 import org.apache.zeppelin.storage.ZLog.ET;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,7 @@ import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Class for handle abort state of jobs
@@ -52,21 +54,35 @@ public class AbortHandler extends AbstractHandler {
     super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
   }
 
-  public List<Job> loadJobs() {
-    return jobDAO.loadNextCancelling();
+  public List<JobBatch> loadJobs() {
+    return jobBatchDAO.getAborting();
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handle(final Job job) {
-    final JobBatch batch = jobBatchDAO.get(job.getBatchId());
+  public void handle(final JobBatch batch) {
 
+    final List<Job> jobs = jobDAO.loadByBatch(batch.getId());
+    final Set<Job.Status> runningStatuses = Sets.newHashSet(Job.Status.RUNNING, Job.Status.ABORTING);
+    final boolean hasRunningJob = jobs.stream().anyMatch(j -> runningStatuses.contains(j.getStatus()));
+    if(! hasRunningJob) {
+      setFailedResult(null, null, batch, JobBatch.Status.ABORTED, PredefinedInterpreterResults.OPERATION_ABORTED);
+      return;
+    }
+
+    jobs.stream()
+            .filter(j -> runningStatuses.contains(j.getStatus()))
+            .forEach(j -> abortRunningJob(batch, j));
+
+  }
+
+  private void abortRunningJob(final JobBatch batch, final Job job) {
     final InterpreterProcess remote = InterpreterProcess.get(job.getShebang());
     if (remote == null) {
       setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
       ZLog.log(ET.INTERPRETER_PROCESS_NOT_FOUND,
-          String.format("Interpreter process not found, shebang: %s", job.getShebang()),
-          String.format("Incorrect interpreter behaviour during handling job abort, process for existing job not found: job[%s]", job.toString()),
-          "Unknown");
+              String.format("Interpreter process not found, shebang: %s", job.getShebang()),
+              String.format("Incorrect interpreter behaviour during handling job abort, process for existing job not found: job[%s]", job.toString()),
+              "Unknown");
       return;
     }
 
@@ -80,10 +96,10 @@ public class AbortHandler extends AbstractHandler {
     } catch (final Exception e) {
       setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
       ZLog.log(ET.JOB_CANCEL_FAILED,
-          String.format("Failed to cancel job with uuid: %s", job.getInterpreterJobUUID()),
-          String.format("Exception thrown during job canceling: cancelResult[%s], job[%s]",
-              cancelResult != null ? cancelResult.toString() : "null", job.toString()),
-          "Unknown");
+              String.format("Failed to cancel job with uuid: %s", job.getInterpreterJobUUID()),
+              String.format("Exception thrown during job canceling: cancelResult[%s], job[%s]",
+                      cancelResult != null ? cancelResult.toString() : "null", job.toString()),
+              "Unknown");
       return;
     } finally {
       if (connection != null) {
@@ -94,25 +110,24 @@ public class AbortHandler extends AbstractHandler {
     switch (cancelResult.status) {
       case ACCEPT:
         ZLog.log(ET.JOB_CANCEL_ACCEPTED,
-            String.format("Interpreter process started to cancel: job[id=%s]", job.getId()),
-            String.format("Cancel signal passed to interpreter process: job[%s], process[%s]", job.toString(), remote.toString()),
-            "Unknown");
-        job.setStatus(Job.Status.ABORTING);
-        jobDAO.update(job);
+                String.format("Interpreter process started to cancel: job[id=%s]", job.getId()),
+                String.format("Cancel signal passed to interpreter process: job[%s], process[%s]", job.toString(), remote.toString()),
+                "Unknown");
+        setFailedResult(job, Job.Status.ABORTING, null, null, null);
         break;
       case NOT_FOUND:
         ZLog.log(ET.JOB_CANCEL_NOT_FOUND,
-            String.format("Process to cancel not found : job[id=%s]", job.getId()),
-            String.format("Cancel result status is \"not found\": job[%s], process[%s]", job.toString(), remote.toString()),
-            "Unknown");
+                String.format("Process to cancel not found : job[id=%s]", job.getId()),
+                String.format("Cancel result status is \"not found\": job[%s], process[%s]", job.toString(), remote.toString()),
+                "Unknown");
         setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
         break;
       case ERROR:
       default:
         ZLog.log(ET.JOB_CANCEL_ERRORED,
-            String.format("Failed to cancel job[id=%s]", job.getId()),
-            String.format("Cancel result status is \"error\": job[%s], process[%s]", job.toString(), remote.toString()),
-            "Unknown");
+                String.format("Failed to cancel job[id=%s]", job.getId()),
+                String.format("Cancel result status is \"error\": job[%s], process[%s]", job.toString(), remote.toString()),
+                "Unknown");
         setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
     }
   }

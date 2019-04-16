@@ -20,6 +20,7 @@ import org.apache.zeppelin.notebook.display.GUI;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 
 public class ParagraphDTO {
 
@@ -156,5 +157,44 @@ public class ParagraphDTO {
 
     public void setPosition(final int position) {
         this.position = position;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ParagraphDTO)) return false;
+        final ParagraphDTO that = (ParagraphDTO) o;
+        return jobId == that.jobId &&
+                databaseId == that.databaseId &&
+                position == that.position &&
+                id.equals(that.id) &&
+                Objects.equals(title, that.title) &&
+                text.equals(that.text) &&
+                user.equals(that.user) &&
+                shebang.equals(that.shebang) &&
+                created.equals(that.created) &&
+                updated.equals(that.updated) &&
+                status.equals(that.status) &&
+                config.equals(that.config) &&
+                settings.equals(that.settings) &&
+                Objects.equals(results, that.results);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(jobId,
+                databaseId,
+                id,
+                title,
+                text,
+                user,
+                shebang,
+                created,
+                updated,
+                status,
+                position,
+                config,
+                settings,
+                results);
     }
 }

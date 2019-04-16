@@ -22,9 +22,13 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class JobBatchDAO {
@@ -49,10 +53,41 @@ public class JobBatchDAO {
 
     private static final String LOAD_BATCH_BY_ID = "SELECT * FROM job_batch WHERE ID = :ID;";
 
+    private static final String LOAD_ABORTING = "SELECT * FROM job_batch WHERE STATUS = :STATUS;";
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public JobBatchDAO(final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+    }
+
+    private static JobBatch mapRow(final ResultSet resultSet, final int i) throws SQLException {
+        final Long id = resultSet.getLong("ID");
+        final Long noteId = resultSet.getLong("NOTE_ID");
+        final JobBatch.Status status = JobBatch.Status.valueOf(resultSet.getString("STATUS"));
+
+        final LocalDateTime createdAt =
+                null != resultSet.getTimestamp("CREATED_AT")
+                        ? resultSet.getTimestamp("CREATED_AT").toLocalDateTime()
+                        : null;
+        final LocalDateTime startedAt =
+                null != resultSet.getTimestamp("STARTED_AT")
+                        ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
+                        : null;
+
+        final LocalDateTime endedAt =
+                null != resultSet.getTimestamp("ENDED_AT")
+                        ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
+                        : null;
+
+        final JobBatch jobBatch = new JobBatch();
+        jobBatch.setId(id);
+        jobBatch.setNoteId(noteId);
+        jobBatch.setStatus(status);
+        jobBatch.setCreatedAt(createdAt);
+        jobBatch.setStartedAt(startedAt);
+        jobBatch.setEndedAt(endedAt);
+        return jobBatch;
     }
 
     public JobBatch persist(final JobBatch jobBatch) {
@@ -84,33 +119,12 @@ public class JobBatchDAO {
     public JobBatch get(final Long batchId) {
         final SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("ID", batchId);
-        return namedParameterJdbcTemplate.queryForObject(LOAD_BATCH_BY_ID, parameters, (resultSet, i) -> {
-            final Long id = resultSet.getLong("ID");
-            final Long noteId = resultSet.getLong("NOTE_ID");
-            final JobBatch.Status status = JobBatch.Status.valueOf(resultSet.getString("STATUS"));
+        return namedParameterJdbcTemplate.queryForObject(LOAD_BATCH_BY_ID, parameters, JobBatchDAO::mapRow);
+    }
 
-            final LocalDateTime createdAt =
-                    null != resultSet.getTimestamp("CREATED_AT")
-                            ? resultSet.getTimestamp("CREATED_AT").toLocalDateTime()
-                            : null;
-            final LocalDateTime startedAt =
-                    null != resultSet.getTimestamp("STARTED_AT")
-                            ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
-                            : null;
-
-            final LocalDateTime endedAt =
-                    null != resultSet.getTimestamp("ENDED_AT")
-                            ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
-                            : null;
-
-            final JobBatch jobBatch = new JobBatch();
-            jobBatch.setId(id);
-            jobBatch.setNoteId(noteId);
-            jobBatch.setStatus(status);
-            jobBatch.setCreatedAt(createdAt);
-            jobBatch.setStartedAt(startedAt);
-            jobBatch.setEndedAt(endedAt);
-            return jobBatch;
-        });
+    public List<JobBatch> getAborting() {
+        final SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("STATUS", JobBatch.Status.ABORTING.name());
+        return namedParameterJdbcTemplate.query(LOAD_ABORTING, parameters, JobBatchDAO::mapRow);
     }
 }

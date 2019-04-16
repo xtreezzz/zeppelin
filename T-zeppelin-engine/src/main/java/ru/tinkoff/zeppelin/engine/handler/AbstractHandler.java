@@ -124,43 +124,49 @@ abstract class AbstractHandler {
     setFailedResult(job, Job.Status.ABORTED, batch, JobBatch.Status.ABORTED, interpreterResult);
   }
 
-  private void setFailedResult(final Job job,
+  void setFailedResult(final Job job,
                                final Job.Status jobStatus,
                                final JobBatch batch,
                                final JobBatch.Status jobBatchStatus,
                                final InterpreterResult interpreterResult) {
 
-    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagpaphId());
+    if(job != null) {
+      final ParagraphDTO before = fullParagraphDAO.getById(job.getParagpaphId());
 
-    persistMessages(job, interpreterResult.message());
-
-    job.setStatus(jobStatus);
-    job.setEndedAt(LocalDateTime.now());
-    jobDAO.update(job);
-
-    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
-    EventService.publish(job. getNoteId(), before, after);
-
-    final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
-    for (final Job j : jobs) {
-      final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagpaphId());
-
-      if (j.getStatus() == Job.Status.PENDING) {
-        j.setStatus(Job.Status.CANCELED);
-        j.setStartedAt(LocalDateTime.now());
-        j.setEndedAt(LocalDateTime.now());
+      if(interpreterResult != null) {
+        persistMessages(job, interpreterResult.message());
       }
-      j.setInterpreterJobUUID(null);
-      j.setInterpreterProcessUUID(null);
-      jobDAO.update(j);
 
-      final ParagraphDTO afterInner = fullParagraphDAO.getById(j.getParagpaphId());
-      EventService.publish(job.getNoteId(), beforeInner, afterInner);
+      job.setStatus(jobStatus);
+      job.setEndedAt(LocalDateTime.now());
+      jobDAO.update(job);
+
+      final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
+      EventService.publish(job.getNoteId(), before, after);
     }
 
-    batch.setStatus(jobBatchStatus);
-    batch.setEndedAt(LocalDateTime.now());
-    jobBatchDAO.update(batch);
+    if(batch != null) {
+      final List<Job> jobs = jobDAO.loadByBatch(batch.getId());
+      for (final Job j : jobs) {
+        final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagpaphId());
+
+        if (j.getStatus() == Job.Status.PENDING) {
+          j.setStatus(Job.Status.CANCELED);
+          j.setStartedAt(LocalDateTime.now());
+          j.setEndedAt(LocalDateTime.now());
+        }
+        j.setInterpreterJobUUID(null);
+        j.setInterpreterProcessUUID(null);
+        jobDAO.update(j);
+
+        final ParagraphDTO afterInner = fullParagraphDAO.getById(j.getParagpaphId());
+        EventService.publish(j.getNoteId(), beforeInner, afterInner);
+      }
+
+      batch.setStatus(jobBatchStatus);
+      batch.setEndedAt(LocalDateTime.now());
+      jobBatchDAO.update(batch);
+    }
   }
 
   private void persistMessages(final Job job,
