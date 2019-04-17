@@ -16,6 +16,10 @@
  */
 package org.apache.zeppelin.storage;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.Set;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -41,6 +45,8 @@ public class JobDAO {
           "                 INDEX_NUMBER,\n" +
           "                 SHEBANG,\n" +
           "                 STATUS,\n" +
+          "                 USER_NAME,\n" +
+          "                 USER_ROLES,\n" +
           "                 INTERPRETER_PROCESS_UUID,\n" +
           "                 INTERPRETER_JOB_UUID,\n" +
           "                 CREATED_AT,\n" +
@@ -52,6 +58,8 @@ public class JobDAO {
           "        :INDEX_NUMBER,\n" +
           "        :SHEBANG,\n" +
           "        :STATUS,\n" +
+          "        :USER_NAME,\n" +
+          "        :USER_ROLES,\n" +
           "        :INTERPRETER_PROCESS_UUID,\n" +
           "        :INTERPRETER_JOB_UUID,\n" +
           "        :CREATED_AT,\n" +
@@ -65,6 +73,8 @@ public class JobDAO {
           "    INDEX_NUMBER             = :INDEX_NUMBER,\n" +
           "    SHEBANG                  = :SHEBANG,\n" +
           "    STATUS                   = :STATUS,\n" +
+          "    USER_NAME                = :USER_NAME,\n" +
+          "    USER_ROLES               = :USER_ROLES,\n" +
           "    INTERPRETER_PROCESS_UUID = :INTERPRETER_PROCESS_UUID,\n" +
           "    INTERPRETER_JOB_UUID     = :INTERPRETER_JOB_UUID,\n" +
           "    CREATED_AT               = :CREATED_AT,\n" +
@@ -80,6 +90,8 @@ public class JobDAO {
           "       INDEX_NUMBER,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
+          "       USER_NAME,\n" +
+          "       USER_ROLES,\n" +
           "       INTERPRETER_PROCESS_UUID,\n" +
           "       INTERPRETER_JOB_UUID,\n" +
           "       CREATED_AT,\n" +
@@ -96,6 +108,8 @@ public class JobDAO {
           "       INDEX_NUMBER,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
+          "       USER_NAME,\n" +
+          "       USER_ROLES,\n" +
           "       INTERPRETER_PROCESS_UUID,\n" +
           "       INTERPRETER_JOB_UUID,\n" +
           "       CREATED_AT,\n" +
@@ -112,6 +126,8 @@ public class JobDAO {
           "       INDEX_NUMBER,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
+          "       USER_NAME,\n" +
+          "       USER_ROLES,\n" +
           "       INTERPRETER_PROCESS_UUID,\n" +
           "       INTERPRETER_JOB_UUID,\n" +
           "       CREATED_AT,\n" +
@@ -130,6 +146,8 @@ public class JobDAO {
           "  J.INDEX_NUMBER,\n" +
           "  J.SHEBANG,\n" +
           "  J.STATUS,\n" +
+          "  J.USER_NAME,\n" +
+          "  J.USER_ROLES,\n" +
           "  J.INTERPRETER_PROCESS_UUID,\n" +
           "  J.INTERPRETER_JOB_UUID,\n" +
           "  J.CREATED_AT,\n" +
@@ -151,6 +169,8 @@ public class JobDAO {
           "       J.INDEX_NUMBER,\n" +
           "       J.SHEBANG,\n" +
           "       J.STATUS,\n" +
+          "       J.USER_NAME,\n" +
+          "       J.USER_ROLES,\n" +
           "       J.INTERPRETER_PROCESS_UUID,\n" +
           "       J.INTERPRETER_JOB_UUID,\n" +
           "       J.CREATED_AT,\n" +
@@ -169,6 +189,8 @@ public class JobDAO {
           "       J.INDEX_NUMBER,\n" +
           "       J.SHEBANG,\n" +
           "       J.STATUS,\n" +
+          "       J.USER_NAME,\n" +
+          "       J.USER_ROLES,\n" +
           "       J.INTERPRETER_PROCESS_UUID,\n" +
           "       J.INTERPRETER_JOB_UUID,\n" +
           "       J.CREATED_AT,\n" +
@@ -195,6 +217,9 @@ public class JobDAO {
   }
 
   private static Job mapRow(final ResultSet resultSet, final int i) throws SQLException {
+    Type rolesSetType = new TypeToken<Set<String>>() {
+    }.getType();
+
     final Long id = resultSet.getLong("ID");
     final Long batch_id = resultSet.getLong("BATCH_ID");
     final Long noteId = resultSet.getLong("NOTE_ID");
@@ -202,6 +227,8 @@ public class JobDAO {
     final Integer index = resultSet.getInt("INDEX_NUMBER");
     final String shebang = resultSet.getString("SHEBANG");
     final Job.Status status = Job.Status.valueOf(resultSet.getString("STATUS"));
+    final String username = resultSet.getString("USER_NAME");
+    final Set<String> roles = new Gson().fromJson(resultSet.getString("USER_ROLES"), rolesSetType);
     final String interpreter_process_uuid = resultSet.getString("INTERPRETER_PROCESS_UUID");
     final String interpreter_job_uuid = resultSet.getString("INTERPRETER_JOB_UUID");
 
@@ -223,10 +250,12 @@ public class JobDAO {
     job.setId(id);
     job.setBatchId(batch_id);
     job.setNoteId(noteId);
-    job.setParagpaphId(paragraphId);
+    job.setParagraphId(paragraphId);
     job.setIndex(index);
     job.setShebang(shebang);
     job.setStatus(status);
+    job.setUsername(username);
+    job.setRoles(roles);
     job.setInterpreterProcessUUID(interpreter_process_uuid);
     job.setInterpreterJobUUID(interpreter_job_uuid);
     job.setCreatedAt(createdAt);
@@ -240,10 +269,12 @@ public class JobDAO {
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("BATCH_ID", job.getBatchId())
             .addValue("NOTE_ID", job.getNoteId())
-            .addValue("PARAGRAPH_ID", job.getParagpaphId())
+            .addValue("PARAGRAPH_ID", job.getParagraphId())
             .addValue("INDEX_NUMBER", job.getIndex())
             .addValue("SHEBANG", job.getShebang())
             .addValue("STATUS", job.getStatus().name())
+            .addValue("USER_NAME", job.getUsername())
+            .addValue("USER_ROLES", new Gson().toJson(job.getRoles()))
             .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
             .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
             .addValue("CREATED_AT", job.getCreatedAt())
@@ -259,10 +290,12 @@ public class JobDAO {
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("BATCH_ID", job.getBatchId())
             .addValue("NOTE_ID", job.getNoteId())
-            .addValue("PARAGRAPH_ID", job.getParagpaphId())
+            .addValue("PARAGRAPH_ID", job.getParagraphId())
             .addValue("INDEX_NUMBER", job.getIndex())
             .addValue("SHEBANG", job.getShebang())
             .addValue("STATUS", job.getStatus().name())
+            .addValue("USER_NAME", job.getUsername())
+            .addValue("USER_ROLES", new Gson().toJson(job.getRoles()))
             .addValue("INTERPRETER_PROCESS_UUID", job.getInterpreterProcessUUID())
             .addValue("INTERPRETER_JOB_UUID", job.getInterpreterJobUUID())
             .addValue("CREATED_AT", job.getCreatedAt())
@@ -300,11 +333,8 @@ public class JobDAO {
   }
 
   public LinkedList<Job> loadNextPending() {
-    final SqlParameterSource parameters = new MapSqlParameterSource();
-
     final LinkedList<Job> jobs = new LinkedList<>(namedParameterJdbcTemplate.query(
             SELECT_READY_TO_EXECUTE_JOBS,
-            parameters,
             JobDAO::mapRow));
     jobs.sort(Comparator.comparing(Job::getIndex));
     return jobs;

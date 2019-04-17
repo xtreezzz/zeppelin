@@ -91,9 +91,9 @@ public class InterpreterResultHandler extends AbstractHandler {
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
     ZLog.log(ET.GOT_JOB,
         String.format("Got result [batch status=%s, batch id=%s] for job: id=%s, noteId=%s, paragraphId=%s",
-            batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagpaphId()),
+            batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagraphId()),
         String.format("Got result [batch status=%s, batch id=%s] for job: id=%s, noteId=%s, paragraphId=%s",
-            batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagpaphId()),
+            batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagraphId()),
         "Unknown");
 
     if (batch.getStatus() == JobBatch.Status.ABORTING || batch.getStatus() == JobBatch.Status.ABORTED) {

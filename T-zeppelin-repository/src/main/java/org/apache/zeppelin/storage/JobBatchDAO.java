@@ -16,13 +16,13 @@
  */
 package org.apache.zeppelin.storage;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 
 import java.sql.ResultSet;
@@ -119,7 +119,11 @@ public class JobBatchDAO {
     public JobBatch get(final Long batchId) {
         final SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("ID", batchId);
-        return namedParameterJdbcTemplate.queryForObject(LOAD_BATCH_BY_ID, parameters, JobBatchDAO::mapRow);
+        try {
+            return namedParameterJdbcTemplate.queryForObject(LOAD_BATCH_BY_ID, parameters, JobBatchDAO::mapRow);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public List<JobBatch> getAborting() {

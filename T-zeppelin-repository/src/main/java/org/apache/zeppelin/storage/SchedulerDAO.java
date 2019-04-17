@@ -18,6 +18,7 @@ package org.apache.zeppelin.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.util.Set;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -108,7 +109,7 @@ public class SchedulerDAO {
   }
 
   private static Scheduler mapRow(final ResultSet resultSet, final int i) throws SQLException {
-    Type rolesListType = new TypeToken<List<String>>() {
+    Type rolesSetType = new TypeToken<Set<String>>() {
     }.getType();
 
     final Long id = resultSet.getLong("ID");
@@ -116,7 +117,7 @@ public class SchedulerDAO {
     final boolean isEnabled = resultSet.getBoolean("ENABLED");
     final String expression = resultSet.getString("EXPRESSION");
     final String userName = resultSet.getString("USER_NAME");
-    final List<String> userRoles = new Gson().fromJson(resultSet.getString("USER_ROLES"), rolesListType);
+    final Set<String> userRoles = new Gson().fromJson(resultSet.getString("USER_ROLES"), rolesSetType);
 
     final LocalDateTime lastExecution =
             null != resultSet.getTimestamp("LAST_EXECUTION")

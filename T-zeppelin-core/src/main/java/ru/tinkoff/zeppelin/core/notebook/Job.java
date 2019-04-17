@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.core.notebook;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.StringJoiner;
 
 public class Job {
@@ -35,12 +36,14 @@ public class Job {
   private long id;
   private long batchId;
   private long noteId;
-  private long paragpaphId;
+  private long paragraphId;
   private long index;
   private String shebang;
   private Status status;
   private String interpreterProcessUUID;
   private String interpreterJobUUID;
+  private String username;
+  private Set<String> roles;
 
   private LocalDateTime createdAt;
   private LocalDateTime startedAt;
@@ -70,12 +73,12 @@ public class Job {
     this.noteId = noteId;
   }
 
-  public long getParagpaphId() {
-    return paragpaphId;
+  public long getParagraphId() {
+    return paragraphId;
   }
 
-  public void setParagpaphId(final long paragpaphId) {
-    this.paragpaphId = paragpaphId;
+  public void setParagraphId(final long paragpaphId) {
+    this.paragraphId = paragpaphId;
   }
 
   public long getIndex() {
@@ -142,16 +145,34 @@ public class Job {
     this.interpreterJobUUID = interpreterJobUUID;
   }
 
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public Set<String> getRoles() {
+    return roles;
+  }
+
+  public void setRoles(Set<String> roles) {
+    this.roles = roles;
+  }
+
   @Override
   public String toString() {
     return new StringJoiner(", ", "{", "}")
         .add("id=" + id)
         .add("batchId=" + batchId)
         .add("noteId=" + noteId)
-        .add("paragpaphId=" + paragpaphId)
+        .add("paragraphId=" + paragraphId)
         .add("index=" + index)
         .add("shebang='" + shebang + "'")
         .add("status=" + status)
+        .add("username=" + username)
+        .add("roles=" + String.join(" ,", roles))
         .add("interpreterProcessUUID='" + interpreterProcessUUID + "'")
         .add("interpreterJobUUID='" + interpreterJobUUID + "'")
         .add("createdAt=" + createdAt)

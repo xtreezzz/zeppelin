@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 public abstract class Interpreter {
 
-  private Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[a-zA-Z0-9]+" + "))");
+  private Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[_a-zA-Z0-9]+" + "))");
 
   protected Map<String, String> configuration;
   protected String classPath;

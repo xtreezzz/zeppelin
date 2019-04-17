@@ -49,12 +49,23 @@ public class ExecutionHandler extends AbstractHandler{
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void run(final Note note, final List<Paragraph> paragraphs, final String username, final Set<String> roles) {
+    if (noteIsRunning(note)) {
+      ZLog.log(ET.JOB_CANCEL_ALREADY_RUNNING,
+          String.format("Note[id=%s] is already running! Abort running note", note.getId()),
+          String.format(
+              "Batch for note[id=%s] with paragraphs[%s] will be rejected when user [name=%s;roles=%s] try execute it",
+              note.getId(), paragraphs.toString(), username, roles.toString()
+          ),
+          username);
+      return;
+    }
+
     ZLog.log(ET.JOB_SUBMITTED_FOR_EXECUTION,
         String.format("Note[id=%s] with paragraphs[%s] submitted for execution by user[name=%s;roles=%s]",
             note.getId(), paragraphs.toString(), username, roles.toString()),
         String.format("Batch for note[id=%s] with paragraphs[%s] published by user[name=%s;roles=%s]",
             note.getId(), paragraphs.toString(), username, roles.toString()),
         username);
-    publishBatch(note, paragraphs);
+    publishBatch(note, paragraphs, username, roles);
   }
 }

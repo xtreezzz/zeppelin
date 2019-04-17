@@ -62,6 +62,23 @@ public class SchedulerHandler extends AbstractHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handle(final Scheduler scheduler) {
+    final Note note = noteDAO.get(scheduler.getNoteId());
+    final List<Paragraph> paragraphs = paragraphDAO.getByNoteId(note.getId());
+
+    if (noteIsRunning(note)) {
+      ZLog.log(ET.JOB_CANCEL_ALREADY_RUNNING,
+          String.format("Note[id=%s] is already running! Abort running note", note.getId()),
+          String.format(
+              "Batch for note[id=%s] with paragraphs[%s] will be rejected when scheduler [username=%s;roles=%s] try execute it",
+              note.getId(),
+              paragraphs.toString(),
+              scheduler.getUser(),
+              scheduler.getRoles().toString()
+          ),
+          scheduler.getUser());
+      return;
+    }
+
     ZLog.log(ET.JOB_READY_FOR_EXECUTION_BY_SCHEDULER,
         String.format("Note[id=%s] is ready for execution by scheduler, user[name=%s, roles=%s]",
             scheduler.getNoteId(), scheduler.getUser(), scheduler.getRoles()),
@@ -70,9 +87,7 @@ public class SchedulerHandler extends AbstractHandler {
             scheduler.getNoteId(), scheduler.getUser(), scheduler.getRoles(),
             scheduler.getLastExecution(), scheduler.getNextExecution(), scheduler.getExpression()),
         scheduler.getUser());
-    final Note note = noteDAO.get(scheduler.getNoteId());
-    final List<Paragraph> paragraphs = paragraphDAO.getByNoteId(note.getId());
-    publishBatch(note, paragraphs);
+    publishBatch(note, paragraphs, scheduler.getUser(), scheduler.getRoles());
 
     final CronExpression cronExpression;
     try {

@@ -18,6 +18,20 @@
         "description": "Path to JEP *.so library",
         "type": "string"
       },
+      "python.jep.config.include.paths": {
+        "envName": "PYTHON_JEP_CONFIG_INCLUDE_PATHS",
+        "propertyName": "python.jep.config.include.paths",
+        "defaultValue": "",
+        "description": "Adds a path of directories separated by File.pathSeparator that will be appended to the sub-intepreter's sys.path",
+        "type": "string"
+      },
+      "python.jep.config.python.home": {
+        "envName": "PYTHON_JEP_CONFIG_PYTHON_HOME",
+        "propertyName": "python.jep.config.python.home",
+        "defaultValue": "",
+        "description": "Set the python's home location, if not specified then use standard",
+        "type": "string"
+      },
       "python.watchdog.time": {
         "envName": "PYTHON_WATCHDOG_TIME",
         "propertyName": "python.watchdog.time",

@@ -19,7 +19,7 @@ package ru.tinkoff.zeppelin.core.notebook;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Paragraph cron configuration.
@@ -33,7 +33,7 @@ public class Scheduler implements Serializable {
   private String expression;
 
   private String user;
-  private List<String> roles;
+  private Set<String> roles;
   private LocalDateTime lastExecution;
   private LocalDateTime nextExecution;
 
@@ -44,7 +44,7 @@ public class Scheduler implements Serializable {
           final boolean isEnabled,
           final String expression,
           final String user,
-          final List<String> roles,
+          final Set<String> roles,
           final LocalDateTime lastExecution,
           final LocalDateTime nextExecution) {
     this.id = id;
@@ -89,11 +89,11 @@ public class Scheduler implements Serializable {
     this.user = user;
   }
 
-  public List<String> getRoles() {
+  public Set<String> getRoles() {
     return roles;
   }
 
-  public void setRoles(final List<String> roles) {
+  public void setRoles(final Set<String> roles) {
     this.roles = roles;
   }
 

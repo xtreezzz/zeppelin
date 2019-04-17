@@ -41,6 +41,7 @@ public class ZLog {
     JOB_CANCEL_ACCEPTED,
     JOB_CANCEL_NOT_FOUND,
     JOB_CANCEL_ERRORED,
+    JOB_CANCEL_ALREADY_RUNNING,
     JOB_SUBMITTED_FOR_EXECUTION,
     GOT_JOB,
     GOT_ABORTED_JOB,
@@ -87,7 +88,8 @@ public class ZLog {
     INTERPRETER_RESULT_NOT_FOUND,
     SUCCESSFUL_RESULT,
     ABORTED_RESULT,
-    ERRORED_RESULT;
+    ERRORED_RESULT,
+    ACCESS_ERROR
   }
 
   private static final Logger logger = LoggerFactory.getLogger(ZLog.class);

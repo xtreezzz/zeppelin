@@ -73,6 +73,8 @@ zeppelin-web/yarn.lock
 /warehouse/
 /notebook/
 /local-repo/
+/helium-repo/
+/favorite-notes/
 
 **/sessions/
 **/data/

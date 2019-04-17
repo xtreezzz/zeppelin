@@ -80,13 +80,17 @@ public class PythonInterpreter extends Interpreter {
                                        Map<String, String> userContext,
                                        Map<String, String> configuration) {
     final Map<String, String> params = new HashMap<>();
-    //params.put("Z_ENV_name", "test");
-    //params.put("Z_ENV_name2", "test2");
+    params.put("Z_ENV_NOTE_ID", noteContext.get("noteId"));
+    params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("paragraphId"));
+    params.put("Z_ENV_USER_NAME", userContext.get("username"));
+    params.put("Z_ENV_USER_ROLES", userContext.get("roles"));
 
 
     final String pythonWorkingDir = configuration.get("python.working.dir");
     final String instanceTempFolder = pythonWorkingDir + "/" + getSessionUUID();
     final File instanceTempDir = new File(instanceTempFolder);
+    params.put("Z_ENV_WORK_DIR", pythonWorkingDir);
+    params.put("Z_ENV_TEMP_DIR", instanceTempFolder);
 
     final String jepLibraryFile = configuration.get("python.jep.library.file");
     final File jepLibrary = new File(jepLibraryFile);
@@ -94,10 +98,8 @@ public class PythonInterpreter extends Interpreter {
     final long watchdogTime = Long.parseLong(configuration.get("python.watchdog.time"));
     watchdog = new ExecuteWatchdog(watchdogTime);
 
-
-    final String additionalJvmArgs = StringUtils.isEmpty(configuration.get("python.subprocess.java.args"))
-            ? StringUtils.EMPTY
-            : configuration.get("python.subprocess.java.args");
+    final String additionalJvmArgs = configuration
+        .getOrDefault("python.subprocess.java.args", StringUtils.EMPTY);
 
     try {
       if (!instanceTempDir.mkdirs()) {
@@ -132,7 +134,7 @@ public class PythonInterpreter extends Interpreter {
 
       // write params
       final Map<String, String> overridedParams = new HashMap<>();
-      getAllEnvVeriables(st).forEach(s -> overridedParams.put(s, "ZEPPPELIN_NULL"));
+      getAllEnvVeriables(st).forEach(s -> overridedParams.put(s, "ZEPPELIN_NULL"));
       overridedParams.putAll(params);
 
       final String paramsDest = instanceTempDir.getAbsolutePath() + "/" + getSessionUUID() + ".params";
@@ -155,13 +157,17 @@ public class PythonInterpreter extends Interpreter {
                       " ru.tinkoff.zeppelin.interpreter.python.PythonInterpreterProcess" +
                       " -py_script \"%s\"" +
                       " -output_file \"%s\"" +
-                      " -params_file \"%s\"",
+                      " -params_file \"%s\"" +
+                      " -jep_include_path \"%s\"" +
+                      " -jep_python_home \"%s\"",
               additionalJvmArgs,
               classPath,
               jepDestFile.getParentFile().getAbsolutePath(),
               scriptFile.getAbsolutePath(),
               outputFile.getAbsolutePath(),
-              paramsFile.getAbsolutePath()
+              paramsFile.getAbsolutePath(),
+              configuration.getOrDefault("python.jep.config.include.paths", StringUtils.EMPTY),
+              configuration.getOrDefault("python.jep.config.python.home", StringUtils.EMPTY)
       );
 
       // start server process

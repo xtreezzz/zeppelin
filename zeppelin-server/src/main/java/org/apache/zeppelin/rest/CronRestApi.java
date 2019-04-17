@@ -95,7 +95,7 @@ public class CronRestApi {
           isEnable,
           expression,
           authenticationInfo.getUser(),
-          new ArrayList<>(authenticationInfo.getRoles()),
+          new HashSet<>(authenticationInfo.getRoles()),
           nextExecution,
           nextExecution
       );

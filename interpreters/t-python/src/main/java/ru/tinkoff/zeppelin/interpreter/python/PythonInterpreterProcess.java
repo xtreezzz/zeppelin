@@ -19,6 +19,8 @@ package ru.tinkoff.zeppelin.interpreter.python;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
+import jep.MainInterpreter;
+import jep.PyConfig;
 import org.apache.commons.cli.*;
 import sun.misc.Signal;
 
@@ -29,7 +31,7 @@ import java.util.Properties;
 
 public class PythonInterpreterProcess {
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) throws JepException {
 
     final Options options = new Options();
     final Option pyScriptPath = new Option("py_script",
@@ -56,6 +58,22 @@ public class PythonInterpreterProcess {
     paramsFilePath.setRequired(true);
     options.addOption(paramsFilePath);
 
+    final Option jepInclude = new Option("jep_include_paths",
+            "jep_include_paths",
+            true,
+            "Sets a path of directories separated by File.pathSeparator that will be appended to the sub-intepreter's sys.path"
+    );
+    jepInclude.setRequired(false);
+    options.addOption(jepInclude);
+
+    final Option pythonHomePath = new Option("jep_python_home",
+            "jep_python_home",
+            true,
+            "Python home directory path"
+    );
+    pythonHomePath.setRequired(false);
+    options.addOption(pythonHomePath);
+
     CommandLine cmd = null;
     try {
       cmd = new DefaultParser().parse(options, args);
@@ -67,9 +85,18 @@ public class PythonInterpreterProcess {
     final String pathToScript = cmd.getOptionValue("py_script");
     final String pathToOutput = cmd.getOptionValue("output_file");
     final String pathToParamsFile = cmd.getOptionValue("params_file");
+    final String jepIncludePath = cmd.getOptionValue("jep_include_path");
+    final String jepPythonHome = cmd.getOptionValue("jep_python_home");
 
     final JepConfig jepConfig = new JepConfig()
-            .setRedirectOutputStreams(true);
+            .setRedirectOutputStreams(true)
+            .setIncludePath(jepIncludePath);
+
+    if (!"".equals(jepPythonHome)) {
+      PyConfig pyConfig = new PyConfig();
+      pyConfig.setPythonHome(jepPythonHome);
+      MainInterpreter.setInitParams(pyConfig);
+    }
 
     final File output = new File(pathToOutput);
     try (final FileOutputStream fis = new FileOutputStream(output, true);
@@ -96,7 +123,7 @@ public class PythonInterpreterProcess {
         final Map<String, Object> params = new HashMap<>();
         for (String key : properties.stringPropertyNames()) {
           params.put(key, properties.get(key).toString());
-          if(properties.get(key).toString().equals("ZEPPPELIN_NULL")) {
+          if(properties.get(key).toString().equals("ZEPPELIN_NULL")) {
             continue;
           }
           jep.set(key, properties.get(key).toString());

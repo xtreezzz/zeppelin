@@ -18,10 +18,12 @@ package ru.tinkoff.zeppelin.engine.handler;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.apache.zeppelin.storage.*;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
+import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
 import ru.tinkoff.zeppelin.engine.EventService;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
@@ -65,14 +67,14 @@ abstract class AbstractHandler {
                         final String interpreterProcessUUID,
                         final String interpreterJobUUID) {
 
-    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagpaphId());
+    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
     job.setStatus(Job.Status.RUNNING);
     job.setInterpreterProcessUUID(interpreterProcessUUID);
     job.setInterpreterJobUUID(interpreterJobUUID);
     jobDAO.update(job);
 
-    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
+    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
     EventService.publish(job.getNoteId(), before, after);
 
     final JobBatch jobBatch = jobBatchDAO.get(job.getBatchId());
@@ -87,7 +89,7 @@ abstract class AbstractHandler {
                                 final JobBatch batch,
                                 final InterpreterResult interpreterResult) {
 
-    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagpaphId());
+    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
     persistMessages(job, interpreterResult.message());
 
@@ -97,7 +99,7 @@ abstract class AbstractHandler {
     job.setInterpreterProcessUUID(null);
     jobDAO.update(job);
 
-    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
+    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
     EventService.publish(job.getNoteId(), before, after);
 
     final List<Job> jobs = jobDAO.loadByBatch(job.getBatchId());
@@ -131,7 +133,7 @@ abstract class AbstractHandler {
                                final InterpreterResult interpreterResult) {
 
     if(job != null) {
-      final ParagraphDTO before = fullParagraphDAO.getById(job.getParagpaphId());
+      final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
       if(interpreterResult != null) {
         persistMessages(job, interpreterResult.message());
@@ -141,14 +143,14 @@ abstract class AbstractHandler {
       job.setEndedAt(LocalDateTime.now());
       jobDAO.update(job);
 
-      final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
+      final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
       EventService.publish(job.getNoteId(), before, after);
     }
 
     if(batch != null) {
       final List<Job> jobs = jobDAO.loadByBatch(batch.getId());
       for (final Job j : jobs) {
-        final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagpaphId());
+        final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagraphId());
 
         if (j.getStatus() == Job.Status.PENDING) {
           j.setStatus(Job.Status.CANCELED);
@@ -159,7 +161,7 @@ abstract class AbstractHandler {
         j.setInterpreterProcessUUID(null);
         jobDAO.update(j);
 
-        final ParagraphDTO afterInner = fullParagraphDAO.getById(j.getParagpaphId());
+        final ParagraphDTO afterInner = fullParagraphDAO.getById(j.getParagraphId());
         EventService.publish(j.getNoteId(), beforeInner, afterInner);
       }
 
@@ -182,7 +184,11 @@ abstract class AbstractHandler {
     }
   }
 
-  void publishBatch(final Note note, final List<Paragraph> paragraphs) {
+  void publishBatch(
+      final Note note,
+      final List<Paragraph> paragraphs,
+      final String username,
+      final Set<String> roles) {
     final JobBatch batch = new JobBatch();
     batch.setId(0L);
     batch.setNoteId(note.getId());
@@ -201,7 +207,7 @@ abstract class AbstractHandler {
       job.setId(0L);
       job.setBatchId(saved.getId());
       job.setNoteId(note.getId());
-      job.setParagpaphId(p.getId());
+      job.setParagraphId(p.getId());
       job.setIndex(i);
       job.setShebang(p.getShebang());
       job.setStatus(Job.Status.PENDING);
@@ -210,6 +216,8 @@ abstract class AbstractHandler {
       job.setCreatedAt(LocalDateTime.now());
       job.setStartedAt(null);
       job.setEndedAt(null);
+      job.setUsername(username);
+      job.setRoles(roles);
       jobDAO.persist(job);
 
       final JobPayload jobPayload = new JobPayload();
@@ -221,7 +229,7 @@ abstract class AbstractHandler {
       p.setJobId(job.getId());
       paragraphDAO.update(p);
 
-      final ParagraphDTO after = fullParagraphDAO.getById(job.getParagpaphId());
+      final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
       EventService.publish(job.getNoteId(), before, after);
     }
     saved.setStatus(JobBatch.Status.PENDING);
@@ -234,6 +242,15 @@ abstract class AbstractHandler {
     final JobBatch jobBatch = jobBatchDAO.get(note.getBatchJobId());
     jobBatch.setStatus(JobBatch.Status.ABORTING);
     jobBatchDAO.update(jobBatch);
+  }
+
+  boolean noteIsRunning(final Note note) {
+    JobBatch jobBatch = jobBatchDAO.get(note.getBatchJobId());
+    if (jobBatch == null) {
+      return false;
+    }
+    Status status = jobBatch.getStatus();
+    return status.equals(Status.PENDING) || status.equals(Status.RUNNING);
   }
 
   private static final Pattern formBlockPattern =

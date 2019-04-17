@@ -21,13 +21,11 @@ import java.io.IOException;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.websocket.handler.EventLogHandler;
-import org.apache.zeppelin.websocket.handler.NoteFormsHandler;
 import org.apache.zeppelin.websocket.handler.NoteHandler;
 import org.apache.zeppelin.websocket.handler.NoteRevisionHandler;
 import org.apache.zeppelin.websocket.handler.ParagraphHandler;
 import org.apache.zeppelin.websocket.handler.RunnerHandler;
 import org.apache.zeppelin.websocket.handler.SettingsHandler;
-import org.apache.zeppelin.websocket.handler.SpellHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +43,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
   private final ParagraphHandler paragraphService;
   private final NoteHandler noteService;
   private final NoteRevisionHandler noteRevisionService;
-  private final NoteFormsHandler noteFormsService;
-  private final SpellHandler spellHandler;
   private final RunnerHandler runnerHandler;
   private final ConnectionManager sessionectionManager;
   private final EventLogHandler eventLogHandler;
@@ -56,8 +52,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
                              final ParagraphHandler paragraphService,
                              final NoteHandler noteService,
                              final NoteRevisionHandler noteRevisionService,
-                             final NoteFormsHandler noteFormsService,
-                             final SpellHandler spellHandler,
                              final RunnerHandler runnerHandler,
                              final ConnectionManager sessionectionManager,
                              final EventLogHandler eventLogHandler) {
@@ -65,8 +59,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
     this.paragraphService = paragraphService;
     this.noteService = noteService;
     this.noteRevisionService = noteRevisionService;
-    this.noteFormsService = noteFormsService;
-    this.spellHandler = spellHandler;
     this.runnerHandler = runnerHandler;
     this.sessionectionManager = sessionectionManager;
     this.eventLogHandler = eventLogHandler;
@@ -146,9 +138,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
         case RUN_PARAGRAPH:
           runnerHandler.runParagraph(session, messagereceived);
           break;
-        case PARAGRAPH_EXECUTED_BY_SPELL:
-          spellHandler.broadcastSpellExecution(session, messagereceived);
-          break;
         case RUN_ALL_PARAGRAPHS:
           runnerHandler.runAllParagraphs(session, messagereceived);
           break;
@@ -210,12 +199,6 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           break;
         case GET_INTERPRETER_BINDINGS:
           // getInterpreterBindings(session, messagereceived);
-          break;
-        case SAVE_NOTE_FORMS:
-          noteFormsService.saveNoteForms(session, messagereceived);
-          break;
-        case REMOVE_NOTE_FORMS:
-          noteFormsService.removeNoteForms(session, messagereceived);
           break;
         case PATCH_PARAGRAPH:
           //paragraphService.patchParagraph(session, messagereceived);
