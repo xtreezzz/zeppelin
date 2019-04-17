@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.UnauthenticatedException;
@@ -39,7 +40,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -64,20 +64,27 @@ public class ZeppelinBeanConfiguration {
 
   @Bean
   DataSource dataSource(
-          @Value("${spring.datasource.driverClassName}") final String driverClassName,
-          @Value("${spring.datasource.url}") final String url,
-          @Value("${spring.datasource.username}") final String username,
-          @Value("${spring.datasource.password}") final String password) {
+          @Value("${spring.datasource.dbcp2.driver-class-name}") final String driverClassName,
+          @Value("${spring.datasource.dbcp2.url}") final String url,
+          @Value("${spring.datasource.dbcp2.username}") final String username,
+          @Value("${spring.datasource.dbcp2.password}") final String password,
+          @Value("${spring.datasource.dbcp2.initial-size}") final int initialSize,
+          @Value("${spring.datasource.dbcp2.max-total}") final int maxTotal,
+          @Value("${spring.datasource.dbcp2.max-idle}") final int maxIdle,
+          @Value("${spring.datasource.dbcp2.min-idle}") final int minIdle
+          ) {
 
+    BasicDataSource bds = new BasicDataSource();
+    bds.setDriverClassName(driverClassName);
+    bds.setUrl(url);
+    bds.setUsername(username);
+    bds.setPassword(password);
+    bds.setInitialSize(initialSize);
+    bds.setMaxTotal(maxTotal);
+    bds.setMaxIdle(maxIdle);
+    bds.setMinIdle(minIdle);
 
-    //TODO(SAN) этот dataSource временный! На прод его нельзя!!!
-    final DriverManagerDataSource dataSource = new DriverManagerDataSource();
-    dataSource.setDriverClassName(driverClassName);
-    dataSource.setUrl(url);
-    dataSource.setUsername(username);
-    dataSource.setPassword(password);
-
-    return dataSource;
+    return bds;
   }
 
   @Bean

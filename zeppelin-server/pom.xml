@@ -174,30 +174,13 @@
       <version>${dependency.commons-io}</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2 -->
     <dependency>
-      <groupId>org.bitbucket.cowwoc.diff-match-patch</groupId>
-      <artifactId>diff-match-patch</artifactId>
-      <version>${org.bitbucket.cowwoc.diff-match-patch}</version>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-dbcp2</artifactId>
+      <version>2.6.0</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.jvnet.libpam4j</groupId>
-      <artifactId>libpam4j</artifactId>
-      <version>${org.jvnet.libpam4j.libpam4j}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.nimbusds</groupId>
-      <artifactId>nimbus-jose-jwt</artifactId>
-      <version>${com.nimbusds.nimbus-jose-jwt}</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.apache.directory.server/kerberos-client -->
-    <dependency>
-      <groupId>org.apache.directory.server</groupId>
-      <artifactId>kerberos-client</artifactId>
-      <version>2.0.0-M16</version>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.zeppelin</groupId>

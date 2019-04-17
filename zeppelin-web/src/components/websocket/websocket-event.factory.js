@@ -32,16 +32,7 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv, ng
   });
 
   websocketCalls.sendNewEvent = function(data) {
-    if ($rootScope.ticket !== undefined) {
-      data.principal = $rootScope.ticket.principal;
-      data.ticket = $rootScope.ticket.ticket;
-      data.roles = $rootScope.ticket.roles;
-    } else {
-      data.principal = '';
-      data.ticket = '';
-      data.roles = '';
-    }
-    console.log('Send >> %o, %o, %o, %o, %o', data.op, data.principal, data.ticket, data.roles, data);
+    console.log('Send >> %o, %o', data.op, data);
     return websocketCalls.ws.send(JSON.stringify(data));
   };
 
