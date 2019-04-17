@@ -17,7 +17,6 @@
 package org.apache.zeppelin.storage;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.apache.zeppelin.SystemEvent;
 import org.slf4j.Logger;
@@ -113,7 +112,7 @@ public class ZLog {
 
   private void enqueue(@Nonnull final ET eventType,
                        @Nonnull final String message,
-                       @Nullable final String description,
+                       @Nonnull final String description,
                        @Nonnull final String username) {
     try {
       storage.log(new SystemEvent(eventType, username, message, description));
@@ -130,10 +129,23 @@ public class ZLog {
    */
   public static void log(@Nonnull final ET eventType,
                          @Nonnull final String message,
-                         @Nullable final String description,
+                         @Nonnull final String description,
                          @Nonnull final String username) {
     try {
       instance.enqueue(eventType, message, description, username);
+    } catch (final Exception e) {
+      // skip
+    }
+  }
+
+  /**
+   * Record without description (description the same as msg).
+   */
+  public static void log(@Nonnull final ET eventType,
+                         @Nonnull final String message,
+                         @Nonnull final String username) {
+    try {
+      instance.enqueue(eventType, message, message, username);
     } catch (final Exception e) {
       // skip
     }

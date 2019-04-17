@@ -523,6 +523,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   $scope.runParagraphFromShortcut = function(paragraphText) {
     // passing `digestRequired` as true to update view immediately
     // without this, results cannot be rendered in view more than once
+    $scope.commitParagraph($scope.paragraph);
     $scope.runParagraph(paragraphText, true, false);
   };
 

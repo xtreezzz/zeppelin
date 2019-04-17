@@ -19,7 +19,7 @@ function MonitoringCtrl($rootScope, $scope, $http, websocketMsgSrv, baseUrlSrv, 
 
   $scope._ = _;
   ngToast.dismiss();
-  // $rootScope.ticket.principal
+  $scope.user = $rootScope.ticket.principal;
 
   $scope.loadAllLogs = function() {
     console.error('loadAllLogs');
