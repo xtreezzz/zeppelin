@@ -18,7 +18,9 @@
 package ru.tinkoff.zeppelin.engine;
 
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -46,6 +48,7 @@ import java.util.Set;
  */
 
 @Lazy(false)
+@DependsOn("configuration")
 @Component
 public class NoteExecutorService {
 
@@ -76,7 +79,7 @@ public class NoteExecutorService {
   }
 
   @PostConstruct
-  private void init() throws Exception{
+  public void init() throws Exception{
     server = new InterpreterProcessServer();
     server.initSources(interpreterOptionRepository.getAllRepositories());
     server.start();

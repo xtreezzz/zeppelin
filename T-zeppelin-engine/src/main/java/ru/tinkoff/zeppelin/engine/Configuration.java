@@ -17,8 +17,15 @@
 
 package ru.tinkoff.zeppelin.engine;
 
-import java.util.Set;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Component("configuration")
 public class Configuration {
 
   private final Set<String> adminUsers;
@@ -33,43 +40,26 @@ public class Configuration {
 
   private static Configuration instance;
 
-  private Configuration(final Set<String> adminUsers,
-                        final Set<String> adminGroups,
-                        final String thriftAddress,
-                        final int thriftPort,
-                        final String instanceMarkerPrefix,
-                        final String metaserverLocation,
-                        final String homeNodeId) {
-    this.adminGroups = adminGroups;
-    this.adminUsers = adminUsers;
-
+  private Configuration(@Value("${zeppelin.admin_users}") final String admin_users,
+                        @Value("${zeppelin.admin_group}") final String admin_group,
+                        @Value("${zeppelin.thrift.address}") final String thriftAddress,
+                        @Value("${zeppelin.thrift.port}") final int thriftPort,
+                        @Value("${zeppelin.instance.markerPrefix}") final String instanceMarkerPrefix,
+                        @Value("${zeppelin.metaserver.address}") final String metaserverLocation,
+                        @Value("${zeppelin.home_node}") final String homeNodeId) {
+    this.adminUsers = parseString(admin_users, ",");
+    this.adminGroups = parseString(admin_group, ",");
     this.thriftAddress = thriftAddress;
     this.thriftPort = thriftPort;
-
     this.instanceMarkerPrefix = instanceMarkerPrefix;
     this.metaserverLocation = metaserverLocation;
     this.homeNodeId = homeNodeId;
     instance = this;
   }
 
-  public synchronized static void create(final Set<String> adminUsers,
-                                         final Set<String> adminGroups,
-                                         final String thriftAddress,
-                                         final int thriftPort,
-                                         final String instanceMarkerPrefix,
-                                         final String metaserverLocation,
-                                         final String homeNodeId) {
-    if (instance != null) {
-      return;
-    }
-
-    new Configuration(adminUsers,
-            adminGroups,
-            thriftAddress,
-            thriftPort,
-            instanceMarkerPrefix,
-            metaserverLocation,
-            homeNodeId);
+  @PostConstruct
+  private void init() {
+    instance = this;
   }
 
 
@@ -99,5 +89,9 @@ public class Configuration {
 
   public static String getHomeNodeId() {
     return instance.homeNodeId;
+  }
+
+  private Set<String> parseString(final String param, final String delimeter) {
+    return Arrays.stream(param.split(delimeter)).map(String::trim).collect(Collectors.toSet());
   }
 }

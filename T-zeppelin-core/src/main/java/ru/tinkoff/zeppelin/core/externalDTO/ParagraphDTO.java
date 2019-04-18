@@ -167,16 +167,16 @@ public class ParagraphDTO {
         return jobId == that.jobId &&
                 databaseId == that.databaseId &&
                 position == that.position &&
-                id.equals(that.id) &&
+                Objects.equals(id, that.id) &&
                 Objects.equals(title, that.title) &&
-                text.equals(that.text) &&
-                user.equals(that.user) &&
-                shebang.equals(that.shebang) &&
-                created.equals(that.created) &&
-                updated.equals(that.updated) &&
-                status.equals(that.status) &&
-                config.equals(that.config) &&
-                settings.equals(that.settings) &&
+                Objects.equals(text, that.text) &&
+                Objects.equals(user, that.user) &&
+                Objects.equals(shebang, that.shebang) &&
+                Objects.equals(created, that.created) &&
+                Objects.equals(updated, that.updated) &&
+                Objects.equals(status, that.status) &&
+                Objects.equals(config, that.config) &&
+                Objects.equals(settings, that.settings) &&
                 Objects.equals(results, that.results);
     }
 
