@@ -18,6 +18,14 @@ package ru.tinkoff.zeppelin.engine.server;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.zeppelin.DependencyResolver;
@@ -27,15 +35,6 @@ import org.apache.zeppelin.storage.ZLog.ET;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -56,7 +55,7 @@ public class InterpreterInstaller {
     return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
   }
 
-  public String install(final String name, final String artifact, final List<Repository> repositories) {
+  public static String install(final String name, final String artifact, final List<Repository> repositories) {
     ZLog.log(ET.INTERPRETER_INSTALL,
         String.format("Attempt for install interpreter with artifact: %s", artifact),
         String.format("Installation called for interpreter with name: %s, artifact: %s, using repos: %s", name, artifact, repositories.toString()),
@@ -148,6 +147,13 @@ public class InterpreterInstaller {
         }
       }
     }
+  }
+
+  public static void reInstall(final String name, final String artifact, final List<Repository> repositories) {
+    if (isInstalled(name)) {
+      uninstallInterpreter(name);
+    }
+    install(name, artifact, repositories);
   }
 
   public static String getDirectory(final String name) {

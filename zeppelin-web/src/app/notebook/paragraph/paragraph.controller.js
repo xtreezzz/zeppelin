@@ -941,16 +941,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       $scope.editor.setHighlightActiveLine($scope.paragraphFocused);
 
       if ($scope.paragraphFocused) {
-        let prefix = $scope.paragraph.shebang;
-        let paragraphText = $scope.paragraph.text ? $scope.paragraph.text.trim() : '';
-
         $scope.editor.focus();
         $scope.goToEnd($scope.editor);
-        if (prefix === paragraphText) {
-          $timeout(function() {
-            $scope.editor.gotoLine(2, 0);
-          }, 0);
-        }
       }
 
       autoAdjustEditorHeight(_editor);

@@ -100,7 +100,11 @@ class InterpreterOptionDAO {
       + "interpreter_name = :interpreter_name";
 
   private static final String INSERT_SOURCE = "INSERT INTO INTERPRETER_ARTIFACT_SOURCE(interpreter_name, "
-      + "artifact, status, \"path\") VALUES (:interpreter_name, :artifact, :status, :path)";
+      + "artifact, status, \"path\", reinstall_on_start) VALUES (:interpreter_name, :artifact, :status, :path, :reinstall_on_start)";
+
+  private static final String UPDATE_SOURCE = "UPDATE INTERPRETER_ARTIFACT_SOURCE SET "
+      + "artifact = :artifact, status = :status, \"path\" = :path, "
+      + "reinstall_on_start = :reinstall_on_start WHERE interpreter_name = :interpreter_name";
 
   private static final String GET_ALL_REPOSITORIES = "SELECT * FROM repository";
 
@@ -256,6 +260,15 @@ class InterpreterOptionDAO {
     return result;
   }
 
+  void updateSource(@Nonnull final InterpreterArtifactSource source) {
+    final int affectedRows  =
+        jdbcTemplate.update(UPDATE_SOURCE, convertInterpreterSourceToParameters(source));
+
+    if (affectedRows == 0) {
+      throw new RuntimeException("Fail to update option " + source.getInterpreterName());
+    }
+  }
+
   @Nullable
   InterpreterArtifactSource getSource(@Nonnull final String name) {
     Preconditions.checkNotNull(name);
@@ -395,7 +408,8 @@ class InterpreterOptionDAO {
         resultSet.getString("interpreter_name"),
         resultSet.getString("artifact"),
         resultSet.getString("path"),
-        InterpreterArtifactSource.Status.valueOf(resultSet.getString("status"))
+        InterpreterArtifactSource.Status.valueOf(resultSet.getString("status")),
+        resultSet.getBoolean("reinstall_on_start")
     );
   }
 
@@ -467,7 +481,8 @@ class InterpreterOptionDAO {
           .addValue("artifact", source.getArtifact())
           .addValue("interpreter_name", source.getInterpreterName())
           .addValue("status", source.getStatus().name())
-          .addValue("path", source.getPath());
+          .addValue("path", source.getPath())
+          .addValue("reinstall_on_start", source.isReinstallOnStart());
     } catch (final Exception e) {
       throw new RuntimeException("Fail to convert source", e);
     }

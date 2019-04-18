@@ -22,10 +22,11 @@ import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
-import org.apache.zeppelin.Repository.ProxyProtocol;
 import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
 import ru.tinkoff.zeppelin.engine.server.InterpreterInstaller;
@@ -63,23 +65,6 @@ public class InterpreterRestApi {
   @Autowired
   public InterpreterRestApi(final InterpreterOptionRepository interpreterOptionRepository) {
     this.interpreterOptionRepository = interpreterOptionRepository;
-
-    try {
-      tempRepositoryInit();
-    } catch (final Exception e) {
-      logger.error("Failed to init interpreter settings", e);
-    }
-  }
-
-  /**
-   * Initialize interpreter settings
-   */
-  private void tempRepositoryInit() {
-    interpreterOptionRepository.saveRepository(
-        new Repository(true, "central", "http://repo1.maven.org/maven2/",
-            "username", "password", ProxyProtocol.HTTP, "127.0.0.1",
-            8000, "proxyLogin", "proxyPass"));
-
   }
 
   /**
@@ -150,6 +135,96 @@ public class InterpreterRestApi {
   }
 
   /**
+   * Install source.
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @PostMapping(value = "/source/install/{interpreterName}", produces = "application/json")
+  public ResponseEntity installSource(@PathVariable("interpreterName") final String interpreterName) {
+    try {
+      final InterpreterArtifactSource src =
+          Objects.requireNonNull(interpreterOptionRepository.getSource(interpreterName));
+      installSource(src);
+      src.setStatus(Status.INSTALLED);
+      interpreterOptionRepository.updateSource(src);
+
+      logger.info("Source {} installed", interpreterName);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while installing new source ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * Uninstall source.
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @PostMapping(value = "/source/uninstall/{interpreterName}", produces = "application/json")
+  public ResponseEntity uninstallSource(@PathVariable("interpreterName") final String interpreterName) {
+    try {
+      final InterpreterArtifactSource src =
+          Objects.requireNonNull(interpreterOptionRepository.getSource(interpreterName));
+      if (src.getStatus().equals(Status.INSTALLED)) {
+        interpreterOptionRepository.getAllOptions().stream()
+            .filter(o -> o.isEnabled() && o.getConfig().getGroup().equals(src.getInterpreterName()))
+            .forEach(o -> {
+              o.setEnabled(false);
+              // kill process??
+              interpreterOptionRepository.updateOption(o);
+            });
+        InterpreterInstaller.uninstallInterpreter(src.getInterpreterName());
+      }
+      if (!InterpreterInstaller.isInstalled(src.getInterpreterName())) {
+        src.setStatus(Status.NOT_INSTALLED);
+      }
+      interpreterOptionRepository.updateSource(src);
+      logger.info("Source {} uninstalled", interpreterName);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while uninstalling new source ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * Reinstall source.
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @PostMapping(value = "/source/reinstall/{interpreterName}", produces = "application/json")
+  public ResponseEntity reinstallSource(@PathVariable("interpreterName") final String interpreterName) {
+    try {
+      final InterpreterArtifactSource src =
+          Objects.requireNonNull(interpreterOptionRepository.getSource(interpreterName));
+      if (src.getStatus().equals(Status.INSTALLED)) {
+        interpreterOptionRepository.getAllOptions().stream()
+            .filter(o -> o.isEnabled() && o.getConfig().getGroup().equals(src.getInterpreterName()))
+            .forEach(o -> {
+              o.setEnabled(false);
+              // kill process??
+              interpreterOptionRepository.updateOption(o);
+            });
+
+        InterpreterInstaller.reInstall(src.getInterpreterName(), src.getArtifact(),
+            interpreterOptionRepository.getAllRepositories());
+      }
+      if (InterpreterInstaller.isInstalled(src.getInterpreterName())) {
+        src.setStatus(Status.INSTALLED);
+      } else {
+        src.setStatus(Status.NOT_INSTALLED);
+      }
+      interpreterOptionRepository.updateSource(src);
+      logger.info("Source {} reinstalled", interpreterName);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while uninstalling new source ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
    * Add new source.
    *
    * @param message InterpreterArtifactSource
@@ -159,19 +234,7 @@ public class InterpreterRestApi {
   public ResponseEntity addSource(@RequestBody final String message) {
     try {
       final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
-      // install sources
-      final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
-      final String installationDir = interpreterInstaller.install(
-              request.getInterpreterName(),
-              request.getArtifact(),
-              interpreterOptionRepository.getAllRepositories()
-      );
-      if (!StringUtils.isAllBlank(installationDir)) {
-        request.setPath(installationDir);
-        request.setStatus(InterpreterArtifactSource.Status.INSTALLED);
-      } else {
-        request.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
-      }
+      request.setStatus(Status.NOT_INSTALLED);
       interpreterOptionRepository.saveSource(request);
 
       logger.info("New source {} added", request.getInterpreterName());
@@ -283,6 +346,27 @@ public class InterpreterRestApi {
     }
   }
 
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @PutMapping(value = "/source/{interpreterName}", produces = "application/json")
+  public ResponseEntity updateSource(@RequestBody final String message,
+      @PathVariable("interpreterName") final String interpreterName) {
+    logger.info("Update source {}", interpreterName);
+    if (message == null) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST).build();
+    }
+    try {
+      final InterpreterArtifactSource src = new Gson().fromJson(message, InterpreterArtifactSource.class);
+      logger.info("source - {}", src);
+      interpreterOptionRepository.updateSource(src);
+      logger.info("Source {} updated", src.getInterpreterName());
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      logger.error("Exception in InterpreterRestApi while creating option ", e);
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
   /**
    * Remove interpreter setting.
    */
@@ -302,11 +386,14 @@ public class InterpreterRestApi {
 
   /**
    * Restart interpreter setting.
+   *
+   * TODO:
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
   public ResponseEntity restartSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
     logger.info("Restart interpreterSetting {}, msg={}", settingId, message);
+
 
     //    final InterpreterSetting setting = interpreterSettingManager.get(settingId);
     //    try {
@@ -338,12 +425,14 @@ public class InterpreterRestApi {
   public ResponseEntity listInterpreter() {
     try {
       final Map<String, BaseInterpreterConfig> m = new HashMap<>();
-      final List<InterpreterArtifactSource> sources= interpreterOptionRepository.getAllSources();
+      final List<InterpreterArtifactSource> sources = interpreterOptionRepository.getAllSources();
       for (final InterpreterArtifactSource source: sources) {
-        final List<BaseInterpreterConfig> configList =
-            InterpreterInstaller.getDefaultConfig(source.getInterpreterName());
-        if (!configList.isEmpty()) {
-          m.put(source.getInterpreterName(), configList.get(0));
+        if (source.getStatus().equals(Status.INSTALLED)) {
+          final List<BaseInterpreterConfig> configList =
+              InterpreterInstaller.getDefaultConfig(source.getInterpreterName());
+          if (!configList.isEmpty()) {
+            m.put(source.getInterpreterName(), configList.get(0));
+          }
         }
       }
       return new JsonResponse<>(HttpStatus.OK, "", m).build();
@@ -362,4 +451,19 @@ public class InterpreterRestApi {
   public ResponseEntity listInterpreterPropertyTypes() {
     return new JsonResponse<>(HttpStatus.OK, InterpreterProperty.getTypes()).build();
   }
+
+  private void installSource(@Nonnull final InterpreterArtifactSource source) {
+    final String installationDir = InterpreterInstaller.install(
+        source.getInterpreterName(),
+        source.getArtifact(),
+        interpreterOptionRepository.getAllRepositories()
+    );
+    if (!StringUtils.isAllBlank(installationDir)) {
+      source.setPath(installationDir);
+      source.setStatus(InterpreterArtifactSource.Status.INSTALLED);
+    } else {
+      source.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
+    }
+  }
+
 }

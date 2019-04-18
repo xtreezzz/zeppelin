@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
@@ -150,8 +151,9 @@ public class CompletionRestApi {
         final List<String> statements = Arrays.asList(statement.split(";"));
         statement = statements.get(statements.size() - 1);
 
-        final net.sf.jsqlparser.statement.Statement parseExpression = CCJSqlParserUtil.parse(statement);
+        final Statement parseExpression = CCJSqlParserUtil.parse(statement);
         parseExpression.accept(statementDeParser);
+        // default completion list
         completions.addAll(
             Arrays.asList("from", "where", "select", "join", "left", "right", "inner", "outer", "on",
                 "and", "or")

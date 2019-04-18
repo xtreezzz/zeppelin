@@ -17,14 +17,13 @@
 
 package org.apache.zeppelin.storage;
 
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.zeppelin.Repository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * Repository for:
@@ -83,6 +82,13 @@ public class InterpreterOptionRepository {
   public InterpreterArtifactSource saveSource(
       @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
     storage.saveInterpreterSource(interpreterArtifactSource);
+    return interpreterArtifactSource;
+  }
+
+  @Nonnull
+  public InterpreterArtifactSource updateSource(
+      @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
+    storage.updateSource(interpreterArtifactSource);
     return interpreterArtifactSource;
   }
 

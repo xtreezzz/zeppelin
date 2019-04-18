@@ -49,8 +49,13 @@ public class InterpreterArtifactSource implements Serializable {
   @Nonnull
   private Status status;
 
+  boolean reinstallOnStart;
+
   public InterpreterArtifactSource(@Nonnull final String interpreterName,
-      @Nonnull final String artifact, @Nullable final String path, @Nonnull final Status status) {
+                                   @Nonnull final String artifact,
+                                   @Nullable final String path,
+                                   @Nonnull final Status status,
+                                   final boolean reinstallOnStart) {
     Preconditions.checkArgument(isValidAbsolutePathOrNull(path), "Wrong path: %s", path);
     Preconditions.checkNotNull(status);
     Preconditions.checkNotNull(interpreterName);
@@ -61,10 +66,11 @@ public class InterpreterArtifactSource implements Serializable {
     this.artifact = artifact;
     this.path = path;
     this.status = status;
+    this.reinstallOnStart = reinstallOnStart;
   }
 
   public InterpreterArtifactSource(@Nonnull final String interpreterName,
-      @Nonnull final String artifact) {
+                                   @Nonnull final String artifact) {
     //TODO(egorklimov): add regexp check for artifact
     Preconditions.checkNotNull(interpreterName);
     Preconditions.checkNotNull(artifact);
@@ -72,6 +78,7 @@ public class InterpreterArtifactSource implements Serializable {
     this.interpreterName = interpreterName;
     this.artifact = artifact;
     this.status = Status.NOT_INSTALLED;
+    this.reinstallOnStart = false;
   }
 
   @Nonnull
@@ -130,6 +137,14 @@ public class InterpreterArtifactSource implements Serializable {
     }
   }
 
+  public boolean isReinstallOnStart() {
+    return reinstallOnStart;
+  }
+
+  public void setReinstallOnStart(final boolean reinstallOnStart) {
+    this.reinstallOnStart = reinstallOnStart;
+  }
+
   public static InterpreterArtifactSource fromJson(@Nonnull final String json) {
     Preconditions.checkNotNull(json);
     final InterpreterArtifactSource source = new Gson().fromJson(json, InterpreterArtifactSource.class);
@@ -155,6 +170,7 @@ public class InterpreterArtifactSource implements Serializable {
         .add("artifact='" + artifact + "'")
         .add("path='" + path + "'")
         .add("status='" + status + "'")
+        .add("reinstallOnStart='" + reinstallOnStart + "'")
         .toString();
   }
 }

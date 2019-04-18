@@ -161,22 +161,15 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting;
+      option = $scope.interpreterSettings[index];
     }
 
-    if (sessionOption === 'isolated') {
+    if (sessionOption === 'ISOLATED') {
       option.perNote = sessionOption;
-      option.session = false;
-      option.process = true;
-    } else if (sessionOption === 'scoped') {
+    } else if (sessionOption === 'SCOPED') {
       option.perNote = sessionOption;
-      option.session = true;
-      option.process = false;
     } else {
-      option.perNote = 'shared';
-      option.session = false;
-      option.process = false;
+      option.perNote = 'SHARED';
     }
   };
 
@@ -186,22 +179,15 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting;
+      option = $scope.interpreterSettings[index];
     }
 
-    if (sessionOption === 'isolated') {
+    if (sessionOption === 'ISOLATED') {
       option.perUser = sessionOption;
-      option.session = false;
-      option.process = true;
-    } else if (sessionOption === 'scoped') {
+    } else if (sessionOption === 'SCOPED') {
       option.perUser = sessionOption;
-      option.session = true;
-      option.process = false;
     } else {
-      option.perUser = 'shared';
-      option.session = false;
-      option.process = false;
+      option.perUser = 'SHARED';
     }
   };
 
@@ -215,36 +201,29 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option = setting;
     }
 
-    if (option.perNote === 'scoped') {
-      return 'scoped';
-    } else if (option.perNote === 'isolated') {
-      return 'isolated';
-    } else {
-      return 'shared';
+    if (option.perNote) {
+      return option.perNote;
     }
+    return 'SHARED';
   };
 
   $scope.getPerUserOption = function(shebang) {
     let option;
     if (shebang === undefined) {
-      option = $scope.newInterpreterSetting.option;
+      option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting.option;
+      option = $scope.interpreterSettings[index];
     }
 
-    if (option.perUser === 'scoped') {
-      return 'scoped';
-    } else if (option.perUser === 'isolated') {
-      return 'isolated';
-    } else {
-      return 'shared';
+    if (option.perUser) {
+      return option.perUser;
     }
+    return 'SHARED';
   };
 
   $scope.getInterpreterRunningOption = function(shebang) {
-    let sharedModeName = 'shared';
+    let sharedModeName = 'SHARED';
 
     let globallyModeName = 'Globally';
     let perNoteModeName = 'Per Note';
@@ -255,8 +234,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting;
+      option = $scope.interpreterSettings[index];
     }
 
     let perNote = option.perNote;
@@ -291,8 +269,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       option = $scope.newInterpreterSetting;
     } else {
       let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting;
+      option = $scope.interpreterSettings[index];
     }
     option.perNote = isPerNoteMode;
     option.perUser = isPerUserMode;
@@ -429,6 +406,18 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     return false;
   };
 
+  $scope.enableReinstall = function(source) {
+    $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + source.interpreterName, source)
+      .then(function(res) {
+      })
+      .catch(function(res) {
+        const message = res.data ? res.data.message : 'Could not connect to server.';
+        console.log('Error %o %o', res.status, message);
+        ngToast.danger({content: message, verticalPosition: 'bottom'});
+      });
+    return false;
+  };
+
   $scope.addNewInterpreterSetting = function() {
     // user input validation on interpreter creation
     if (!$scope.newInterpreterSetting.customInterpreterName
@@ -460,9 +449,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     }
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
 
-    let request = angular.copy($scope.newInterpreterSetting);
-    request.perNote = request.perNote.toUpperCase();
-    request.perUser = request.perUser.toUpperCase();
+    let request = $scope.newInterpreterSetting;
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)
       .then(function(res) {
         websocketMsgSrv.fireEvent('ADD_INTERPRETER',
@@ -488,10 +475,10 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   };
 
   $scope.resetNewInterpreterSetting = function() {
-    // see org.apache.zeppelin.interpreter.configuration.InterpreterOption
+    // see ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption
     $scope.newInterpreterSetting = {
       customInterpreterName: undefined,
-      name: undefined,
+      interpreterName: undefined,
       shebang: undefined,
       perNote: undefined,
       perUser: undefined,
@@ -605,6 +592,63 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       }).catch(function(res) {
         console.log('Error %o %o', res.headers, res.config);
       });
+  };
+
+  $scope.installSource = function(interpreterName) {
+    let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
+    $scope.sources[index].status = 'IN_PROGRESS';
+    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + interpreterName)
+      .then(function(res) {
+        getSources();
+        getAvailableInterpreters();
+      }).catch(function(res) {
+        console.log('Error %o %o', res.headers, res.config);
+      });
+  };
+
+
+  $scope.uninstallSource = function(interpreterName) {
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: 'Do you want to uninstall this interpreter source? All running interpreters would be disabled!',
+      callback: function(result) {
+        if (result) {
+          let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
+          $scope.sources[index].status = 'IN_PROGRESS';
+          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + interpreterName)
+            .then(function(res) {
+              getSources();
+              getAvailableInterpreters();
+              getInterpreterSettings();
+            }).catch(function(res) {
+              console.log('Error %o %o', res.headers, res.config);
+            });
+        }
+      },
+    });
+  };
+
+  $scope.reinstallSource = function(interpreterName) {
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: 'Do you want to reinstall this interpreter source? All running interpreters would be unavailable!',
+      callback: function(result) {
+        if (result) {
+          let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
+          $scope.sources[index].status = 'IN_PROGRESS';
+          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + interpreterName)
+            .then(function(res) {
+              getSources();
+              getAvailableInterpreters();
+              getInterpreterSettings();
+            }).catch(function(res) {
+              console.log('Error %o %o', res.headers, res.config);
+            });
+        }
+      },
+    });
   };
 
   $scope.removeSource = function(interpreterName) {

@@ -117,7 +117,50 @@ limitations under the License.
 
   <div class="tab-content">
     <div id="home-{{source.interpreterName}}" class="tab-pane fade in active">
-      <h5>{{source.interpreterName}}&nbsp:&nbsp{{source.artifact}}</h5>
+      <div class="card bg-light md-12">
+        <div class="card-body">
+          <h5 class="card-title">
+            {{source.interpreterName}}:&nbsp
+            <!-- img -->
+            <small ng-switch="source.status">
+              <small ng-switch-when="INSTALLED">
+                <i style="vertical-align: middle; color: green; margin-right: 3px;" class="fa fa-circle"
+                   uib-tooltip="Installed">
+                </i>
+              </small>
+              <small ng-switch-when="NOT_INSTALLED">
+                <i style="vertical-align: middle; color: red; cursor: pointer" class="fa fa-circle"
+                   uib-tooltip="Not installed yet">
+                </i>
+              </small>
+              <small ng-switch-when="IN_PROGRESS">
+                <div class="spinner-border text-success" role="status">
+                  <span class="sr-only">In progress...</span>
+                </div>
+              </small>
+              <small ng-switch-default>
+                <i style="vertical-align: middle; color: blue" class="fa fa-spinner spinAnimation"
+                   uib-tooltip="Error occured">
+                </i>
+              </small>
+            </small>
+          </h5>
+          <h6 class="card-subtitle mb-2 text-muted">{{source.artifact}}</h6>
+
+          <p class="card-text" ng-if="source.status === 'INSTALLED'">You may setup <b>{{source.interpreterName}}</b> interpreter using this artifact.</p>
+          <p class="card-text" ng-if="source.status === 'NOT_INSTALLED'">Install artifact to setup <b>{{source.interpreterName}}</b> interpreter.</p>
+
+          <input type="checkbox" ng-model="source.reinstallOnStart" ng-click="enableReinstall(source)" />
+          <label class="form-check-label" uib-tooltip="Enable artifact reinstall on app restart.">Reinstall on start.</label>
+
+          <hr/>
+          <button class="btn btn-primary" ng-if="source.status === 'NOT_INSTALLED'" ng-click="installSource(source.interpreterName)">Install</button>
+
+          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="uninstallSource(source.interpreterName)">Uninstall</button>
+          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="reinstallSource(source.interpreterName)">Reinstall</button>
+        </div>
+      </div>
+
     </div>
 
     <div id="{{setting.shebang.substring(1)}}" class="tab-pane fade"
@@ -135,28 +178,8 @@ limitations under the License.
             ><span ng-show="!$first">{{interpreter.customInterpreterName}}</span>
             </span>
               </small>
-              <!--
-                <small ng-switch="setting.status">
-                  <small ng-switch-when="READY">
-                    <i style="color: green; margin-right: 3px;" class="fa fa-circle"
-                       uib-tooltip="Ready">
-                    </i>
-                  </small>
-                  <small ng-switch-when="ERROR">
-                    <i style="color: red; cursor: pointer" class="fa fa-circle"
-                       ng-click="showErrorMessage(setting)"
-                       uib-tooltip="Error downloading dependencies">
-                    </i>
-                  </small>
-                  <small ng-switch-default>
-                    <i style="color: blue" class="fa fa-spinner spinAnimation"
-                       uib-tooltip="Dependencies are downloading">
-                    </i>
-                  </small>
-                </small>
-              -->
             </h3>
-            <span style="float:right" ng-show="!valueform.$visible" >
+          <span style="float:right" ng-show="!valueform.$visible" >
           <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);">
               <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
               <span ng-if="setting.isEnabled != true" class="fa fa-toggle-off" style="border: none !important; font-size:24px; color:red"></span>
@@ -190,19 +213,19 @@ limitations under the License.
               <ul class="dropdown-menu" role="menu">
                 <li>
                   <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'shared', 'shared')">
+                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SHARED')">
                     Globally
                   </a>
                 </li>
                 <li>
                   <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'scoped', '')">
+                     ng-click="setInterpreterRunningOption(setting.shebang, 'SCOPED', 'SHARED')">
                     Per Note
                   </a>
                 </li>
                 <li ng-if="ticket.principal !== 'anonymous'">
                   <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'shared', 'scoped')">
+                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SCOPED')">
                     Per User
                   </a>
                 </li>
@@ -273,7 +296,7 @@ limitations under the License.
                    uib-tooltip="Can manage interpreter sessions differently by setting this option. Click this button to learn more"
                    ng-href="{{getInterpreterBindingModeDocsLink()}}" target="_blank"></a>
                 <span ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User' && ticket.principal !== 'anonymous'">
-              <span ng-if="getPerNoteOption(setting.shebang) === 'shared'">
+              <span ng-if="getPerNoteOption(setting.shebang) === 'SHARED'">
                 <button type="button" class="btn btn-default btn-xs"
                         ng-click="setPerNoteOption(setting.shebang, 'SCOPED')"
                         ng-disabled="!valueform.$visible"
@@ -391,7 +414,7 @@ limitations under the License.
           <div class="col-md-12">
             <span class="input-group" style="line-height:30px;">
               <label>
-                Set additional JVM options.
+                Additional JVM options.
                 <span editable-text="setting.jvmOptions" e-form="valueform" e-msd-elastic>
                 {{setting.jvmOptions}}
                 </span>
@@ -404,7 +427,7 @@ limitations under the License.
           <div class="col-md-12">
             <span class="input-group" style="line-height:30px;">
               <label>
-                Set count of concurrent tasks.
+                Count of concurrent tasks.
               <span editable-text="setting.concurrentTasks" e-widget-number e-form="valueform" e-msd-elastic>
                 {{setting.concurrentTasks}}
               </span>

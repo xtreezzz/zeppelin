@@ -22,12 +22,13 @@ CHECK(VALUE IN ('NOT_INSTALLED', 'INSTALLED', 'IN_PROGRESS'));
 -- Represents InterpreterArtifactSource
 CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
 (
-    id                BIGSERIAL     PRIMARY KEY,
-    interpreter_name  VARCHAR(255)  NOT NULL UNIQUE,
-    artifact          VARCHAR(255)  NOT NULL,
+    id                   BIGSERIAL     PRIMARY KEY,
+    interpreter_name     VARCHAR(255)  NOT NULL UNIQUE,
+    artifact             VARCHAR(255)  NOT NULL,
     --TODO(egorklimov ): CHECK (artifact ~* {REGEXP})
-    status            interpreter_artifact_source_status,
-    "path"            VARCHAR(1024) UNIQUE
+    status               interpreter_artifact_source_status,
+    "path"               VARCHAR(1024) UNIQUE,
+    reinstall_on_start   BOOLEAN       NOT NULL DEFAULT FALSE
 );
 
 -- Represents BaseInterpreterConfig
