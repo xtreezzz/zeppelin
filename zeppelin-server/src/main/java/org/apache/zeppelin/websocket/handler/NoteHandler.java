@@ -178,14 +178,14 @@ public class NoteHandler extends AbstractHandler {
     final Note cloneNote = new Note(path);
     cloneNote.setPath(path);
     cloneNote.setScheduler(note.getScheduler());
-    note.getReaders().clear();
-    note.getRunners().clear();
-    note.getWriters().clear();
-    note.getOwners().clear();
-    note.getReaders().add(authenticationInfo.getUser());
-    note.getRunners().add(authenticationInfo.getUser());
-    note.getWriters().add(authenticationInfo.getUser());
-    note.getOwners().add(authenticationInfo.getUser());
+    cloneNote.getReaders().clear();
+    cloneNote.getRunners().clear();
+    cloneNote.getWriters().clear();
+    cloneNote.getOwners().clear();
+    cloneNote.getReaders().add(authenticationInfo.getUser());
+    cloneNote.getRunners().add(authenticationInfo.getUser());
+    cloneNote.getWriters().add(authenticationInfo.getUser());
+    cloneNote.getOwners().add(authenticationInfo.getUser());
     noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParagraphs(note);
