@@ -17,8 +17,6 @@
 
 package ru.tinkoff.zeppelin.core.notebook;
 
-import org.apache.zeppelin.notebook.display.GUI;
-
 import java.io.Serializable;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -45,7 +43,7 @@ public class Paragraph implements Serializable {
   private Map<String, Object> config;
 
   // form and parameter settings
-  private GUI settings;
+  private Map<String, Object> formParams;
 
 
   public Paragraph() {
@@ -64,7 +62,7 @@ public class Paragraph implements Serializable {
                    final Long jobId,
                    final Long revisionId,
                    final Map<String, Object> config,
-                   final GUI settings) {
+                   final Map<String, Object> formParams) {
     this.id = id;
     this.noteId = noteId;
     this.uuid = uuid;
@@ -77,7 +75,7 @@ public class Paragraph implements Serializable {
     this.jobId = jobId;
     this.revisionId = revisionId;
     this.config = config;
-    this.settings = settings;
+    this.formParams = formParams;
   }
 
   public Long getId() {
@@ -164,12 +162,12 @@ public class Paragraph implements Serializable {
     this.config = config;
   }
 
-  public GUI getGUI() {
-    return settings;
+  public Map<String, Object> getFormParams() {
+    return formParams;
   }
 
-  public void setSettings(final GUI settings) {
-    this.settings = settings;
+  public void setFormParams(final Map<String, Object> formParams) {
+    this.formParams = formParams;
   }
 
   public Long getRevisionId() {

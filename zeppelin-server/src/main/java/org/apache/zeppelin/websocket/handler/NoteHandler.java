@@ -17,8 +17,16 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -36,12 +44,6 @@ import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
-
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -154,7 +156,7 @@ public class NoteHandler extends AbstractHandler {
       paragraph.setPosition(0);
       paragraph.setJobId(null);
       paragraph.setConfig(new HashMap<>());
-      paragraph.setSettings(new GUI());
+      paragraph.setFormParams(new HashMap<>());
       noteService.persistParagraph(note, paragraph);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
@@ -199,7 +201,7 @@ public class NoteHandler extends AbstractHandler {
       cloneParagraph.setPosition(paragraph.getPosition());
       cloneParagraph.setJobId(null);
       cloneParagraph.setConfig(paragraph.getConfig());
-      cloneParagraph.setSettings(paragraph.getGUI());
+      cloneParagraph.setFormParams(paragraph.getFormParams());
       noteService.persistParagraph(note, cloneParagraph);
     }
 

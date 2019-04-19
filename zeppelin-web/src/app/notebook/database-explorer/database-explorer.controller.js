@@ -283,16 +283,15 @@ function DatabaseExplorerCtrl($scope) {
       searchParams.CURRENT_DISPLAYED = 0;
     }).on('load_node.jstree', function(event, data) {
       // сделать отступы для отображения типов
-        let nodes = data.node.children.map((id) => jstreeDOM.jstree(true).get_node(id));
-        let maxLength = Math.max.apply(null, nodes.map((node) => node.text.length)) + 3;
-        nodes.forEach(function(node) {
-          let spaces = ' '.repeat(maxLength - node.original.text.length);
-          if (node.original.type) {
-            node.text = node.original.text + spaces
-            + '<span class = "column-type-span">' + node.original.type
-            + '</span>';
-          }
-        });
+      let nodes = data.node.children.map((id) => jstreeDOM.jstree(true).get_node(id));
+      let maxLength = Math.max.apply(null, nodes.map((node) => node.text.length)) + 3;
+      nodes.forEach(function(node) {
+        let spaces = ' '.repeat(maxLength - node.original.text.length);
+        if (node.original.type) {
+          node.text = node.original.text + spaces
+            + '<span class = "column-type-span">' + node.original.type + '</span>';
+        }
+      });
     }).on('model.jstree', function(event, data, parent) {
       data.nodes.forEach((id) => {
         let node = data.instance.get_node(id);

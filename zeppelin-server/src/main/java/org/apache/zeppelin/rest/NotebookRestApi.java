@@ -828,7 +828,7 @@ public class NotebookRestApi {
         .filter(p -> p.getId() == paragraphId)
         .findAny()
         .ifPresent(p -> {
-          Map<String, Object> params = p.getGUI().getParams();
+          Map<String, Object> params = p.getFormParams();
           params.clear();
           params.putAll(formValues);
           noteRepository.updateParagraph(note, p);

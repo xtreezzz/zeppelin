@@ -193,6 +193,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     initializeDefault($scope.paragraph.config);
     getInterpreterSettings();
+    setTimeout(() => parseForm($scope.originalText), 250);
   };
 
   $scope.$on('noteRunningStatus', function(event, status) {
@@ -201,6 +202,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   });
 
   const initializeDefault = function(config) {
+    if (!$scope.paragraph.settings) {
+      $scope.paragraph.settings = {params: $scope.paragraph.formParams};
+    }
     let forms = $scope.paragraph.settings.forms;
 
     if (!config.colWidth) {
@@ -879,6 +883,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   }
 
   function setForms(newForms) {
+    if (!$scope.paragraph.settings) {
+      $scope.paragraph.settings = {params: $scope.paragraph.formParams};
+    }
     $scope.paragraph.settings.forms = newForms;
     $scope.$apply();
   }

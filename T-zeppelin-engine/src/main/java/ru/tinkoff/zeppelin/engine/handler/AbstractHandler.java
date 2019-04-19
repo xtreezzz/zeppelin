@@ -256,8 +256,8 @@ abstract class AbstractHandler {
   private static final Pattern formBlockPattern =
       Pattern.compile("%FORM(.*)%FORM[\n ]*", Pattern.DOTALL);
 
-  private String clearParagraphText(Paragraph p) {
-    Map<String, Object> formValues = p.getGUI().getParams();
+  private String clearParagraphText(final Paragraph p) {
+    Map<String, Object> formValues = p.getFormParams();
     if (formValues.isEmpty()) {
       return p.getText();
     }

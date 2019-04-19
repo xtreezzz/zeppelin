@@ -18,7 +18,6 @@ package org.apache.zeppelin.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -50,7 +49,7 @@ public class ParagraphDAO {
           "                        POSITION,\n" +
           "                        JOB_ID,\n" +
           "                        CONFIG,\n" +
-          "                        GUI,\n" +
+          "                        FORM_PARAMS,\n" +
           "                        REVISION_ID)\n" +
           "VALUES (:NOTE_ID,\n" +
           "        :UUID,\n" +
@@ -62,7 +61,7 @@ public class ParagraphDAO {
           "        :POSITION,\n" +
           "        :JOB_ID,\n" +
           "        :CONFIG,\n" +
-          "        :GUI,\n" +
+          "        :FORM_PARAMS,\n" +
           "        :REVISION_ID);";
 
   private final static String UPDATE_PARAGRAPH = "" +
@@ -77,7 +76,7 @@ public class ParagraphDAO {
           "    POSITION    = :POSITION,\n" +
           "    JOB_ID      = :JOB_ID,\n" +
           "    CONFIG      = :CONFIG,\n" +
-          "    GUI         = :GUI,\n" +
+          "    FORM_PARAMS         = :FORM_PARAMS,\n" +
           "    REVISION_ID = :REVISION_ID\n" +
           "WHERE ID = :ID;";
 
@@ -99,7 +98,7 @@ public class ParagraphDAO {
           "       POSITION,\n" +
           "       JOB_ID,\n" +
           "       CONFIG,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n";
 
@@ -115,7 +114,7 @@ public class ParagraphDAO {
           "       POSITION,\n" +
           "       JOB_ID,\n" +
           "       CONFIG,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n" +
           "  WHERE ID = :ID;";
@@ -132,7 +131,7 @@ public class ParagraphDAO {
           "       POSITION,\n" +
           "       JOB_ID,\n" +
           "       CONFIG,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n" +
           "  WHERE UUID = :UUID;";
@@ -149,7 +148,7 @@ public class ParagraphDAO {
           "       POSITION,\n" +
           "       JOB_ID,\n" +
           "       CONFIG,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n" +
           "WHERE NOTE_ID = :NOTE_ID\n" +
@@ -157,6 +156,7 @@ public class ParagraphDAO {
 
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final static Gson gson = new Gson();
 
   public ParagraphDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
@@ -185,8 +185,8 @@ public class ParagraphDAO {
             ? resultSet.getLong("JOB_ID")
             : null;
 
-    final Map<String, Object> config = new Gson().fromJson(resultSet.getString("CONFIG"), configType);
-    final GUI gui = new Gson().fromJson(resultSet.getString("GUI"), GUI.class);
+    final Map<String, Object> config = gson.fromJson(resultSet.getString("CONFIG"), configType);
+    final Map<String, Object> formParams = gson.fromJson(resultSet.getString("FORM_PARAMS"), configType);
     final Long revisionId =  null != resultSet.getString("REVISION_ID")
             ? resultSet.getLong("REVISION_ID")
             : null;
@@ -204,7 +204,7 @@ public class ParagraphDAO {
             jobId,
             revisionId,
             config,
-            gui);
+            formParams);
   }
 
   public Paragraph persist(final Paragraph paragraph) {
@@ -220,7 +220,7 @@ public class ParagraphDAO {
             .addValue("POSITION", paragraph.getPosition())
             .addValue("JOB_ID", paragraph.getJobId())
             .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
-            .addValue("GUI", generatePGjson(paragraph.getGUI()))
+            .addValue("FORM_PARAMS", generatePGjson(paragraph.getFormParams()))
             .addValue("REVISION_ID", paragraph.getRevisionId());
     jdbcTemplate.update(PERSIST_PARAGRAPH, parameters, holder);
 
@@ -240,7 +240,7 @@ public class ParagraphDAO {
             .addValue("POSITION", paragraph.getPosition())
             .addValue("JOB_ID", paragraph.getJobId())
             .addValue("CONFIG", generatePGjson(paragraph.getConfig()))
-            .addValue("GUI", generatePGjson(paragraph.getGUI()))
+            .addValue("FORM_PARAMS", generatePGjson(paragraph.getFormParams()))
             .addValue("REVISION_ID", paragraph.getRevisionId())
             .addValue("ID", paragraph.getId());
     jdbcTemplate.update(UPDATE_PARAGRAPH, parameters);

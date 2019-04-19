@@ -20,7 +20,7 @@ import com.google.gson.Gson;
 import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 
-public class Utils {
+class Utils {
   private static final Gson gson = new Gson();
 
   static PGobject generatePGjson(final Object value) {

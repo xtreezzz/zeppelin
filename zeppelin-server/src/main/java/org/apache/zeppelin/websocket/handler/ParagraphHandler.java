@@ -17,12 +17,16 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.BadRequestException;
-import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.slf4j.Logger;
@@ -33,13 +37,6 @@ import org.springframework.web.socket.WebSocketSession;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Component
 public class ParagraphHandler extends AbstractHandler {
@@ -67,7 +64,7 @@ public class ParagraphHandler extends AbstractHandler {
     final Map<String, Object> params = fromMessage.getNotNull("params");
 
     paragraph.setConfig(config);
-    paragraph.getGUI().setParams(params);
+    paragraph.setFormParams(params);
     paragraph.setTitle(title);
     paragraph.setText(text);
     paragraph.setShebang(shebang);
@@ -159,7 +156,7 @@ public class ParagraphHandler extends AbstractHandler {
     paragraph.setPosition(index);
     paragraph.setJobId(null);
     paragraph.setConfig(new HashMap<>());
-    paragraph.setSettings(new GUI());
+    paragraph.setFormParams(new HashMap<>());
     noteService.persistParagraph(note, paragraph);
 
     return paragraph.getUuid();

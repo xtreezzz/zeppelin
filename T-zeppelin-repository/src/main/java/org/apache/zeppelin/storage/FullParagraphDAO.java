@@ -18,15 +18,6 @@ package org.apache.zeppelin.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.zeppelin.notebook.display.GUI;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.stereotype.Component;
-import ru.tinkoff.zeppelin.core.externalDTO.InterpreterResultDTO;
-import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
-
 import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,6 +25,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.externalDTO.InterpreterResultDTO;
+import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 
 @Component
 public class FullParagraphDAO {
@@ -50,7 +48,7 @@ public class FullParagraphDAO {
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
           "       P.CONFIG,\n" +
-          "       P.GUI\n" +
+          "       P.FORM_PARAMS\n" +
           "FROM PARAGRAPHS P\n" +
           "       LEFT JOIN JOB J ON P.JOB_ID = J.ID\n" +
           "WHERE P.ID = :ID;";
@@ -67,7 +65,7 @@ public class FullParagraphDAO {
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
           "       P.CONFIG,\n" +
-          "       P.GUI\n" +
+          "       P.FORM_PARAMS\n" +
           "FROM PARAGRAPHS P\n" +
           "       LEFT JOIN JOB J ON P.JOB_ID = J.ID\n" +
           "WHERE P.UUID = :UUID;";
@@ -84,7 +82,7 @@ public class FullParagraphDAO {
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
           "       P.CONFIG,\n" +
-          "       P.GUI\n" +
+          "       P.FORM_PARAMS\n" +
           "FROM NOTES N\n" +
           "       LEFT JOIN PARAGRAPHS P ON N.ID = P.NOTE_ID\n" +
           "       LEFT JOIN JOB J ON P.JOB_ID = J.ID\n" +
@@ -102,7 +100,7 @@ public class FullParagraphDAO {
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
           "       P.CONFIG,\n" +
-          "       P.GUI\n" +
+          "       P.FORM_PARAMS\n" +
           "FROM NOTES N\n" +
           "       LEFT JOIN PARAGRAPHS P ON N.ID = P.NOTE_ID\n" +
           "       LEFT JOIN JOB J ON P.JOB_ID = J.ID\n" +
@@ -116,6 +114,7 @@ public class FullParagraphDAO {
 
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private final static Gson gson = new Gson();
 
   public FullParagraphDAO(final NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
@@ -154,8 +153,8 @@ public class FullParagraphDAO {
     final String status = resultSet.getString("STATUS");
     final Integer position = resultSet.getInt("POSITION");
 
-    final Map<String, Object> config = new Gson().fromJson(resultSet.getString("CONFIG"), configType);
-    final GUI gui = new Gson().fromJson(resultSet.getString("GUI"), GUI.class);
+    final Map<String, Object> config = gson.fromJson(resultSet.getString("CONFIG"), configType);
+    final Map<String, Object> formParams = gson.fromJson(resultSet.getString("FORM_PARAMS"), configType);
 
     final ParagraphDTO paragraphDTO = new ParagraphDTO();
     paragraphDTO.setJobId(jobId);
@@ -169,7 +168,7 @@ public class FullParagraphDAO {
     paragraphDTO.setUpdated(updated);
     paragraphDTO.setStatus(status);
     paragraphDTO.setConfig(config);
-    paragraphDTO.setSettings(gui);
+    paragraphDTO.setFormParams(formParams);
     paragraphDTO.setPosition(position);
     return paragraphDTO;
 

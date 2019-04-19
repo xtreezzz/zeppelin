@@ -16,7 +16,6 @@
  */
 package ru.tinkoff.zeppelin.core.externalDTO;
 
-import org.apache.zeppelin.notebook.display.GUI;
 import ru.tinkoff.zeppelin.core.notebook.NoteRevision;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 
@@ -33,11 +32,7 @@ public class NoteDTO {
     private String path;
     private NoteRevision revision;
 
-    /**
-     * form and parameter guiConfiguration
-     * see https://github.com/apache/zeppelin/pull/2641
-     */
-    private  GUI guiConfiguration;
+    private  Map<String, Object> formParams;
 
     private List<ParagraphDTO> paragraphs = new ArrayList<>();
 
@@ -87,12 +82,12 @@ public class NoteDTO {
         this.revision = revision;
     }
 
-    public GUI getGuiConfiguration() {
-        return guiConfiguration;
+    public Map<String, Object> getFormParams() {
+        return formParams;
     }
 
-    public void setGuiConfiguration(GUI guiConfiguration) {
-        this.guiConfiguration = guiConfiguration;
+    public void setFormParams(Map<String, Object> formParams) {
+        this.formParams = formParams;
     }
 
     public List<ParagraphDTO> getParagraphs() {

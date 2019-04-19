@@ -16,8 +16,17 @@
  */
 package org.apache.zeppelin.storage;
 
+import static org.apache.zeppelin.storage.Utils.generatePGjson;
+
 import com.google.gson.Gson;
-import org.apache.zeppelin.notebook.display.GUI;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -26,15 +35,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.apache.zeppelin.storage.Utils.generatePGjson;
-
 @Component
 public class NoteDAO {
 
@@ -42,12 +42,12 @@ public class NoteDAO {
           "INSERT INTO NOTES (UUID,\n" +
           "                   PATH,\n" +
           "                   PERMISSIONS,\n" +
-          "                   GUI,\n" +
+          "                   FORM_PARAMS,\n" +
           "                   JOB_BATCH_ID)\n" +
           "VALUES (:UUID,\n" +
           "        :PATH,\n" +
           "        :PERMISSIONS,\n" +
-          "        :GUI,\n" +
+          "        :FORM_PARAMS,\n" +
           "        :JOB_BATCH_ID);";
 
   private static final String UPDATE_NOTE = "" +
@@ -55,7 +55,7 @@ public class NoteDAO {
           "SET UUID         = :UUID,\n" +
           "    PATH         = :PATH,\n" +
           "    PERMISSIONS  = :PERMISSIONS,\n" +
-          "    GUI          = :GUI,\n" +
+          "    FORM_PARAMS          = :FORM_PARAMS,\n" +
           "    JOB_BATCH_ID =:JOB_BATCH_ID\n" +
           "WHERE ID = :ID;";
 
@@ -65,7 +65,7 @@ public class NoteDAO {
           "       UUID,\n" +
           "       PATH,\n" +
           "       PERMISSIONS,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       JOB_BATCH_ID\n" +
           "FROM NOTES\n" +
           "WHERE ID = :ID;";
@@ -75,7 +75,7 @@ public class NoteDAO {
           "       UUID,\n" +
           "       PATH,\n" +
           "       PERMISSIONS,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       JOB_BATCH_ID\n" +
           "FROM NOTES\n" +
           "WHERE UUID = :UUID;";
@@ -85,7 +85,7 @@ public class NoteDAO {
           "       UUID,\n" +
           "       PATH,\n" +
           "       PERMISSIONS,\n" +
-          "       GUI,\n" +
+          "       FORM_PARAMS,\n" +
           "       JOB_BATCH_ID\n" +
           "FROM NOTES\n";
 
@@ -104,10 +104,11 @@ public class NoteDAO {
 
 
   private static Note mapRow(final ResultSet resultSet, final int i) throws SQLException {
+    final Type formParamsType = new TypeToken<Map<String, String>>() {}.getType();
     long dbNoteId = resultSet.getLong("id");
     String noteId = resultSet.getString("UUID");
     String notePath = resultSet.getString("path");
-    GUI gui = gson.fromJson(resultSet.getString("gui"), GUI.class);
+    final Map<String, String> formParams = gson.fromJson(resultSet.getString("FORM_PARAMS"), formParamsType);
     Map<String, Set<String>> permission = new HashMap<>(4);
     permission = gson.fromJson(resultSet.getString("permissions"), permission.getClass());
     final Long jobBatchId = resultSet.getString("JOB_BATCH_ID") != null
@@ -121,8 +122,7 @@ public class NoteDAO {
     note.getReaders().addAll(permission.get("readers"));
     note.getRunners().addAll(permission.get("runners"));
     note.getWriters().addAll(permission.get("writers"));
-    note.getGuiConfiguration().setParams(gui.getParams());
-    note.getGuiConfiguration().setForms(gui.getForms());
+    note.getFormParams().putAll(formParams);
     note.setBatchJobId(jobBatchId);
     return note;
   }
@@ -139,7 +139,7 @@ public class NoteDAO {
             .addValue("UUID", note.getUuid())
             .addValue("PATH", note.getPath())
             .addValue("PERMISSIONS", generatePGjson(permission))
-            .addValue("GUI", generatePGjson(note.getGuiConfiguration()))
+            .addValue("FORM_PARAMS", generatePGjson(note.getFormParams()))
             .addValue("JOB_BATCH_ID", note.getBatchJobId());
     jdbcTemplate.update(PERSIST_NOTE, parameters, holder);
 
@@ -159,7 +159,7 @@ public class NoteDAO {
             .addValue("UUID", note.getUuid())
             .addValue("PATH", note.getPath())
             .addValue("PERMISSIONS", generatePGjson(permission))
-            .addValue("GUI", generatePGjson(note.getGuiConfiguration()))
+            .addValue("FORM_PARAMS", generatePGjson(note.getFormParams()))
             .addValue("JOB_BATCH_ID", note.getBatchJobId())
             .addValue("ID", note.getId());
 

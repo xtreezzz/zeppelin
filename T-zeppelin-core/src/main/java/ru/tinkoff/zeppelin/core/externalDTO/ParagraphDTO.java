@@ -16,8 +16,6 @@
  */
 package ru.tinkoff.zeppelin.core.externalDTO;
 
-import org.apache.zeppelin.notebook.display.GUI;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
@@ -42,8 +40,7 @@ public class ParagraphDTO {
     //paragraph configs like isOpen, colWidth, etc
     private Map<String, Object> config;
 
-    // form and parameter settings
-    private GUI settings;
+    private Map<String, Object> formParams;
 
     private InterpreterResultDTO results;
 
@@ -127,12 +124,12 @@ public class ParagraphDTO {
         this.config = config;
     }
 
-    public GUI getSettings() {
-        return settings;
+    public Map<String, Object> getFormParams() {
+        return formParams;
     }
 
-    public void setSettings(GUI settings) {
-        this.settings = settings;
+    public void setFormParams(Map<String, Object> formParams) {
+        this.formParams = formParams;
     }
 
     public InterpreterResultDTO getResults() {
@@ -176,7 +173,7 @@ public class ParagraphDTO {
                 Objects.equals(updated, that.updated) &&
                 Objects.equals(status, that.status) &&
                 Objects.equals(config, that.config) &&
-                Objects.equals(settings, that.settings) &&
+                Objects.equals(formParams, that.formParams) &&
                 Objects.equals(results, that.results);
     }
 
@@ -194,7 +191,7 @@ public class ParagraphDTO {
                 status,
                 position,
                 config,
-                settings,
+                formParams,
                 results);
     }
 }

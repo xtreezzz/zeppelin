@@ -21,7 +21,6 @@ import com.google.common.collect.Sets;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
-import org.apache.zeppelin.realm.ShiroSecurityService;
 import org.apache.zeppelin.storage.SchedulerDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
@@ -124,7 +123,7 @@ public class CronRestApi {
     responce.put("enable", scheduler.isEnabled());
     SockMessage message = new SockMessage(Operation.NOTE_UPDATED);
     message.put("path", note.getPath());
-    message.put("config", note.getGuiConfiguration());
+    message.put("config", note.getFormParams());
     message.put("info", null);
     connectionManager.broadcast(note.getId(), message);
     return new JsonResponse(HttpStatus.OK, responce).build();

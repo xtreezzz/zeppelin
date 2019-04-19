@@ -19,9 +19,10 @@ package ru.tinkoff.zeppelin.core.notebook;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import org.apache.zeppelin.notebook.display.GUI;
 import org.apache.zeppelin.utils.IdHashes;
 
 /**
@@ -39,11 +40,7 @@ public class Note implements Serializable {
   private String path;
   private NoteRevision revision;
 
-  /**
-   * form and parameter guiConfiguration
-   * see https://github.com/apache/zeppelin/pull/2641
-   */
-  private final GUI guiConfiguration;
+  private Map<String, Object> formParams;
 
   private boolean isRunning = false;
 
@@ -65,7 +62,7 @@ public class Note implements Serializable {
     this.name = name;
     this.path = path;
 
-    this.guiConfiguration = new GUI();
+    this.formParams = new HashMap<>();
 
     this.owners = new HashSet<>();
     this.readers = new HashSet<>();
@@ -95,8 +92,8 @@ public class Note implements Serializable {
     return name;
   }
 
-  public GUI getGuiConfiguration() {
-    return guiConfiguration;
+  public Map<String, Object> getFormParams() {
+    return formParams;
   }
 
   public boolean isRunning() {
