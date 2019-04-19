@@ -16,6 +16,7 @@
 #jstree a {
   user-select: none;
   white-space: pre;
+  font-family: monospace;
 }
 
 #inputJstreeSearch {
@@ -73,6 +74,28 @@
   text-align: center;
   color: white;
   text-shadow: 1px 1px 5px black, -1px -1px 5px black
+}
+
+.metaserver-unavailable-div {
+  margin: 40% 15px;
+  background: rgba(0, 32, 204, 0.06);
+  padding: 10px;
+  border: 2px solid rgba(7, 7, 7, 0.4);
+  border-radius: 30px;
+}
+
+.metaserver-unavailable-div>span {
+  font-size: 35px;
+  text-align: center;
+  display: block;
+}
+
+.metaserver-unavailable-div>i {
+  font-size: 50px;
+  display: block;
+  text-align: center;
+  padding-top: 25px;
+  color: red;
 }
 
 .db-explorer .form-group {

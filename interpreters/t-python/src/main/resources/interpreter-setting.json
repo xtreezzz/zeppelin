@@ -49,7 +49,7 @@
     },
     "editor": {
       "language": "python",
-      "editOnDblClick": true,
+      "editOnDblClick": false,
       "completionSupport": false
     }
   }

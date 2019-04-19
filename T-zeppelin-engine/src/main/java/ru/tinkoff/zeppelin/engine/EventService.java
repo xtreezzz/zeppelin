@@ -77,7 +77,7 @@ public class EventService {
   }
 
   public static void publish(final long noteId, final ParagraphDTO before, final ParagraphDTO after) {
-    if(! Objects.equals(before, after)) {
+    if(!Objects.equals(before, after)) {
       paragraphEvents.add(new Event(noteId, before, after));
     }
   }

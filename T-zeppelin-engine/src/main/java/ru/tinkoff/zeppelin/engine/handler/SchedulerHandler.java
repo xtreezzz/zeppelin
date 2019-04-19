@@ -101,9 +101,7 @@ public class SchedulerHandler extends AbstractHandler {
       throw new IllegalArgumentException("Wrong cron expression");
     }
 
-    final ZonedDateTime zdt = scheduler.getNextExecution().atZone(ZoneId.systemDefault());
-    final Date currentExecution = Date.from(zdt.toInstant());
-    final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(currentExecution);
+    final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
     final LocalDateTime nextExecution = LocalDateTime.ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
 
     scheduler.setLastExecution(scheduler.getNextExecution());

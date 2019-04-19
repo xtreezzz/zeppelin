@@ -14,7 +14,7 @@ limitations under the License.
 
 <div class="db-explorer box">
 
-  <div class="form-group">
+  <div ng-if="!unavailableBlockDisplay" class="form-group">
     <select class="form-control"
             id="databaseSelect"
             ng-model="currentSource"
@@ -35,6 +35,11 @@ limitations under the License.
 
   <div id="jstreeDiv">
     <div id="jstree"></div>
+    <div ng-if="unavailableBlockDisplay" class="metaserver-unavailable-div">
+      <span>Metaserver</span>
+      <span>is unavailable</span>
+      <i class="icon-feed"></i>
+    </div>
     <div id="jstreeMaxElementDiv"><h4>Too many elements to display</h4></div>
   </div>
 

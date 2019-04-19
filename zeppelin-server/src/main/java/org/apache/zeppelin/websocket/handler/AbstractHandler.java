@@ -40,8 +40,6 @@ import java.util.Set;
 
 public abstract class AbstractHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
-
   protected static Gson gson = new GsonBuilder()
           .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
           .setPrettyPrinting()

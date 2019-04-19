@@ -49,6 +49,7 @@ function DatabaseExplorerCtrl($scope) {
   $scope.currentSource = null;
   $scope.sources = [];
   $scope.searchText = '';
+  $scope.unavailableBlockDisplay = false;
 
   // TODO(SAN) init vars
   let metaServerUrl = null;
@@ -139,7 +140,11 @@ function DatabaseExplorerCtrl($scope) {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         return;
       }
-      callback(xhr.responseText);
+      try {
+        callback(xhr.responseText);
+      } catch (err) {
+        $scope.unavailableBlockDisplay = true;
+      }
     };
     xhr.send();
   }
@@ -278,16 +283,16 @@ function DatabaseExplorerCtrl($scope) {
       searchParams.CURRENT_DISPLAYED = 0;
     }).on('load_node.jstree', function(event, data) {
       // сделать отступы для отображения типов
-      if (data.node.original && data.node.original.type === 'table') {
         let nodes = data.node.children.map((id) => jstreeDOM.jstree(true).get_node(id));
         let maxLength = Math.max.apply(null, nodes.map((node) => node.text.length)) + 3;
         nodes.forEach(function(node) {
           let spaces = ' '.repeat(maxLength - node.original.text.length);
-          node.text = node.original.text + spaces
-            + '<span class = "column-type-span">' + node.original.value_type
+          if (node.original.type) {
+            node.text = node.original.text + spaces
+            + '<span class = "column-type-span">' + node.original.type
             + '</span>';
+          }
         });
-      }
     }).on('model.jstree', function(event, data, parent) {
       data.nodes.forEach((id) => {
         let node = data.instance.get_node(id);
