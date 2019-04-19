@@ -53,7 +53,7 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv, ng
     if (op === 'NOTE') {
       $rootScope.$broadcast('setNoteContent', data.note);
     } else if (op === 'NEW_NOTE') {
-      $location.path('/notebook/' + data.note.id);
+      $location.path('/notebook/' + data.note.uuid);
     } else if (op === 'NOTES_INFO') {
       $rootScope.$broadcast('setNoteMenu', data.notes);
     } else if (op === 'NOTE_RUNNING_STATUS') {

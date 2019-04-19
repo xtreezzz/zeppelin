@@ -157,7 +157,7 @@ public class NoteHandler extends AbstractHandler {
       paragraph.setJobId(null);
       paragraph.setConfig(new HashMap<>());
       paragraph.setFormParams(new HashMap<>());
-      noteService.persistParagraph(note, paragraph);
+      noteService.persistParagraphSilently(paragraph);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
@@ -175,7 +175,7 @@ public class NoteHandler extends AbstractHandler {
       path = File.separator + path;
     }
 
-    final Note cloneNote = new Note(path);
+    Note cloneNote = new Note(path);
     cloneNote.setPath(path);
     cloneNote.setScheduler(note.getScheduler());
     cloneNote.getReaders().clear();
@@ -186,7 +186,7 @@ public class NoteHandler extends AbstractHandler {
     cloneNote.getRunners().add(authenticationInfo.getUser());
     cloneNote.getWriters().add(authenticationInfo.getUser());
     cloneNote.getOwners().add(authenticationInfo.getUser());
-    noteService.persistNote(cloneNote);
+    cloneNote = noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParagraphs(note);
     for (final Paragraph paragraph : paragraphs) {
@@ -202,10 +202,11 @@ public class NoteHandler extends AbstractHandler {
       cloneParagraph.setJobId(null);
       cloneParagraph.setConfig(paragraph.getConfig());
       cloneParagraph.setFormParams(paragraph.getFormParams());
-      noteService.persistParagraph(note, cloneParagraph);
+      noteService.persistParagraphSilently(cloneParagraph);
     }
 
-    connectionManager.addSubscriberToNode(cloneNote.getId(), conn);
+    connectionManager.removeSubscribersFromAllNote(conn);
+    conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", cloneNote).toSend());
   }
 
 

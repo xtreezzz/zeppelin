@@ -1324,6 +1324,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
   const setParagraphMode = function(session) {
     let index = _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang});
+    if (index < 0) {
+      return;
+    }
     if ($scope.interpreterSettings[index].config.editor.language) {
       setEditorLanguage(session, $scope.interpreterSettings[index].config.editor.language);
       _.merge($scope.paragraph.config.editorSetting,
