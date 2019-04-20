@@ -16,7 +16,17 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import org.apache.zeppelin.storage.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.zeppelin.storage.FullParagraphDAO;
+import org.apache.zeppelin.storage.JobBatchDAO;
+import org.apache.zeppelin.storage.JobDAO;
+import org.apache.zeppelin.storage.JobPayloadDAO;
+import org.apache.zeppelin.storage.JobResultDAO;
+import org.apache.zeppelin.storage.NoteDAO;
+import org.apache.zeppelin.storage.ParagraphDAO;
+import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -29,10 +39,6 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Class for handle pending jobs
@@ -87,13 +93,14 @@ public class PendingHandler extends AbstractHandler {
 
     // prepare notecontext
     final Map<String, String> noteContext = new HashMap<>();
-    noteContext.put("noteId", String.valueOf(job.getNoteId()));
-    noteContext.put("paragraphId", String.valueOf(job.getParagraphId()));
+
+    noteContext.put("Z_ENV_NOTE_ID", String.valueOf(job.getNoteId()));
+    noteContext.put("Z_ENV_PARAGRAPH_ID", String.valueOf(job.getParagraphId()));
 
     // prepare usercontext
     final Map<String, String> userContext = new HashMap<>();
-    userContext.put("username", job.getUsername());
-    userContext.put("roles", job.getRoles().toString());
+    userContext.put("Z_ENV_USER_NAME", job.getUsername());
+    userContext.put("Z_ENV_USER_ROLES", job.getRoles().toString());
 
     // prepare configuration
     final Map<String, String> configuration = new HashMap<>();

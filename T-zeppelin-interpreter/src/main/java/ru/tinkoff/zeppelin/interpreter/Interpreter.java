@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 public abstract class Interpreter {
 
-  private Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[_a-zA-Z0-9]+" + "))");
+  private final Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[_a-zA-Z0-9]+" + "))");
 
   protected Map<String, String> configuration;
   protected String classPath;
@@ -58,9 +58,9 @@ public abstract class Interpreter {
                                                 final Map<String, String> userContext,
                                                 final Map<String, String> configuration);
 
-  protected Set<String> getAllEnvVeriables(final String st) {
-    Set<String> matches = new HashSet<>();
-    Matcher m = envVariables.matcher(st);
+  protected Set<String> getAllEnvVariables(final String st) {
+    final Set<String> matches = new HashSet<>();
+    final Matcher m = envVariables.matcher(st);
     while (m.find()) {
       matches.add(m.group(1));
     }

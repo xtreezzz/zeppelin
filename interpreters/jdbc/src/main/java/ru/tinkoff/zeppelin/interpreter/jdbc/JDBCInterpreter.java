@@ -39,13 +39,13 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -245,19 +245,25 @@ public class JDBCInterpreter extends Interpreter {
                                        @Nonnull final Map<String, String> userContext,
                                        @Nonnull final Map<String, String> configuration) {
     if (isOpened() && isAlive()) {
+      final Map<String, String> params = new HashMap<>();
+      params.put("Z_ENV_NOTE_ID", noteContext.get("Z_ENV_NOTE_ID"));
+      params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("Z_ENV_PARAGRAPH_ID"));
+      params.put("Z_ENV_USER_NAME", userContext.get("Z_ENV_USER_NAME"));
+      params.put("Z_ENV_USER_ROLES", userContext.get("Z_ENV_USER_ROLES"));
+
       final String precode = configuration.get("query.precode");
       if (precode != null && !precode.trim().equals("")) {
-        final InterpreterResult precodeResult = executeQuery(precode, false);
+        final InterpreterResult precodeResult = executeQuery(interpolate(precode, params), false);
         if (precodeResult.code().equals(Code.ERROR)) {
           return precodeResult;
         }
       }
 
-      final InterpreterResult queryResult = executeQuery(st, true);
+      final InterpreterResult queryResult = executeQuery(interpolate(st, params), true);
 
       final String postcode = configuration.get("query.postcode");
       if (postcode != null && !postcode.trim().equals("")) {
-        final InterpreterResult postcodeResult = executeQuery(postcode, false);
+        final InterpreterResult postcodeResult = executeQuery(interpolate(postcode, params), false);
         if (postcodeResult.code().equals(Code.ERROR)) {
           LOGGER.error("Postcode query failed: {}", postcodeResult.message());
           close();
@@ -406,8 +412,8 @@ public class JDBCInterpreter extends Interpreter {
 
   /**
    * Gets driver folder, notice that this method should be called after
-   *
    * {@link JDBCInterpreter#isInstalled(String)}.
+   *
    * @param artifact driver maven artifact, never {@code null}.
    * @return absolute path to driver folder.
    */
@@ -482,5 +488,25 @@ public class JDBCInterpreter extends Interpreter {
     }
     return str.replace('\t', ' ')
         .replace('\n', ' ');
+  }
+
+  /**
+   * Replaces all environment variables in query.
+   *
+   * @param query, initial query, never {@code null}.
+   * @param intpContext, interpreter context, never {@code null}.
+   * @return new query with replaced env variables, never {@code null}.
+   */
+  @Nonnull
+  private String interpolate(@Nonnull final String query, @Nonnull final Map<String, String> intpContext) {
+    final StringBuilder interpolatedPrecode = new StringBuilder(query);
+    getAllEnvVariables(query).forEach(env ->
+        interpolatedPrecode.replace(
+            interpolatedPrecode.indexOf(env),
+            interpolatedPrecode.indexOf(env) + env.length(),
+            intpContext.get(env)
+        )
+    );
+    return interpolatedPrecode.toString();
   }
 }

@@ -16,13 +16,6 @@
  */
 package ru.tinkoff.zeppelin.interpreter.python;
 
-import org.apache.commons.exec.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import ru.tinkoff.zeppelin.interpreter.Interpreter;
-import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Base64;
@@ -30,6 +23,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteResultHandler;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import ru.tinkoff.zeppelin.interpreter.Interpreter;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 public class PythonInterpreter extends Interpreter {
 
@@ -80,10 +83,10 @@ public class PythonInterpreter extends Interpreter {
                                        Map<String, String> userContext,
                                        Map<String, String> configuration) {
     final Map<String, String> params = new HashMap<>();
-    params.put("Z_ENV_NOTE_ID", noteContext.get("noteId"));
-    params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("paragraphId"));
-    params.put("Z_ENV_USER_NAME", userContext.get("username"));
-    params.put("Z_ENV_USER_ROLES", userContext.get("roles"));
+    params.put("Z_ENV_NOTE_ID", noteContext.get("Z_ENV_NOTE_ID"));
+    params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("Z_ENV_PARAGRAPH_ID"));
+    params.put("Z_ENV_USER_NAME", userContext.get("Z_ENV_USER_NAME"));
+    params.put("Z_ENV_USER_ROLES", userContext.get("Z_ENV_USER_ROLES"));
 
 
     final String pythonWorkingDir = configuration.get("python.working.dir");
@@ -134,7 +137,7 @@ public class PythonInterpreter extends Interpreter {
 
       // write params
       final Map<String, String> overridedParams = new HashMap<>();
-      getAllEnvVeriables(st).forEach(s -> overridedParams.put(s, "ZEPPELIN_NULL"));
+      getAllEnvVariables(st).forEach(s -> overridedParams.put(s, "ZEPPELIN_NULL"));
       overridedParams.putAll(params);
 
       final String paramsDest = instanceTempDir.getAbsolutePath() + "/" + getSessionUUID() + ".params";
