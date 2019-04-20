@@ -15,11 +15,11 @@
 -- limitations under the License.
 --
 
--- Represents InterpreterArtifactSource.Status
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status
 CREATE DOMAIN INTERPRETER_ARTIFACT_SOURCE_STATUS AS VARCHAR(13) DEFAULT 'NOT_INSTALLED' NOT NULL
-CHECK(VALUE IN ('NOT_INSTALLED', 'INSTALLED', 'IN_PROGRESS'));
+CHECK(VALUE IN ('NOT_INSTALLED', 'INSTALLED'));
 
--- Represents InterpreterArtifactSource
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource
 CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
 (
     id                   BIGSERIAL     PRIMARY KEY,
@@ -31,7 +31,7 @@ CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
     reinstall_on_start   BOOLEAN       NOT NULL DEFAULT FALSE
 );
 
--- Represents BaseInterpreterConfig
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig
 CREATE TABLE BASE_INTERPRETER_CONFIG
 (
     id                BIGSERIAL     PRIMARY KEY,
@@ -42,7 +42,7 @@ CREATE TABLE BASE_INTERPRETER_CONFIG
     editor            JSON          NOT NULL
 );
 
--- Represents InterpreterOption.ProcessType
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption.ProcessType
 CREATE DOMAIN INTERPRETER_PROCESS_TYPE AS VARCHAR(10) DEFAULT 'SHARED' NOT NULL
 CHECK(VALUE IN ('SHARED', 'SCOPED', 'ISOLATED'));
 

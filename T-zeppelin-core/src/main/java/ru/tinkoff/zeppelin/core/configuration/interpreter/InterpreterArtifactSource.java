@@ -26,6 +26,11 @@ import java.util.StringJoiner;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Interpreter source. Installs at runtime by maven artifact.
+ *
+ * @see ru.tinkoff.zeppelin.engine.server.InterpreterInstaller
+ */
 public class InterpreterArtifactSource implements Serializable {
 
   /**
@@ -33,8 +38,7 @@ public class InterpreterArtifactSource implements Serializable {
    */
   public enum Status {
     NOT_INSTALLED,
-    INSTALLED,
-    IN_PROGRESS
+    INSTALLED
   }
 
   @Nonnull
@@ -43,13 +47,19 @@ public class InterpreterArtifactSource implements Serializable {
   @Nonnull
   private String artifact;
 
+  /**
+   * {@code null} if source is not installed, absolute path otherwise.
+   */
   @Nullable
   private String path;
 
   @Nonnull
   private Status status;
 
-  boolean reinstallOnStart;
+  /**
+   * if {@code true} - source would be reinstalled on app restart.
+   */
+  private boolean reinstallOnStart;
 
   public InterpreterArtifactSource(@Nonnull final String interpreterName,
                                    @Nonnull final String artifact,
@@ -126,6 +136,12 @@ public class InterpreterArtifactSource implements Serializable {
     this.status = status;
   }
 
+  /**
+   * Validates path.
+   *
+   * @param path absolute path to .jar or {@code null} if source is not installed.
+   * @return {@code true} if correct path or {@code null}, {@code false} otherwise.
+   */
   private static boolean isValidAbsolutePathOrNull(@Nullable final String path) {
     try {
       if (path != null) {
