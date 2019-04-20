@@ -15,15 +15,20 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.storage;
+package ru.tinkoff.zeppelin.engine;
 
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.storage.InterpreterOptionDAO;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.engine.server.InterpreterInstaller;
 
 /**
  * Repository for:
@@ -33,13 +38,59 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
  *
  * @see org.apache.zeppelin.rest.InterpreterRestApi
  */
-public class InterpreterOptionRepository {
+public class InterpreterSettingService {
 
   @Nonnull
   private final InterpreterOptionDAO storage;
 
-  public InterpreterOptionRepository(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
+  public InterpreterSettingService(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
     this.storage = new InterpreterOptionDAO(jdbcTemplate);
+  }
+
+  @PostConstruct
+  private void reinstall() {
+    getAllSources().stream()
+        .filter(InterpreterArtifactSource::isReinstallOnStart)
+        .forEach(this::reInstallSource);
+  }
+
+  public void uninstallSource(@Nonnull final InterpreterArtifactSource source) {
+    disableRelatedInterpreters(source.getInterpreterName());
+
+    InterpreterInstaller.uninstallInterpreter(source.getInterpreterName());
+    if (!InterpreterInstaller.isInstalled(source.getInterpreterName())) {
+      source.setStatus(Status.NOT_INSTALLED);
+      source.setPath(null);
+    }
+    updateSource(source);
+  }
+
+  public void installSource(@Nonnull final InterpreterArtifactSource source) {
+    final String installationDir = InterpreterInstaller.install(source.getInterpreterName(), source.getArtifact(), getAllRepositories());
+    if (!StringUtils.isAllBlank(installationDir)) {
+      source.setPath(installationDir);
+      source.setStatus(InterpreterArtifactSource.Status.INSTALLED);
+    } else {
+      source.setPath(null);
+      source.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
+    }
+    updateSource(source);
+  }
+
+  private void disableRelatedInterpreters(@Nonnull final String interpreterName) {
+    getAllOptions()
+        .stream()
+        .filter(o -> o.isEnabled() && o.getConfig().getGroup().equals(interpreterName))
+        .forEach(o -> {
+          o.setEnabled(false);
+          //FIXME: stop process?
+          updateOption(o);
+        });
+  }
+
+  public void reInstallSource(@Nonnull final InterpreterArtifactSource source) {
+    uninstallSource(source);
+    installSource(source);
   }
 
   @Nonnull

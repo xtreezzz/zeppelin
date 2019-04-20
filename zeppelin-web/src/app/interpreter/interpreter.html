@@ -180,7 +180,7 @@ limitations under the License.
               </small>
             </h3>
           <span style="float:right" ng-show="!valueform.$visible" >
-          <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);">
+          <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
               <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
               <span ng-if="setting.isEnabled != true" class="fa fa-toggle-off" style="border: none !important; font-size:24px; color:red"></span>
           </button>

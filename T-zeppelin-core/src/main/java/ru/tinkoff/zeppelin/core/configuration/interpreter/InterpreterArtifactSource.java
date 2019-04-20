@@ -106,11 +106,11 @@ public class InterpreterArtifactSource implements Serializable {
   }
 
   /**
-   * Set path to downloaded .jar
+   * Sets path to downloaded .jar, {@code null} when source is not installed
    *
-   * @param path - Nonnul
+   * @param path New aboslute path to .jar or {@code null}.
    */
-  public void setPath(@Nonnull final String path) {
+  public void setPath(@Nullable final String path) {
     Preconditions.checkArgument(isValidAbsolutePathOrNull(path), "Wrong path: %s", path);
     this.path = path;
   }

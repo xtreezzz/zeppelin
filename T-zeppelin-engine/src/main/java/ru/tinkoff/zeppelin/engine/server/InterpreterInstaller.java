@@ -47,11 +47,14 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
 public class InterpreterInstaller {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpreterInstaller.class);
-  private static final String destinationFolder = "interpreters/";
+  private static final String DESTINATION_FOLDER = "interpreters/";
 
+  private InterpreterInstaller() {
+    // not called.
+  }
 
   public static boolean isInstalled(final String name) {
-    final File folderToStore = new File(destinationFolder + name + "/");
+    final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
   }
 
@@ -69,7 +72,7 @@ public class InterpreterInstaller {
       return path;
     }
 
-    final File folderToStore = new File(destinationFolder + name + "/");
+    final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     try {
       final DependencyResolver dependencyResolver = new DependencyResolver(repositories);
       dependencyResolver.load(artifact, folderToStore);
@@ -92,7 +95,7 @@ public class InterpreterInstaller {
   }
 
   public static void uninstallInterpreter(final String name) {
-    final File folderToStore = new File(destinationFolder + name + "/");
+    final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     try {
       FileUtils.deleteDirectory(folderToStore);
       ZLog.log(ET.INTERPRETER_SUCCESSFULLY_UNINSTALLED,
@@ -109,7 +112,7 @@ public class InterpreterInstaller {
   }
 
   public static List<BaseInterpreterConfig> getDefaultConfig(final String name) {
-    final File folderToStore = new File(destinationFolder + name + "/");
+    final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     ZLog.log(ET.INTERPRETER_CONFIGURATION_REQUESTED,
         String.format("Requested for interpreter[name:%s] configuration", name),
         String.format("Requested for \"interpreter-setting.json\" in %s", folderToStore.getAbsolutePath()),
@@ -149,15 +152,8 @@ public class InterpreterInstaller {
     }
   }
 
-  public static void reInstall(final String name, final String artifact, final List<Repository> repositories) {
-    if (isInstalled(name)) {
-      uninstallInterpreter(name);
-    }
-    install(name, artifact, repositories);
-  }
-
   public static String getDirectory(final String name) {
-      final File folderToStore = new File(destinationFolder + name + "/");
+      final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
       return folderToStore.getAbsolutePath();
   }
 }

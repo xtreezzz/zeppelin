@@ -34,7 +34,6 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 import net.sf.jsqlparser.util.deparser.SelectDeParser;
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
-import org.apache.zeppelin.storage.InterpreterOptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,18 +45,19 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
 @RestController
 @RequestMapping("/api/completion")
 public class CompletionRestApi {
 
-  private final InterpreterOptionRepository interpreterRepo;
+  private final InterpreterSettingService interpreterRepo;
 
   private final NoteService noteService;
 
   @Autowired
-  public CompletionRestApi(final InterpreterOptionRepository interpreterRepo,
+  public CompletionRestApi(final InterpreterSettingService interpreterRepo,
                            final NoteService noteService) {
     this.interpreterRepo = interpreterRepo;
     this.noteService = noteService;
@@ -123,9 +123,9 @@ public class CompletionRestApi {
     private final String description;
 
     InterpreterCompletion(@Nonnull final String name,
-        @Nonnull final String value,
-        @Nonnull final String meta,
-        @Nonnull final String description) {
+                          @Nonnull final String value,
+                          @Nonnull final String meta,
+                          @Nonnull final String description) {
       this.name = name;
       this.value = value;
       this.meta = meta;

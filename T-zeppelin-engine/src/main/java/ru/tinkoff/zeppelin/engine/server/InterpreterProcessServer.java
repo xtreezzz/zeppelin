@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.engine.server;
 
 import com.google.gson.Gson;
+import java.util.List;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -29,8 +30,6 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.ZeppelinThriftService;
-
-import java.util.List;
 
 /**
  * Thrift server for external interpreter process
@@ -48,8 +47,7 @@ public class InterpreterProcessServer {
 
   public void initSources(final List<Repository> repositories) {
     InterpreterInstaller.uninstallInterpreter("remote-server");
-    final InterpreterInstaller interpreterInstaller = new InterpreterInstaller();
-    interpreterInstaller.install("remote-server", "org.apache.zeppelin:T-zeppelin-remote:1.0.0-T-SNAPSHOT", repositories);
+    InterpreterInstaller.install("remote-server", "org.apache.zeppelin:T-zeppelin-remote:1.0.0-T-SNAPSHOT", repositories);
     remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server");
   }
 

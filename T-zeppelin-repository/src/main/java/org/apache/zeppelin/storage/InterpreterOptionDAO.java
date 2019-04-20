@@ -48,7 +48,7 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.option.Permissions;
  *
  * Access to {@link org.apache.zeppelin.interpreter.configuration.BaseInterpreterConfig} is hidden.
  */
-class InterpreterOptionDAO {
+public class InterpreterOptionDAO {
 
   @Nonnull
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -130,7 +130,7 @@ class InterpreterOptionDAO {
   }
 
   @Nonnull
-  List<InterpreterOption> getAllInterpreterOptions() {
+  public List<InterpreterOption> getAllInterpreterOptions() {
     final List<InterpreterOption> result = jdbcTemplate
         .query(GET_ALL_OPTIONS, (resultSet, i) -> convertResultSetToInterpreterOption(resultSet));
     Preconditions.checkNotNull(result);
@@ -138,7 +138,7 @@ class InterpreterOptionDAO {
   }
 
   @Nullable
-  InterpreterOption getInterpreterOption(@Nonnull final String shebang) {
+  public InterpreterOption getInterpreterOption(@Nonnull final String shebang) {
     Preconditions.checkNotNull(shebang);
     try {
       final InterpreterOption option = jdbcTemplate.queryForObject(
@@ -161,7 +161,7 @@ class InterpreterOptionDAO {
    *
    * @see InterpreterOptionDAO#convertInterpreterOptionToParameters
    */
-  void saveInterpreterOption(@Nonnull final InterpreterOption option) {
+  public void saveInterpreterOption(@Nonnull final InterpreterOption option) {
     Preconditions.checkNotNull(option);
     final int affectedRows =
         jdbcTemplate.update(INSERT_OPTION, convertInterpreterOptionToParameters(option));
@@ -173,7 +173,7 @@ class InterpreterOptionDAO {
     }
   }
 
-  void updateInterpreterOption(@Nonnull final InterpreterOption option) {
+  public void updateInterpreterOption(@Nonnull final InterpreterOption option) {
     //TODO(egorklimov): if config update completed, but option update
     // failed data would be inconsistent, transaction?
     Preconditions.checkNotNull(option);
@@ -187,7 +187,7 @@ class InterpreterOptionDAO {
     }
   }
 
-  boolean removeInterpreterOption(@Nonnull final String shebang) {
+  public boolean removeInterpreterOption(@Nonnull final String shebang) {
     Preconditions.checkNotNull(shebang);
     return jdbcTemplate.update(DELETE_OPTION, new MapSqlParameterSource("shebang", shebang)) != 0;
   }
@@ -253,14 +253,14 @@ class InterpreterOptionDAO {
   }
 
   @Nonnull
-  List<InterpreterArtifactSource> getAllSources() {
+  public List<InterpreterArtifactSource> getAllSources() {
     final List<InterpreterArtifactSource> result = jdbcTemplate
         .query(GET_ALL_SOURCES, (resultSet, i) -> convertResultSetToInterpreterSource(resultSet));
     Preconditions.checkNotNull(result);
     return result;
   }
 
-  void updateSource(@Nonnull final InterpreterArtifactSource source) {
+  public void updateSource(@Nonnull final InterpreterArtifactSource source) {
     final int affectedRows  =
         jdbcTemplate.update(UPDATE_SOURCE, convertInterpreterSourceToParameters(source));
 
@@ -270,7 +270,7 @@ class InterpreterOptionDAO {
   }
 
   @Nullable
-  InterpreterArtifactSource getSource(@Nonnull final String name) {
+  public InterpreterArtifactSource getSource(@Nonnull final String name) {
     Preconditions.checkNotNull(name);
     try {
       final InterpreterArtifactSource source = jdbcTemplate.queryForObject(
@@ -289,7 +289,7 @@ class InterpreterOptionDAO {
     }
   }
 
-  void saveInterpreterSource(@Nonnull final InterpreterArtifactSource source) {
+  public void saveInterpreterSource(@Nonnull final InterpreterArtifactSource source) {
     Preconditions.checkNotNull(source);
     final int affectedRows =
         jdbcTemplate.update(INSERT_SOURCE, convertInterpreterSourceToParameters(source));
@@ -299,14 +299,14 @@ class InterpreterOptionDAO {
     }
   }
 
-  boolean removeInterpreterSource(@Nonnull final String interpreterName) {
+  public boolean removeInterpreterSource(@Nonnull final String interpreterName) {
     Preconditions.checkNotNull(interpreterName);
     return jdbcTemplate.update(DELETE_SOURCE,
         new MapSqlParameterSource("interpreter_name", interpreterName)) != 0;
   }
 
   @Nonnull
-  List<Repository> getAllRepositories() {
+  public List<Repository> getAllRepositories() {
     final List<Repository> result = jdbcTemplate.query(
         GET_ALL_REPOSITORIES, (resultSet, i) -> convertResultSetToRepository(resultSet));
     Preconditions.checkNotNull(result);
@@ -314,7 +314,7 @@ class InterpreterOptionDAO {
   }
 
   @Nullable
-  Repository getRepository(@Nonnull final String id) {
+  public Repository getRepository(@Nonnull final String id) {
     Preconditions.checkNotNull(id);
     try {
       final Repository repository = jdbcTemplate.queryForObject(
@@ -333,7 +333,7 @@ class InterpreterOptionDAO {
     }
   }
 
-  void saveRepository(@Nonnull final Repository repository) {
+  public void saveRepository(@Nonnull final Repository repository) {
     Preconditions.checkNotNull(repository);
     final int affectedRows =
         jdbcTemplate.update(INSERT_REPOSITORY, convertRepositoryToParameters(repository));
@@ -343,7 +343,7 @@ class InterpreterOptionDAO {
     }
   }
 
-  boolean removeRepository(@Nonnull final String id) {
+  public boolean removeRepository(@Nonnull final String id) {
     Preconditions.checkNotNull(id);
     return jdbcTemplate.update(
         DELETE_REPOSITORY, new MapSqlParameterSource("repository_id", id)) != 0;

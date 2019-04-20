@@ -17,27 +17,32 @@
 
 package ru.tinkoff.zeppelin.engine;
 
-import org.apache.zeppelin.storage.InterpreterOptionRepository;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
-import ru.tinkoff.zeppelin.core.notebook.*;
-import ru.tinkoff.zeppelin.engine.handler.*;
+import ru.tinkoff.zeppelin.core.notebook.Job;
+import ru.tinkoff.zeppelin.core.notebook.JobBatch;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.core.notebook.Scheduler;
+import ru.tinkoff.zeppelin.engine.handler.AbortHandler;
+import ru.tinkoff.zeppelin.engine.handler.ExecutionHandler;
+import ru.tinkoff.zeppelin.engine.handler.InterpreterDeadHandler;
+import ru.tinkoff.zeppelin.engine.handler.InterpreterStarterHandler;
+import ru.tinkoff.zeppelin.engine.handler.PendingHandler;
+import ru.tinkoff.zeppelin.engine.handler.SchedulerHandler;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
 import ru.tinkoff.zeppelin.engine.server.InterpreterProcessServer;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResultStatus;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Core class of logic
@@ -57,7 +62,7 @@ public class NoteExecutorService {
   private final AbortHandler abortHandler;
   private final PendingHandler pendingHandler;
   private final InterpreterDeadHandler interpreterDeadHandler;
-  private final InterpreterOptionRepository interpreterOptionRepository;
+  private final InterpreterSettingService interpreterSettingService;
   private final InterpreterStarterHandler interpreterStarterHandler;
   private final SchedulerHandler schedulerHandler;
   private final ExecutionHandler executionHandler;
@@ -65,14 +70,14 @@ public class NoteExecutorService {
   public NoteExecutorService(final AbortHandler abortHandler,
                              final PendingHandler pendingHandler,
                              final InterpreterDeadHandler interpreterDeadHandler,
-                             final InterpreterOptionRepository interpreterOptionRepository,
+                             final InterpreterSettingService interpreterSettingService,
                              final InterpreterStarterHandler interpreterStarterHandler,
                              final SchedulerHandler schedulerHandler,
                              final ExecutionHandler executionHandler) {
     this.abortHandler = abortHandler;
     this.pendingHandler = pendingHandler;
     this.interpreterDeadHandler = interpreterDeadHandler;
-    this.interpreterOptionRepository = interpreterOptionRepository;
+    this.interpreterSettingService = interpreterSettingService;
     this.interpreterStarterHandler = interpreterStarterHandler;
     this.schedulerHandler = schedulerHandler;
     this.executionHandler = executionHandler;
@@ -81,7 +86,7 @@ public class NoteExecutorService {
   @PostConstruct
   public void init() throws Exception{
     server = new InterpreterProcessServer();
-    server.initSources(interpreterOptionRepository.getAllRepositories());
+    server.initSources(interpreterSettingService.getAllRepositories());
     server.start();
   }
 
@@ -96,7 +101,7 @@ public class NoteExecutorService {
     final List<Job> jobs = pendingHandler.loadJobs();
     for (final Job job : jobs) {
       try {
-        final InterpreterOption option = interpreterOptionRepository.getOption(job.getShebang());
+        final InterpreterOption option = interpreterSettingService.getOption(job.getShebang());
         final InterpreterProcess process = InterpreterProcess.get(job.getShebang());
         if (process != null
                 && process.getStatus() == InterpreterProcess.Status.READY
@@ -108,7 +113,7 @@ public class NoteExecutorService {
           final String str = ";";
         } else {
           final InterpreterArtifactSource source = option != null
-                  ? interpreterOptionRepository.getSource(option.getInterpreterName())
+                  ? interpreterSettingService.getSource(option.getInterpreterName())
                   : null;
 
           interpreterStarterHandler.handle(job,
@@ -145,7 +150,7 @@ public class NoteExecutorService {
       if(process.getStatus() == InterpreterProcess.Status.STARTING) {
         continue;
       }
-      final InterpreterOption option = interpreterOptionRepository.getOption(shebang);
+      final InterpreterOption option = interpreterSettingService.getOption(shebang);
       final PingResult pingResult = process.ping();
 
       if (pingResult == null
