@@ -54,6 +54,13 @@
 
   <dependencies>
 
+    <!-- https://mvnrepository.com/artifact/org.apache.metamodel/MetaModel-jdbc -->
+    <dependency>
+      <groupId>org.apache.metamodel</groupId>
+      <artifactId>MetaModel-jdbc</artifactId>
+      <version>5.3.0</version>
+    </dependency>
+
     <dependency>
       <groupId>com.github.jsqlparser</groupId>
       <artifactId>jsqlparser</artifactId>
@@ -187,6 +194,12 @@
       <artifactId>logger</artifactId>
       <version>1.0.0-T-SNAPSHOT</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
