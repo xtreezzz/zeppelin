@@ -33,7 +33,7 @@ public class NewParagraphRequest implements JsonSerializable {
 
   String title;
   String text;
-  Double index;
+  Integer index;
   HashMap<String, Object> config;
 
   public NewParagraphRequest() {
@@ -47,7 +47,7 @@ public class NewParagraphRequest implements JsonSerializable {
     return text;
   }
 
-  public Double getIndex() {
+  public Integer getIndex() {
     return index;
   }
 

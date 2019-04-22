@@ -94,7 +94,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           eventLogHandler.log(messagereceived);
           break;
         case LIST_NOTES:
-          noteService.listNotesInfo(session, messagereceived);
+          noteService.sendListNotesInfo(session);
           break;
         case GET_HOME_NOTE:
           noteService.getHomeNote(session, messagereceived);
@@ -109,25 +109,25 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteService.deleteNote(session, messagereceived);
           break;
         case REMOVE_FOLDER:
-          noteService.removeFolder(messagereceived);
+          noteService.removeFolder(session, messagereceived);
           break;
         case MOVE_NOTE_TO_TRASH:
           noteService.moveNoteToTrash(session, messagereceived);
           break;
         case MOVE_FOLDER_TO_TRASH:
-          noteService.moveFolderToTrash(messagereceived);
+          noteService.moveFolderToTrash(session, messagereceived);
           break;
         case EMPTY_TRASH:
-          noteService.emptyTrash(messagereceived);
+          noteService.emptyTrash(session, messagereceived);
           break;
         case RESTORE_FOLDER:
-          noteService.restoreFolder(messagereceived);
+          noteService.restoreFolder(session, messagereceived);
           break;
         case RESTORE_NOTE:
           noteService.restoreNote(session, messagereceived);
           break;
         case RESTORE_ALL:
-          noteService.restoreAll(messagereceived);
+          noteService.restoreAll(session, messagereceived);
           break;
         case CLONE_NOTE:
           noteService.cloneNote(session, messagereceived);
@@ -169,7 +169,7 @@ public class WebsocketDispatcher extends TextWebSocketHandler {
           noteService.updateNote(session, messagereceived);
           break;
         case FOLDER_RENAME:
-          noteService.renameFolder(messagereceived);
+          noteService.renameFolder(session, messagereceived);
           break;
         case PING:
           break; //do nothing

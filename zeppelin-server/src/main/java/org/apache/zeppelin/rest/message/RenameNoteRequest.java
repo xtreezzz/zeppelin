@@ -22,13 +22,13 @@ package org.apache.zeppelin.rest.message;
  */
 
 public class RenameNoteRequest {
-  String name;
+  String path;
 
   public RenameNoteRequest() {
 
   }
 
-  public String getName() {
-    return name;
+  public String getPath() {
+    return path;
   }
 }

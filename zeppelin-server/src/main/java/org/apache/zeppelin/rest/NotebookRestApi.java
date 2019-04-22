@@ -20,6 +20,10 @@ package org.apache.zeppelin.rest;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.BadRequestException;
@@ -41,6 +45,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
 
@@ -58,7 +63,7 @@ public class NotebookRestApi {
 
   private final LuceneSearch luceneSearch;
   private final ConnectionManager connectionManager;
-  private final NoteService noteRepository;
+  private final NoteService noteService;
 
   @Autowired
   public NotebookRestApi(
@@ -67,7 +72,7 @@ public class NotebookRestApi {
           final NoteService noteRepository) {
     this.luceneSearch = luceneSearch;
     this.connectionManager = connectionManager;
-    this.noteRepository = noteRepository;
+    this.noteService = noteRepository;
   }
 
   /**
@@ -78,7 +83,7 @@ public class NotebookRestApi {
     checkIfUserCanRead(noteId,
             "Insufficient privileges you cannot get the list of permissions for this note");
     final HashMap<String, Set<String>> permissionsMap = new HashMap<>();
-    Note target = noteRepository.getNote(noteId);
+    Note target = noteService.getNote(noteId);
     if (target != null) {
       permissionsMap.put("owners", target.getOwners());
       permissionsMap.put("readers", target.getReaders());
@@ -171,6 +176,46 @@ public class NotebookRestApi {
     }
   }
 
+  private boolean userHasOwnerPermission(final Note note) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
+    return userRoles.removeAll(admin) || userRoles.removeAll(note.getOwners());
+  }
+
+  private static String normalizePath(String path) {
+    // fix 'folder/noteName' --> '/folder/noteName'
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
+
+    // fix '///folder//noteName' --> '/folder/noteName'
+    while (path.contains("//")) {
+      path = path.replaceAll("//", "/");
+    }
+
+    //fix '/folder/noteName/' --> '/folder/noteName'
+    if (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+
+    return path;
+  }
+
+  private Paragraph getParagraph(final Note note, final String paragraphId) {
+    return noteService.getParagraphs(note).stream()
+        .filter(p -> p.getUuid().equals(paragraphId))
+        .findAny()
+        .orElseThrow(() -> new ParagraphNotFoundException("paragraph not found"));
+  }
+
   /**
    * Set note authorization information.
    */
@@ -187,7 +232,7 @@ public class NotebookRestApi {
     final HashMap<String, HashSet<String>> permMap =
             gson.fromJson(req, new TypeToken<HashMap<String, HashSet<String>>>() {
             }.getType());
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
 
     checkIfUserIsOwner(noteId,
         ownerPermissionError(userAndRoles, note.getOwners()));
@@ -242,7 +287,7 @@ public class NotebookRestApi {
     LOG.debug("After set permissions {} {} {} {}", note.getOwners(), note.getReaders(),
         note.getRunners(), note.getWriters());
 
-    noteRepository.updateNote(note);
+    noteService.updateNote(note);
     //TODO(KOT): FIX
       /*
     zeppelinRepositoryServer.broadcastNote(note);
@@ -253,14 +298,16 @@ public class NotebookRestApi {
 
   @GetMapping(produces = "application/json")
   public ResponseEntity getNoteList() {
-    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
-   // final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
+    final List<NoteInfo> notesInfo = noteService.getAllNotes().stream()
+        .filter(this::userHasOwnerPermission)
+        .map(NoteInfo::new)
+        .collect(Collectors.toList());
     return new JsonResponse(HttpStatus.OK, "", notesInfo).build();
   }
 
   @GetMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity getNote(@PathVariable("noteId") final String noteId) {
-    return new JsonResponse(HttpStatus.OK, "", noteRepository.getNote(noteId)).build();
+    return new JsonResponse(HttpStatus.OK, "", noteService.getNote(noteId)).build();
   }
 
   /**
@@ -299,34 +346,40 @@ public class NotebookRestApi {
    */
   @PostMapping(produces = "application/json")
   public ResponseEntity createNote(final String message) throws IOException {
-
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+
     LOG.info("Create new note by JSON {}", message);
-    final NewNoteRequest request = NewNoteRequest.fromJson(message);
-    final Note note = new Note(
-            request.getName().substring(0, request.getName().lastIndexOf("/")),
-            request.getName().substring(request.getName().lastIndexOf("/") + 1)
-        //getServiceContext().getAutheInfo());
-    );
 
-//    if (request.getParagraphs() != null) {
-//      for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
-//        final Paragraph paragraph = new Paragraph(
-//                paragraphRequest.getTitle(),
-//                paragraphRequest.getText(),
-//                subject.getUser(),
-//                new GUI()
-//        );
-//        final Map<String, Object> config = paragraphRequest.getConfig();
-//        if (config != null && !config.isEmpty()) {
-//          configureParagraph(paragraph, config, user);
-//        }
-//        //note.getParagraphs().add(paragraph);
-//      }
-//    }
-    noteRepository.persistNote(note);
+    try {
+      final NewNoteRequest request = NewNoteRequest.fromJson(message);
+      final Note note = new Note(request.getName());
+      note.getReaders().add(authenticationInfo.getUser());
+      note.getRunners().add(authenticationInfo.getUser());
+      note.getWriters().add(authenticationInfo.getUser());
+      note.getOwners().add(authenticationInfo.getUser());
+      noteService.persistNote(note);
 
-    return new JsonResponse(HttpStatus.OK, "", note.getUuid()).build();
+      if (request.getParagraphs() != null) {
+        for (final NewParagraphRequest paragraphRequest : request.getParagraphs()) {
+          final Paragraph paragraph = new Paragraph();
+          paragraph.setId(null);
+          paragraph.setNoteId(note.getId());
+          paragraph.setTitle(paragraphRequest.getTitle());
+          paragraph.setText(paragraphRequest.getText());
+          paragraph.setShebang(null);
+          paragraph.setCreated(LocalDateTime.now());
+          paragraph.setUpdated(LocalDateTime.now());
+          paragraph.setPosition(paragraphRequest.getIndex());
+          paragraph.setJobId(null);
+          paragraph.setConfig(new HashMap<>());
+          paragraph.setFormParams(new HashMap<>());
+          noteService.persistParagraphSilently(paragraph);
+        }
+      }
+      return new JsonResponse(HttpStatus.OK, "", note.getUuid()).build();
+    } catch (final Exception e) {
+      throw new IllegalStateException("Failed to create note.", e);
+    }
   }
 
 
@@ -339,12 +392,16 @@ public class NotebookRestApi {
   @DeleteMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity deleteNote(@PathVariable("noteId") final String noteId) throws IOException {
     LOG.info("Delete note {} ", noteId);
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    //noteRepository.removeNote(noteId);
-
-    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
-    //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-
+    final Note note = noteService.getNote(noteId);
+    if (!userHasOwnerPermission(note)) {
+      throw new AccessDeniedException(
+          "User " + authenticationInfo.getUser() +
+              " is no owner note " + note.getId()
+      );
+    }
+    noteService.deleteNote(note);
     return new JsonResponse(HttpStatus.OK, "").build();
   }
 
@@ -357,23 +414,45 @@ public class NotebookRestApi {
   @PostMapping(value = "/{noteId}", produces = "application/json")
   public ResponseEntity cloneNote(@PathVariable("noteId") final String noteId, final String message)
           throws IOException, IllegalArgumentException {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     LOG.info("clone note by JSON {}", message);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot clone this note");
+    Note note = noteService.getNote(noteId);
     final NewNoteRequest request = NewNoteRequest.fromJson(message);
-    String newNoteName = null;
-    if (request != null) {
-      newNoteName = request.getName();
+    String path = normalizePath(request.getName());
+
+    Note cloneNote = new Note(path);
+    cloneNote.setPath(path);
+    cloneNote.setScheduler(note.getScheduler());
+    cloneNote.getReaders().clear();
+    cloneNote.getRunners().clear();
+    cloneNote.getWriters().clear();
+    cloneNote.getOwners().clear();
+    cloneNote.getReaders().add(authenticationInfo.getUser());
+    cloneNote.getRunners().add(authenticationInfo.getUser());
+    cloneNote.getWriters().add(authenticationInfo.getUser());
+    cloneNote.getOwners().add(authenticationInfo.getUser());
+    cloneNote = noteService.persistNote(cloneNote);
+
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
+    for (final Paragraph paragraph : paragraphs) {
+      final Paragraph cloneParagraph = new Paragraph();
+      cloneParagraph.setId(null);
+      cloneParagraph.setNoteId(cloneNote.getId());
+      cloneParagraph.setTitle(paragraph.getTitle());
+      cloneParagraph.setText(paragraph.getText());
+      cloneParagraph.setShebang(paragraph.getShebang());
+      cloneParagraph.setCreated(LocalDateTime.now());
+      cloneParagraph.setUpdated(LocalDateTime.now());
+      cloneParagraph.setPosition(paragraph.getPosition());
+      cloneParagraph.setJobId(null);
+      cloneParagraph.setConfig(paragraph.getConfig());
+      cloneParagraph.setFormParams(paragraph.getFormParams());
+      noteService.persistParagraphSilently(cloneParagraph);
     }
-    //final Note newNote = zeppelinRepository.cloneNote(noteId, newNoteName, getServiceContext().getAutheInfo());
 
-    //connectionManager.broadcast(newNote.getUuid(), new SockMessage(Operation.NOTE).put("note", newNote));
-
-    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
-    //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-
-    return new JsonResponse(HttpStatus.OK, "", null).build();
-    //return new JsonResponse(HttpStatus.OK, "", newNote.getUuid()).build();
+    return new JsonResponse(HttpStatus.OK, "", cloneNote.getUuid()).build();
   }
 
   /**
@@ -387,24 +466,14 @@ public class NotebookRestApi {
                                    final String message) throws IOException {
     LOG.info("rename note by JSON {}", message);
     final RenameNoteRequest request = gson.fromJson(message, RenameNoteRequest.class);
-    final String name = request.getName();
-    if (name.isEmpty()) {
-      LOG.warn("Trying to rename zeppelinRepository {} with empty name parameter", noteId);
-      throw new BadRequestException("name can not be empty");
+    final String path = request.getPath();
+    if (path.isEmpty()) {
+      LOG.warn("Trying to rename zeppelinRepository {} with empty path parameter", noteId);
+      throw new BadRequestException("path can not be empty");
     }
-    final Note note = noteRepository.getNote(noteId);
-    String newName = org.apache.commons.lang.StringUtils.EMPTY;
-    if (!name.startsWith("/")) {
-      newName = "/" + name;
-    }
-
-    //zeppelinRepository.moveNote(note.getUuid(), newName);
-
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-
-    final List<NoteInfo> notesInfo = null;//noteRepository.getNotesInfo();
-    //final List<NoteInfo> notesInfo = zeppelinRepository.getNotesInfo(getServiceContext().getUserAndRoles());
-
+    final Note note = noteService.getNote(noteId);
+    note.setPath(path);
+    noteService.updateNote(note);
     return new JsonResponse(HttpStatus.OK, "").build();
   }
 
@@ -420,33 +489,35 @@ public class NotebookRestApi {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     LOG.info("insert paragraph {} {}", noteId, message);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot add paragraph to this note");
 
     final NewParagraphRequest request = NewParagraphRequest.fromJson(message);
-    final Double indexDouble = request.getIndex();
+    final Integer index = request.getIndex();
+    final List<Paragraph> paragraphs = noteService.getParagraphs(note);
 
-//    final Paragraph paragraph = new Paragraph(request.getTitle(),
-//            request.getText(),
-//            subject.getUser(),
-//            new GUI()
-//    );
-//    final Map<String, Object> config = request.getConfig();
-//    if (config != null && !config.isEmpty()) {
-//      configureParagraph(paragraph, config, user);
-//    }
-//    if (indexDouble == null) {
-//      note.getParagraphs().add(paragraph);
-//    } else {
-//      note.getParagraphs().add(indexDouble.intValue(), paragraph);
-//    }
+    for (int i = index; i < paragraphs.size(); i++) {
+      final Paragraph p = paragraphs.get(i);
+      p.setPosition(i + 1);
+      noteService.updateParagraph(note, p);
+    }
 
-    noteRepository.updateNote(note);
+    Paragraph paragraph = new Paragraph();
+    paragraph.setId(null);
+    paragraph.setNoteId(note.getId());
+    paragraph.setTitle(StringUtils.EMPTY);
+    paragraph.setText(request.getText());
+    paragraph.setShebang(null);
+    paragraph.setCreated(LocalDateTime.now());
+    paragraph.setUpdated(LocalDateTime.now());
+    paragraph.setPosition(index);
+    paragraph.setJobId(null);
+    paragraph.setConfig(new HashMap<>());
+    paragraph.setFormParams(new HashMap<>());
+    paragraph = noteService.persistParagraph(note, paragraph);
 
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-    //TODO(egorklimov): fix paragraph id
-    return new JsonResponse(HttpStatus.OK, "", "32").build();
+    return new JsonResponse(HttpStatus.OK, "", paragraph.getUuid()).build();
   }
 
 
@@ -457,17 +528,16 @@ public class NotebookRestApi {
    * @return JSON with information of the paragraph
    */
   @GetMapping(value = "/{noteId}/paragraph/{paragraphId}", produces = "application/json")
-  public ResponseEntity getParagraph(@PathVariable("noteId") final String noteId,
-                                     @PathVariable("paragraphId") final String paragraphId) {
+  public ResponseEntity getParagraph(
+      @PathVariable("noteId") final String noteId,
+      @PathVariable("paragraphId") final String paragraphId) {
     LOG.info("get paragraph {} {}", noteId, paragraphId);
 
-    final Note note = noteRepository.getNote(noteId);
+    Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get this paragraph");
-    final Paragraph p = null;//note.getParagraph(paragraphId);
-    checkIfParagraphIsNotNull(p);
 
-    return new JsonResponse(HttpStatus.OK, "", p).build();
+    return new JsonResponse(HttpStatus.OK, "", getParagraph(note, paragraphId)).build();
   }
 
   /**
@@ -484,21 +554,20 @@ public class NotebookRestApi {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     LOG.info("{} will update paragraph {} {}", authenticationInfo.getUser(), noteId, paragraphId);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph");
-    final Paragraph p = null;//note.getParagraph(paragraphId);
-    checkIfParagraphIsNotNull(p);
+    final Paragraph paragraph = getParagraph(note, paragraphId);
 
     final UpdateParagraphRequest updatedParagraph = gson.fromJson(message, UpdateParagraphRequest.class);
-    p.setText(updatedParagraph.getText());
+    paragraph.setText(updatedParagraph.getText());
 
     if (updatedParagraph.getTitle() != null) {
-      p.setTitle(updatedParagraph.getTitle());
+      paragraph.setTitle(updatedParagraph.getTitle());
     }
 
-    noteRepository.updateNote(note);
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", p));
+    noteService.updateParagraph(note, paragraph);
+    connectionManager.broadcast(note.getId(), new SockMessage(Operation.PARAGRAPH).put("paragraph", paragraph));
     return new JsonResponse(HttpStatus.OK, "").build();
   }
 
@@ -511,16 +580,16 @@ public class NotebookRestApi {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     LOG.info("{} will update paragraph config {} {}", authenticationInfo.getUser(), noteId, paragraphId);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanWrite(noteId, "Insufficient privileges you cannot update this paragraph config");
-    final Paragraph p = null;//note.getParagraph(paragraphId);
-    checkIfParagraphIsNotNull(p);
+    final Paragraph paragraph = getParagraph(note, paragraphId);
+    checkIfParagraphIsNotNull(paragraph);
 
     final Map<String, Object> newConfig = gson.fromJson(message, HashMap.class);
-    configureParagraph(p, newConfig, authenticationInfo.getUser());
-    noteRepository.updateNote(note);
-    return new JsonResponse(HttpStatus.OK, "", p).build();
+    paragraph.setConfig(newConfig);
+    noteService.updateParagraph(note, paragraph);
+    return new JsonResponse(HttpStatus.OK, "").build();
   }
 
   /**
@@ -533,13 +602,13 @@ public class NotebookRestApi {
           throws IOException {
     LOG.info("move paragraph {} {} {}", noteId, paragraphId, index);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
 //    if (index > 0 && index >= note.getParagraphs().size()) {
 //      throw new BadRequestException("newIndex " + index + " is out of bounds");
 //    }
 
     //note.moveParagraph(paragraphId, index);
-    noteRepository.updateNote(note);
+    noteService.updateNote(note);
 
     final SockMessage message = new SockMessage(Operation.PARAGRAPH_MOVED)
             .put("id", paragraphId)
@@ -563,12 +632,12 @@ public class NotebookRestApi {
                                   @PathVariable("paragraphId") final String paragraphId) throws IOException {
     LOG.info("delete paragraph {} {}", noteId, paragraphId);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
 
     //note.getParagraphs().removeIf(paragraph -> paragraph.getId().equals(paragraphId));
     //note.removeParagraph(getServiceContext().getAutheInfo().getUser(), paragraphId);
 
-    noteRepository.updateNote(note);
+    noteService.updateNote(note);
 
     connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
 
@@ -586,7 +655,7 @@ public class NotebookRestApi {
           throws IOException {
     LOG.info("clear all paragraph output of note {}", noteId);
 
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
 
     //note.clearAllParagraphOutput();
 
@@ -609,7 +678,7 @@ public class NotebookRestApi {
           throws IOException, IllegalArgumentException {
     final boolean blocking = waitToFinish == null || waitToFinish;
     LOG.info("run note jobs {} waitToFinish: {}", noteId, blocking);
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot run job for this note");
 
@@ -635,7 +704,7 @@ public class NotebookRestApi {
   @DeleteMapping(value = "/job/{noteId}", produces = "application/json")
   public ResponseEntity stopNoteJobs(@PathVariable("noteId") final String noteId) throws IllegalArgumentException {
     LOG.info("stop note jobs {} ", noteId);
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRun(noteId, "Insufficient privileges you cannot stop this job for this note");
 
@@ -660,7 +729,7 @@ public class NotebookRestApi {
   public ResponseEntity getNoteJobStatus(@PathVariable("noteId") final String noteId)
           throws IOException, IllegalArgumentException {
     LOG.info("get note job status.");
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
@@ -682,7 +751,7 @@ public class NotebookRestApi {
                                                   @PathVariable("paragraphId") final String paragraphId)
           throws IllegalArgumentException {
     LOG.info("get note paragraph job status.");
-    final Note note = noteRepository.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
     checkIfNoteIsNotNull(note);
     checkIfUserCanRead(noteId, "Insufficient privileges you cannot get job status");
 
@@ -822,8 +891,8 @@ public class NotebookRestApi {
     long noteId = Long.valueOf(noteIdParam);
     long paragraphId = Long.valueOf(paragraphIdIdParam);
 //    checkIfUserCanWrite(noteId, "Insufficient privileges you cannot change form values");
-    Note note = noteRepository.getNote(noteId);
-    noteRepository.getParagraphs(note)
+    Note note = noteService.getNote(noteId);
+    noteService.getParagraphs(note)
         .stream()
         .filter(p -> p.getId() == paragraphId)
         .findAny()
@@ -831,7 +900,7 @@ public class NotebookRestApi {
           Map<String, Object> params = p.getFormParams();
           params.clear();
           params.putAll(formValues);
-          noteRepository.updateParagraph(note, p);
+          noteService.updateParagraph(note, p);
         });
     return new JsonResponse(HttpStatus.OK).build();
   }
@@ -901,33 +970,4 @@ public class NotebookRestApi {
     }
     return new JsonResponse(HttpStatus.OK, notesFound).build();
   }
-
-  private void initParagraph(final Paragraph p, final NewParagraphRequest request, final String user) {
-    LOG.info("Init Paragraph for user {}", user);
-    checkIfParagraphIsNotNull(p);
-    p.setTitle(request.getTitle());
-    p.setText(request.getText());
-    final Map<String, Object> config = request.getConfig();
-    if (config != null && !config.isEmpty()) {
-      configureParagraph(p, config, user);
-    }
-  }
-
-  //TODO(egorklimov): Конфиг был убран из параграфа
-  private void configureParagraph(final Paragraph p, final Map<String, Object> newConfig, final String user) {
-    //    LOG.info("Configure Paragraph for user {}", user);
-    //    if (newConfig == null || newConfig.isEmpty()) {
-    //      LOG.warn("{} is trying to update paragraph {} of note {} with empty config",
-    //              user, p.getUuid(), p.getNote().getUuid());
-    //      throw new BadRequestException("paragraph config cannot be empty");
-    //    }
-    //    final Map<String, Object> origConfig = p.getScheduler();
-    //    for (final Map.Entry<String, Object> entry : newConfig.entrySet()) {
-    //      origConfig.put(entry.getKey(), entry.getValue());
-    //    }
-    //
-    //    p.setConfig(origConfig);
-    //  }
-  }
 }
-
