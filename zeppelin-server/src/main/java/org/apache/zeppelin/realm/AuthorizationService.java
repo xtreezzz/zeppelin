@@ -31,6 +31,8 @@ import org.apache.shiro.util.ThreadContext;
 
 public class AuthorizationService {
 
+  public static String ANONYMOUS = "anonymous";
+
   private static final ThreadLocal<String> principalThreadLocal = new ThreadLocal<>();
   private static final Map<String, AuthenticationInfo> cache = new ConcurrentHashMap<>();
 

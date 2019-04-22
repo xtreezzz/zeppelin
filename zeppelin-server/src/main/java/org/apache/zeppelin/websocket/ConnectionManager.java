@@ -18,6 +18,7 @@
 package org.apache.zeppelin.websocket;
 
 
+import org.apache.zeppelin.realm.AuthorizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,9 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 import ru.tinkoff.zeppelin.engine.EventService;
 
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -63,6 +62,8 @@ public class ConnectionManager {
     if (!sessions.contains(socket)) {
       sessions.add(socket);
     }
+
+    sendColaborativeStatus(sessions);
   }
 
   public void removeSubscriberFromNote(final Long noteId, final WebSocketSession socket) {
@@ -70,6 +71,34 @@ public class ConnectionManager {
     final Queue<WebSocketSession> sessions = noteSocketMap.get(noteId);
     if (sessions != null) {
       sessions.remove(socket);
+    }
+    sendColaborativeStatus(sessions);
+  }
+
+  private void sendColaborativeStatus(final Queue<WebSocketSession> sessions) {
+
+    final List<String> users = new ArrayList<>();
+    if (sessions.size() > 1) {
+      for (final WebSocketSession session : sessions) {
+        final String user = session.getPrincipal() != null
+                ? session.getPrincipal().getName()
+                : AuthorizationService.ANONYMOUS;
+        users.add(user);
+      }
+    }
+
+    for (final WebSocketSession session : sessions) {
+      try {
+        boolean collaborativeStatusNew = users.size() > 1;
+        SockMessage message = new SockMessage(Operation.COLLABORATIVE_MODE_STATUS);
+        message.put("status", collaborativeStatusNew);
+        if (collaborativeStatusNew) {
+          message.put("users", users);
+        }
+        session.sendMessage(message.toSend());
+      } catch (final Exception e) {
+        //SKIP
+      }
     }
   }
 

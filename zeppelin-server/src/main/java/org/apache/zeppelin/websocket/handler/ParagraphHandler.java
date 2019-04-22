@@ -19,16 +19,15 @@ package org.apache.zeppelin.websocket.handler;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.BadRequestException;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
+import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,10 +62,26 @@ public class ParagraphHandler extends AbstractHandler {
     final Map<String, Object> config = fromMessage.getNotNull("config");
     final Map<String, Object> params = fromMessage.getNotNull("params");
 
+
+    final DiffMatchPatch dmp = new DiffMatchPatch();
+    LinkedList<DiffMatchPatch.Patch> patches = null;
+    try {
+      patches = dmp.patchMake(paragraph.getText(), text);
+    } catch (ClassCastException e) {
+      LOG.error("Failed to parse patches", e);
+    }
+
+    final String paragraphText = paragraph.getText() == null
+            ? StringUtils.EMPTY
+            : paragraph.getText();
+
     paragraph.setConfig(config);
     paragraph.setFormParams(params);
     paragraph.setTitle(title);
-    paragraph.setText(text);
+    paragraph.setText(
+            patches != null
+                    ? (String) dmp.patchApply(patches, paragraphText)[0]
+                    : text);
     paragraph.setShebang(shebang);
 
     noteService.updateParagraph(note, paragraph);

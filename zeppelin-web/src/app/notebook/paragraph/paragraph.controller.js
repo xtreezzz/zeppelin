@@ -818,7 +818,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $scope.dirtyText = dirtyText;
     if ($scope.dirtyText !== $scope.originalText) {
       if ($scope.collaborativeMode) {
-        $scope.sendPatch();
+        $scope.saveNote();
       } else {
         $scope.startSaveTimer();
       }
