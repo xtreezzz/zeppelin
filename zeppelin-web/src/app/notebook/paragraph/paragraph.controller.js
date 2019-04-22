@@ -1769,6 +1769,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
     // 7. update form
     parseForm(newPara.text, true);
+
+    // 8. update form parameters
+    $scope.paragraph.settings.params = newPara.formParams;
   };
 
   /** $scope.$on */
