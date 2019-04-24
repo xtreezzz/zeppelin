@@ -17,12 +17,9 @@
 package ru.tinkoff.zeppelin.interpreter.jdbc;
 
 import com.google.common.collect.Lists;
-
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.ResultSet;
@@ -36,11 +33,7 @@ import java.util.Objects;
 import java.util.Properties;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.zeppelin.DependencyResolver;
-import org.apache.zeppelin.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
@@ -269,14 +262,14 @@ public class JDBCInterpreter extends Interpreter {
       }
 
       final InterpreterResult queryResult = executeQuery(
-              JDBCInterpolation.interpolate(st, params, getAllEnvVariables(precode)),
+              JDBCInterpolation.interpolate(st, params, getAllEnvVariables(st)),
               true
       );
 
       final String postcode = configuration.get("query.postcode");
       if (postcode != null && !postcode.trim().equals("")) {
         final InterpreterResult postcodeResult = executeQuery(
-                JDBCInterpolation.interpolate(postcode, params, getAllEnvVariables(precode)),
+                JDBCInterpolation.interpolate(postcode, params, getAllEnvVariables(postcode)),
                 false
         );
         if (postcodeResult.code().equals(Code.ERROR)) {

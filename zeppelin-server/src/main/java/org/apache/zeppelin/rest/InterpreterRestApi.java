@@ -348,7 +348,6 @@ public class InterpreterRestApi {
   /**
    * Restart interpreter setting.
    *
-   * TODO:
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
