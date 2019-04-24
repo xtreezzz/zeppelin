@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ru.tinkoff.zeppelin.remote;
 
 import org.apache.commons.cli.*;
@@ -21,11 +22,15 @@ import sun.misc.Signal;
 
 import java.util.Objects;
 
-public class RemoteInterpreterServer {
+public class RemoteProcessServer {
 
   public static void main(String[] args) throws Exception {
 
     final Options options = new Options();
+
+    final Option processThread = new Option("pt", "processThread", true, "process thread class name");
+    processThread.setRequired(true);
+    options.addOption(processThread);
 
     final Option host = new Option("h", "host", true, "zeppelin thrift server host");
     host.setRequired(true);
@@ -35,15 +40,19 @@ public class RemoteInterpreterServer {
     port.setRequired(true);
     options.addOption(port);
 
-    final Option shebang = new Option("sb", "shebang", true, "interpreter shebang");
+    final Option shebang = new Option("sb", "shebang", true, "process shebang");
     shebang.setRequired(true);
     options.addOption(shebang);
 
-    final Option classpath = new Option("cp", "classpath", true, "interpreter classpath");
+    final Option type = new Option("tp", "type", true, "process type");
+    type.setRequired(true);
+    options.addOption(type);
+
+    final Option classpath = new Option("cp", "classpath", true, "process classpath");
     classpath.setRequired(true);
     options.addOption(classpath);
 
-    final Option classname = new Option("cn", "classname", true, "interpreter classname");
+    final Option classname = new Option("cn", "classname", true, "process classname");
     classname.setRequired(true);
     options.addOption(classname);
 
@@ -63,29 +72,34 @@ public class RemoteInterpreterServer {
       System.exit(1);
     }
 
+    final String processThreadClass = cmd.getOptionValue("processThread");
+
     final String zeppelinServerHost = cmd.getOptionValue("host");
     final String zeppelinServerPort = cmd.getOptionValue("port");
 
-    final String interpreterShebang = cmd.getOptionValue("shebang");
-    final String interpreterClasspath = cmd.getOptionValue("classpath");
-    final String interpreterClassname = cmd.getOptionValue("classname");
+    final String processShebang = cmd.getOptionValue("shebang");
+    final String processType = cmd.getOptionValue("type");
+    final String processClassPath = cmd.getOptionValue("classpath");
+    final String processClassName = cmd.getOptionValue("classname");
 
-
-    final RemoteInterpreterThread remoteInterpreterServer = new RemoteInterpreterThread(
+    final Class clazz = Class.forName(processThreadClass);
+    final AbstractRemoteProcessThread thread = (AbstractRemoteProcessThread) clazz.newInstance();
+    thread.init(
             zeppelinServerHost,
             zeppelinServerPort,
-            interpreterShebang,
-            interpreterClasspath,
-            interpreterClassname
+            processShebang,
+            processType,
+            processClassPath,
+            processClassName
     );
 
     Signal.handle(new Signal("TERM"), signal -> {
-      remoteInterpreterServer.shutdown();
+      thread.shutdown();
       System.exit(0);
     });
 
-    remoteInterpreterServer.start();
-    remoteInterpreterServer.join();
+    thread.start();
+    thread.join();
     System.exit(0);
   }
 

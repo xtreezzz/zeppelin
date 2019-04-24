@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.CompletionService;
 import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
@@ -55,12 +56,15 @@ public class CompletionRestApi {
   private final InterpreterSettingService interpreterRepo;
 
   private final NoteService noteService;
+  private final CompletionService completionService;
 
   @Autowired
   public CompletionRestApi(final InterpreterSettingService interpreterRepo,
-                           final NoteService noteService) {
+                           final NoteService noteService,
+                           final CompletionService completionService) {
     this.interpreterRepo = interpreterRepo;
     this.noteService = noteService;
+    this.completionService = completionService;
   }
 
   @PostMapping(value = "/{noteId}/{paragraphId}", produces = "application/json")
@@ -138,7 +142,7 @@ public class CompletionRestApi {
     static List<InterpreterCompletion> complete(@Nonnull final String buffer, final int pos) {
       final Set<String> completions = new TreeSet<>();
 
-      final StringBuilder myBuf = new StringBuilder();
+        final StringBuilder myBuf = new StringBuilder();
       final SelectDeParser selectDeparser = new SelectDeParser();
       selectDeparser.setBuffer(myBuf);
       final ExpressionDeParser expressionDeParser =

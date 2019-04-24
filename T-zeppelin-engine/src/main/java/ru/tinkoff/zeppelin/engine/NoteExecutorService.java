@@ -39,8 +39,9 @@ import ru.tinkoff.zeppelin.engine.handler.InterpreterDeadHandler;
 import ru.tinkoff.zeppelin.engine.handler.InterpreterStarterHandler;
 import ru.tinkoff.zeppelin.engine.handler.PendingHandler;
 import ru.tinkoff.zeppelin.engine.handler.SchedulerHandler;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcessServer;
+import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessServer;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResultStatus;
 
@@ -57,7 +58,7 @@ import ru.tinkoff.zeppelin.interpreter.thrift.PingResultStatus;
 @Component
 public class NoteExecutorService {
 
-  private InterpreterProcessServer server;
+  private RemoteProcessServer server;
 
   private final AbortHandler abortHandler;
   private final PendingHandler pendingHandler;
@@ -85,7 +86,7 @@ public class NoteExecutorService {
 
   @PostConstruct
   public void init() throws Exception{
-    server = new InterpreterProcessServer();
+    server = new RemoteProcessServer();
     server.initSources(interpreterSettingService.getAllRepositories());
     server.start();
   }
@@ -102,13 +103,13 @@ public class NoteExecutorService {
     for (final Job job : jobs) {
       try {
         final InterpreterOption option = interpreterSettingService.getOption(job.getShebang());
-        final InterpreterProcess process = InterpreterProcess.get(job.getShebang());
+        final AbstractRemoteProcess process = AbstractRemoteProcess.get(job.getShebang(), RemoteProcessType.INTERPRETER);
         if (process != null
-                && process.getStatus() == InterpreterProcess.Status.READY
+                && process.getStatus() == AbstractRemoteProcess.Status.READY
                 && option != null) {
           pendingHandler.handle(job, process, option);
         } else if (process != null
-                && process.getStatus() == InterpreterProcess.Status.STARTING
+                && process.getStatus() == AbstractRemoteProcess.Status.STARTING
                 && option != null) {
           final String str = ";";
         } else {
@@ -144,10 +145,10 @@ public class NoteExecutorService {
   @Scheduled(fixedDelay = 5_000)
   private void actualizeInterpreters() {
     final List<String> liveInterpretersPID = new ArrayList<>();
-    final List<String> shebangs = InterpreterProcess.getShebangs();
+    final List<String> shebangs = AbstractRemoteProcess.getShebangs(RemoteProcessType.INTERPRETER);
     for (final String shebang : shebangs) {
-      final InterpreterProcess process = InterpreterProcess.get(shebang);
-      if(process.getStatus() == InterpreterProcess.Status.STARTING) {
+      final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
+      if(process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
         continue;
       }
       final InterpreterOption option = interpreterSettingService.getOption(shebang);
@@ -159,7 +160,7 @@ public class NoteExecutorService {
               || !option.isEnabled()) {
 
         process.forceKill();
-        InterpreterProcess.remove(process.getShebang());
+        AbstractRemoteProcess.remove(process.getShebang(), RemoteProcessType.INTERPRETER);
       } else {
         liveInterpretersPID.add(process.getUuid());
       }

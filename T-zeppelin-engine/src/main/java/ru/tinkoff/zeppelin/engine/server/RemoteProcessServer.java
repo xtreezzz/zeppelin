@@ -38,7 +38,7 @@ import ru.tinkoff.zeppelin.interpreter.thrift.ZeppelinThriftService;
  * @version 1.0
  * @since 1.0
  */
-public class InterpreterProcessServer {
+public class RemoteProcessServer {
 
   private TServerSocket serverSocket;
   private TThreadPoolServer thriftServer;
@@ -46,9 +46,9 @@ public class InterpreterProcessServer {
   private String remoteServerClassPath;
 
   public void initSources(final List<Repository> repositories) {
-    InterpreterInstaller.uninstallInterpreter("remote-server");
-    InterpreterInstaller.install("remote-server", "org.apache.zeppelin:T-zeppelin-remote:1.0.0-T-SNAPSHOT", repositories);
-    remoteServerClassPath = InterpreterInstaller.getDirectory("remote-server");
+    ModuleInstaller.uninstallInterpreter("remote-server");
+    ModuleInstaller.install("remote-server", "org.apache.zeppelin:T-zeppelin-remote:1.0.0-T-SNAPSHOT", repositories);
+    remoteServerClassPath = ModuleInstaller.getDirectory("remote-server");
   }
 
   public void start() throws TTransportException {
@@ -67,7 +67,7 @@ public class InterpreterProcessServer {
       processor = new ZeppelinThriftService.Processor<>(new ZeppelinThriftService.Iface() {
         @Override
         public void registerInterpreterProcess(final RegisterInfo registerInfo) {
-          InterpreterProcess.handleRegisterEvent(registerInfo);
+          AbstractRemoteProcess.handleRegisterEvent(registerInfo);
         }
 
         @Override

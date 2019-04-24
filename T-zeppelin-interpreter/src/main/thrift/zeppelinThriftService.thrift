@@ -22,7 +22,8 @@ struct RegisterInfo {
   1: string host,
   2: i32 port
   3: string shebang
-  4: string interpreterProcessUUID
+  4: string processType
+  5: string processUUID
 }
 
 service ZeppelinThriftService {

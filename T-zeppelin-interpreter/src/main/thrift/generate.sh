@@ -19,8 +19,8 @@
 
 rm -rf gen-java
 rm -rf ../java/ru/tinkoff/zeppelin/interpreter/thrift
-thrift --gen java remoteInterpreterThriftService.thrift
-thrift --gen java zeppelinThriftService.thrift
+thrift  --gen java remoteThriftService.thrift
+thrift  --gen java zeppelinThriftService.thrift
 for file in gen-java/ru/tinkoff/zeppelin/interpreter/thrift/* ; do
   cat header ${file} > ${file}.tmp
   mv -f ${file}.tmp ${file}

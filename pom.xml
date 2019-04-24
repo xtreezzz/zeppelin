@@ -59,15 +59,18 @@
     <module>T-zeppelin-remote</module>
     <module>T-zeppelin-interpreter</module>
 
-    <module>interpreters/markdown</module>
     <module>zeppelin-web</module>
     <module>zeppelin-server</module>
     <module>zeppelin-dependency</module>
     <module>zeppelin-helium</module>
     <module>logger</module>
 
-    <module>interpreters/t-python</module>
-    <module>interpreters/jdbc</module>
+    <module>modules/t-jdbc/t-jdbc-commons</module>
+    <module>modules/t-jdbc/t-jdbc-interpreter</module>
+    <module>modules/t-jdbc/t-jdbc-completer</module>
+
+    <module>modules/t-python</module>
+    <module>modules/markdown</module>
   </modules>
 
   <properties>

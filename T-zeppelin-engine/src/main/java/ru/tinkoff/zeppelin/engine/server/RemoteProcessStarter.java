@@ -19,6 +19,7 @@ package ru.tinkoff.zeppelin.engine.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -35,10 +36,10 @@ import org.apache.zeppelin.storage.ZLog.ET;
  * @version 1.0
  * @since 1.0
  */
-public class InterpreterProcessStarter {
-
+public class RemoteProcessStarter {
 
   public static void start(final String shebang,
+                           final RemoteProcessType processType,
                            final String interpreterClassPath,
                            final String interpreterClassName,
                            final String remoteServerClassPath,
@@ -51,25 +52,29 @@ public class InterpreterProcessStarter {
                     " -DzeppelinInstance=%s" +
                     " %s" +
                     " -cp \"./*:%s/*\"" +
-                    " ru.tinkoff.zeppelin.remote.RemoteInterpreterServer" +
+                    " ru.tinkoff.zeppelin.remote.RemoteProcessServer" +
+                    " -pt %s" +
                     " -h %s" +
                     " -p %s" +
                     " -sb %s" +
+                    " -tp %s" +
                     " -cp %s" +
                     " -cn %s ",
             zeppelinInstance,
             jvmOptions,
             remoteServerClassPath,
+            processType.getRemoteThreadClass().getName(),
             thriftAddr,
             thriftPort,
             shebang,
+            processType.name(),
             interpreterClassPath,
             interpreterClassName
     );
     ZLog.log(ET.INTERPRETER_PROCESS_START_REQUESTED,
-        "Requested to start interpreter, cmd: " + cmd,
-        "Requested to start interpreter, cmd: " + cmd,
-        "Unknown");
+            "Requested to start interpreter, cmd: " + cmd,
+            "Requested to start interpreter, cmd: " + cmd,
+            "Unknown");
 
     // start server process
     final CommandLine cmdLine = CommandLine.parse(cmd);
@@ -81,30 +86,29 @@ public class InterpreterProcessStarter {
     executor.setWatchdog(watchdog);
 
     final ExecuteResultHandler handler = new ExecuteResultHandler() {
-
       @Override
       public void onProcessComplete(final int exitValue) {
-        InterpreterProcess.handleProcessCompleteEvent(shebang);
+        AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
+        ZLog.log(ET.INTERPRETER_PROCESS_FINISHED,
+                "Interpreter process finished, cmd: " + cmd,
+                "Interpreter process finished, cmd: " + cmd,
+                "Unknown");
       }
 
       @Override
       public void onProcessFailed(final ExecuteException e) {
-        InterpreterProcess.handleProcessCompleteEvent(shebang);
+        AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
+        ZLog.log(ET.INTERPRETER_PROCESS_FAILED,
+                "Interpreter process failed, cmd: " + cmd,
+                "Error occured during process execution, cmd: " + cmd + ", error: " + e.getMessage(),
+                "Unknown");
       }
     };
 
     try {
       executor.execute(cmdLine, new HashMap<>(), handler);
-      ZLog.log(ET.INTERPRETER_PROCESS_FINISHED,
-          "Interpreter process finished, cmd: " + cmd,
-          "Interpreter process finished, cmd: " + cmd,
-          "Unknown");
     } catch (final IOException e) {
-      ZLog.log(ET.INTERPRETER_PROCESS_FAILED,
-          "Interpreter process failed, cmd: " + cmd,
-          String.format("Error occured during process execution, cmd: %s, error: %s",
-              cmd, e.getMessage()), "Unknown");
-      InterpreterProcess.handleProcessCompleteEvent(shebang);
+      AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
     }
   }
 }

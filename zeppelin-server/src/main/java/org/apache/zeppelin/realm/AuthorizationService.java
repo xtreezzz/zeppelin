@@ -46,9 +46,9 @@ public class AuthorizationService {
             : ShiroSecurityService.get() != null
               ? ShiroSecurityService.get().getPrincipal()
               : null;
-    if(principal == null || "anonymous".equals(principal)) {
-      final AuthenticationInfo authenticationInfo = new AuthenticationInfo("anonymous", new HashSet<>());
-      cache.put("anonymous", authenticationInfo);
+    if(principal == null || ANONYMOUS.equals(principal)) {
+      final AuthenticationInfo authenticationInfo = new AuthenticationInfo(ANONYMOUS, new HashSet<>());
+      cache.put(ANONYMOUS, authenticationInfo);
       return authenticationInfo;
     }
 

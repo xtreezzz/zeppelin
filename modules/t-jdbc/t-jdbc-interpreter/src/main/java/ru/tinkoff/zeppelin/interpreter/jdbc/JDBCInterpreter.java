@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.interpreter.jdbc;
 
 import com.google.common.collect.Lists;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -35,6 +36,7 @@ import java.util.Objects;
 import java.util.Properties;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.DependencyResolver;
@@ -50,26 +52,26 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 
 /**
  * Common JDBC Interpreter: This interpreter can be used for accessing different SQL databases.
- *
+ * <p>
  * Before using interpreter you should configure driver, which will be installed at runtime:
  * <ul>
- *   <li>{@code driver.className} - driver class name, e.g. {@code org.postgresql.Driver}</li>
- *   <li>{@code driver.artifact} - maven driver artifact, e.g. {@code org.postgresql:postgresql:jar:42.2.5}</li>
+ * <li>{@code driver.className} - driver class name, e.g. {@code org.postgresql.Driver}</li>
+ * <li>{@code driver.artifact} - maven driver artifact, e.g. {@code org.postgresql:postgresql:jar:42.2.5}</li>
  * </ul>
- *
+ * <p>
  * Specify connection:
  * <ul>
- *   <li>{@code connection.user} - username for database connection</li>
- *   <li>{@code connection.url} - database url</li>
- *   <li>{@code connection.password} - password</li>
+ * <li>{@code connection.user} - username for database connection</li>
+ * <li>{@code connection.url} - database url</li>
+ * <li>{@code connection.password} - password</li>
  * </ul>
- *
+ * <p>
  * Precode and Postcode rules:
  * <ul>
- *   <li>If precode fails -> Error result from precode will be returned as total query result</li>
- *   <li>If precode succeed, postcode always will be executed</li>
- *   <li>If postcode fails -> error will be logged, and connection will be closed.</li>
- *   <li></li>
+ * <li>If precode fails -> Error result from precode will be returned as total query result</li>
+ * <li>If precode succeed, postcode always will be executed</li>
+ * <li>If postcode fails -> error will be logged, and connection will be closed.</li>
+ * <li></li>
  * </ul>
  */
 public class JDBCInterpreter extends Interpreter {
@@ -137,7 +139,7 @@ public class JDBCInterpreter extends Interpreter {
    * Installs driver if needed and opens the database connection.
    *
    * @param configuration interpreter configuration.
-   * @param classPath class path.
+   * @param classPath     class path.
    */
   @Override
   public void open(@Nonnull final Map<String, String> configuration, @Nonnull final String classPath) {
@@ -153,12 +155,16 @@ public class JDBCInterpreter extends Interpreter {
     final String password = configuration.get(CONNECTION_PASSWORD_KEY);
 
     if (className != null
-        && artifact != null
-        && user != null
-        && dbUrl != null
-        && password != null) {
+            && artifact != null
+            && user != null
+            && dbUrl != null
+            && password != null) {
 
-      final String dir = installDriver(artifact);
+      final String repositpryURL = configuration.getOrDefault(
+              DRIVER_MAVEN_REPO_KEY,
+              "http://repo1.maven.org/maven2/"
+      );
+      final String dir = JDBCInstallation.installDriver(artifact, repositpryURL);
       if (dir != null && !dir.equals("")) {
         final File driverFolder = new File(dir);
         try {
@@ -221,9 +227,9 @@ public class JDBCInterpreter extends Interpreter {
 
   /**
    * Interprets query.
-   *
+   * <p>
    * Notice that interpreter should be alive before calling interpreter. {@link JDBCInterpreter#isAlive()}
-   *
+   * <p>
    * TODO(egorklimov): check execution logic on cancel!
    * If interpreter would be canceled on precode, {@code precodeResult.code()} would be {@code Code.ERROR}
    * therefore whole interpret process will be finished.
@@ -232,9 +238,9 @@ public class JDBCInterpreter extends Interpreter {
    * If interpreter would be canceled on postcode, {@code postcodeResult.code()} would be {@code Code.ERROR}
    * therefore connection will be closed and ...??
    *
-   * @param st statements to run.
-   * @param noteContext Note context
-   * @param userContext User context
+   * @param st            statements to run.
+   * @param noteContext   Note context
+   * @param userContext   User context
    * @param configuration Interpreter properties
    * @return Interpreter result
    */
@@ -253,17 +259,26 @@ public class JDBCInterpreter extends Interpreter {
 
       final String precode = configuration.get("query.precode");
       if (precode != null && !precode.trim().equals("")) {
-        final InterpreterResult precodeResult = executeQuery(interpolate(precode, params), false);
+        final InterpreterResult precodeResult = executeQuery(
+                JDBCInterpolation.interpolate(precode, params, getAllEnvVariables(precode)),
+                false
+        );
         if (precodeResult.code().equals(Code.ERROR)) {
           return precodeResult;
         }
       }
 
-      final InterpreterResult queryResult = executeQuery(interpolate(st, params), true);
+      final InterpreterResult queryResult = executeQuery(
+              JDBCInterpolation.interpolate(st, params, getAllEnvVariables(precode)),
+              true
+      );
 
       final String postcode = configuration.get("query.postcode");
       if (postcode != null && !postcode.trim().equals("")) {
-        final InterpreterResult postcodeResult = executeQuery(interpolate(postcode, params), false);
+        final InterpreterResult postcodeResult = executeQuery(
+                JDBCInterpolation.interpolate(postcode, params, getAllEnvVariables(precode)),
+                false
+        );
         if (postcodeResult.code().equals(Code.ERROR)) {
           LOGGER.error("Postcode query failed: {}", postcodeResult.message());
           close();
@@ -272,15 +287,15 @@ public class JDBCInterpreter extends Interpreter {
       return queryResult;
     }
     return new InterpreterResult(Code.ERROR,
-        Collections.singletonList(new Message(Type.TEXT, "Interpreter is not opened")));
+            Collections.singletonList(new Message(Type.TEXT, "Interpreter is not opened")));
   }
 
   /**
    * Util method to execute a single query.
    *
-   * @param queryString - Query to execute, may consist of multiple statements, never {@code null}.
+   * @param queryString   - Query to execute, may consist of multiple statements, never {@code null}.
    * @param processResult - Flag of result processing, if {@code true} - result
-   *                        will be converted to table format, otherwise result has no message.
+   *                      will be converted to table format, otherwise result has no message.
    * @return Result of query execution, never {@code null}.
    */
   @Nonnull
@@ -312,7 +327,7 @@ public class JDBCInterpreter extends Interpreter {
           updateCount = Objects.requireNonNull(this.query).getUpdateCount();
           if (updateCount != -1) {
             queryResult.add(new Message(Type.TEXT,
-                "Query executed successfully. Affected rows: " + updateCount));
+                    "Query executed successfully. Affected rows: " + updateCount));
           }
         }
         // go to the next result set, previous would be closed.
@@ -322,8 +337,8 @@ public class JDBCInterpreter extends Interpreter {
     } catch (final Exception e) {
       // increment exception message if smth went wrong.
       exception.append("Exception during processing the query:\n")
-          .append(ExceptionUtils.getStackTrace(e))
-          .append("\n");
+              .append(ExceptionUtils.getStackTrace(e))
+              .append("\n");
     } finally {
       // cleanup.
       try {
@@ -336,12 +351,12 @@ public class JDBCInterpreter extends Interpreter {
       } catch (final Exception e) {
         // increment exception message if smth went wrong.
         exception.append("Exception during connection closing:\n")
-            .append(ExceptionUtils.getStackTrace(e));
+                .append(ExceptionUtils.getStackTrace(e));
       }
     }
     // reachable if smth went wrong during query processing.
     return new InterpreterResult(Code.ERROR, Collections.singletonList(
-        new Message(Type.TEXT, exception.toString())));
+            new Message(Type.TEXT, exception.toString())));
   }
 
   /**
@@ -364,64 +379,6 @@ public class JDBCInterpreter extends Interpreter {
     }
   }
 
-  private boolean isInstalled(@Nonnull final String artifact) {
-    final File folderToStore = new File(getDestinationFolder(artifact));
-    return folderToStore.exists() && Objects.requireNonNull(folderToStore.list()).length > 0;
-  }
-
-  /**
-   * Downloads driver by the maven artifact.
-   *
-   * @param artifact Driver artifact, never {@code null}.
-   * @return Absolute path to driver directory, {@code null} if installation failed.
-   */
-  @Nullable
-  private String installDriver(@Nonnull final String artifact) {
-    if (isInstalled(artifact)) {
-      return getDirectory(artifact);
-    }
-
-    try {
-      final File folderToStore = new File(getDestinationFolder(artifact));
-      final List<Repository> repos = Collections.singletonList(
-          new Repository(false, "central",
-              configuration.getOrDefault(DRIVER_MAVEN_REPO_KEY, "http://repo1.maven.org/maven2/"),
-              null, null, null, null,
-              null, null, null));
-
-      final DependencyResolver dependencyResolver = new DependencyResolver(repos);
-      dependencyResolver.load(artifact, folderToStore);
-      return folderToStore.getAbsolutePath();
-    } catch (final Exception e) {
-      LOGGER.error("Error while installDriver interpreter", e);
-      uninstallDriver(artifact);
-      return null;
-    }
-  }
-
-  private void uninstallDriver(@Nonnull final String artifact) {
-    try {
-      if (isInstalled(artifact)) {
-        final File folderToStore = new File(getDirectory(artifact));
-        FileUtils.deleteDirectory(folderToStore);
-      }
-    } catch (final Exception e) {
-      LOGGER.error("Error while remove interpreter", e);
-    }
-  }
-
-  /**
-   * Gets driver folder, notice that this method should be called after
-   * {@link JDBCInterpreter#isInstalled(String)}.
-   *
-   * @param artifact driver maven artifact, never {@code null}.
-   * @return absolute path to driver folder.
-   */
-  @Nonnull
-  private String getDirectory(@Nonnull final String artifact) {
-    final File folderToStore = new File(getDestinationFolder(artifact));
-    return folderToStore.getAbsolutePath();
-  }
 
   /**
    * Converts result set to table.
@@ -471,14 +428,6 @@ public class JDBCInterpreter extends Interpreter {
     }
   }
 
-  private String getDestinationFolder(final String artifact) {
-    try {
-      return String.join(File.separator, "drivers", URLEncoder.encode(artifact, "UTF-16")) + File.separator;
-    } catch (final UnsupportedEncodingException e) {
-      return "";
-    }
-  }
-
   /**
    * For table response replace Tab and Newline characters from the content.
    */
@@ -487,26 +436,6 @@ public class JDBCInterpreter extends Interpreter {
       return "";
     }
     return str.replace('\t', ' ')
-        .replace('\n', ' ');
-  }
-
-  /**
-   * Replaces all environment variables in query.
-   *
-   * @param query, initial query, never {@code null}.
-   * @param intpContext, interpreter context, never {@code null}.
-   * @return new query with replaced env variables, never {@code null}.
-   */
-  @Nonnull
-  private String interpolate(@Nonnull final String query, @Nonnull final Map<String, String> intpContext) {
-    final StringBuilder interpolatedPrecode = new StringBuilder(query);
-    getAllEnvVariables(query).forEach(env ->
-        interpolatedPrecode.replace(
-            interpolatedPrecode.indexOf(env),
-            interpolatedPrecode.indexOf(env) + env.length(),
-            intpContext.get(env)
-        )
-    );
-    return interpolatedPrecode.toString();
+            .replace('\n', ' ');
   }
 }

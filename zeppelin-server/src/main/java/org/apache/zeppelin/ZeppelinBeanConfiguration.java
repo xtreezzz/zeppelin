@@ -118,6 +118,7 @@ public class ZeppelinBeanConfiguration {
   @Bean
   public IniWebEnvironment getIniWebEnvironment() {
     final IniWebEnvironment environment = new IniWebEnvironment();
+    environment.setConfigLocations(System.getProperty("shiroPath"));
     environment.init();
     return environment;
   }

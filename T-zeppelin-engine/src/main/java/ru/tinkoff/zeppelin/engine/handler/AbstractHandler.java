@@ -25,6 +25,7 @@ import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
 import ru.tinkoff.zeppelin.engine.EventService;
+import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 import java.time.LocalDateTime;
@@ -223,7 +224,7 @@ abstract class AbstractHandler {
       final JobPayload jobPayload = new JobPayload();
       jobPayload.setId(0L);
       jobPayload.setJobId(job.getId());
-      jobPayload.setPayload(clearParagraphText(p));
+      jobPayload.setPayload(FormsProcessor.injectFormValues(p.getText(), p.getFormParams()));
       jobPayloadDAO.persist(jobPayload);
 
       p.setJobId(job.getId());
@@ -251,24 +252,5 @@ abstract class AbstractHandler {
     }
     Status status = jobBatch.getStatus();
     return status.equals(Status.PENDING) || status.equals(Status.RUNNING);
-  }
-
-  private static final Pattern formBlockPattern =
-      Pattern.compile("%FORM(.*)%FORM[\n ]*", Pattern.DOTALL);
-
-  private String clearParagraphText(final Paragraph p) {
-    Map<String, Object> formValues = p.getFormParams();
-    if (formValues.isEmpty()) {
-      return p.getText();
-    }
-    String text = formBlockPattern.matcher(p.getText()).replaceAll("");
-    for (Entry<String, Object> form : formValues.entrySet()) {
-      Object value = form.getValue();
-      if (value instanceof List) {
-        value = String.join(",", (List) value);
-      }
-      text = text.replaceAll("#" + form.getKey() + "#", value.toString());
-    }
-    return text;
   }
 }

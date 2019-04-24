@@ -18,25 +18,26 @@
 package ru.tinkoff.zeppelin.engine;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.storage.InterpreterOptionDAO;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
-import ru.tinkoff.zeppelin.engine.server.InterpreterInstaller;
+import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 
 /**
  * Repository for:
- *    {@link InterpreterOption},
- *    {@link InterpreterArtifactSource},
- *    {@link Repository}
- *
- * @see org.apache.zeppelin.rest.InterpreterRestApi
+ * {@link InterpreterOption},
+ * {@link InterpreterArtifactSource},
+ * {@link Repository}
  */
 public class InterpreterSettingService {
 
@@ -48,49 +49,113 @@ public class InterpreterSettingService {
   }
 
   @PostConstruct
-  private void reinstall() {
-    getAllSources().stream()
-        .filter(InterpreterArtifactSource::isReinstallOnStart)
-        .forEach(this::reInstallSource);
+  private void init() {
+//    getAllSources().stream()
+//            .filter(InterpreterArtifactSource::isReinstallOnStart)
+//            .forEach(this::reInstallSource);
   }
 
-  public void uninstallSource(@Nonnull final InterpreterArtifactSource source) {
-    disableRelatedInterpreters(source.getInterpreterName());
+  public synchronized void installSource(@Nonnull final InterpreterArtifactSource source,
+                                         final boolean installSources,
+                                         final boolean checkNames) {
 
-    InterpreterInstaller.uninstallInterpreter(source.getInterpreterName());
-    if (!InterpreterInstaller.isInstalled(source.getInterpreterName())) {
-      source.setStatus(Status.NOT_INSTALLED);
-      source.setPath(null);
+    // 1 check that name does not exist
+    final boolean hasSameName = getAllSources().stream()
+            .anyMatch(s -> s.getInterpreterName().equals(source.getInterpreterName()));
+
+    if (hasSameName && checkNames) {
+      throw new RuntimeException("Wrong configuration. Found duplicated name.");
     }
-    updateSource(source);
-  }
 
-  public void installSource(@Nonnull final InterpreterArtifactSource source) {
-    final String installationDir = InterpreterInstaller.install(source.getInterpreterName(), source.getArtifact(), getAllRepositories());
-    if (!StringUtils.isAllBlank(installationDir)) {
+    //1 check for ability to install
+    final String installationDir;
+    try {
+      ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
+      installationDir = ModuleInstaller.install(source.getInterpreterName(), source.getArtifact(), getAllRepositories());
+      if(StringUtils.isEmpty(installationDir)) {
+        throw new RuntimeException();
+      }
+
+    } catch (final Exception e) {
+      ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
+      throw new RuntimeException("Error while install sources: " + e.getMessage());
+    }
+
+    //2 check configuration file
+    try {
+      ModuleInstaller.getDefaultConfig(source.getInterpreterName());
+    } catch (final Exception e) {
+      ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
+      throw new RuntimeException("Wrong zeppelin module configuration: " + e.getMessage());
+    }
+
+    if (!installSources) {
+      ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
+    }
+
+    if (!StringUtils.isAllBlank(installationDir) && installSources) {
       source.setPath(installationDir);
       source.setStatus(InterpreterArtifactSource.Status.INSTALLED);
     } else {
       source.setPath(null);
       source.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
     }
-    updateSource(source);
+    if(hasSameName) {
+      storage.updateSource(source);
+    } else {
+      storage.saveInterpreterSource(source);
+    }
   }
 
-  private void disableRelatedInterpreters(@Nonnull final String interpreterName) {
-    getAllOptions()
-        .stream()
-        .filter(o -> o.isEnabled() && o.getConfig().getGroup().equals(interpreterName))
-        .forEach(o -> {
-          o.setEnabled(false);
-          //FIXME: stop process?
-          updateOption(o);
-        });
+
+  public synchronized void uninstallSource(@Nonnull final InterpreterArtifactSource source, final boolean delete) {
+
+    final List<InterpreterOption> interpreterOptions = storage.getAllInterpreterOptions()
+            .stream()
+            .filter(o -> o.getConfig().getGroup().equals(source.getInterpreterName()))
+            .collect(Collectors.toList());
+
+    // 1 disable all interpreters
+    for (final InterpreterOption option : interpreterOptions) {
+      option.setEnabled(false);
+      storage.updateInterpreterOption(option);
+    }
+
+    // 2 stop all interpreters
+    for (final InterpreterOption option : interpreterOptions) {
+      final String shebang = option.getShebang();
+      final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
+      if(process != null) {
+        process.forceKill();
+      }
+    }
+
+    // 3 uninstall interpreter
+    ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
+
+    // 4 set correct status
+    source.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
+    storage.updateSource(source);
+
+    // 4 early exit if not delete drom db
+    if (!delete) {
+      return;
+    }
+
+    // 5 delete all configurations
+    for (final InterpreterOption option : interpreterOptions) {
+      storage.removeInterpreterOption(option.getShebang());
+    }
+
+    // 5 delete sources
+    removeSource(source.getInterpreterName());
   }
 
-  public void reInstallSource(@Nonnull final InterpreterArtifactSource source) {
-    uninstallSource(source);
-    installSource(source);
+  public void restartInterpreter(final String shebang) {
+    final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
+    if(process != null) {
+      process.forceKill();
+    }
   }
 
   @Nonnull
@@ -130,15 +195,8 @@ public class InterpreterSettingService {
   }
 
   @Nonnull
-  public InterpreterArtifactSource saveSource(
-      @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
-    storage.saveInterpreterSource(interpreterArtifactSource);
-    return interpreterArtifactSource;
-  }
-
-  @Nonnull
   public InterpreterArtifactSource updateSource(
-      @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
+          @Nonnull final InterpreterArtifactSource interpreterArtifactSource) {
     storage.updateSource(interpreterArtifactSource);
     return interpreterArtifactSource;
   }

@@ -19,6 +19,7 @@ package ru.tinkoff.zeppelin.engine.handler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.storage.JobBatchDAO;
 import org.apache.zeppelin.storage.JobDAO;
@@ -33,7 +34,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Job;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
+import ru.tinkoff.zeppelin.engine.server.InterpreterRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
@@ -66,23 +68,23 @@ public class PendingHandler extends AbstractHandler {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handle(final Job job, final InterpreterProcess process, final InterpreterOption option) {
+  public void handle(final Job job, final AbstractRemoteProcess process, final InterpreterOption option) {
     if (!userIsInterpreterOwner(job, option)) {
       String errorMessage = String.format(
-          "User [%s] does not have access to [%s] interpreter.",
-          job.getUsername(),
-          option.getInterpreterName()
+              "User [%s] does not have access to [%s] interpreter.",
+              job.getUsername(),
+              option.getInterpreterName()
       );
 
       ZLog.log(
-          ET.ACCESS_ERROR,
-          errorMessage,
-          String.format("Job: interpreter access error, job[%s]", job.toString()),
-          job.getUsername()
+              ET.ACCESS_ERROR,
+              errorMessage,
+              String.format("Job: interpreter access error, job[%s]", job.toString()),
+              job.getUsername()
       );
       InterpreterResult interpreterResult = new InterpreterResult(
-          Code.ABORTED,
-          new Message(Type.TEXT, errorMessage)
+              Code.ABORTED,
+              new Message(Type.TEXT, errorMessage)
       );
       setAbortResult(job, jobBatchDAO.get(job.getBatchId()), interpreterResult);
       return;
@@ -109,33 +111,33 @@ public class PendingHandler extends AbstractHandler {
             .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
 
     ZLog.log(ET.JOB_READY_FOR_EXECUTION, "Job ready for execution, id=" + job.getId(),
-        String.format("Job ready for execution, job[%s]", job.toString()), job.getUsername());
-    final PushResult result = process.push(payload, noteContext, userContext, configuration);
-    if(result == null) {
+            String.format("Job ready for execution, job[%s]", job.toString()), job.getUsername());
+    final PushResult result = ((InterpreterRemoteProcess) process).push(payload, noteContext, userContext, configuration);
+    if (result == null) {
       ZLog.log(ET.JOB_REQUEST_IS_EMPTY, "Push result is empty for job with id=" + job.getId(),
-          String.format("Push result is empty, job[%s]", job.toString()), job.getUsername());
+              String.format("Push result is empty, job[%s]", job.toString()), job.getUsername());
       return;
     }
 
     switch (result.getStatus()) {
       case ACCEPT:
         ZLog.log(ET.JOB_ACCEPTED, String.format("Job accepted, id=%s", job.getId()),
-            String.format("Job accepted, job[%s]", job.toString()), job.getUsername());
+                String.format("Job accepted, job[%s]", job.toString()), job.getUsername());
         setRunningState(job, result.getInterpreterProcessUUID(), result.getInterpreterJobUUID());
         break;
       case DECLINE:
         ZLog.log(ET.JOB_DECLINED, String.format("Job declined, id=%s", job.getId()),
-            String.format("Job declined, job[%s]", job.toString()), job.getUsername());
+                String.format("Job declined, job[%s]", job.toString()), job.getUsername());
         break;
       case ERROR:
         ZLog.log(ET.JOB_REQUEST_ERRORED, String.format("Job errored, id=%s", job.getId()),
-            String.format("Job errored, job[%s]", job.toString()), job.getUsername());
+                String.format("Job errored, job[%s]", job.toString()), job.getUsername());
         break;
       default:
         ZLog.log(ET.JOB_UNDEFINED,
-            String.format("System error, job request status undefined, id=%s, status=%s", job.getId(), result.getStatus()),
-            String.format("System error, job request status undefined, job[%s], status=%s", job.toString(), result.getStatus()),
-            job.getUsername());
+                String.format("System error, job request status undefined, id=%s, status=%s", job.getId(), result.getStatus()),
+                String.format("System error, job request status undefined, job[%s], status=%s", job.toString(), result.getStatus()),
+                job.getUsername());
     }
   }
 

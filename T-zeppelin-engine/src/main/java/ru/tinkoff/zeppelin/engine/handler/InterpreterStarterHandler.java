@@ -25,8 +25,9 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.engine.Configuration;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcessStarter;
+import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessStarter;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 
 /**
@@ -77,16 +78,22 @@ public class InterpreterStarterHandler extends AbstractHandler {
       setErrorResult(job, batch, PredefinedInterpreterResults.INTERPRETER_NOT_FOUND);
       return;
     }
-    InterpreterProcess.starting(job.getShebang());
 
-    InterpreterProcessStarter.start(job.getShebang(),
-            source.getPath(),
-            option.getConfig().getClassName(),
-            remoteServerClassPath,
-            thriftAddr,
-            thriftPort,
-            option.getJvmOptions(),
-            Configuration.getInstanceMarkerPrefix());
+    AbstractRemoteProcess.starting(job.getShebang(), RemoteProcessType.INTERPRETER);
+    try {
+      RemoteProcessStarter.start(
+              job.getShebang(),
+              RemoteProcessType.INTERPRETER,
+              source.getPath(),
+              option.getConfig().getClassName(),
+              remoteServerClassPath,
+              thriftAddr,
+              thriftPort,
+              option.getJvmOptions(),
+              Configuration.getInstanceMarkerPrefix());
+    } catch (final Exception e) {
+      AbstractRemoteProcess.remove(job.getShebang(), RemoteProcessType.INTERPRETER);
+    }
   }
 
 }

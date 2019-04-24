@@ -23,7 +23,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
-import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
 
@@ -38,45 +37,62 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 1.0
  * @since 1.0
  */
-public class InterpreterProcess {
+public abstract class AbstractRemoteProcess {
 
   public enum Status {
     STARTING,
     READY
   }
 
-  private static final Map<String, InterpreterProcess> processMap = new ConcurrentHashMap<>();
+  private static final Map<RemoteProcessType, Map<String, AbstractRemoteProcess>> processMap = new ConcurrentHashMap<>();
 
-  public static void starting(final String shebang) {
+  public static void starting(final String shebang, final RemoteProcessType processType) {
     ZLog.log(ET.PROCESS_STARTED,
         String.format("Process started by shebang=%s", shebang),
         String.format("New interpreter process added to process map by shebang=%s", shebang),
         "Unknown");
-    processMap.put(shebang, new InterpreterProcess(shebang, Status.STARTING, null, -1));
+
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+
+    switch (processType) {
+      case INTERPRETER:
+        processMap.get(processType).put(shebang, new InterpreterRemoteProcess(shebang, Status.STARTING, null, -1));
+        break;
+    }
   }
 
   static void handleRegisterEvent(final RegisterInfo registerInfo) {
-    if (processMap.containsKey(registerInfo.getShebang())) {
-      final InterpreterProcess process = processMap.get(registerInfo.getShebang());
+    final RemoteProcessType processType = RemoteProcessType.valueOf(registerInfo.getProcessType());
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+    if (processMap.get(processType).containsKey(registerInfo.getShebang())) {
+      final AbstractRemoteProcess process = processMap.get(processType).get(registerInfo.getShebang());
       process.host = registerInfo.getHost();
       process.port = registerInfo.getPort();
-      process.uuid = registerInfo.getInterpreterProcessUUID();
+      process.uuid = registerInfo.getProcessUUID();
       process.status = Status.READY;
       ZLog.log(ET.REMOTE_CONNECTION_REGISTERED,
           String.format("Registered remote connection to interpreter process with shebang=%s", registerInfo.getShebang()),
           String.format("Received register event for interpreter, process details: shebang=%s, host=%s, port=%s, process uuid=%s",
               registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
-              registerInfo.getInterpreterProcessUUID()), "Unknown");
+              registerInfo.getProcessUUID()), "Unknown");
     }
     ZLog.log(ET.BAD_REMOTE_CONNECTION,
         String.format("Requested interpreter process[shebang:%s] for remote connection not found", registerInfo.getShebang()),
         String.format("Interpreter process with shebang=%s not exist in process map, process details: host=%s, port=%s, process uuid=%s",
-            registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()), registerInfo.getInterpreterProcessUUID()),
+            registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()), registerInfo.getProcessUUID()),
         "Unknown");
   }
 
-  static void handleProcessCompleteEvent(final String shebang) {
-    final InterpreterProcess foundedProcess = processMap.remove(shebang);
+  static void handleProcessCompleteEvent(final String shebang, final RemoteProcessType processType) {
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+
+    final AbstractRemoteProcess foundedProcess = processMap.get(processType).remove(shebang);
     if (foundedProcess == null) {
       ZLog.log(ET.COMPLETED_PROCESS_NOT_FOUND,
           String.format("System error, finished process by shebang: %s not found", shebang),
@@ -91,16 +107,28 @@ public class InterpreterProcess {
     }
   }
 
-  public static void remove(final String shebang) {
-    processMap.remove(shebang);
+  public static void remove(final String shebang, final RemoteProcessType processType) {
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+
+    processMap.get(processType).remove(shebang);
   }
 
-  public static InterpreterProcess get(final String shebang) {
-    return processMap.get(shebang);
+  public static AbstractRemoteProcess get(final String shebang, final RemoteProcessType processType) {
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+
+    return processMap.get(processType).get(shebang);
   }
 
-  public static List<String> getShebangs() {
-    return new ArrayList<>(processMap.keySet());
+  public static List<String> getShebangs(final RemoteProcessType processType) {
+    if(!processMap.containsKey(processType)) {
+      processMap.put(processType, new ConcurrentHashMap<>());
+    }
+
+    return new ArrayList<>(processMap.get(processType).keySet());
   }
 
   private final String shebang;
@@ -108,9 +136,12 @@ public class InterpreterProcess {
 
   private String host;
   private int port;
-  private String uuid;
+  protected String uuid;
 
-  private InterpreterProcess(final String shebang, final Status status, final String host, final int port) {
+  protected AbstractRemoteProcess(final String shebang,
+                                  final Status status,
+                                  final String host,
+                                  final int port) {
     this.shebang = shebang;
     this.status = status;
     this.host = host;
@@ -126,7 +157,7 @@ public class InterpreterProcess {
     return status;
   }
 
-  public RemoteInterpreterThriftService.Client getConnection() {
+  protected RemoteInterpreterThriftService.Client getConnection() {
     final TSocket transport = new TSocket(host, port);
     try {
       transport.open();
@@ -141,7 +172,7 @@ public class InterpreterProcess {
     return new RemoteInterpreterThriftService.Client(protocol);
   }
 
-  public void releaseConnection(final RemoteInterpreterThriftService.Client connection) {
+  protected void releaseConnection(final RemoteInterpreterThriftService.Client connection) {
     try {
       connection.getOutputProtocol().getTransport().close();
     } catch (final Throwable t) {
@@ -154,32 +185,6 @@ public class InterpreterProcess {
 
   public String getUuid() {
     return uuid;
-  }
-
-  public PushResult push(final String payload,
-                         final Map<String, String> noteContext,
-                         final Map<String, String> userContext,
-                         final Map<String, String> configuration) {
-    final RemoteInterpreterThriftService.Client client = getConnection();
-    if(client == null) {
-      ZLog.log(ET.PUSH_FAILED_CLIENT_NOT_FOUND,
-          String.format("Push failed: client not found, uuid=%s", this.uuid),
-          String.format("Push failed: client not found, process details=%s", this.toString()),
-          "Unknown");
-      return null;
-    }
-
-    try {
-      return client.push(payload, noteContext, userContext, configuration);
-    } catch (final Throwable throwable) {
-      ZLog.log(ET.PUSH_FAILED,
-          String.format("Push failed, uuid=%s", this.uuid),
-          String.format("Error occurred during push, process details=%s, error=%s",
-              this.toString(), throwable.getMessage()), "Unknown");
-      return null;
-    } finally {
-      releaseConnection(client);
-    }
   }
 
   public PingResult ping() {
@@ -235,7 +240,7 @@ public class InterpreterProcess {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final InterpreterProcess that = (InterpreterProcess) o;
+    final AbstractRemoteProcess that = (AbstractRemoteProcess) o;
     return port == that.port &&
             shebang.equals(that.shebang) &&
             Objects.equals(host, that.host) &&

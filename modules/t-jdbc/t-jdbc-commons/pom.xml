@@ -23,13 +23,13 @@
     <artifactId>zeppelin</artifactId>
     <groupId>org.apache.zeppelin</groupId>
     <version>1.0.0-T-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>jdbc</artifactId>
+  <artifactId>t-jdbc-commons</artifactId>
   <version>1.0.0-T-SNAPSHOT</version>
-  <name>Zeppelin: JDBC interpreter</name>
+  <name>Zeppelin: JDBC commons</name>
 
 
   <dependencies>

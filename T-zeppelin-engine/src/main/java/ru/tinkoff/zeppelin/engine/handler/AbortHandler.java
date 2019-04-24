@@ -25,10 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.core.notebook.Note;
-import ru.tinkoff.zeppelin.engine.server.InterpreterProcess;
+import ru.tinkoff.zeppelin.engine.server.InterpreterRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.CancelResult;
-import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
 
 import java.util.List;
 import java.util.Objects;
@@ -76,7 +77,7 @@ public class AbortHandler extends AbstractHandler {
   }
 
   private void abortRunningJob(final JobBatch batch, final Job job) {
-    final InterpreterProcess remote = InterpreterProcess.get(job.getShebang());
+    final InterpreterRemoteProcess remote = (InterpreterRemoteProcess) AbstractRemoteProcess.get(job.getShebang(), RemoteProcessType.INTERPRETER);
     if (remote == null) {
       setAbortResult(job, batch, PredefinedInterpreterResults.OPERATION_ABORTED);
       ZLog.log(ET.INTERPRETER_PROCESS_NOT_FOUND,
@@ -87,10 +88,8 @@ public class AbortHandler extends AbstractHandler {
     }
 
     CancelResult cancelResult = null;
-    RemoteInterpreterThriftService.Client connection = null;
     try {
-      connection = remote.getConnection();
-      cancelResult = remote.getConnection().cancel(job.getInterpreterJobUUID());
+      cancelResult = remote.cancel(job.getInterpreterJobUUID());
       Objects.requireNonNull(cancelResult);
 
     } catch (final Exception e) {
@@ -101,10 +100,6 @@ public class AbortHandler extends AbstractHandler {
                       cancelResult != null ? cancelResult.toString() : "null", job.toString()),
               "Unknown");
       return;
-    } finally {
-      if (connection != null) {
-        remote.releaseConnection(connection);
-      }
     }
 
     switch (cancelResult.status) {

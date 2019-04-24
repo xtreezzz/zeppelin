@@ -14,15 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ru.tinkoff.zeppelin.remote;
 
 import com.google.gson.Gson;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.TProcessor;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
@@ -35,104 +31,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
-public class RemoteInterpreterThread extends Thread implements RemoteInterpreterThriftService.Iface {
-
-  private final String zeppelinServerHost;
-  private final String zeppelinServerPort;
-
-  private final String interpreterShebang;
-  private final String interpreterClasspath;
-  private final String interpreterClassName;
-
-  private TServerSocket serverTransport;
-  private TThreadPoolServer server;
-  private ZeppelinThriftService.Client zeppelin;
-
-  private Class interpreterClass;
+public class RemoteInterpreterThread extends AbstractRemoteProcessThread implements RemoteInterpreterThriftService.Iface {
 
   private final ConcurrentLinkedQueue<Interpreter> cachedInstances = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Interpreter> workingInstances = new ConcurrentLinkedQueue<>();
   private final ExecutorService executor = Executors.newFixedThreadPool(10);
-  private static final UUID processUUID = UUID.randomUUID();
-
-  RemoteInterpreterThread(final String zeppelinServerHost,
-                          final String zeppelinServerPort,
-                          final String interpreterShebang,
-                          final String interpreterClasspath,
-                          final String interpreterClassName) {
-    this.zeppelinServerHost = zeppelinServerHost;
-    this.zeppelinServerPort = zeppelinServerPort;
-    this.interpreterShebang = interpreterShebang;
-    this.interpreterClasspath = interpreterClasspath;
-    this.interpreterClassName = interpreterClassName;
-  }
 
   @Override
-  public void run() {
-    try {
-      interpreterClass = Class.forName(interpreterClassName);
-
-      serverTransport = createTServerSocket();
-      server = new TThreadPoolServer(
-              new TThreadPoolServer
-                      .Args(serverTransport)
-                      .processor(new RemoteInterpreterThriftService.Processor<>(this))
-      );
-
-      final TTransport transport = new TSocket(zeppelinServerHost, Integer.parseInt(zeppelinServerPort));
-      transport.open();
-
-      zeppelin = new ZeppelinThriftService.Client(new TBinaryProtocol(transport));
-
-      new Thread(new Runnable() {
-        boolean interrupted = false;
-
-        @Override
-        public void run() {
-          while (!interrupted && !server.isServing()) {
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException e) {
-              interrupted = true;
-            }
-          }
-
-          if (!interrupted) {
-            final RegisterInfo registerInfo = new RegisterInfo(
-                    //serverTransport.getServerSocket().getInetAddress().getHostAddress(),
-                    "127.0.0.1",
-                    serverTransport.getServerSocket().getLocalPort(),
-                    interpreterShebang,
-                    processUUID.toString()
-            );
-            try {
-              zeppelin.registerInterpreterProcess(registerInfo);
-            } catch (TException e) {
-              shutdown();
-            }
-          }
-        }
-      }).start();
-
-      server.serve();
-    } catch (final Exception e) {
-      throw new IllegalStateException("", e);
-    }
+  protected TProcessor getProcessor() {
+    return new RemoteInterpreterThriftService.Processor<>(this);
   }
-
-  private static TServerSocket createTServerSocket() {
-    int start = 1024;
-    int end = 65535;
-    for (int i = start; i <= end; ++i) {
-      try {
-        return new TServerSocket(i);
-      } catch (Exception e) {
-        // ignore this
-      }
-    }
-    throw new IllegalStateException("No available port in the portRange: " + start + ":" + end);
-  }
-
 
   @Override
   public PushResult push(final String st,
@@ -148,10 +56,10 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
           interpreter = polled;
         } else {
           polled.close();
-          interpreter = (Interpreter) (interpreterClass.newInstance());
+          interpreter = (Interpreter) (processClass.newInstance());
         }
       } else {
-        interpreter = (Interpreter) interpreterClass.newInstance();
+        interpreter = (Interpreter) processClass.newInstance();
       }
 
       final UUID uuid = UUID.randomUUID();
@@ -164,7 +72,7 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
             InterpreterResult result;
             try {
               if (!interpreter.isOpened()) {
-                interpreter.open(configuration, this.interpreterClasspath);
+                interpreter.open(configuration, this.processClasspath);
               }
               result = interpreter.interpretV2(st, noteContext, userContext, configuration);
             } catch (Exception e) {
@@ -213,12 +121,7 @@ public class RemoteInterpreterThread extends Thread implements RemoteInterpreter
         // log n skip
       }
     }
-    System.exit(0);
+    super.shutdown();
   }
 
-
-  @Override
-  public PingResult ping() {
-    return new PingResult(PingResultStatus.OK, processUUID.toString());
-  }
 }

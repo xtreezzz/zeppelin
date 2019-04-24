@@ -18,6 +18,24 @@
 
 namespace java ru.tinkoff.zeppelin.interpreter.thrift
 
+enum PingResultStatus {
+    OK,
+    KILL_ME
+}
+
+struct PingResult {
+  1: PingResultStatus status,
+  2: string uuid
+}
+
+service RemoteProcessThriftService {
+
+  PingResult ping();
+
+  void shutdown();
+}
+
+
 enum PushResultStatus {
     ACCEPT,
     DECLINE,
@@ -42,24 +60,16 @@ struct CancelResult {
   3: string uuid
 }
 
-enum PingResultStatus {
-    OK,
-    KILL_ME
-}
-
-struct PingResult {
-  1: PingResultStatus status,
-  2: string uuid
-}
-
-service RemoteInterpreterThriftService {
+service RemoteInterpreterThriftService extends RemoteProcessThriftService {
 
   PushResult push(1: string st, 2: map<string, string> noteContext, 3: map<string, string> userContext, 4:  map<string, string> configuration);
   CancelResult cancel(1: string UUID);
+}
 
-  PingResult ping();
 
-  void shutdown();
+service RemoteCompleterThriftService extends RemoteProcessThriftService {
+
+  string compete(1: string st, 2: map<string, string> noteContext, 3: map<string, string> userContext, 4:  map<string, string> configuration);
 }
 
 

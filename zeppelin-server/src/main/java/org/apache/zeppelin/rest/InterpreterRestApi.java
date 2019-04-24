@@ -46,7 +46,7 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSou
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
 import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
-import ru.tinkoff.zeppelin.engine.server.InterpreterInstaller;
+import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
 
 
 /**
@@ -139,9 +139,8 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/install/{interpreterName}", produces = "application/json")
   public ResponseEntity installSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src =
-          Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.installSource(src);
+      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
+      interpreterSettingService.installSource(src, true, false);
       logger.info("Source {} installed", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -158,9 +157,8 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/uninstall/{interpreterName}", produces = "application/json")
   public ResponseEntity uninstallSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src =
-          Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.uninstallSource(src);
+      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
+      interpreterSettingService.uninstallSource(src, false);
       logger.info("Source {} uninstalled", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -177,9 +175,9 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/reinstall/{interpreterName}", produces = "application/json")
   public ResponseEntity reinstallSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src =
-          Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.reInstallSource(src);
+      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
+      interpreterSettingService.uninstallSource(src, false);
+      interpreterSettingService.installSource(src, true, false);
       logger.info("Source {} reinstalled", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -199,8 +197,7 @@ public class InterpreterRestApi {
   public ResponseEntity addSource(@RequestBody final String message) {
     try {
       final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
-      request.setStatus(Status.NOT_INSTALLED);
-      interpreterSettingService.saveSource(request);
+      interpreterSettingService.installSource(request, false, true);
 
       logger.info("New source {} added", request.getInterpreterName());
       return new JsonResponse(HttpStatus.OK).build();
@@ -223,7 +220,7 @@ public class InterpreterRestApi {
       logger.info("Remove source {}", interpreterName);
       final InterpreterArtifactSource source = interpreterSettingService.getSource(interpreterName);
       Preconditions.checkNotNull(source);
-      interpreterSettingService.uninstallSource(source);
+      interpreterSettingService.uninstallSource(source, true);
       interpreterSettingService.removeSource(interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -355,31 +352,11 @@ public class InterpreterRestApi {
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")
-  public ResponseEntity restartSetting(@RequestBody final String message, @PathVariable("settingId") final String settingId) {
-    logger.info("Restart interpreterSetting {}, msg={}", settingId, message);
+  public ResponseEntity restartSetting(@PathVariable("settingId") final String shebang) {
+    logger.info("Restart interpreterSetting {}", shebang);
 
-
-    //    final InterpreterSetting setting = interpreterSettingManager.get(settingId);
-    //    try {
-    //      final RestartInterpreterRequest request = RestartInterpreterRequest.fromJson(message);
-    //
-    //      final String noteId = request == null ? null : request.getUuid();
-    //      if (null == noteId) {
-    //        interpreterSettingManager.close(settingId);
-    //      } else {
-    //        interpreterSettingManager.restart(settingId, noteId, securityService.getPrincipal());
-    //      }
-    //
-    //    } catch (final InterpreterException e) {
-    //      logger.error("Exception in InterpreterRestApi while restartSetting ", e);
-    //      return new JsonResponse(HttpStatus.NOT_FOUND, e.getMessage(), ExceptionUtils.getStackTrace(e))
-    //          .build();
-    //    }
-    //    if (setting == null) {
-    //      return new JsonResponse(HttpStatus.NOT_FOUND, "", settingId).build();
-    //    }
-    //    return new JsonResponse(HttpStatus.OK, "", setting).build();
-    return new JsonResponse<>(HttpStatus.NOT_IMPLEMENTED, "").build();
+    interpreterSettingService.restartInterpreter("%" + shebang);
+    return new JsonResponse<>(HttpStatus.OK, "").build();
   }
 
   /**
@@ -393,7 +370,7 @@ public class InterpreterRestApi {
       for (final InterpreterArtifactSource source: sources) {
         if (source.getStatus().equals(Status.INSTALLED)) {
           final List<BaseInterpreterConfig> configList =
-              InterpreterInstaller.getDefaultConfig(source.getInterpreterName());
+              ModuleInstaller.getDefaultConfig(source.getInterpreterName());
           if (!configList.isEmpty()) {
             m.put(source.getInterpreterName(), configList.get(0));
           }
