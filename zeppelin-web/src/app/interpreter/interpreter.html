@@ -163,18 +163,8 @@ limitations under the License.
       <div id="{{setting.interpreterName | lowercase}}">
         <div class="row interpreter" style="margin-top: 5px">
           <div class="col-md-12">
-            <h3 class="interpreter-title">{{setting.interpreterName}}
-              <small>
-            <span style="display:inline-block" ng-repeat="interpreter in setting.config"
-                  title="{{interpreter.className}}">
-              <span ng-show="!$first">, </span>
-              <span ng-show="!$parent.$first || $first">{{setting.shebang}}</span
-              ><span ng-show="(!$parent.$first || $first) && !$first">.</span
-            ><span ng-show="!$first">{{interpreter.customInterpreterName}}</span>
-            </span>
-              </small>
-            </h3>
-          <span style="float:right" ng-show="!valueform.$visible" >
+            <h3 class="interpreter-title">{{setting.customInterpreterName}}</h3>
+            <span style="float:right" ng-show="!valueform.$visible" >
           <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
               <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
               <span ng-if="setting.isEnabled != true" class="fa fa-toggle-off" style="border: none !important; font-size:24px; color:red"></span>

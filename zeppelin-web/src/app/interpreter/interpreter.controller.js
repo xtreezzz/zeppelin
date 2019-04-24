@@ -121,7 +121,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
             window.location = baseUrlSrv.getBase();
           }, 3000);
         }
-        console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -129,7 +129,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter').then(function(res) {
       $scope.availableInterpreters = res.data.body;
     }).catch(function(res) {
-      console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+      $scope.showErrorMessage(res);
     });
   };
 
@@ -138,7 +138,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       .then(function(res) {
         $scope.interpreterPropertyTypes = res.data.body;
       }).catch(function(res) {
-        console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -307,9 +307,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
           $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1), setting)
             .then(function(res) {
-              $scope.interpreterSettings[index] = res.data.body;
-              removeTMPSettings(index);
-              // thisConfirm.close();
+              thisConfirm.close();
             })
             .catch(function(res) {
               const message = res.data ? res.data.message : 'Could not connect to server.';
@@ -346,7 +344,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
               let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
               $scope.interpreterSettings.splice(index, 1);
             }).catch(function(res) {
-              console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+              $scope.showErrorMessage(res);
             });
         }
       },
@@ -377,8 +375,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         if (result) {
           $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/restart/' + shebang.substring(1))
             .then(function(res) {
-              let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-              $scope.interpreterSettings[index] = res.data.body;
               ngToast.info('Interpreter stopped. Will be lazily started on next run.');
             }).catch(function(res) {
               let errorMsg = (res.data !== null) ? res.data.message : 'Could not connect to server.';
@@ -519,8 +515,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/repository')
       .success(function(data, status, headers, config) {
         $scope.repositories = data.body;
-      }).error(function(data, status, headers, config) {
-        console.log('Error %o %o', status, data.message);
+      }).catch(function(res) {
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -533,7 +529,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         $scope.resetNewRepositorySetting();
         angular.element('#repoModal').modal('hide');
       }).catch(function(res) {
-        console.log('Error %o %o', res.headers, res.config);
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -549,7 +545,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
               let index = _.findIndex($scope.repositories, {'id': repoId});
               $scope.repositories.splice(index, 1);
             }).catch(function(res) {
-              console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+              $scope.showErrorMessage(res);
             });
         }
       },
@@ -576,8 +572,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/source')
       .success(function(data, status, headers, config) {
         $scope.sources = data.body;
-      }).error(function(data, status, headers, config) {
-        console.log('Error %o %o', status, data.message);
+      }).catch(function(res) {
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -590,19 +586,17 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         $scope.resetNewSourceSetting();
         angular.element('#srcModal').modal('hide');
       }).catch(function(res) {
-        console.log('Error %o %o', res.headers, res.config);
+        $scope.showErrorMessage(res);
       });
   };
 
   $scope.installSource = function(interpreterName) {
-    let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
-    $scope.sources[index].status = 'IN_PROGRESS';
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + interpreterName)
       .then(function(res) {
         getSources();
         getAvailableInterpreters();
       }).catch(function(res) {
-        console.log('Error %o %o', res.headers, res.config);
+        $scope.showErrorMessage(res);
       });
   };
 
@@ -614,15 +608,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       message: 'Do you want to uninstall this interpreter source? All running interpreters would be disabled!',
       callback: function(result) {
         if (result) {
-          let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
-          $scope.sources[index].status = 'IN_PROGRESS';
           $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + interpreterName)
             .then(function(res) {
               getSources();
               getAvailableInterpreters();
               getInterpreterSettings();
             }).catch(function(res) {
-              console.log('Error %o %o', res.headers, res.config);
+              $scope.showErrorMessage(res);
             });
         }
       },
@@ -636,15 +628,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       message: 'Do you want to reinstall this interpreter source? All running interpreters would be unavailable!',
       callback: function(result) {
         if (result) {
-          let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
-          $scope.sources[index].status = 'IN_PROGRESS';
           $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + interpreterName)
             .then(function(res) {
               getSources();
               getAvailableInterpreters();
               getInterpreterSettings();
             }).catch(function(res) {
-              console.log('Error %o %o', res.headers, res.config);
+              $scope.showErrorMessage(res);
             });
         }
       },
@@ -663,7 +653,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
               let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
               $scope.sources.splice(index, 1);
             }).catch(function(res) {
-              console.log('Error %o %o', res.status, res.data ? res.data.message : '');
+              $scope.showErrorMessage(res);
             });
         }
       },
@@ -672,10 +662,20 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   // common
 
-  $scope.showErrorMessage = function(setting) {
+  $scope.showErrorMessage = function(res) {
     BootstrapDialog.show({
-      title: 'Error downloading dependencies',
-      message: _.escape(setting.errorReason),
+      closable: false,
+      closeByBackdrop: false,
+      closeByKeyboard: false,
+      title: 'Error: ' + res.status,
+      message: _.escape(res.data ? res.data.message : ''),
+      buttons: [{
+        // close all the dialogs when there are error on running all paragraphs
+        label: 'Close',
+        action: function() {
+          BootstrapDialog.closeAll();
+        },
+      }],
     });
   };
 

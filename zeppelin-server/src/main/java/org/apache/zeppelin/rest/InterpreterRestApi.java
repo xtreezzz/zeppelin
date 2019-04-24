@@ -298,6 +298,8 @@ public class InterpreterRestApi {
     try {
       final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
       interpreterSettingService.updateOption(option);
+      // restart with new settings
+      interpreterSettingService.restartInterpreter("%" + shebang);
       logger.info("Option {} updated", option.getShebang());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
