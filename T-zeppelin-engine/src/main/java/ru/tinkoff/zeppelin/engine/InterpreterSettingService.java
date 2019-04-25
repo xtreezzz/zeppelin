@@ -50,9 +50,12 @@ public class InterpreterSettingService {
 
   @PostConstruct
   private void init() {
-//    getAllSources().stream()
-//            .filter(InterpreterArtifactSource::isReinstallOnStart)
-//            .forEach(this::reInstallSource);
+    getAllSources().stream()
+            .filter(InterpreterArtifactSource::isReinstallOnStart)
+            .forEach(src -> {
+              uninstallSource(src, false);
+              installSource(src, true, false);
+            });
   }
 
   public synchronized void installSource(@Nonnull final InterpreterArtifactSource source,
@@ -72,7 +75,7 @@ public class InterpreterSettingService {
     try {
       ModuleInstaller.uninstallInterpreter(source.getInterpreterName());
       installationDir = ModuleInstaller.install(source.getInterpreterName(), source.getArtifact(), getAllRepositories());
-      if(StringUtils.isEmpty(installationDir)) {
+      if (StringUtils.isEmpty(installationDir)) {
         throw new RuntimeException();
       }
 
@@ -100,7 +103,7 @@ public class InterpreterSettingService {
       source.setPath(null);
       source.setStatus(InterpreterArtifactSource.Status.NOT_INSTALLED);
     }
-    if(hasSameName) {
+    if (hasSameName) {
       storage.updateSource(source);
     } else {
       storage.saveInterpreterSource(source);
@@ -125,7 +128,7 @@ public class InterpreterSettingService {
     for (final InterpreterOption option : interpreterOptions) {
       final String shebang = option.getShebang();
       final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
-      if(process != null) {
+      if (process != null) {
         process.forceKill();
       }
     }
@@ -153,7 +156,7 @@ public class InterpreterSettingService {
 
   public void restartInterpreter(final String shebang) {
     final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
-    if(process != null) {
+    if (process != null) {
       process.forceKill();
     }
   }
