@@ -69,7 +69,7 @@ service RemoteInterpreterThriftService extends RemoteProcessThriftService {
 
 service RemoteCompleterThriftService extends RemoteProcessThriftService {
 
-  string compete(1: string st, 2: map<string, string> noteContext, 3: map<string, string> userContext, 4:  map<string, string> configuration);
+  string compete(1: string st, 2: i32 cursorPosition, 3: map<string, string> noteContext, 4: map<string, string> userContext, 5:  map<string, string> configuration);
 }
 
 

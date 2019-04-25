@@ -17,30 +17,45 @@
 
 package ru.tinkoff.zeppelin.engine;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.CompleterRemoteProcess;
+import ru.tinkoff.zeppelin.engine.server.RemoteProcessStarter;
 import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+@DependsOn({"configuration", "thriftBootstrap"})
 @Component
 public class CompletionService {
 
   private final InterpreterSettingService interpreterSettingService;
+  private final ThriftServerBootstrap serverBootstrap;
 
-  public CompletionService(final InterpreterSettingService interpreterSettingService) {
+  public CompletionService(final InterpreterSettingService interpreterSettingService,
+                           final ThriftServerBootstrap serverBootstrap) {
     this.interpreterSettingService = interpreterSettingService;
+    this.serverBootstrap = serverBootstrap;
   }
 
-  public void complete(final Note note,
+  public String complete(final Note note,
                        final Paragraph paragraph,
                        final String payload,
-                       final int cursorPosition) {
+                       final int cursorPosition,
+                       final String user,
+                       final Set<String> roles) {
     try {
       final InterpreterOption option = interpreterSettingService.getOption(paragraph.getShebang());
-      final AbstractRemoteProcess process = AbstractRemoteProcess.get(paragraph.getShebang(), RemoteProcessType.INTERPRETER);
+      final AbstractRemoteProcess process = AbstractRemoteProcess.get(paragraph.getShebang(), RemoteProcessType.COMPLETER);
       if (process != null
               && process.getStatus() == AbstractRemoteProcess.Status.READY
               && option != null) {
@@ -48,15 +63,67 @@ public class CompletionService {
         final FormsProcessor.InjectResponse response
                 = FormsProcessor.injectFormValues(payload, cursorPosition, paragraph.getFormParams());
 
-        final String ste = ";";
+        // prepare notecontext
+        final Map<String, String> noteContext = new HashMap<>();
+
+        noteContext.put("Z_ENV_NOTE_ID", String.valueOf(paragraph.getNoteId()));
+        noteContext.put("Z_ENV_PARAGRAPH_ID", String.valueOf(paragraph.getId()));
+
+        // prepare usercontext
+        final Map<String, String> userContext = new HashMap<>();
+        userContext.put("Z_ENV_USER_NAME", user);
+        userContext.put("Z_ENV_USER_ROLES", roles.toString());
+
+        // prepare configuration
+        final Map<String, String> configuration = new HashMap<>();
+        option.getConfig()
+                .getProperties()
+                .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
+
+        final String result = ((CompleterRemoteProcess)process).complete(
+                response.getPayload(),
+                response.getCursorPosition(),
+                noteContext,
+                userContext,
+                configuration);
+
+        return result;
 
       } else if (process != null
               && process.getStatus() == AbstractRemoteProcess.Status.STARTING
               && option != null) {
         final String str = ";";
+      } else {
+        final String shebang = ";";
+
+        final InterpreterArtifactSource source = option != null
+                ? interpreterSettingService.getSource(option.getInterpreterName())
+                : null;
+
+        if (option == null || !option.isEnabled()
+                || source == null || source.getStatus() != InterpreterArtifactSource.Status.INSTALLED) {
+          return StringUtils.EMPTY;
+        }
+
+        AbstractRemoteProcess.starting(shebang, RemoteProcessType.COMPLETER);
+        try {
+          RemoteProcessStarter.start(
+                  shebang,
+                  RemoteProcessType.COMPLETER,
+                  source.getPath(),
+                  option.getConfig().getClassName(),
+                  serverBootstrap.getServer().getRemoteServerClassPath(),
+                  serverBootstrap.getServer().getAddr(),
+                  serverBootstrap.getServer().getPort(),
+                  option.getJvmOptions(),
+                  Configuration.getInstanceMarkerPrefix());
+        } catch (final Exception e) {
+          AbstractRemoteProcess.remove(shebang, RemoteProcessType.COMPLETER);
+        }
       }
     } catch (final Exception e) {
       //log this
     }
+    return StringUtils.EMPTY;
   }
 }

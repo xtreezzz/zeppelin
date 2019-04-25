@@ -14,26 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ru.tinkoff.zeppelin.interpreter;
 
 import java.util.Map;
 
-public abstract class Interpreter extends Base {
+public abstract class Completer extends Base {
 
-  protected Map<String, String> configuration;
-  protected String classPath;
-
-  // service methods and fields
-  private volatile String sessionUUID;
-  public String getSessionUUID() {
-    return sessionUUID;
+  public Completer() {
   }
-  public void setSessionUUID(final String sessionUUID) {
-    this.sessionUUID = sessionUUID;
-  }
-
-
-  public Interpreter() { }
 
   public abstract boolean isAlive();
 
@@ -43,12 +32,13 @@ public abstract class Interpreter extends Base {
 
   public abstract boolean isReusableForConfiguration(final Map<String, String> configuration);
 
-  public abstract void  cancel();
+  public abstract void cancel();
 
   public abstract void close();
 
-  public abstract InterpreterResult interpretV2(final String st,
-                                                final Map<String, String> noteContext,
-                                                final Map<String, String> userContext,
-                                                final Map<String, String> configuration);
+  public abstract String complete(final String st,
+                                  final int cursorPosition,
+                                  final Map<String, String> noteContext,
+                                  final Map<String, String> userContext,
+                                  final Map<String, String> configuration);
 }

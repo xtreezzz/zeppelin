@@ -17,33 +17,22 @@
 
 package ru.tinkoff.zeppelin.engine;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
-import ru.tinkoff.zeppelin.core.notebook.Job;
-import ru.tinkoff.zeppelin.core.notebook.JobBatch;
-import ru.tinkoff.zeppelin.core.notebook.Note;
-import ru.tinkoff.zeppelin.core.notebook.Paragraph;
-import ru.tinkoff.zeppelin.core.notebook.Scheduler;
-import ru.tinkoff.zeppelin.engine.handler.AbortHandler;
-import ru.tinkoff.zeppelin.engine.handler.ExecutionHandler;
-import ru.tinkoff.zeppelin.engine.handler.InterpreterDeadHandler;
-import ru.tinkoff.zeppelin.engine.handler.InterpreterStarterHandler;
-import ru.tinkoff.zeppelin.engine.handler.PendingHandler;
-import ru.tinkoff.zeppelin.engine.handler.SchedulerHandler;
+import ru.tinkoff.zeppelin.core.notebook.*;
+import ru.tinkoff.zeppelin.engine.handler.*;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
-import ru.tinkoff.zeppelin.engine.server.RemoteProcessServer;
 import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResultStatus;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Core class of logic
@@ -54,11 +43,9 @@ import ru.tinkoff.zeppelin.interpreter.thrift.PingResultStatus;
  */
 
 @Lazy(false)
-@DependsOn("configuration")
+@DependsOn({"configuration", "thriftBootstrap"})
 @Component
 public class NoteExecutorService {
-
-  private RemoteProcessServer server;
 
   private final AbortHandler abortHandler;
   private final PendingHandler pendingHandler;
@@ -67,6 +54,7 @@ public class NoteExecutorService {
   private final InterpreterStarterHandler interpreterStarterHandler;
   private final SchedulerHandler schedulerHandler;
   private final ExecutionHandler executionHandler;
+  private final ThriftServerBootstrap serverBootstrap;
 
   public NoteExecutorService(final AbortHandler abortHandler,
                              final PendingHandler pendingHandler,
@@ -74,7 +62,8 @@ public class NoteExecutorService {
                              final InterpreterSettingService interpreterSettingService,
                              final InterpreterStarterHandler interpreterStarterHandler,
                              final SchedulerHandler schedulerHandler,
-                             final ExecutionHandler executionHandler) {
+                             final ExecutionHandler executionHandler,
+                             final ThriftServerBootstrap serverBootstrap) {
     this.abortHandler = abortHandler;
     this.pendingHandler = pendingHandler;
     this.interpreterDeadHandler = interpreterDeadHandler;
@@ -82,18 +71,7 @@ public class NoteExecutorService {
     this.interpreterStarterHandler = interpreterStarterHandler;
     this.schedulerHandler = schedulerHandler;
     this.executionHandler = executionHandler;
-  }
-
-  @PostConstruct
-  public void init() throws Exception{
-    server = new RemoteProcessServer();
-    server.initSources(interpreterSettingService.getAllRepositories());
-    server.start();
-  }
-
-  @PreDestroy
-  private void destroy() {
-    server.stop();
+    this.serverBootstrap = serverBootstrap;
   }
 
 
@@ -120,9 +98,9 @@ public class NoteExecutorService {
           interpreterStarterHandler.handle(job,
                   option,
                   source,
-                  server.getRemoteServerClassPath(),
-                  server.getAddr(),
-                  server.getPort());
+                  serverBootstrap.getServer().getRemoteServerClassPath(),
+                  serverBootstrap.getServer().getAddr(),
+                  serverBootstrap.getServer().getPort());
         }
       } catch (final Exception e) {
         //log this

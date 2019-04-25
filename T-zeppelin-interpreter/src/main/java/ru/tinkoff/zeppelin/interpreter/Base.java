@@ -15,30 +15,23 @@
  * limitations under the License.
  */
 
-package ru.tinkoff.zeppelin.engine.server;
+package ru.tinkoff.zeppelin.interpreter;
 
-import ru.tinkoff.zeppelin.remote.RemoteCompleterThread;
-import ru.tinkoff.zeppelin.remote.RemoteInterpreterThread;
-import ru.tinkoff.zeppelin.remote.SimpleExternalProcess;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public enum RemoteProcessType {
-  INTERPRETER(RemoteInterpreterThread.class, SimpleExternalProcess.class),
-  COMPLETER(RemoteCompleterThread.class, SimpleExternalProcess.class),
-  ;
+public class Base {
 
-  private Class remoteThreadClass;
-  private Class remoteServerClass;
+  protected final Pattern envVariables = Pattern.compile("(?=(" + "Z_ENV_[_a-zA-Z0-9]+" + "))");
 
-  RemoteProcessType(final Class remoteThreadClass, final Class remoteServerClass) {
-    this.remoteThreadClass = remoteThreadClass;
-    this.remoteServerClass = remoteServerClass;
-  }
-
-  public Class getRemoteThreadClass() {
-    return remoteThreadClass;
-  }
-
-  public Class getRemoteServerClass() {
-    return remoteServerClass;
+  protected Set<String> getAllEnvVariables(final String st) {
+    final Set<String> matches = new HashSet<>();
+    final Matcher m = envVariables.matcher(st);
+    while (m.find()) {
+      matches.add(m.group(1));
+    }
+    return matches;
   }
 }

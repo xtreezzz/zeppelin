@@ -22,7 +22,7 @@ import sun.misc.Signal;
 
 import java.util.Objects;
 
-public class RemoteProcessServer {
+public class SimpleExternalProcess {
 
   public static void main(String[] args) throws Exception {
 
