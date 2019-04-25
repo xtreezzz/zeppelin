@@ -19,13 +19,14 @@ package ru.tinkoff.zeppelin.engine.server;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
-import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
+import ru.tinkoff.zeppelin.interpreter.thrift.RemoteProcessThriftService;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 1.0
  * @since 1.0
  */
-public abstract class AbstractRemoteProcess {
+public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService.Client> {
 
   public enum Status {
     STARTING,
@@ -48,24 +49,31 @@ public abstract class AbstractRemoteProcess {
 
   public static void starting(final String shebang, final RemoteProcessType processType) {
     ZLog.log(ET.PROCESS_STARTED,
-        String.format("Process started by shebang=%s", shebang),
-        String.format("New interpreter process added to process map by shebang=%s", shebang),
-        "Unknown");
+            String.format("Process started by shebang=%s", shebang),
+            String.format("New interpreter process added to process map by shebang=%s", shebang),
+            "Unknown");
 
-    if(!processMap.containsKey(processType)) {
+    if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
+  final AbstractRemoteProcess process;
+      switch (processType) {
+        case INTERPRETER:
+          process = new InterpreterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
+          break;
+        case COMPLETER:
+          process = new CompleterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
+          break;
+        default:
+          throw new IllegalArgumentException();
+      }
 
-    switch (processType) {
-      case INTERPRETER:
-        processMap.get(processType).put(shebang, new InterpreterRemoteProcess(shebang, Status.STARTING, null, -1));
-        break;
-    }
+    processMap.get(processType).put(shebang, process);
   }
 
   static void handleRegisterEvent(final RegisterInfo registerInfo) {
     final RemoteProcessType processType = RemoteProcessType.valueOf(registerInfo.getProcessType());
-    if(!processMap.containsKey(processType)) {
+    if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
     if (processMap.get(processType).containsKey(registerInfo.getShebang())) {
@@ -75,40 +83,40 @@ public abstract class AbstractRemoteProcess {
       process.uuid = registerInfo.getProcessUUID();
       process.status = Status.READY;
       ZLog.log(ET.REMOTE_CONNECTION_REGISTERED,
-          String.format("Registered remote connection to interpreter process with shebang=%s", registerInfo.getShebang()),
-          String.format("Received register event for interpreter, process details: shebang=%s, host=%s, port=%s, process uuid=%s",
-              registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
-              registerInfo.getProcessUUID()), "Unknown");
+              String.format("Registered remote connection to interpreter process with shebang=%s", registerInfo.getShebang()),
+              String.format("Received register event for interpreter, process details: shebang=%s, host=%s, port=%s, process uuid=%s",
+                      registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
+                      registerInfo.getProcessUUID()), "Unknown");
     }
     ZLog.log(ET.BAD_REMOTE_CONNECTION,
-        String.format("Requested interpreter process[shebang:%s] for remote connection not found", registerInfo.getShebang()),
-        String.format("Interpreter process with shebang=%s not exist in process map, process details: host=%s, port=%s, process uuid=%s",
-            registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()), registerInfo.getProcessUUID()),
-        "Unknown");
+            String.format("Requested interpreter process[shebang:%s] for remote connection not found", registerInfo.getShebang()),
+            String.format("Interpreter process with shebang=%s not exist in process map, process details: host=%s, port=%s, process uuid=%s",
+                    registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()), registerInfo.getProcessUUID()),
+            "Unknown");
   }
 
   static void handleProcessCompleteEvent(final String shebang, final RemoteProcessType processType) {
-    if(!processMap.containsKey(processType)) {
+    if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
 
     final AbstractRemoteProcess foundedProcess = processMap.get(processType).remove(shebang);
     if (foundedProcess == null) {
       ZLog.log(ET.COMPLETED_PROCESS_NOT_FOUND,
-          String.format("System error, finished process by shebang: %s not found", shebang),
-          String.format("Interpreter process with shebang=%s not exist in process map", shebang),
-          "Unknown");
+              String.format("System error, finished process by shebang: %s not found", shebang),
+              String.format("Interpreter process with shebang=%s not exist in process map", shebang),
+              "Unknown");
     } else {
       ZLog.log(ET.PROCESS_COMPLETED,
-          String.format("Process with shebang=%s and uuid=%s finished", foundedProcess.getShebang(), foundedProcess.uuid),
-          String.format("Process finished, details: shebang=%s, host=%s, port=%s, process uuid=%s, status=%s",
-              foundedProcess.getShebang(), foundedProcess.host, foundedProcess.port, foundedProcess.uuid, foundedProcess.status),
-          "Unknown");
+              String.format("Process with shebang=%s and uuid=%s finished", foundedProcess.getShebang(), foundedProcess.uuid),
+              String.format("Process finished, details: shebang=%s, host=%s, port=%s, process uuid=%s, status=%s",
+                      foundedProcess.getShebang(), foundedProcess.host, foundedProcess.port, foundedProcess.uuid, foundedProcess.status),
+              "Unknown");
     }
   }
 
   public static void remove(final String shebang, final RemoteProcessType processType) {
-    if(!processMap.containsKey(processType)) {
+    if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
 
@@ -136,7 +144,7 @@ public abstract class AbstractRemoteProcess {
 
   private String host;
   private int port;
-  protected String uuid;
+  String uuid;
 
   protected AbstractRemoteProcess(final String shebang,
                                   final Status status,
@@ -157,29 +165,36 @@ public abstract class AbstractRemoteProcess {
     return status;
   }
 
-  protected RemoteInterpreterThriftService.Client getConnection() {
+  @SuppressWarnings("unchecked")
+  T getConnection() {
     final TSocket transport = new TSocket(host, port);
     try {
       transport.open();
-    } catch (final TTransportException e) {
+      final TProtocol protocol = new TBinaryProtocol(transport);
+
+      // a little bit of reflection
+      final Class<T> clazz = ((Class<T>) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
+      final Constructor<T> constructor = clazz.getConstructor(TProtocol.class);
+      return constructor.newInstance(protocol);
+      //return new RemoteInterpreterThriftService.Client(protocol);
+
+    } catch (final Exception e) {
       ZLog.log(ET.CONNECTION_FAILED,
-          String.format("Failed to open connection with host=%s, port=%s", host, port),
-          String.format("Error occurred during opening TSocket with host=%s, port=%s, error: %s",
-              host, port, e.getMessage()), "Unknown");
+              String.format("Failed to open connection with host=%s, port=%s", host, port),
+              String.format("Error occurred during opening TSocket with host=%s, port=%s, error: %s",
+                      host, port, e.getMessage()), "Unknown");
       return null;
     }
-    final TProtocol protocol = new TBinaryProtocol(transport);
-    return new RemoteInterpreterThriftService.Client(protocol);
   }
 
-  protected void releaseConnection(final RemoteInterpreterThriftService.Client connection) {
+  void releaseConnection(final RemoteProcessThriftService.Client connection) {
     try {
       connection.getOutputProtocol().getTransport().close();
     } catch (final Throwable t) {
       ZLog.log(ET.FAILED_TO_RELEASE_CONNECTION,
-          "System error, failed to close connection",
-          String.format("Failed to close connection, process details=%s, error=%s",
-              this.toString(), t.getMessage()), "Unknown");
+              "System error, failed to close connection",
+              String.format("Failed to close connection, process details=%s, error=%s",
+                      this.toString(), t.getMessage()), "Unknown");
     }
   }
 
@@ -188,12 +203,12 @@ public abstract class AbstractRemoteProcess {
   }
 
   public PingResult ping() {
-    final RemoteInterpreterThriftService.Client client = getConnection();
-    if(client == null) {
+    final T client = getConnection();
+    if (client == null) {
       ZLog.log(ET.PING_FAILED_CLIENT_NOT_FOUND,
-          String.format("Ping failed: client not found, uuid=%s", this.uuid),
-          String.format("Ping failed: client not found, process details=%s", this.toString()),
-          "Unknown");
+              String.format("Ping failed: client not found, uuid=%s", this.uuid),
+              String.format("Ping failed: client not found, process details=%s", this.toString()),
+              "Unknown");
       return null;
     }
 
@@ -201,9 +216,9 @@ public abstract class AbstractRemoteProcess {
       return client.ping();
     } catch (final Throwable throwable) {
       ZLog.log(ET.PING_FAILED,
-          String.format("Ping failed, uuid=%s", this.uuid),
-          String.format("Error occurred during ping, process details=%s, error=%s",
-              this.toString(), throwable.getMessage()), "Unknown");
+              String.format("Ping failed, uuid=%s", this.uuid),
+              String.format("Error occurred during ping, process details=%s, error=%s",
+                      this.toString(), throwable.getMessage()), "Unknown");
       return null;
     } finally {
       releaseConnection(client);
@@ -212,15 +227,15 @@ public abstract class AbstractRemoteProcess {
 
   public void forceKill() {
     ZLog.log(ET.FORCE_KILL_REQUESTED,
-        String.format("Close process with uuid=%s", this.uuid),
-        String.format("Force kill called for process: %s", this.toString()),
-        "Unknown");
-    final RemoteInterpreterThriftService.Client client = getConnection();
-    if(client == null) {
+            String.format("Close process with uuid=%s", this.uuid),
+            String.format("Force kill called for process: %s", this.toString()),
+            "Unknown");
+    final RemoteProcessThriftService.Client client = getConnection();
+    if (client == null) {
       ZLog.log(ET.FORCE_KILL_FAILED_CLIENT_NOT_FOUND,
-          String.format("Force kill failed: client not found, uuid=%s", this.uuid),
-          String.format("Force kill failed: client not found, process details=%s", this.toString()),
-          "Unknown");
+              String.format("Force kill failed: client not found, uuid=%s", this.uuid),
+              String.format("Force kill failed: client not found, process details=%s", this.toString()),
+              "Unknown");
       return;
     }
 
@@ -228,9 +243,9 @@ public abstract class AbstractRemoteProcess {
       client.shutdown();
     } catch (final Throwable throwable) {
       ZLog.log(ET.FORCE_KILL_FAILED,
-          String.format("Force kill failed, uuid=%s", this.uuid),
-          String.format("Error occurred during force kill, process details=%s, error=%s",
-              this.toString(), throwable.getMessage()), "Unknown");
+              String.format("Force kill failed, uuid=%s", this.uuid),
+              String.format("Error occurred during force kill, process details=%s, error=%s",
+                      this.toString(), throwable.getMessage()), "Unknown");
     } finally {
       releaseConnection(client);
     }
@@ -255,11 +270,11 @@ public abstract class AbstractRemoteProcess {
   @Override
   public String toString() {
     return new StringJoiner(", ", "{", "}")
-        .add("shebang='" + shebang + "'")
-        .add("status=" + status)
-        .add("host='" + host + "'")
-        .add("port=" + port)
-        .add("uuid='" + uuid + "'")
-        .toString();
+            .add("shebang='" + shebang + "'")
+            .add("status=" + status)
+            .add("host='" + host + "'")
+            .add("port=" + port)
+            .add("uuid='" + uuid + "'")
+            .toString();
   }
 }

@@ -52,7 +52,7 @@ public class RemoteProcessStarter {
                     " -DzeppelinInstance=%s" +
                     " %s" +
                     " -cp \"./*:%s/*\"" +
-                    " ru.tinkoff.zeppelin.remote.RemoteProcessServer" +
+                    " %s" +
                     " -pt %s" +
                     " -h %s" +
                     " -p %s" +
@@ -63,6 +63,7 @@ public class RemoteProcessStarter {
             zeppelinInstance,
             jvmOptions,
             remoteServerClassPath,
+            processType.getRemoteServerClass().getName(),
             processType.getRemoteThreadClass().getName(),
             thriftAddr,
             thriftPort,
