@@ -41,7 +41,7 @@ public class AuthorizationService {
   }
 
   public static AuthenticationInfo getAuthenticationInfo() {
-    final String principal = ShiroSecurityService.get() != null
+    final String principal = ShiroSecurityService.get() != null && ShiroSecurityService.get().getPrincipal() != null
             ? ShiroSecurityService.get().getPrincipal()
             : principalThreadLocal.get();
     if(principal == null || ANONYMOUS.equals(principal)) {
