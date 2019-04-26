@@ -23,8 +23,6 @@ abstract class AbstractRestApi {
   protected final NoteService noteService;
   protected final ConnectionManager connectionManager;
 
-  private final static ThreadLocal<Set<String>> userRolesThreadLocal = new ThreadLocal<>();
-
   protected AbstractRestApi(
       final NoteService noteService,
       final ConnectionManager connectionManager) {
@@ -107,15 +105,10 @@ abstract class AbstractRestApi {
   }
 
   private static Set<String> getUserAvailableRoles() {
-    Set<String> userRoles = userRolesThreadLocal.get();
-    if (userRoles == null) {
-      final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-      userRoles = new HashSet<>();
-      userRoles.add(authenticationInfo.getUser());
-      userRoles.addAll(authenticationInfo.getRoles());
-      userRoles = Collections.unmodifiableSet(userRoles);
-      userRolesThreadLocal.set(userRoles);
-    }
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    Set<String> userRoles = new HashSet<>();
+    userRoles.add(authenticationInfo.getUser());
+    userRoles.addAll(authenticationInfo.getRoles());
     return userRoles;
   }
 
