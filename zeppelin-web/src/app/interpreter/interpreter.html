@@ -106,9 +106,9 @@ limitations under the License.
         <button class="btn btn-default btn-sm"
                 data-toggle="modal"
                 data-target="#interpreterModal"
-                onclick="setDefaultInterpreterGroup(source.name)">
+                ng-click="setSelectedModuleSources(source.name)">
           <i class="fa fa-plus"></i>
-          Create Interpreter
+          Create
         </button>
         <div ng-include src="'app/interpreter/interpreter-create.html'"></div>
       </div>
@@ -163,7 +163,7 @@ limitations under the License.
       <div id="{{setting.name | lowercase}}">
         <div class="row interpreter" style="margin-top: 5px">
           <div class="col-md-12">
-            <h3 class="interpreter-title">{{setting.customInterpreterName}}</h3>
+            <h3 class="interpreter-title">{{setting.humanReadableName}}</h3>
             <span style="float:right" ng-show="!valueform.$visible" >
           <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
               <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
@@ -183,205 +183,6 @@ limitations under the License.
           </div>
         </div>
 
-        <div class="row interpreter">
-          <div class="col-md-12">
-            <h5>Option</h5>
-            <div class="row interpreter" style="margin-top: 5px;">
-              <div class="col-md-6">
-                The interpreter will be instantiated
-                <span class="btn-group">
-              <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                      data-toggle="dropdown"
-                      ng-disabled="!valueform.$visible">
-                {{getInterpreterRunningOption(setting.shebang)}} <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" role="menu">
-                <li>
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SHARED')">
-                    Globally
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SCOPED', 'SHARED')">
-                    Per Note
-                  </a>
-                </li>
-                <li ng-if="ticket.principal !== 'anonymous'">
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SCOPED')">
-                    Per User
-                  </a>
-                </li>
-              </ul>
-            </span>
-                in
-                <span class="btn-group">
-              <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                      data-toggle="dropdown"
-                      ng-disabled="!valueform.$visible
-                                   || getInterpreterRunningOption(setting.shebang) === 'Globally'">
-                <span ng-if="getInterpreterRunningOption(setting.shebang) !== 'Per User'">
-                  {{getPerNoteOption(setting.shebang)}}
-                </span>
-                <span ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'">
-                  {{getPerUserOption(setting.shebang)}}
-                </span>
-                  <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" role="menu">
-                <li
-                  ng-if="getInterpreterRunningOption(setting.shebang) === 'Globally'">
-                  <a style="cursor:pointer"
-                     uib-tooltip="Single interpreter instance are shared across notes"
-                     ng-click="setPerNoteOption(setting.shebang, 'SHARED')">
-                    shared per note
-                  </a>
-                </li>
-
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per Note'"
-                     uib-tooltip="Separate Interpreter instance for each note"
-                     ng-click="setPerNoteOption(setting.shebang, 'SCOPED')">
-                    scoped per note
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'"
-                     uib-tooltip="Separate Interpreter instance for each note"
-                     ng-click="setPerUserOption(setting.shebang, 'SCOPED')">
-                    scoped per user
-                  </a>
-                </li>
-
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per Note'"
-                     uib-tooltip="Separate Interpreter process for each note"
-                     ng-click="setPerNoteOption(setting.shebang, 'ISOLATED')">
-                    isolated per note
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'"
-                     uib-tooltip="Separate Interpreter process for each note"
-                     ng-click="setPerUserOption(setting.shebang, 'ISOLATED')">
-                    isolated per user
-                  </a>
-                </li>
-              </ul>
-            </span>
-                process
-                <a class="fa fa-info-circle interpreter-binding-mode-info-link"
-                   aria-hidden="true"
-                   uib-tooltip="Can manage interpreter sessions differently by setting this option. Click this button to learn more"
-                   ng-href="{{getInterpreterBindingModeDocsLink()}}" target="_blank"></a>
-                <span ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User' && ticket.principal !== 'anonymous'">
-              <span ng-if="getPerNoteOption(setting.shebang) === 'SHARED'">
-                <button type="button" class="btn btn-default btn-xs"
-                        ng-click="setPerNoteOption(setting.shebang, 'SCOPED')"
-                        ng-disabled="!valueform.$visible"
-                        data-toggle="dropdown">
-                  <i class="fa fa-plus"></i>
-                </button>
-              </span>
-            </span>
-              </div>
-            </div>
-            <div class="row interpreter"
-                 style="margin-top: 6px;"
-                 ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'
-                    && ticket.principal !== 'anonymous'
-                    && getPerNoteOption(setting.shebang) !== 'SHARED'">
-              <div class="col-md-12">
-            <span>
-              <span class="hidden-xs" style="padding-left: 190px;">And </span>
-              <span class="visible-xs" style="padding-left: 0px;">And </span>
-              <span class="btn-group">
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                        data-toggle="dropdown"
-                        ng-disabled="true">
-                  <span>
-                    Per Note
-                  </span>
-                  <span class="caret"></span>
-                </button>
-              </span>
-              in
-              <span class="btn-group">
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                        data-toggle="dropdown"
-                        ng-disabled="!valueform.$visible">
-                  <span>
-                    {{getPerNoteOption(setting.shebang)}}
-                  </span>
-                  <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                  <li>
-                    <a style="cursor:pointer"
-                       uib-tooltip="Separate Interpreter instance for each note"
-                       ng-click="setPerNoteOption(setting.shebang, 'SCOPED')">
-                      scoped per note
-                    </a>
-                  </li>
-                  <li>
-                    <a style="cursor:pointer"
-                       uib-tooltip="Separate Interpreter process for each note"
-                       ng-click="setPerNoteOption(setting.shebang, 'ISOLATED')">
-                      isolated per note
-                    </a>
-                  </li>
-                </ul>
-              </span>
-              process
-              <a class="fa fa-info-circle interpreter-binding-mode-info-link"
-                 aria-hidden="true"
-                 uib-tooltip="Can manage interpreter sessions differently by setting this option. Click this button to learn more"
-                 ng-href="{{getInterpreterBindingModeDocsLink()}}" target="_blank"></a>
-              <button type="button" class="btn btn-default btn-xs"
-                      ng-disabled="!valueform.$visible"
-                      ng-click="setPerNoteOption(setting.shebang, 'SHARED')"
-                      data-toggle="dropdown">
-                <i class="fa fa-minus"></i>
-              </button>
-            </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row interpreter" style="margin-top: 5px;"
-             ng-show="getInterpreterRunningOption(setting.shebang)=='Per User' && getPerUserOption(setting.shebang)=='ISOLATED'">
-        </div>
-        <div class="row interpreter">
-          <div class="col-md-12">
-            <div class="checkbox remove-margin-top-bottom">
-          <span class="input-group" style="line-height:30px;">
-            <label>
-              <input type="checkbox" style="width:20px" id="isExistingProcess" ng-model="setting.remoteProcess.isEnabled" ng-disabled="!valueform.$visible"/>
-              Connect to existing process
-            </label>
-          </span>
-            </div>
-          </div>
-        </div>
-        <div class="row interpreter" ng-if="setting.remoteProcess.isEnabled">
-          <div class="col-md-12">
-            <b>Host</b>
-            <input id="newInterpreterSettingHost" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="setting.remoteProcess.host" ng-disabled="!valueform.$visible"  />
-          </div>
-          <div class="col-md-12">
-            <b>Port</b>
-            <input id="newInterpreterSettingPort" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="setting.remoteProcess.port"  ng-disabled="!valueform.$visible" />
-          </div>
-        </div>
         <div class="row interpreter">
           <div class="col-md-12">
             <div class="checkbox remove-margin-top-bottom">

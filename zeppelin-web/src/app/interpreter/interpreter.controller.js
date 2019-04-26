@@ -20,36 +20,36 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   let interpreterSettingsTmp = [];
   $scope.interpreterSettings = [];
-  $scope.availableInterpreters = {};
+  $scope.moduleSources = {};
   $scope.showRepositoryInfo = false;
   $scope.searchInterpreter = '';
   $scope._ = _;
   $scope.interpreterPropertyTypes = [];
   ngToast.dismiss();
 
-  $scope.openPermissions = function() {
+  $scope.openPermissions = function () {
     $scope.showInterpreterAuth = true;
   };
 
-  $scope.closePermissions = function() {
+  $scope.closePermissions = function () {
     $scope.showInterpreterAuth = false;
   };
 
-  let getSelectJson = function() {
+  let getSelectJson = function () {
     let selectJson = {
       tags: true,
       minimumInputLength: 3,
       multiple: true,
       tokenSeparators: [',', ' '],
       ajax: {
-        url: function(params) {
+        url: function (params) {
           if (!params.term) {
             return false;
           }
           return baseUrlSrv.getRestApiBase() + '/security/userlist/' + params.term;
         },
         delay: 250,
-        processResults: function(data, params) {
+        processResults: function (data, params) {
           let results = [];
 
           if (data.body.users.length !== 0) {
@@ -91,8 +91,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     return selectJson;
   };
 
-  $scope.togglePermissions = function(interpreterName) {
-    angular.element('#' + interpreterName + 'Owners').select2(getSelectJson());
+  $scope.togglePermissions = function (humanReadableName) {
+    angular.element('#' + humanReadableName + 'Owners').select2(getSelectJson());
     if ($scope.showInterpreterAuth) {
       $scope.closePermissions();
     } else {
@@ -100,189 +100,69 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     }
   };
 
-  $scope.$on('ngRenderFinished', function(event, data) {
+  $scope.$on('ngRenderFinished', function (event, data) {
     for (let setting = 0; setting < $scope.interpreterSettings.length; setting++) {
       angular.element('#' + $scope.interpreterSettings[setting].name + 'Owners').select2(getSelectJson());
     }
   });
 
-  let getInterpreterSettings = function() {
+  let getInterpreterSettings = function () {
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
-      .then(function(res) {
+      .then(function (res) {
         $scope.interpreterSettings = res.data.body;
-      }).catch(function(res) {
-        if (res.status === 401) {
-          ngToast.danger({
-            content: 'You don\'t have permission on this page',
-            verticalPosition: 'bottom',
-            timeout: '3000',
-          });
-          setTimeout(function() {
-            window.location = baseUrlSrv.getBase();
-          }, 3000);
-        }
-        $scope.showErrorMessage(res);
-      });
-  };
-
-  let getAvailableInterpreters = function() {
-    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter').then(function(res) {
-      $scope.availableInterpreters = res.data.body;
-    }).catch(function(res) {
+      }).catch(function (res) {
+      if (res.status === 401) {
+        ngToast.danger({
+          content: 'You don\'t have permission on this page',
+          verticalPosition: 'bottom',
+          timeout: '3000',
+        });
+        setTimeout(function () {
+          window.location = baseUrlSrv.getBase();
+        }, 3000);
+      }
       $scope.showErrorMessage(res);
     });
   };
 
-  let getAvailableInterpreterPropertyWidgets = function() {
-    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/property/types')
-      .then(function(res) {
-        $scope.interpreterPropertyTypes = res.data.body;
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+  let getModuleSources = function () {
+    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter').then(function (res) {
+      $scope.moduleSources = res.data.body;
+    }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
-  let emptyNewProperty = function(object) {
+  let getAvailableInterpreterPropertyWidgets = function () {
+    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/property/types')
+      .then(function (res) {
+        $scope.interpreterPropertyTypes = res.data.body;
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
+  };
+
+  let emptyNewProperty = function (object) {
     angular.extend(object, {propertyValue: '', propertyKey: '', propertyType: $scope.interpreterPropertyTypes[0]});
   };
 
-  let removeTMPSettings = function(index) {
+  let removeTMPSettings = function (index) {
     interpreterSettingsTmp.splice(index, 1);
   };
 
-  $scope.copyOriginInterpreterSettingProperties = function(shebang) {
+  $scope.copyOriginInterpreterSettingProperties = function (shebang) {
     let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
     interpreterSettingsTmp[index] = angular.copy($scope.interpreterSettings[index]);
   };
 
-  $scope.setPerNoteOption = function(shebang, sessionOption) {
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      option = $scope.interpreterSettings[index];
-    }
-
-    if (sessionOption === 'ISOLATED') {
-      option.perNote = sessionOption;
-    } else if (sessionOption === 'SCOPED') {
-      option.perNote = sessionOption;
-    } else {
-      option.perNote = 'SHARED';
-    }
-  };
-
-  $scope.setPerUserOption = function(shebang, sessionOption) {
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      option = $scope.interpreterSettings[index];
-    }
-
-    if (sessionOption === 'ISOLATED') {
-      option.perUser = sessionOption;
-    } else if (sessionOption === 'SCOPED') {
-      option.perUser = sessionOption;
-    } else {
-      option.perUser = 'SHARED';
-    }
-  };
-
-  $scope.getPerNoteOption = function(shebang) {
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      let setting = $scope.interpreterSettings[index];
-      option = setting;
-    }
-
-    if (option.perNote) {
-      return option.perNote;
-    }
-    return 'SHARED';
-  };
-
-  $scope.getPerUserOption = function(shebang) {
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      option = $scope.interpreterSettings[index];
-    }
-
-    if (option.perUser) {
-      return option.perUser;
-    }
-    return 'SHARED';
-  };
-
-  $scope.getInterpreterRunningOption = function(shebang) {
-    let sharedModeName = 'SHARED';
-
-    let globallyModeName = 'Globally';
-    let perNoteModeName = 'Per Note';
-    let perUserModeName = 'Per User';
-
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      option = $scope.interpreterSettings[index];
-    }
-
-    let perNote = option.perNote;
-    let perUser = option.perUser;
-
-    // Globally == shared_perNote + shared_perUser
-    if (perNote === sharedModeName && perUser === sharedModeName) {
-      return globallyModeName;
-    }
-
-    if ($rootScope.ticket.ticket === 'anonymous' && $rootScope.ticket.roles === '[]') {
-      if (perNote !== undefined && typeof perNote === 'string' && perNote !== '') {
-        return perNoteModeName;
-      }
-    } else if ($rootScope.ticket.ticket !== 'anonymous') {
-      if (perNote !== undefined && typeof perNote === 'string' && perNote !== '') {
-        if (perUser !== undefined && typeof perUser === 'string' && perUser !== '') {
-          return perUserModeName;
-        }
-        return perNoteModeName;
-      }
-    }
-
-    option.perNote = sharedModeName;
-    option.perUser = sharedModeName;
-    return globallyModeName;
-  };
-
-  $scope.setInterpreterRunningOption = function(shebang, isPerNoteMode, isPerUserMode) {
-    let option;
-    if (shebang === undefined) {
-      option = $scope.newInterpreterSetting;
-    } else {
-      let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
-      option = $scope.interpreterSettings[index];
-    }
-    option.perNote = isPerNoteMode;
-    option.perUser = isPerUserMode;
-  };
-
-  $scope.updateInterpreterSetting = function(form, shebang) {
+  $scope.updateInterpreterSetting = function (form, shebang) {
     const thisConfirm = BootstrapDialog.confirm({
       closable: false,
       closeByBackdrop: false,
       closeByKeyboard: false,
       title: '',
       message: 'Do you want to update this interpreter and restart with new settings?',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
           let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
           let setting = angular.copy($scope.interpreterSettings[index]);
@@ -296,7 +176,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
           if (setting.permissions.isEnabled === undefined) {
             setting.permissions.isEnabled = false;
           }
-          setting.permissions.owners = angular.element('#' + setting.interpreterName + 'Owners').val();
+          setting.permissions.owners = angular.element('#' + setting.humanReadableName + 'Owners').val();
           for (let i = 0; i < setting.permissions.owners.length; i++) {
             setting.permissions.owners[i] = setting.permissions.owners[i].trim();
           }
@@ -306,10 +186,10 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
             .html('<i class="fa fa-circle-o-notch fa-spin"></i> Saving Setting');
 
           $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1), setting)
-            .then(function(res) {
+            .then(function (res) {
               thisConfirm.close();
             })
-            .catch(function(res) {
+            .catch(function (res) {
               const message = res.data ? res.data.message : 'Could not connect to server.';
               console.log('Error %o %o', res.status, message);
               ngToast.danger({content: message, verticalPosition: 'bottom'});
@@ -324,7 +204,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     });
   };
 
-  $scope.resetInterpreterSetting = function(shebang) {
+  $scope.resetInterpreterSetting = function (shebang) {
     let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
 
     // Set the old settings back
@@ -332,69 +212,54 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     removeTMPSettings(index);
   };
 
-  $scope.removeInterpreterSetting = function(shebang) {
+  $scope.removeInterpreterSetting = function (shebang) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to delete this interpreter setting?',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
           $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1))
-            .then(function(res) {
+            .then(function (res) {
               let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
               $scope.interpreterSettings.splice(index, 1);
-            }).catch(function(res) {
-              $scope.showErrorMessage(res);
-            });
+            }).catch(function (res) {
+            $scope.showErrorMessage(res);
+          });
         }
       },
     });
   };
 
-  $scope.newInterpreterGroupChange = function() {
-    $scope.newInterpreterSetting.config =
-    $scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName];
-
-    $scope.newInterpreterSetting.editor =
-    angular.copy($scope.availableInterpreters[$scope.newInterpreterSetting.interpreterName].editor);
-
-    for (let key in $scope.newInterpreterSetting.config.properties) {
-      if ($scope.newInterpreterSetting.config.properties.hasOwnProperty(key)) {
-        $scope.newInterpreterSetting.config.properties[key].currentValue =
-        $scope.newInterpreterSetting.config.properties[key].defaultValue;
-      }
-    }
-  };
-
-  $scope.restartInterpreterSetting = function(shebang) {
+  $scope.restartInterpreterSetting = function (shebang) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to restart this interpreter?',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
           $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/restart/' + shebang.substring(1))
-            .then(function(res) {
+            .then(function (res) {
               ngToast.info('Interpreter stopped. Will be lazily started on next run.');
-            }).catch(function(res) {
-              let errorMsg = (res.data !== null) ? res.data.message : 'Could not connect to server.';
-              console.log('Error %o %o', res.status, errorMsg);
-              ngToast.danger(errorMsg);
-            });
+            }).catch(function (res) {
+            let errorMsg = (res.data !== null) ? res.data.message : 'Could not connect to server.';
+            console.log('Error %o %o', res.status, errorMsg);
+            ngToast.danger(errorMsg);
+          });
         }
       },
     });
   };
 
-  $scope.enableInterpreter = function(shebang) {
+  $scope.enableInterpreter = function (shebang) {
     let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
     let request = angular.copy($scope.interpreterSettings[index]);
     request.isEnabled = !request.isEnabled;
     $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/setting/' + shebang.substring(1), request)
-      .then(function(res) {
+      .then(function (res) {
         $scope.interpreterSettings[index].isEnabled = !$scope.interpreterSettings[index].isEnabled;
       })
-      .catch(function(res) {
+      .catch(function (res) {
         const message = res.data ? res.data.message : 'Could not connect to server.';
         console.log('Error %o %o', res.status, message);
         ngToast.danger({content: message, verticalPosition: 'bottom'});
@@ -402,11 +267,11 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     return false;
   };
 
-  $scope.enableReinstall = function(source) {
-    $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + source.interpreterName, source)
-      .then(function(res) {
+  $scope.enableReinstall = function (source) {
+    $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + source.humanReadableName, source)
+      .then(function (res) {
       })
-      .catch(function(res) {
+      .catch(function (res) {
         const message = res.data ? res.data.message : 'Could not connect to server.';
         console.log('Error %o %o', res.status, message);
         ngToast.danger({content: message, verticalPosition: 'bottom'});
@@ -414,13 +279,12 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     return false;
   };
 
-  $scope.addNewInterpreterSetting = function() {
+  $scope.addNewInterpreterSetting = function () {
     // user input validation on interpreter creation
-    if (!$scope.newInterpreterSetting.customInterpreterName
-    || !$scope.newInterpreterSetting.customInterpreterName.trim()
-    || !$scope.newInterpreterSetting.interpreterName
-    || !$scope.newInterpreterSetting.shebang
-    || !$scope.newInterpreterSetting.shebang.trim()) {
+    if (!$scope.newInterpreterSetting.humanReadableName
+      || !$scope.newInterpreterSetting.humanReadableName.trim()
+      || !$scope.newInterpreterSetting.shebang
+      || !$scope.newInterpreterSetting.shebang.trim()) {
       BootstrapDialog.alert({
         closable: true,
         title: 'Add interpreter',
@@ -446,47 +310,48 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
 
     let request = $scope.newInterpreterSetting;
-    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/setting', request)
-      .then(function(res) {
+    $http({
+      method: 'POST',
+      url: baseUrlSrv.getRestApiBase() + '/interpreter/setting',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      data: request
+    })
+      .then(function (res) {
         websocketMsgSrv.fireEvent('ADD_INTERPRETER',
-         'Interpreter ' + request.shebang + ' has been added',
-         'New interpreter has been added ' + request);
+          'Interpreter ' + request.shebang + ' has been added',
+          'New interpreter has been added ' + request);
         $scope.resetNewInterpreterSetting();
         getInterpreterSettings();
-        getAvailableInterpreters();
+        getModuleSources();
         angular.element('#interpreterModal').modal('hide');
-      }).catch(function(res) {
-        const errorMsg = res.data ? res.data.message : 'Could not connect to server.';
-        console.log('Error %o %o', res.status, errorMsg);
-        ngToast.danger({content: errorMsg, verticalPosition: 'bottom'});
-      });
+      }).catch(function (res) {
+      const errorMsg = res.data ? res.data.message : 'Could not connect to server.';
+      console.log('Error %o %o', res.status, errorMsg);
+      ngToast.danger({content: errorMsg, verticalPosition: 'bottom'});
+    });
   };
 
-  $scope.setDefaultInterpreterGroup = function(interpreterName) {
-    $scope.defaultInterpreterGroup = interpreterName;
+  $scope.setSelectedModuleSources = function (moduleSource) {
+    console.log('selectedModuleSources ', moduleSource);
+    $scope.selectedModuleSources = moduleSource;
   };
 
-  $scope.cancelInterpreterSetting = function() {
+  $scope.cancelInterpreterSetting = function () {
     $scope.resetNewInterpreterSetting();
   };
 
-  $scope.resetNewInterpreterSetting = function() {
+  $scope.resetNewInterpreterSetting = function () {
     // see ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption
     $scope.newInterpreterSetting = {
-      customInterpreterName: undefined,
-      interpreterName: undefined,
+      humanReadableName: undefined,
       shebang: undefined,
-      perNote: undefined,
-      perUser: undefined,
+      moduleSourceName: undefined,
       config: {},
       jvmOptions: '',
       concurrentTasks: 10,
       isEnabled: false,
-      remoteProcess: {
-        host: undefined,
-        port: undefined,
-        isEnabled: false,
-      },
       permissions: {
         isEnabled: false,
         owners: [],
@@ -496,7 +361,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     emptyNewProperty($scope.newInterpreterSetting);
   };
 
-  $scope.resetNewRepositorySetting = function() {
+  $scope.resetNewRepositorySetting = function () {
     $scope.newRepoSetting = {
       id: '',
       url: '',
@@ -511,48 +376,48 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     };
   };
 
-  let getRepositories = function() {
+  let getRepositories = function () {
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/repository')
-      .success(function(data, status, headers, config) {
+      .success(function (data, status, headers, config) {
         $scope.repositories = data.body;
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
-  $scope.addNewRepository = function() {
+  $scope.addNewRepository = function () {
     let request = angular.copy($scope.newRepoSetting);
 
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/repository', request)
-      .then(function(res) {
+      .then(function (res) {
         getRepositories();
         $scope.resetNewRepositorySetting();
         angular.element('#repoModal').modal('hide');
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
-  $scope.removeRepository = function(repoId) {
+  $scope.removeRepository = function (repoId) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to delete this repository?',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
           $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/repository/' + repoId)
-            .then(function(res) {
+            .then(function (res) {
               let index = _.findIndex($scope.repositories, {'id': repoId});
               $scope.repositories.splice(index, 1);
-            }).catch(function(res) {
-              $scope.showErrorMessage(res);
-            });
+            }).catch(function (res) {
+            $scope.showErrorMessage(res);
+          });
         }
       },
     });
   };
 
-  $scope.isDefaultRepository = function(repoId) {
+  $scope.isDefaultRepository = function (repoId) {
     if (repoId === 'central' || repoId === 'local') {
       return true;
     } else {
@@ -561,7 +426,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   };
 
   // Sources.
-  $scope.resetNewSourceSetting = function() {
+  $scope.resetNewSourceSetting = function () {
     $scope.newSrcSetting = {
       name: '',
       artifact: '',
@@ -569,95 +434,108 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     };
   };
 
-  let getSources = function() {
+  let getSources = function () {
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/source')
-      .success(function(data, status, headers, config) {
+      .success(function (data, status, headers, config) {
         $scope.sources = data.body;
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
-  $scope.addNewSource = function() {
+  $scope.addNewSource = function () {
     let request = angular.copy($scope.newSrcSetting);
-    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source', request)
-      .then(function(res) {
+    $http({
+      method: 'POST',
+      url: baseUrlSrv.getRestApiBase() + '/interpreter/source',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      data: request
+    })
+      .then(function (res) {
         getSources();
-        getAvailableInterpreters();
+        getModuleSources();
         $scope.resetNewSourceSetting();
         angular.element('#srcModal').modal('hide');
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
-  $scope.installSource = function(moduleName) {
+  $scope.installSource = function (moduleName) {
     let index = _.findIndex($scope.sources, {'name': moduleName});
     $scope.sources[index].status = 'IN_PROGRESS';
     $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + moduleName)
-      .then(function(res) {
+      .then(function (res) {
         getSources();
-        getAvailableInterpreters();
-      }).catch(function(res) {
-        $scope.showErrorMessage(res);
-      });
+        getModuleSources();
+      }).catch(function (res) {
+      $scope.showErrorMessage(res);
+    });
   };
 
 
-  $scope.uninstallSource = function(interpreterName) {
+  $scope.uninstallSource = function (humanReadableName) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to uninstall this interpreter source? All running interpreters would be disabled!',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
-          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + interpreterName)
-            .then(function(res) {
+          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + humanReadableName)
+            .then(function (res) {
               getSources();
-              getAvailableInterpreters();
+              getModuleSources();
               getInterpreterSettings();
-            }).catch(function(res) {
-              $scope.showErrorMessage(res);
-            });
+            }).catch(function (res) {
+            $scope.showErrorMessage(res);
+          });
         }
       },
     });
   };
 
-  $scope.reinstallSource = function(interpreterName) {
+  $scope.reinstallSource = function (humanReadableName) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to reinstall this interpreter source? All running interpreters would be unavailable!',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
-          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + interpreterName)
-            .then(function(res) {
+          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + humanReadableName)
+            .then(function (res) {
               getSources();
-              getAvailableInterpreters();
+              getModuleSources();
               getInterpreterSettings();
-            }).catch(function(res) {
-              $scope.showErrorMessage(res);
-            });
+            }).catch(function (res) {
+            $scope.showErrorMessage(res);
+          });
         }
       },
     });
   };
 
-  $scope.removeSource = function(interpreterName) {
+  $scope.removeSource = function (humanReadableName) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
       message: 'Do you want to delete this source?',
-      callback: function(result) {
+      callback: function (result) {
         if (result) {
-          $http.delete(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + interpreterName)
-            .then(function(res) {
-              let index = _.findIndex($scope.sources, {'interpreterName': interpreterName});
+          $http({
+            method: 'DELETE',
+            url: baseUrlSrv.getRestApiBase() + '/interpreter/source/' + humanReadableName,
+            headers: {
+              'Content-Type': 'text/plain',
+            }
+          })
+            .then(function (res) {
+              let index = _.findIndex($scope.sources, {'humanReadableName': humanReadableName});
               $scope.sources.splice(index, 1);
-            }).catch(function(res) {
-              $scope.showErrorMessage(res);
-            });
+            }).catch(function (res) {
+            $scope.showErrorMessage(res);
+          });
         }
       },
     });
@@ -665,7 +543,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   // common
 
-  $scope.showErrorMessage = function(res) {
+  $scope.showErrorMessage = function (res) {
     BootstrapDialog.show({
       closable: false,
       closeByBackdrop: false,
@@ -675,14 +553,14 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       buttons: [{
         // close all the dialogs when there are error on running all paragraphs
         label: 'Close',
-        action: function() {
+        action: function () {
           BootstrapDialog.closeAll();
         },
       }],
     });
   };
 
-  let init = function() {
+  let init = function () {
     getAvailableInterpreterPropertyWidgets();
 
     $scope.resetNewInterpreterSetting();
@@ -690,12 +568,12 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     $scope.resetNewSourceSetting();
 
     getInterpreterSettings();
-    getAvailableInterpreters();
+    getModuleSources();
     getRepositories();
     getSources();
   };
 
-  $scope.getInterpreterBindingModeDocsLink = function() {
+  $scope.getInterpreterBindingModeDocsLink = function () {
     const currentVersion = $rootScope.zeppelinVersion;
     return `https://zeppelin.apache.org/docs/${currentVersion}/usage/interpreter/interpreter_binding_mode.html`;
   };
