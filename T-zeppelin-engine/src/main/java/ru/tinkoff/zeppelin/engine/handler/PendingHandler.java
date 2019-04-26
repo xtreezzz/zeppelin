@@ -34,6 +34,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
 import ru.tinkoff.zeppelin.core.notebook.Job;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.server.InterpreterRemoteProcess;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
@@ -94,10 +96,14 @@ public class PendingHandler extends AbstractHandler {
     final String payload = jobPayloadDAO.getByJobId(job.getId()).getPayload();
 
     // prepare notecontext
+    final Note note = noteDAO.get(job.getNoteId());
     final Map<String, String> noteContext = new HashMap<>();
 
     noteContext.put("Z_ENV_NOTE_ID", String.valueOf(job.getNoteId()));
+    noteContext.put("Z_ENV_NOTE_UUID", String.valueOf(note.getUuid()));
     noteContext.put("Z_ENV_PARAGRAPH_ID", String.valueOf(job.getParagraphId()));
+
+    noteContext.put("Z_ENV_MARKER_PREFIX", Configuration.getInstanceMarkerPrefix());
 
     // prepare usercontext
     final Map<String, String> userContext = new HashMap<>();
