@@ -36,12 +36,15 @@ public class JDBCInterpolation {
                                    @Nonnull final Set<String> envVariables) {
 
     final StringBuilder interpolatedPrecode = new StringBuilder(query);
-    envVariables.forEach(env ->
-            interpolatedPrecode.replace(
-                    interpolatedPrecode.indexOf(env),
-                    interpolatedPrecode.indexOf(env) + env.length(),
-                    intpContext.get(env)
-            )
+    envVariables.forEach(env -> {
+      while (interpolatedPrecode.indexOf(env) != -1) {
+        interpolatedPrecode.replace(
+            interpolatedPrecode.indexOf(env),
+            interpolatedPrecode.indexOf(env) + env.length(),
+            intpContext.get(env)
+        );
+      }
+        }
     );
     return interpolatedPrecode.toString();
   }
