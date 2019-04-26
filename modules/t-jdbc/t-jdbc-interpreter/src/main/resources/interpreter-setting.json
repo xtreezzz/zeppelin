@@ -1,7 +1,5 @@
 [
   {
-    "group": "jdbc",
-    "name": "jdbc",
     "className": "ru.tinkoff.zeppelin.interpreter.jdbc.JDBCInterpreter",
     "properties": {
       "connection.url": {

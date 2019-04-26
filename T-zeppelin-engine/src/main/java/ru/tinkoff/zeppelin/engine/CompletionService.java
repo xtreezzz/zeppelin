@@ -18,10 +18,14 @@
 package ru.tinkoff.zeppelin.engine;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.zeppelin.storage.ModuleConfigurationDAO;
+import org.apache.zeppelin.storage.ModuleInnerConfigurationDAO;
+import org.apache.zeppelin.storage.ModuleSourcesDAO;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
@@ -38,27 +42,35 @@ import java.util.Set;
 @Component
 public class CompletionService {
 
-  private final InterpreterSettingService interpreterSettingService;
+  private final ModuleConfigurationDAO moduleConfigurationDAO;
+  private final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO;
+  private final ModuleSourcesDAO moduleSourcesDAO;
   private final ThriftServerBootstrap serverBootstrap;
 
-  public CompletionService(final InterpreterSettingService interpreterSettingService,
+  public CompletionService(final ModuleConfigurationDAO moduleConfigurationDAO,
+                           final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO,
+                           final ModuleSourcesDAO moduleSourcesDAO,
                            final ThriftServerBootstrap serverBootstrap) {
-    this.interpreterSettingService = interpreterSettingService;
+
+    this.moduleConfigurationDAO = moduleConfigurationDAO;
+    this.moduleInnerConfigurationDAO = moduleInnerConfigurationDAO;
+    this.moduleSourcesDAO = moduleSourcesDAO;
     this.serverBootstrap = serverBootstrap;
   }
 
   public String complete(final Note note,
-                       final Paragraph paragraph,
-                       final String payload,
-                       final int cursorPosition,
-                       final String user,
-                       final Set<String> roles) {
+                         final Paragraph paragraph,
+                         final String payload,
+                         final int cursorPosition,
+                         final String user,
+                         final Set<String> roles) {
     try {
-      final InterpreterOption option = interpreterSettingService.getOption(paragraph.getShebang());
+      final ModuleConfiguration config = moduleConfigurationDAO.getByShebang(paragraph.getShebang());
+      final ModuleInnerConfiguration intpConfig = moduleInnerConfigurationDAO.getById(config.getModuleInnerConfigId());
       final AbstractRemoteProcess process = AbstractRemoteProcess.get(paragraph.getShebang(), RemoteProcessType.COMPLETER);
       if (process != null
               && process.getStatus() == AbstractRemoteProcess.Status.READY
-              && option != null) {
+              && config != null) {
 
         final FormsProcessor.InjectResponse response
                 = FormsProcessor.injectFormValues(payload, cursorPosition, paragraph.getFormParams());
@@ -76,11 +88,10 @@ public class CompletionService {
 
         // prepare configuration
         final Map<String, String> configuration = new HashMap<>();
-        option.getConfig()
-                .getProperties()
+        intpConfig.getProperties()
                 .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
 
-        final String result = ((CompleterRemoteProcess)process).complete(
+        final String result = ((CompleterRemoteProcess) process).complete(
                 response.getPayload(),
                 response.getCursorPosition(),
                 noteContext,
@@ -91,17 +102,17 @@ public class CompletionService {
 
       } else if (process != null
               && process.getStatus() == AbstractRemoteProcess.Status.STARTING
-              && option != null) {
+              && config != null) {
         final String str = ";";
       } else {
         final String shebang = ";";
 
-        final InterpreterArtifactSource source = option != null
-                ? interpreterSettingService.getSource(option.getInterpreterName())
+        final ModuleSource source = config != null
+                ? moduleSourcesDAO.get(config.getModuleSourceId())
                 : null;
 
-        if (option == null || !option.isEnabled()
-                || source == null || source.getStatus() != InterpreterArtifactSource.Status.INSTALLED) {
+        if (config == null || !config.isEnabled()
+                || source == null || source.getStatus() != ModuleSource.Status.INSTALLED) {
           return StringUtils.EMPTY;
         }
 
@@ -111,11 +122,11 @@ public class CompletionService {
                   shebang,
                   RemoteProcessType.COMPLETER,
                   source.getPath(),
-                  option.getConfig().getClassName(),
+                  intpConfig.getClassName(),
                   serverBootstrap.getServer().getRemoteServerClassPath(),
                   serverBootstrap.getServer().getAddr(),
                   serverBootstrap.getServer().getPort(),
-                  option.getJvmOptions(),
+                  config.getJvmOptions(),
                   Configuration.getInstanceMarkerPrefix());
         } catch (final Exception e) {
           AbstractRemoteProcess.remove(shebang, RemoteProcessType.COMPLETER);

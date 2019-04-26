@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.rest;
+package org.apache.zeppelin.rest.moduleSettings;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.Repository;
+import org.apache.zeppelin.rest.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,12 +40,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource.Status;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
-import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
+import ru.tinkoff.zeppelin.engine.ModuleSettingService;
 import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
 
 
@@ -58,11 +58,11 @@ public class InterpreterRestApi {
 
   private static final Logger logger = LoggerFactory.getLogger(InterpreterRestApi.class);
 
-  private final InterpreterSettingService interpreterSettingService;
+  private final ModuleSettingService moduleSettingService;
 
   @Autowired
-  public InterpreterRestApi(final InterpreterSettingService interpreterSettingService) {
-    this.interpreterSettingService = interpreterSettingService;
+  public InterpreterRestApi(final ModuleSettingService moduleSettingService) {
+    this.moduleSettingService = moduleSettingService;
   }
 
   /**
@@ -71,7 +71,7 @@ public class InterpreterRestApi {
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
     try {
-      return new JsonResponse<>(HttpStatus.OK, "", interpreterSettingService.getAllRepositories()).build();
+      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingService.getAllRepositories()).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while loading all repositories ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
@@ -89,7 +89,7 @@ public class InterpreterRestApi {
   public ResponseEntity addRepository(@RequestBody final String message) {
     try {
       final Repository request = Repository.fromJson(message);
-      interpreterSettingService.saveRepository(request);
+      moduleSettingService.persistRepository(request);
       logger.info("New repository {} added", request.getId());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -109,7 +109,7 @@ public class InterpreterRestApi {
   public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
     try {
       logger.info("Remove repository {}", repoId);
-      interpreterSettingService.removeRepository(repoId);
+      moduleSettingService.deleteRepository(repoId);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while deleting repository ", e);
@@ -118,13 +118,15 @@ public class InterpreterRestApi {
     }
   }
 
+
+
   /**
    * List of all sources.
    */
   @GetMapping(value = "/source", produces = "application/json")
   public ResponseEntity listSources() {
     try {
-      return new JsonResponse<>(HttpStatus.OK, "", interpreterSettingService.getAllSources()).build();
+      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingService.getAllSources()).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while loading all sources ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
@@ -139,8 +141,14 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/install/{interpreterName}", produces = "application/json")
   public ResponseEntity installSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.installSource(src, true, false);
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      final ModuleSource source = sources.stream()
+              .filter(s -> s.getName().equals(interpreterName))
+              .findFirst()
+              .orElse(null);
+
+      Objects.requireNonNull(source);
+      moduleSettingService.installSource(source, true, false);
       logger.info("Source {} installed", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -157,8 +165,16 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/uninstall/{interpreterName}", produces = "application/json")
   public ResponseEntity uninstallSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.uninstallSource(src, false);
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      final ModuleSource source = sources.stream()
+              .filter(s -> s.getName().equals(interpreterName))
+              .findFirst()
+              .orElse(null);
+
+      Objects.requireNonNull(source);
+      moduleSettingService.installSource(source, true, false);
+
+      moduleSettingService.uninstallSource(source, false);
       logger.info("Source {} uninstalled", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -175,9 +191,16 @@ public class InterpreterRestApi {
   @PostMapping(value = "/source/reinstall/{interpreterName}", produces = "application/json")
   public ResponseEntity reinstallSource(@PathVariable("interpreterName") final String interpreterName) {
     try {
-      final InterpreterArtifactSource src = Objects.requireNonNull(interpreterSettingService.getSource(interpreterName));
-      interpreterSettingService.uninstallSource(src, false);
-      interpreterSettingService.installSource(src, true, false);
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      final ModuleSource source = sources.stream()
+              .filter(s -> s.getName().equals(interpreterName))
+              .findFirst()
+              .orElse(null);
+
+      Objects.requireNonNull(source);
+
+      moduleSettingService.uninstallSource(source, false);
+      moduleSettingService.installSource(source, true, false);
       logger.info("Source {} reinstalled", interpreterName);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -190,16 +213,18 @@ public class InterpreterRestApi {
   /**
    * Add new source.
    *
-   * @param message InterpreterArtifactSource
+   * @param message ModuleSource
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PostMapping(value = "/source", produces = "application/json")
   public ResponseEntity addSource(@RequestBody final String message) {
     try {
-      final InterpreterArtifactSource request = InterpreterArtifactSource.fromJson(message);
-      interpreterSettingService.installSource(request, false, true);
+      final ModuleSource source = new Gson().fromJson(message, ModuleSource.class);
 
-      logger.info("New source {} added", request.getInterpreterName());
+      //source.setType(ModuleSource.Type.INTERPRETER);
+      moduleSettingService.installSource(source, false, true);
+
+      logger.info("New source {} added", source.getName());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating new source ", e);
@@ -218,10 +243,15 @@ public class InterpreterRestApi {
   public ResponseEntity removeSource(@PathVariable("name") final String interpreterName) {
     try {
       logger.info("Remove source {}", interpreterName);
-      final InterpreterArtifactSource source = interpreterSettingService.getSource(interpreterName);
-      Preconditions.checkNotNull(source);
-      interpreterSettingService.uninstallSource(source, true);
-      interpreterSettingService.removeSource(interpreterName);
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      final ModuleSource source = sources.stream()
+              .filter(s -> s.getName().equals(interpreterName))
+              .findFirst()
+              .orElse(null);
+
+      Objects.requireNonNull(source);
+
+      moduleSettingService.uninstallSource(source, true);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while deleting source ", e);
@@ -230,13 +260,16 @@ public class InterpreterRestApi {
     }
   }
 
+
+
+
   /**
    * List all interpreter settings.
    */
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
     try {
-      return new JsonResponse<>(HttpStatus.OK, "", interpreterSettingService.getAllOptions()).build();
+      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingService.getAllOptions()).build();
     } catch (final Exception e) {
       logger.error("Fail to get all interpreter setting", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
@@ -250,7 +283,7 @@ public class InterpreterRestApi {
   @GetMapping(value = "/setting/{shebang}", produces = "application/json")
   public ResponseEntity getSetting(@PathVariable("shebang") final String shebang) {
     try {
-      final InterpreterOption setting = interpreterSettingService.getOption(shebang);
+      final ModuleConfiguration setting = moduleSettingService.getOption(shebang);
       if (setting == null) {
         return new JsonResponse<>(HttpStatus.NOT_FOUND).build();
       } else {
@@ -276,9 +309,9 @@ public class InterpreterRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
     }
     try {
-      final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
+      final ModuleConfiguration option = new Gson().fromJson(message, ModuleConfiguration.class);
       logger.info("Trying to add option: {}", option);
-      interpreterSettingService.saveOption(option);
+      moduleSettingService.persistModuleConfiguration(option);
       logger.info("New option {} added", option.getShebang());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
@@ -318,10 +351,23 @@ public class InterpreterRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
     }
     try {
-      final InterpreterArtifactSource src = new Gson().fromJson(message, InterpreterArtifactSource.class);
+      final ModuleSource src = new Gson().fromJson(message, ModuleSource.class);
+
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      final ModuleSource source = sources.stream()
+              .filter(s -> s.getName().equals(interpreterName))
+              .findFirst()
+              .orElse(null);
+
+      Objects.requireNonNull(source);
+
+      moduleSettingService.uninstallSource(source, false);
+      moduleSettingService.updateSource(src);
+      moduleSettingService.installSource(source, true, false);
+
       logger.info("source - {}", src);
-      interpreterSettingService.updateSource(src);
-      logger.info("Source {} updated", src.getInterpreterName());
+      moduleSettingService.updateSource(src);
+      logger.info("Source {} updated", src.getName());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating option ", e);
@@ -338,7 +384,7 @@ public class InterpreterRestApi {
   public ResponseEntity removeSetting(@PathVariable("shebang") final String shebang) {
     try {
       logger.info("Remove interpreterSetting {}", "%" + shebang);
-      interpreterSettingService.removeOption("%" + shebang);
+      moduleSettingService.removeOption("%" + shebang);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while removing interpreter option ", e);
@@ -356,7 +402,7 @@ public class InterpreterRestApi {
   public ResponseEntity restartSetting(@PathVariable("settingId") final String shebang) {
     logger.info("Restart interpreterSetting {}", shebang);
 
-    interpreterSettingService.restartInterpreter("%" + shebang);
+    moduleSettingService.restartInterpreter("%" + shebang);
     return new JsonResponse<>(HttpStatus.OK, "").build();
   }
 
@@ -366,14 +412,14 @@ public class InterpreterRestApi {
   @GetMapping(produces = "application/json")
   public ResponseEntity listInterpreter() {
     try {
-      final Map<String, BaseInterpreterConfig> m = new HashMap<>();
-      final List<InterpreterArtifactSource> sources = interpreterSettingService.getAllSources();
-      for (final InterpreterArtifactSource source: sources) {
+      final Map<String, ModuleInnerConfiguration> m = new HashMap<>();
+      final List<ModuleSource> sources = moduleSettingService.getAllSources();
+      for (final ModuleSource source: sources) {
         if (source.getStatus().equals(Status.INSTALLED)) {
-          final List<BaseInterpreterConfig> configList =
-              ModuleInstaller.getDefaultConfig(source.getInterpreterName());
+          final List<ModuleInnerConfiguration> configList =
+              ModuleInstaller.getDefaultConfig(source.getName());
           if (!configList.isEmpty()) {
-            m.put(source.getInterpreterName(), configList.get(0));
+            m.put(source.getName(), configList.get(0));
           }
         }
       }

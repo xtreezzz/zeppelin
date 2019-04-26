@@ -26,7 +26,7 @@ import org.apache.zeppelin.storage.ZLog;
 import org.apache.zeppelin.storage.ZLog.ET;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,7 +112,7 @@ public class ModuleInstaller {
     }
   }
 
-  public static List<BaseInterpreterConfig> getDefaultConfig(final String name) {
+  public static List<ModuleInnerConfiguration> getDefaultConfig(final String name) {
     final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     ZLog.log(ET.INTERPRETER_CONFIGURATION_REQUESTED,
             String.format("Requested for interpreter[name:%s] configuration", name),
@@ -130,7 +130,7 @@ public class ModuleInstaller {
 
       classLoader = URLClassLoader.newInstance(urls.toArray(new URL[0]));
       final String config = IOUtils.toString(classLoader.getResourceAsStream("interpreter-setting.json"), "UTF-8");
-      final List<BaseInterpreterConfig> result = Arrays.asList(new Gson().fromJson(config, (Type) BaseInterpreterConfig[].class));
+      final List<ModuleInnerConfiguration> result = Arrays.asList(new Gson().fromJson(config, (Type) ModuleInnerConfiguration[].class));
       ZLog.log(ET.INTERPRETER_CONFIGURAION_FOUND,
               String.format("Configuration for interpreter %s successfully found", name),
               String.format("\"interpreter-setting.json\" for interpreter[%s] in %s successfully parsed",

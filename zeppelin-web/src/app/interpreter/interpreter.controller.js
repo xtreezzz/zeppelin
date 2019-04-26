@@ -563,8 +563,9 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   // Sources.
   $scope.resetNewSourceSetting = function() {
     $scope.newSrcSetting = {
-      interpreterName: '',
+      name: '',
       artifact: '',
+      type: '',
     };
   };
 
@@ -590,8 +591,10 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       });
   };
 
-  $scope.installSource = function(interpreterName) {
-    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + interpreterName)
+  $scope.installSource = function(moduleName) {
+    let index = _.findIndex($scope.sources, {'name': moduleName});
+    $scope.sources[index].status = 'IN_PROGRESS';
+    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + moduleName)
       .then(function(res) {
         getSources();
         getAvailableInterpreters();

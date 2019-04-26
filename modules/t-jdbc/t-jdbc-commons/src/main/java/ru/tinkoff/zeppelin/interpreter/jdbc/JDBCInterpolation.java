@@ -35,15 +35,11 @@ public class JDBCInterpolation {
                                    @Nonnull final Map<String, String> intpContext,
                                    @Nonnull final Set<String> envVariables) {
 
-    final StringBuilder interpolatedPrecode = new StringBuilder(query);
-    envVariables.forEach(env ->
-            interpolatedPrecode.replace(
-                    interpolatedPrecode.indexOf(env),
-                    interpolatedPrecode.indexOf(env) + env.length(),
-                    intpContext.get(env)
-            )
-    );
-    return interpolatedPrecode.toString();
+    String afterInject = query;
+    for (final String var : envVariables) {
+      afterInject = afterInject.replaceAll(var, intpContext.get(var));
+    }
+    return afterInject;
   }
 
 }

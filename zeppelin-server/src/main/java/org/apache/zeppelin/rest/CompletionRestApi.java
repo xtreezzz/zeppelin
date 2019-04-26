@@ -42,27 +42,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.CompletionService;
-import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
 import ru.tinkoff.zeppelin.engine.NoteService;
 
 @RestController
 @RequestMapping("/api/completion")
 public class CompletionRestApi {
 
-  private final InterpreterSettingService interpreterRepo;
 
   private final NoteService noteService;
   private final CompletionService completionService;
 
   @Autowired
-  public CompletionRestApi(final InterpreterSettingService interpreterRepo,
+  public CompletionRestApi(
                            final NoteService noteService,
                            final CompletionService completionService) {
-    this.interpreterRepo = interpreterRepo;
     this.noteService = noteService;
     this.completionService = completionService;
   }
@@ -71,45 +68,45 @@ public class CompletionRestApi {
   public ResponseEntity completion(@PathVariable("noteId") final String noteId,
                                    @PathVariable("paragraphId") final String paragraphId,
                                    @RequestBody final String message) {
-    final List<InterpreterCompletion> completions = new ArrayList<>();
-
-    final Note note = noteService.getNote(noteId);
-    final Optional<Paragraph> p = noteService.getParagraphs(note).stream()
-        .filter(e -> e.getUuid().equals(paragraphId)).findAny();
-
-    final Map<String, String> params = new Gson().fromJson(message,
-        new TypeToken<HashMap<String, String>>() {}.getType());
-
-    final String buf = params.get("buf");
-    final int cur = (int) Double.parseDouble(params.get("cursor"));
-
-    if (p.isPresent()) {
-      final Optional<InterpreterOption> option = interpreterRepo.getAllOptions().stream()
-          .filter(o -> o.getShebang().equals(p.get().getShebang()))
-          .findAny();
-
-      if (option.isPresent()) {
-        if (option.get().getConfig().getGroup().equals("jdbc")) {
-          completions.addAll(JDBCCompleter.complete(buf, cur));
-        } else {
-          completions.add(
-              new InterpreterCompletion(
-                  "warning",
-                  "",
-                  "keyword",
-                  "Completion for this interpreter is not supported yet."
-              )
-          );
-        }
-      } else {
-        //LOGIC ERROR
-        return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Interpreter not found").build();
-      }
-    } else {
-      //LOGIC ERROR
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Paragraph not found").build();
-    }
-    return new JsonResponse<>(HttpStatus.OK, "", completions).build();
+//    final List<InterpreterCompletion> completions = new ArrayList<>();
+//
+//    final Note note = noteService.getNote(noteId);
+//    final Optional<Paragraph> p = noteService.getParagraphs(note).stream()
+//        .filter(e -> e.getUuid().equals(paragraphId)).findAny();
+//
+//    final Map<String, String> params = new Gson().fromJson(message,
+//        new TypeToken<HashMap<String, String>>() {}.getType());
+//
+//    final String buf = params.get("buf");
+//    final int cur = (int) Double.parseDouble(params.get("cursor"));
+//
+//    if (p.isPresent()) {
+//      final Optional<ModuleConfiguration> option = interpreterRepo.getAllOptions().stream()
+//          .filter(o -> o.getShebang().equals(p.get().getShebang()))
+//          .findAny();
+//
+//      if (option.isPresent()) {
+//        if (option.get().getConfig().getGroup().equals("jdbc")) {
+//          completions.addAll(JDBCCompleter.complete(buf, cur));
+//        } else {
+//          completions.add(
+//              new InterpreterCompletion(
+//                  "warning",
+//                  "",
+//                  "keyword",
+//                  "Completion for this interpreter is not supported yet."
+//              )
+//          );
+//        }
+//      } else {
+//        //LOGIC ERROR
+//        return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Interpreter not found").build();
+//      }
+//    } else {
+//      //LOGIC ERROR
+//      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Paragraph not found").build();
+//    }
+    return new JsonResponse<>(HttpStatus.OK, "", "").build();
   }
 
   private static class InterpreterCompletion {

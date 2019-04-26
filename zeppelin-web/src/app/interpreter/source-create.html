@@ -28,8 +28,8 @@ limitations under the License.
           <div class="form-group">
             <label class="control-label col-sm-2" for="name">Interpreter Name</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="name" ng-model="newSrcSetting.interpreterName"
-                     placeholder="Interpreter Name" required />
+              <input type="text" class="form-control" id="name" ng-model="newSrcSetting.name"
+                     placeholder="Module Name" required />
             </div>
           </div>
           <div class="form-group">
@@ -38,6 +38,14 @@ limitations under the License.
               <input type="text"
                      class="form-control" id="artifact" ng-model="newSrcSetting.artifact"
                      placeholder="Interpreter Artifact" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="type">Type</label>
+            <div class="col-sm-10">
+              <input type="text"
+                     class="form-control" id="type" ng-model="newSrcSetting.type"
+                     placeholder="Module Type" required />
             </div>
           </div>
         </div>

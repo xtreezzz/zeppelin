@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.core.configuration.interpreter;
 
 import com.google.common.base.Preconditions;
+
 import java.io.Serializable;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -25,50 +26,35 @@ import javax.annotation.Nonnull;
 /**
  * Represents default interpreter setting.
  */
-public class BaseInterpreterConfig implements Serializable {
+public class ModuleInnerConfiguration implements Serializable {
 
-  @Nonnull
-  private final String group;
+  private long id;
 
-  @Nonnull
-  private final String name;
-
-  @Nonnull
   private final String className;
 
-  @Nonnull
   private final Map<String, InterpreterProperty> properties;
 
-  @Nonnull
   private final Map<String, Object> editor;
 
 
-  public BaseInterpreterConfig(@Nonnull final String name, @Nonnull final String group,
-      @Nonnull final String className, @Nonnull final Map<String, InterpreterProperty> properties,
-      @Nonnull final Map<String, Object> editor) {
-    Preconditions.checkNotNull(name);
-    Preconditions.checkNotNull(group);
+  public ModuleInnerConfiguration(@Nonnull final String className,
+                                  @Nonnull final Map<String, InterpreterProperty> properties,
+                                  @Nonnull final Map<String, Object> editor) {
     Preconditions.checkNotNull(className);
     Preconditions.checkNotNull(properties);
     Preconditions.checkNotNull(editor);
 
-    this.name = name;
-    this.group = group;
     this.className = className;
     this.properties = properties;
     this.editor = editor;
   }
 
-  @Nonnull
-  public String getName() {
-    Preconditions.checkNotNull(name);
-    return name;
+  public long getId() {
+    return id;
   }
 
-  @Nonnull
-  public String getGroup() {
-    Preconditions.checkNotNull(group);
-    return group;
+  public void setId(final long id) {
+    this.id = id;
   }
 
   @Nonnull
@@ -89,19 +75,12 @@ public class BaseInterpreterConfig implements Serializable {
     return editor;
   }
 
-  @Nonnull
-  public String getInterpreterKey() {
-    return getGroup() + "." + getName();
-  }
-
   @Override
   public String toString() {
     return new StringJoiner(", ", "{", "}")
-        .add("group='" + group + "'")
-        .add("name='" + name + "'")
-        .add("className='" + className + "'")
-        .add("properties=" + properties)
-        .add("editor=" + editor)
-        .toString();
+            .add("className='" + className + "'")
+            .add("properties=" + properties)
+            .add("editor=" + editor)
+            .toString();
   }
 }

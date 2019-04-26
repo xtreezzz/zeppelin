@@ -20,8 +20,9 @@ import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.engine.Configuration;
@@ -53,19 +54,20 @@ public class InterpreterStarterHandler extends AbstractHandler {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handle(final Job job,
-                     final InterpreterOption option,
-                     final InterpreterArtifactSource source,
+                     final ModuleConfiguration config,
+                     final ModuleInnerConfiguration innerConfig,
+                     final ModuleSource source,
                      final String remoteServerClassPath,
                      final String thriftAddr,
                      final int thriftPort) {
 
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
-    if (option == null) {
+    if (config == null) {
       setErrorResult(job, batch, PredefinedInterpreterResults.INTERPRETER_NOT_FOUND);
       return;
     }
 
-    if (!option.isEnabled()) {
+    if (!config.isEnabled()) {
       setErrorResult(job, batch, PredefinedInterpreterResults.INTERPRETER_DISABLED);
     }
 
@@ -74,7 +76,7 @@ public class InterpreterStarterHandler extends AbstractHandler {
       return;
     }
 
-    if (source.getStatus() != InterpreterArtifactSource.Status.INSTALLED) {
+    if (source.getStatus() != ModuleSource.Status.INSTALLED) {
       setErrorResult(job, batch, PredefinedInterpreterResults.INTERPRETER_NOT_FOUND);
       return;
     }
@@ -85,11 +87,11 @@ public class InterpreterStarterHandler extends AbstractHandler {
               job.getShebang(),
               RemoteProcessType.INTERPRETER,
               source.getPath(),
-              option.getConfig().getClassName(),
+              innerConfig.getClassName(),
               remoteServerClassPath,
               thriftAddr,
               thriftPort,
-              option.getJvmOptions(),
+              config.getJvmOptions(),
               Configuration.getInstanceMarkerPrefix());
     } catch (final Exception e) {
       AbstractRemoteProcess.remove(job.getShebang(), RemoteProcessType.INTERPRETER);

@@ -88,15 +88,15 @@ limitations under the License.
 </div>
 
 <div interpreter-item class="box width-full"
-     ng-repeat="source in sources | orderBy: 'interpreterName' | filter: {interpreterName:searchInterpreter}" >
+     ng-repeat="source in sources | orderBy: 'name' | filter: {name:searchInterpreter}" >
   <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#home-{{source.interpreterName}}">{{source.interpreterName}}</a></li>
-    <li ng-repeat="setting in interpreterSettings | orderBy: 'setting.interpreterName' | filter: { interpreterName: source.interpreterName }">
+    <li class="active"><a data-toggle="tab" href="#home-{{source.name}}">{{source.name}}</a></li>
+    <li ng-repeat="setting in interpreterSettings | orderBy: 'setting.name' | filter: { name: source.name }">
       <a data-toggle="tab" href="#{{setting.shebang.substring(1)}}">{{setting.shebang}}</a></li>
     <!-- reverse -->
     <li style="float:right;">
       <div class="pull-right">
-        <button type="button" class="btn btn-default btn-sm" aria-label="Close" ng-click="removeSource(source.interpreterName)">
+        <button type="button" class="btn btn-default btn-sm" aria-label="Close" ng-click="removeSource(source.name)">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -106,7 +106,7 @@ limitations under the License.
         <button class="btn btn-default btn-sm"
                 data-toggle="modal"
                 data-target="#interpreterModal"
-                onclick="setDefaultInterpreterGroup(source.interpreterName)">
+                onclick="setDefaultInterpreterGroup(source.name)">
           <i class="fa fa-plus"></i>
           Create Interpreter
         </button>
@@ -116,11 +116,11 @@ limitations under the License.
   </ul>
 
   <div class="tab-content">
-    <div id="home-{{source.interpreterName}}" class="tab-pane fade in active">
+    <div id="home-{{source.name}}" class="tab-pane fade in active">
       <div class="card bg-light md-12">
         <div class="card-body">
           <h5 class="card-title">
-            {{source.interpreterName}}:&nbsp
+            {{source.name}}:&nbsp
             <!-- img -->
             <small ng-switch="source.status">
               <small ng-switch-when="INSTALLED">
@@ -142,25 +142,25 @@ limitations under the License.
           </h5>
           <h6 class="card-subtitle mb-2 text-muted">{{source.artifact}}</h6>
 
-          <p class="card-text" ng-if="source.status === 'INSTALLED'">You may setup <b>{{source.interpreterName}}</b> interpreter using this artifact.</p>
-          <p class="card-text" ng-if="source.status === 'NOT_INSTALLED'">Install artifact to setup <b>{{source.interpreterName}}</b> interpreter.</p>
+          <p class="card-text" ng-if="source.status === 'INSTALLED'">You may setup <b>{{source.name}}</b> interpreter using this artifact.</p>
+          <p class="card-text" ng-if="source.status === 'NOT_INSTALLED'">Install artifact to setup <b>{{source.name}}</b> interpreter.</p>
 
           <input type="checkbox" ng-model="source.reinstallOnStart" ng-click="enableReinstall(source)" />
           <label class="form-check-label" uib-tooltip="Enable artifact reinstall on app restart.">Reinstall on start.</label>
 
           <hr/>
-          <button class="btn btn-primary" ng-if="source.status === 'NOT_INSTALLED'" ng-click="installSource(source.interpreterName)">Install</button>
+          <button class="btn btn-primary" ng-if="source.status === 'NOT_INSTALLED'" ng-click="installSource(source.name)">Install</button>
 
-          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="uninstallSource(source.interpreterName)">Uninstall</button>
-          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="reinstallSource(source.interpreterName)">Reinstall</button>
+          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="uninstallSource(source.name)">Uninstall</button>
+          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="reinstallSource(source.name)">Reinstall</button>
         </div>
       </div>
 
     </div>
 
     <div id="{{setting.shebang.substring(1)}}" class="tab-pane fade"
-         ng-repeat="setting in interpreterSettings | orderBy: 'setting.interpreterName' | filter: { interpreterName: source.interpreterName }">
-      <div id="{{setting.interpreterName | lowercase}}">
+         ng-repeat="setting in interpreterSettings | orderBy: 'setting.name' | filter: { name: source.name }">
+      <div id="{{setting.name | lowercase}}">
         <div class="row interpreter" style="margin-top: 5px">
           <div class="col-md-12">
             <h3 class="interpreter-title">{{setting.customInterpreterName}}</h3>
@@ -387,7 +387,7 @@ limitations under the License.
             <div class="checkbox remove-margin-top-bottom">
           <span class="input-group" style="line-height:30px;">
             <label>
-              <input type="checkbox" style="width:20px !important" id="idShowPermission" ng-click="togglePermissions(setting.interpreterName)" ng-model="setting.permissions.isEnabled" ng-disabled="!valueform.$visible"/>
+              <input type="checkbox" style="width:20px !important" id="idShowPermission" ng-click="togglePermissions(setting.name)" ng-model="setting.permissions.isEnabled" ng-disabled="!valueform.$visible"/>
                Set permission
             </label>
           </span>
@@ -433,7 +433,7 @@ limitations under the License.
                 <div>
 
                   <span class="owners">Owners </span>
-                  <select id="{{setting.interpreterName}}Owners" class="form-control" multiple="multiple" ng-disabled="!valueform.$visible">
+                  <select id="{{setting.name}}Owners" class="form-control" multiple="multiple" ng-disabled="!valueform.$visible">
                     <option ng-repeat="owner in setting.permissions.owners" selected="selected">{{owner}}</option>
                   </select>
                 </div>

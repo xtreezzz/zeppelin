@@ -32,7 +32,7 @@ public class ResponseHeaderFilter implements Filter {
     httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://localhost:9000");
     httpServletResponse.setHeader("Access-Control-Allow-Credentials", "true");
     httpServletResponse.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    httpServletResponse.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, HEAD, DELETE");
+    httpServletResponse.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, HEAD, DELETE");
     chain.doFilter(request, response);
   }
 }

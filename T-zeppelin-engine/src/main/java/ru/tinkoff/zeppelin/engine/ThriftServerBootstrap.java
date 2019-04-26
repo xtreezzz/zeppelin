@@ -17,6 +17,7 @@
 
 package ru.tinkoff.zeppelin.engine;
 
+import org.apache.zeppelin.storage.ModuleRepositoryDAO;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -30,17 +31,17 @@ import javax.annotation.PreDestroy;
 @Component("thriftBootstrap")
 class ThriftServerBootstrap {
 
-  private final InterpreterSettingService interpreterSettingService;
+  private final ModuleRepositoryDAO repositoryDAO;
   private RemoteProcessServer server;
 
-  public ThriftServerBootstrap(final InterpreterSettingService interpreterSettingService) {
-    this.interpreterSettingService = interpreterSettingService;
+  public ThriftServerBootstrap(final ModuleRepositoryDAO repositoryDAO) {
+    this.repositoryDAO = repositoryDAO;
   }
 
   @PostConstruct
   public void init() throws Exception{
     server = new RemoteProcessServer();
-    server.initSources(interpreterSettingService.getAllRepositories());
+    server.initSources(repositoryDAO.getAll());
     server.start();
   }
 

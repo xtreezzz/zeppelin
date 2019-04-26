@@ -32,7 +32,8 @@ import org.apache.zeppelin.storage.ZLog.ET;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.engine.Configuration;
@@ -70,12 +71,15 @@ public class PendingHandler extends AbstractHandler {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handle(final Job job, final AbstractRemoteProcess process, final InterpreterOption option) {
-    if (!userIsInterpreterOwner(job, option)) {
+  public void handle(final Job job,
+                     final AbstractRemoteProcess process,
+                     final ModuleConfiguration config,
+                     final ModuleInnerConfiguration innerConfig) {
+    if (!userIsInterpreterOwner(job, config)) {
       String errorMessage = String.format(
               "User [%s] does not have access to [%s] interpreter.",
               job.getUsername(),
-              option.getInterpreterName()
+              config.getHumanReadableName()
       );
 
       ZLog.log(
@@ -111,9 +115,9 @@ public class PendingHandler extends AbstractHandler {
     userContext.put("Z_ENV_USER_ROLES", job.getRoles().toString());
 
     // prepare configuration
+
     final Map<String, String> configuration = new HashMap<>();
-    option.getConfig()
-            .getProperties()
+    innerConfig.getProperties()
             .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
 
     ZLog.log(ET.JOB_READY_FOR_EXECUTION, "Job ready for execution, id=" + job.getId(),
@@ -147,7 +151,7 @@ public class PendingHandler extends AbstractHandler {
     }
   }
 
-  private boolean userIsInterpreterOwner(Job job, InterpreterOption option) {
+  private boolean userIsInterpreterOwner(Job job, ModuleConfiguration option) {
     List<String> owners = option.getPermissions().getOwners();
     if (owners.isEmpty()) {
       return true;
