@@ -60,7 +60,6 @@ public class ParagraphHandler extends AbstractHandler {
     final String shebang = fromMessage.getNotNull("shebang");
     final String text = fromMessage.getNotNull("paragraph");
     final Map<String, Object> config = fromMessage.getNotNull("config");
-    final Map<String, Object> params = fromMessage.getNotNull("params");
 
 
     final DiffMatchPatch dmp = new DiffMatchPatch();
@@ -75,8 +74,7 @@ public class ParagraphHandler extends AbstractHandler {
             ? StringUtils.EMPTY
             : paragraph.getText();
 
-    paragraph.setConfig(config);
-    paragraph.setFormParams(params);
+    paragraph.getConfig().putAll(config);
     paragraph.setTitle(title);
     paragraph.setText(
             patches != null
@@ -170,8 +168,6 @@ public class ParagraphHandler extends AbstractHandler {
     paragraph.setUpdated(LocalDateTime.now());
     paragraph.setPosition(index);
     paragraph.setJobId(null);
-    paragraph.setConfig(new HashMap<>());
-    paragraph.setFormParams(new HashMap<>());
     noteService.persistParagraph(note, paragraph);
 
     return paragraph.getUuid();

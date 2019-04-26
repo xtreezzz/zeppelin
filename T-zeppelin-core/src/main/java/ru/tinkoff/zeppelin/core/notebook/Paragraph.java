@@ -20,6 +20,7 @@ package ru.tinkoff.zeppelin.core.notebook;
 import java.io.Serializable;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,6 +49,8 @@ public class Paragraph implements Serializable {
 
   public Paragraph() {
     this.uuid = "paragraph_" + System.currentTimeMillis() + "_" + new SecureRandom().nextInt();
+    config = new HashMap<>(5);
+    formParams = new HashMap<>(1);
   }
 
   public Paragraph(final Long id,
@@ -158,16 +161,8 @@ public class Paragraph implements Serializable {
     return config;
   }
 
-  public void setConfig(final Map<String, Object> config) {
-    this.config = config;
-  }
-
   public Map<String, Object> getFormParams() {
     return formParams;
-  }
-
-  public void setFormParams(final Map<String, Object> formParams) {
-    this.formParams = formParams;
   }
 
   public Long getRevisionId() {

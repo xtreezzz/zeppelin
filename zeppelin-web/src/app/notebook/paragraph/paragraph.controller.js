@@ -924,9 +924,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
 
     $http.post(
-      baseUrlSrv.getRestApiBase() + '/notebook/' +
-      $scope.parentNote.databaseId + '/' +
-      $scope.paragraph.databaseId + '/form_values',
+      baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.parentNote.databaseId +
+      '/paragraph/' + $scope.paragraph.databaseId + '/set_forms_values',
       params
     ).then(() => {
       if (changedForm.runOnChange) {

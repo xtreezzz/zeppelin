@@ -871,9 +871,14 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   };
 
   let getPermissions = function(callback) {
-    $http.get(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.id + '/permissions')
+    $http.get(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.databaseId)
     .success(function(data, status, headers, config) {
-      $scope.permissions = data.body;
+      $scope.permissions = {
+        owners: data.body.owners,
+        readers: data.body.readers,
+        runners: data.body.runners,
+        writers: data.body.writers,
+      };
       $scope.permissionsOrig = angular.copy($scope.permissions); // to check dirty
 
       let selectJson = {
@@ -1241,8 +1246,17 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     }
   };
 
+  // Work in dev
+  // $http({
+  //   method: 'POST',
+  //   url: baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.id + '/update',
+  //   headers: {
+  //     'Content-Type': 'text/plain',
+  //   },
+  //   data: $scope.permissions})
+
   $scope.setPermissions = function() {
-    $http.put(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.id + '/permissions',
+    $http.post(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.databaseId + '/update',
       $scope.permissions, {withCredentials: true})
     .success(function(data, status, headers, config) {
       getPermissions(function() {

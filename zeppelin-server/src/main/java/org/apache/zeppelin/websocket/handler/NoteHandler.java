@@ -141,8 +141,6 @@ public class NoteHandler extends AbstractHandler {
       paragraph.setUpdated(LocalDateTime.now());
       paragraph.setPosition(0);
       paragraph.setJobId(null);
-      paragraph.setConfig(new HashMap<>());
-      paragraph.setFormParams(new HashMap<>());
       noteService.persistParagraphSilently(paragraph);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
@@ -184,8 +182,8 @@ public class NoteHandler extends AbstractHandler {
       cloneParagraph.setUpdated(LocalDateTime.now());
       cloneParagraph.setPosition(paragraph.getPosition());
       cloneParagraph.setJobId(null);
-      cloneParagraph.setConfig(paragraph.getConfig());
-      cloneParagraph.setFormParams(paragraph.getFormParams());
+      cloneParagraph.getConfig().putAll(paragraph.getConfig());
+      cloneParagraph.getFormParams().putAll(paragraph.getFormParams());
       noteService.persistParagraphSilently(cloneParagraph);
     }
 
