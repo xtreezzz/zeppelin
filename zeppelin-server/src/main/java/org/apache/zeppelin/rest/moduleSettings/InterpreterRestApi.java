@@ -18,10 +18,12 @@
 package org.apache.zeppelin.rest.moduleSettings;
 
 import com.google.gson.Gson;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.Repository;
 import org.apache.zeppelin.rest.JsonResponse;
@@ -119,7 +121,6 @@ public class InterpreterRestApi {
   }
 
 
-
   /**
    * List of all sources.
    */
@@ -154,7 +155,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while installing new source ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -180,7 +181,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while uninstalling new source ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -206,7 +207,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while uninstalling new source ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -259,8 +260,6 @@ public class InterpreterRestApi {
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
-
-
 
 
   /**
@@ -317,7 +316,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating option ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -329,23 +328,23 @@ public class InterpreterRestApi {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
     }
     try {
-      final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
-      interpreterSettingService.updateOption(option);
-      // restart with new settings
-      interpreterSettingService.restartInterpreter("%" + shebang);
-      logger.info("Option {} updated", option.getShebang());
+//      final InterpreterOption option = new Gson().fromJson(message, InterpreterOption.class);
+//      interpreterSettingService.updateOption(option);
+//      // restart with new settings
+//      interpreterSettingService.restartInterpreter("%" + shebang);
+//      logger.info("Option {} updated", option.getShebang());
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating option ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/source/{interpreterName}", produces = "application/json")
   public ResponseEntity updateSource(@RequestBody final String message,
-      @PathVariable("interpreterName") final String interpreterName) {
+                                     @PathVariable("interpreterName") final String interpreterName) {
     logger.info("Update source {}", interpreterName);
     if (message == null) {
       return new JsonResponse(HttpStatus.BAD_REQUEST).build();
@@ -372,7 +371,7 @@ public class InterpreterRestApi {
     } catch (final Exception e) {
       logger.error("Exception in InterpreterRestApi while creating option ", e);
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-          ExceptionUtils.getStackTrace(e)).build();
+              ExceptionUtils.getStackTrace(e)).build();
     }
   }
 
@@ -395,7 +394,6 @@ public class InterpreterRestApi {
 
   /**
    * Restart interpreter setting.
-   *
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @PutMapping(value = "/setting/restart/{settingId}", produces = "application/json")

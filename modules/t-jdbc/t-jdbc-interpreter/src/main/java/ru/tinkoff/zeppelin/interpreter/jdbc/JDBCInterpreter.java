@@ -245,10 +245,8 @@ public class JDBCInterpreter extends Interpreter {
                                        @Nonnull final Map<String, String> configuration) {
     if (isOpened() && isAlive()) {
       final Map<String, String> params = new HashMap<>();
-      params.put("Z_ENV_NOTE_ID", noteContext.get("Z_ENV_NOTE_ID"));
-      params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("Z_ENV_PARAGRAPH_ID"));
-      params.put("Z_ENV_USER_NAME", userContext.get("Z_ENV_USER_NAME"));
-      params.put("Z_ENV_USER_ROLES", userContext.get("Z_ENV_USER_ROLES"));
+      params.putAll(noteContext);
+      params.putAll(userContext);
 
       final String precode = configuration.get("query.precode");
       if (precode != null && !precode.trim().equals("")) {

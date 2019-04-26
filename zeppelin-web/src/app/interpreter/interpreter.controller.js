@@ -14,8 +14,7 @@
 
 angular.module('zeppelinWebApp').controller('InterpreterCtrl', InterpreterCtrl);
 
-function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv, ngToast,
-                         $timeout, $route) {
+function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv, ngToast, $timeout, $route) {
   'ngInject';
 
   let interpreterSettingsTmp = [];
@@ -128,6 +127,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   let getModuleSources = function () {
     $http.get(baseUrlSrv.getRestApiBase() + '/interpreter').then(function (res) {
       $scope.moduleSources = res.data.body;
+      console.log('getModuleSources', $scope.moduleSources);
     }).catch(function (res) {
       $scope.showErrorMessage(res);
     });
@@ -155,7 +155,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     interpreterSettingsTmp[index] = angular.copy($scope.interpreterSettings[index]);
   };
 
-  $scope.updateInterpreterSetting = function (form, shebang) {
+  $scope.updateModule = function (form, shebang) {
     const thisConfirm = BootstrapDialog.confirm({
       closable: false,
       closeByBackdrop: false,
@@ -212,7 +212,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     removeTMPSettings(index);
   };
 
-  $scope.removeInterpreterSetting = function (shebang) {
+  $scope.deleteModule = function (shebang) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
@@ -231,7 +231,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     });
   };
 
-  $scope.restartInterpreterSetting = function (shebang) {
+  $scope.restartModule = function (shebang) {
     BootstrapDialog.confirm({
       closable: true,
       title: '',
@@ -251,7 +251,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     });
   };
 
-  $scope.enableInterpreter = function (shebang) {
+  $scope.enableModule = function (shebang) {
     let index = _.findIndex($scope.interpreterSettings, {'shebang': shebang});
     let request = angular.copy($scope.interpreterSettings[index]);
     request.isEnabled = !request.isEnabled;
@@ -266,6 +266,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       });
     return false;
   };
+
 
   $scope.enableReinstall = function (source) {
     $http.put(baseUrlSrv.getRestApiBase() + '/interpreter/source/' + source.humanReadableName, source)
@@ -302,12 +303,29 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       return;
     }
 
+    let finalSetting = {};
+    finalSetting.moduleConfiguration = {};
+    finalSetting.moduleConfiguration.shebang = $scope.newInterpreterSetting.shebang;
+    finalSetting.moduleConfiguration.humanReadableName = $scope.newInterpreterSetting.humanReadableName;
+    finalSetting.moduleConfiguration.jvmOptions = $scope.newInterpreterSetting.jvmOptions;
+    finalSetting.moduleConfiguration.concurrentTasks = $scope.newInterpreterSetting.concurrentTasks;
+    finalSetting.moduleConfiguration.moduleInnerConfigId = -1;
+    finalSetting.moduleConfiguration.permissions = $scope.newInterpreterSetting.permissions;
+    finalSetting.moduleConfiguration.isEnabled = false;
+
+    finalSetting.moduleInnerConfiguration = {};
+    finalSetting.moduleInnerConfiguration.properties = $scope.newInterpreterSetting.config.properties;
+    finalSetting.moduleInnerConfiguration.editor = $scope.newInterpreterSetting.config.editor;
+
+    console.log('finalSetting', finalSetting);
+
     let newSetting = $scope.newInterpreterSetting;
 
     if (newSetting.permissions.isEnabled === undefined) {
       newSetting.permissions.isEnabled = false;
     }
     newSetting.permissions.owners = angular.element('#newInterpreterOwners').val();
+
 
     let request = $scope.newInterpreterSetting;
     $http({
@@ -322,7 +340,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         websocketMsgSrv.fireEvent('ADD_INTERPRETER',
           'Interpreter ' + request.shebang + ' has been added',
           'New interpreter has been added ' + request);
-        $scope.resetNewInterpreterSetting();
+        $scope.resetModuleSettings();
         getInterpreterSettings();
         getModuleSources();
         angular.element('#interpreterModal').modal('hide');
@@ -335,14 +353,24 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   $scope.setSelectedModuleSources = function (moduleSource) {
     console.log('selectedModuleSources ', moduleSource);
+    console.log('$scope.moduleSources ', $scope.moduleSources);
     $scope.selectedModuleSources = moduleSource;
+
+    $scope.newInterpreterSetting.config =
+      $scope.moduleSources[moduleSource];
+
+    $scope.newInterpreterSetting.editor =
+      angular.copy($scope.moduleSources[moduleSource].editor);
+
+    for (let key in $scope.newInterpreterSetting.config.properties) {
+      if ($scope.newInterpreterSetting.config.properties.hasOwnProperty(key)) {
+        $scope.newInterpreterSetting.config.properties[key].currentValue =
+          $scope.newInterpreterSetting.config.properties[key].defaultValue;
+      }
+    }
   };
 
-  $scope.cancelInterpreterSetting = function () {
-    $scope.resetNewInterpreterSetting();
-  };
-
-  $scope.resetNewInterpreterSetting = function () {
+  $scope.resetModuleSettings = function () {
     // see ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption
     $scope.newInterpreterSetting = {
       humanReadableName: undefined,
@@ -466,7 +494,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   $scope.installSource = function (moduleName) {
     let index = _.findIndex($scope.sources, {'name': moduleName});
     $scope.sources[index].status = 'IN_PROGRESS';
-    $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + moduleName)
+    $http({
+      method: 'POST',
+      url: baseUrlSrv.getRestApiBase() + '/interpreter/source/install/' + moduleName,
+      headers: {
+        'Content-Type': 'text/plain',
+      }
+    })
       .then(function (res) {
         getSources();
         getModuleSources();
@@ -483,7 +517,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       message: 'Do you want to uninstall this interpreter source? All running interpreters would be disabled!',
       callback: function (result) {
         if (result) {
-          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + humanReadableName)
+          $http({
+            method: 'POST',
+            url: baseUrlSrv.getRestApiBase() + '/interpreter/source/uninstall/' + humanReadableName,
+            headers: {
+              'Content-Type': 'text/plain',
+            }
+          })
             .then(function (res) {
               getSources();
               getModuleSources();
@@ -503,7 +543,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       message: 'Do you want to reinstall this interpreter source? All running interpreters would be unavailable!',
       callback: function (result) {
         if (result) {
-          $http.post(baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + humanReadableName)
+          $http({
+            method: 'POST',
+            url: baseUrlSrv.getRestApiBase() + '/interpreter/source/reinstall/' + humanReadableName,
+            headers: {
+              'Content-Type': 'text/plain',
+            }
+          })
             .then(function (res) {
               getSources();
               getModuleSources();
@@ -563,7 +609,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   let init = function () {
     getAvailableInterpreterPropertyWidgets();
 
-    $scope.resetNewInterpreterSetting();
+    $scope.resetModuleSettings();
     $scope.resetNewRepositorySetting();
     $scope.resetNewSourceSetting();
 

@@ -106,7 +106,8 @@ limitations under the License.
         <button class="btn btn-default btn-sm"
                 data-toggle="modal"
                 data-target="#interpreterModal"
-                ng-click="setSelectedModuleSources(source.name)">
+                ng-click="setSelectedModuleSources(source.name)"
+                ng-if="source.status === 'INSTALLED'">
           <i class="fa fa-plus"></i>
           Create
         </button>
@@ -165,7 +166,7 @@ limitations under the License.
           <div class="col-md-12">
             <h3 class="interpreter-title">{{setting.humanReadableName}}</h3>
             <span style="float:right" ng-show="!valueform.$visible" >
-          <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
+          <button class="btn btn-default btn-xs" ng-click="enableModule(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
               <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
               <span ng-if="setting.isEnabled != true" class="fa fa-toggle-off" style="border: none !important; font-size:24px; color:red"></span>
           </button>
@@ -174,10 +175,10 @@ limitations under the License.
                   copyOriginInterpreterSettingProperties(setting.shebang)">
             <span class="fa fa-pencil"></span> edit</button>
           <button class="btn btn-default btn-xs"
-                  ng-click="restartInterpreterSetting(setting.shebang)">
+                  ng-click="restartModule(setting.shebang)">
             <span class="fa fa-refresh"></span> restart</button>
           <button class="btn btn-default btn-xs"
-                  ng-click="removeInterpreterSetting(setting.shebang)">
+                  ng-click="deleteModule(setting.shebang)">
             <span class="fa fa-trash"></span> remove</button>
         </span>
           </div>
