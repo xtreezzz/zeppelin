@@ -22,9 +22,9 @@ limitations under the License.
       <p class="form-control-title"
          ng-class="{'reverse-ellipsis ellipsis':noteName(note).length > 45}"
          tooltip-placement="bottom"
-         uib-tooltip={{noteName(note)}}
-         ng-click="input.showEditor = !revisionView; input.value = note.name"
-         ng-show="!input.showEditor"><span>{{noteName(note)}}</span></p>
+         uib-tooltip={{note.name}}
+         ng-click="input.showEditor = !revisionView; input.value = note.path"
+         ng-show="!input.showEditor"><span>{{note.name}}</span></p>
     </div>
     <div style="float: left; padding-bottom: 10px">
       <span class="labelBtn btn-group">
