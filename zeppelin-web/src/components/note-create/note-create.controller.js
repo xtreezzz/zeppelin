@@ -54,7 +54,7 @@ function NoteCreateCtrl($scope, noteListFactory, $routeParams, websocketMsgSrv) 
   vm.preVisible = function(clone, sourceNoteName, path) {
     vm.clone = clone;
     vm.sourceNoteName = sourceNoteName;
-    $scope.note.notename = vm.clone ? vm.cloneNoteName() : vm.newNoteName(path);
+    $scope.note.path = vm.clone ? vm.cloneNoteName() : vm.newNoteName(path);
     $scope.$apply();
   };
 
