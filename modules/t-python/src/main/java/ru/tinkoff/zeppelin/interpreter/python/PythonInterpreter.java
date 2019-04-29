@@ -158,7 +158,7 @@ public class PythonInterpreter extends Interpreter {
                       " -py_script \"%s\"" +
                       " -output_file \"%s\"" +
                       " -params_file \"%s\"" +
-                      " -jep_include_path \"%s\"" +
+                      " -jep_include_paths \"%s\"" +
                       " -jep_python_home \"%s\"",
               additionalJvmArgs,
               classPath,

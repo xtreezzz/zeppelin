@@ -85,12 +85,12 @@ public class PythonInterpreterProcess {
     final String pathToScript = cmd.getOptionValue("py_script");
     final String pathToOutput = cmd.getOptionValue("output_file");
     final String pathToParamsFile = cmd.getOptionValue("params_file");
-    final String jepIncludePath = cmd.getOptionValue("jep_include_path");
+    final String jepIncludePaths = cmd.getOptionValue("jep_include_paths");
     final String jepPythonHome = cmd.getOptionValue("jep_python_home");
 
     final JepConfig jepConfig = new JepConfig()
             .setRedirectOutputStreams(true)
-            .setIncludePath(jepIncludePath);
+            .addIncludePaths(jepIncludePaths.split(":"));
 
     if (!"".equals(jepPythonHome)) {
       PyConfig pyConfig = new PyConfig();
