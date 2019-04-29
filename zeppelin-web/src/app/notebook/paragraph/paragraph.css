@@ -96,6 +96,16 @@
   overflow: auto;
 }
 
+.shebang select {
+  padding: 0;
+  height: 22px;
+}
+
+.control span.ng-scope {
+  display: inline-block;
+  margin-top: 4px;
+}
+
 /*
   Paragraph as Iframe CSS
 */

@@ -34,13 +34,26 @@ limitations under the License.
       </ul>
     </span>
   </span>
-  <span>
+  <span style="padding-right: 5px">
     {{paragraph.status}}
   </span>
 
   <span ng-if="paragraph.status === 'RUNNING' && paragraph.executor !== 'SPELL'">
     {{getProgress()}}%
   </span>
+
+  <!-- shebang -->
+  <div ng-if="!paragraph.config.editorHide && !viewOnly"
+       style="display: inline-block; color: black;">
+    <div class="shebang" ng-if="!paragraph.config.editorHide && !viewOnly">
+      <select
+        class="form-control"
+        ng-change="editor.setReadOnly(false);commitParagraph(paragraph);setParagraphMode(editor.getSession());"
+        ng-model="paragraph.shebang"
+        ng-options="setting.shebang as setting.shebang for setting in interpreterSettings | orderBy: 'interpreterName'">
+      </select>
+    </div>
+  </div>
 
   <!-- Run / Cancel button -->
   <span ng-if="!revisionView">
