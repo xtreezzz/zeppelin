@@ -189,6 +189,7 @@ public class NoteHandler extends AbstractHandler {
 
     connectionManager.removeSubscribersFromAllNote(conn);
     conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", cloneNote).toSend());
+    sendListNotesInfo(conn);
   }
 
 

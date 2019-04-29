@@ -51,33 +51,35 @@ function NoteCreateCtrl($scope, noteListFactory, $routeParams, websocketMsgSrv) 
     vm.createNote();
   };
 
-  vm.preVisible = function(clone, sourceNoteName, path) {
+  vm.preVisible = function(clone, notePath) {
     vm.clone = clone;
-    vm.sourceNoteName = sourceNoteName;
-    $scope.note.path = vm.clone ? vm.cloneNoteName() : vm.newNoteName(path);
+    vm.notePath = notePath;
+    $scope.note.path = vm.clone ? vm.cloneNoteName() : vm.newNoteName();
     $scope.$apply();
   };
 
-  vm.newNoteName = function(path) {
+  vm.newNoteName = function() {
+    let path = '/Users/' + $scope.ticket.screenUsername + '/' + 'Untitled Note ';
     let newCount = 1;
-    angular.forEach(vm.notes.flatList, function(noteName) {
-      noteName = noteName.path;
-      if (noteName.match(/^\/Untitled Note [0-9]*$/)) {
-        let lastCount = noteName.substr(15) * 1;
+    angular.forEach(vm.notes.flatList, function(note) {
+      let regExp = new RegExp(`^${path}([0-9]+)$`);
+      let match = note.path.match(regExp);
+      if (match) {
+        let lastCount = parseInt(match[1]);
         if (newCount <= lastCount) {
           newCount = lastCount + 1;
         }
       }
     });
-    return (path ? path + '/' : 'Users/' + $scope.ticket.screenUsername + '/') + 'Untitled Note ' + newCount;
+    return path + newCount;
   };
 
   vm.cloneNoteName = function() {
     let copyCount = 1;
     let newCloneName = '';
-    let lastIndex = vm.sourceNoteName.lastIndexOf(' ');
-    let endsWithNumber = !!vm.sourceNoteName.match('^.+?\\s\\d$');
-    let noteNamePrefix = endsWithNumber ? vm.sourceNoteName.substr(0, lastIndex) : vm.sourceNoteName;
+    let lastIndex = vm.notePath.lastIndexOf(' ');
+    let endsWithNumber = !!vm.notePath.match('^.+?\\s\\d$');
+    let noteNamePrefix = endsWithNumber ? vm.notePath.substr(0, lastIndex) : vm.notePath;
     let regexp = new RegExp('^' + noteNamePrefix + ' .+');
 
     angular.forEach(vm.notes.flatList, function(noteName) {
@@ -86,16 +88,19 @@ function NoteCreateCtrl($scope, noteListFactory, $routeParams, websocketMsgSrv) 
         let lastCopyCount = noteName.substr(lastIndex).trim();
         newCloneName = noteNamePrefix;
         lastCopyCount = parseInt(lastCopyCount);
-        if (copyCount <= lastCopyCount) {
-          copyCount = lastCopyCount + 1;
+        if (copyCount < lastCopyCount) {
+          copyCount = lastCopyCount;
         }
       }
     });
 
     if (!newCloneName) {
-      newCloneName = vm.sourceNoteName;
+      newCloneName = vm.notePath;
     }
-    return newCloneName + ' ' + copyCount;
+    if (!noteNamePrefix.endsWith('Clone')) {
+      return vm.notePath + ' Clone';
+    }
+    return newCloneName + ' ' + (copyCount + 1);
   };
 
   vm.getInterpreterSettings = function() {
