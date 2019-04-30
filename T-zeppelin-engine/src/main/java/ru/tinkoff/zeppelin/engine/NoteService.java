@@ -18,10 +18,12 @@ package ru.tinkoff.zeppelin.engine;
 
 import org.apache.zeppelin.storage.FullParagraphDAO;
 import org.apache.zeppelin.storage.NoteDAO;
+import org.apache.zeppelin.storage.NoteRevisionDAO;
 import org.apache.zeppelin.storage.ParagraphDAO;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.NoteRevision;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 
 import java.util.List;
@@ -39,13 +41,16 @@ public class NoteService {
   private final NoteDAO noteDAO;
   private final ParagraphDAO paragraphDAO;
   private final FullParagraphDAO fullParagraphDAO;
+  private final NoteRevisionDAO noteRevisionDAO;
 
   public NoteService(final NoteDAO noteDAO,
-                     final ParagraphDAO paragraphDAO,
-                     final FullParagraphDAO fullParagraphDAO) {
+      final ParagraphDAO paragraphDAO,
+      final FullParagraphDAO fullParagraphDAO,
+      final NoteRevisionDAO noteRevisionDAO) {
     this.noteDAO = noteDAO;
     this.paragraphDAO = paragraphDAO;
     this.fullParagraphDAO = fullParagraphDAO;
+    this.noteRevisionDAO = noteRevisionDAO;
   }
 
   public List<Note> getAllNotes() {
@@ -82,7 +87,11 @@ public class NoteService {
   }
 
   public List<Paragraph> getParagraphs(final Note note) {
-    return paragraphDAO.getByNoteId(note.getId());
+    if (note.getRevision() == null) {
+      return paragraphDAO.getByNoteId(note.getId());
+    } else {
+      return paragraphDAO.getByRevisionId(note.getRevision().getId());
+    }
   }
 
   public Paragraph persistParagraph(final Note note, final Paragraph paragraph) {
@@ -120,4 +129,23 @@ public class NoteService {
     EventService.publish(note.getId(), before, after);
   }
 
+  public void persistRevision(final Note note, final String message) {
+    NoteRevision revision = noteRevisionDAO.createRevision(note, message);
+    List<Paragraph> paragraphs = paragraphDAO.getByNoteId(note.getId());
+    paragraphs.stream()
+        .peek(p -> p.setRevisionId(revision.getId()))
+        .peek(p -> p.setJobId(null))
+        .forEach(paragraphDAO::persist);
+  }
+
+  public List<NoteRevision> getRevisions(final Note note) {
+    return noteRevisionDAO.getRevisions(note.getId());
+  }
+
+  public void restoreNoteToRevision(final Note note, final NoteRevision revision) {
+    paragraphDAO.getByNoteId(note.getId()).forEach(paragraphDAO::remove);
+    paragraphDAO.getByRevisionId(revision.getId()).stream()
+        .peek(p -> p.setRevisionId(null))
+        .forEach(paragraphDAO::persist);
+  }
 }

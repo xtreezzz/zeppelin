@@ -16,8 +16,16 @@
  */
 package org.apache.zeppelin.storage;
 
+import static org.apache.zeppelin.storage.Utils.generatePGjson;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -25,15 +33,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
-
-import java.lang.reflect.Type;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.zeppelin.storage.Utils.generatePGjson;
 
 @Component
 public class ParagraphDAO {
@@ -76,7 +75,7 @@ public class ParagraphDAO {
           "    POSITION    = :POSITION,\n" +
           "    JOB_ID      = :JOB_ID,\n" +
           "    CONFIG      = :CONFIG,\n" +
-          "    FORM_PARAMS         = :FORM_PARAMS,\n" +
+          "    FORM_PARAMS = :FORM_PARAMS,\n" +
           "    REVISION_ID = :REVISION_ID\n" +
           "WHERE ID = :ID;";
 
@@ -100,7 +99,8 @@ public class ParagraphDAO {
           "       CONFIG,\n" +
           "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
-          "FROM PARAGRAPHS\n";
+          "FROM PARAGRAPHS\n" +
+          "WHERE REVISION_ID = 0;";
 
   private final static String SELECT_PARAGRAPH_BY_ID = "" +
           "SELECT ID,\n" +
@@ -152,6 +152,25 @@ public class ParagraphDAO {
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n" +
           "WHERE NOTE_ID = :NOTE_ID\n" +
+          "  AND REVISION_ID ISNULL\n" +
+          "ORDER BY POSITION;";
+
+  private final static String SELECT_PARAGRAPH_BY_REVISION_ID = "" +
+          "SELECT ID,\n" +
+          "       NOTE_ID,\n" +
+          "       UUID,\n" +
+          "       TITLE,\n" +
+          "       TEXT,\n" +
+          "       SHEBANG,\n" +
+          "       CREATED,\n" +
+          "       UPDATED,\n" +
+          "       POSITION,\n" +
+          "       JOB_ID,\n" +
+          "       CONFIG,\n" +
+          "       FORM_PARAMS,\n" +
+          "       REVISION_ID\n" +
+          "FROM PARAGRAPHS\n" +
+          "WHERE REVISION_ID = :REVISION_ID\n" +
           "ORDER BY POSITION;";
 
 
@@ -291,6 +310,15 @@ public class ParagraphDAO {
             .addValue("NOTE_ID", noteId);
     return jdbcTemplate.query(
             SELECT_PARAGRAPH_BY_NOTE_ID,
+            parameters,
+            ParagraphDAO::mapRow);
+  }
+
+  public List<Paragraph> getByRevisionId(final Long revisionId) {
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("REVISION_ID", revisionId);
+    return jdbcTemplate.query(
+            SELECT_PARAGRAPH_BY_REVISION_ID,
             parameters,
             ParagraphDAO::mapRow);
   }
