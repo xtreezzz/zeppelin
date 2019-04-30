@@ -17,9 +17,6 @@
 
 package org.apache.zeppelin;
 
-import java.util.Map;
-import java.util.concurrent.Executor;
-import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
@@ -34,19 +31,20 @@ import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroWebFilterConfiguration;
 import org.apache.shiro.web.env.IniWebEnvironment;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
+
+import javax.sql.DataSource;
+import java.util.Map;
+import java.util.concurrent.Executor;
 
 @Configuration
 @Import({ShiroBeanConfiguration.class,
@@ -54,12 +52,6 @@ import ru.tinkoff.zeppelin.engine.InterpreterSettingService;
 })
 public class ZeppelinBeanConfiguration {
 
-  @Bean
-  @Autowired
-  public InterpreterSettingService databaseInterpreterOptionRepository(
-      final NamedParameterJdbcTemplate jdbcTemplate) {
-    return new InterpreterSettingService(jdbcTemplate);
-  }
 
   @Bean
   DataSource dataSource(

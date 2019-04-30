@@ -23,30 +23,41 @@ limitations under the License.
         <h4 class="modal-title">Add New Source</h4>
       </div>
 
-      <form class="form-horizontal" ng-submit="addNewSource()">
+      <form class="form-horizontal">
         <div class="modal-body">
           <div class="form-group">
             <label class="control-label col-sm-2" for="name">Interpreter Name</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="name" ng-model="newSrcSetting.interpreterName"
-                     placeholder="Interpreter Name" required />
+              <input type="text" class="form-control" id="name" ng-model="creatingModuleSource.name"
+                     placeholder="Module Name" required />
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-2" for="artifact">Artifact</label>
             <div class="col-sm-10">
               <input type="text"
-                     class="form-control" id="artifact" ng-model="newSrcSetting.artifact"
+                     class="form-control" id="artifact" ng-model="creatingModuleSource.artifact"
                      placeholder="Interpreter Artifact" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="type">Type</label>
+            <div class="col-sm-10">
+              <select
+                id="type"
+                ng-model="creatingModuleSource.type"
+                ng-options="type for type in moduleTypes">
+              </select>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="submit"
-                  class="btn btn-default">Add
+                  class="btn btn-default"
+                  ng-click="addNewModuleSource()">Add
           </button>
           <button type="button" data-dismiss="modal"
-                  class="btn btn-default" ng-click="resetNewSourceSetting()">Cancel
+                  class="btn btn-default" ng-click="clearCreatingModuleSource()">Cancel
           </button>
         </div>
       </form>

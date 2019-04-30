@@ -1,13 +1,11 @@
-[
-  {
-    "group": "jdbc",
-    "name": "jdbc",
+ {
     "className": "ru.tinkoff.zeppelin.interpreter.jdbc.JDBCInterpreter",
     "properties": {
       "connection.url": {
         "envName": null,
         "propertyName": "connection.url",
         "defaultValue": "jdbc:postgresql://localhost:5432/",
+        "currentValue": "jdbc:postgresql://localhost:5432/",
         "description": "The URL for JDBC.",
         "type": "string"
       },
@@ -15,6 +13,7 @@
         "envName": null,
         "propertyName": "connection.user",
         "defaultValue": "gpadmin",
+        "currentValue": "gpadmin",
         "description": "The JDBC user name",
         "type": "string"
       },
@@ -22,6 +21,7 @@
         "envName": null,
         "propertyName": "connection.password",
         "defaultValue": "",
+        "currentValue": "",
         "description": "The JDBC user password",
         "type": "password"
       },
@@ -29,6 +29,7 @@
         "envName": null,
         "propertyName": "driver.className",
         "defaultValue": "org.postgresql.Driver",
+        "currentValue": "org.postgresql.Driver",
         "description": "JDBC Driver Name",
         "type": "string"
       },
@@ -36,6 +37,7 @@
         "envName": null,
         "propertyName": "driver.artifact",
         "defaultValue": "org.postgresql:postgresql:jar:42.2.5",
+        "currentValue": "org.postgresql:postgresql:jar:42.2.5",
         "description": "JDBC Driver Maven Artifact",
         "type": "textarea"
       },
@@ -43,6 +45,7 @@
         "envName": null,
         "propertyName": "driver.maven.repository.url",
         "defaultValue": "http://repo1.maven.org/maven2/",
+        "currentValue": "http://repo1.maven.org/maven2/",
         "description": "Maven Repository url to download driver",
         "type": "textarea"
       },
@@ -50,6 +53,7 @@
         "envName": null,
         "propertyName": "query.timeout",
         "defaultValue": "0",
+        "currentValue": "0",
         "description": "The number of seconds the driver will wait for a query to execute, 0 means no limit",
         "type": "number"
       },
@@ -57,6 +61,7 @@
         "envName": null,
         "propertyName": "query.rowlimit",
         "defaultValue": "0",
+        "currentValue": "0",
         "description": "Max query row count, 0 means no limit",
         "type": "number"
       },
@@ -64,6 +69,7 @@
         "envName": null,
         "propertyName": "query.precode",
         "defaultValue": "",
+        "currentValue": "",
         "description": "Query which will be executed before each user query",
         "type": "textarea"
       },
@@ -71,6 +77,7 @@
         "envName": null,
         "propertyName": "query.postcode",
         "defaultValue": "",
+        "currentValue": "",
         "description": "Query which will be executed after each user query",
         "type": "textarea"
       }
@@ -79,8 +86,7 @@
       "language": "sql",
       "enableLiveAutocompletion": true,
       "editOnDblClick": false,
-      "completionSupport": false,
+      "completionSupport": true,
       "completionKey": "TAB"
     }
   }
-]

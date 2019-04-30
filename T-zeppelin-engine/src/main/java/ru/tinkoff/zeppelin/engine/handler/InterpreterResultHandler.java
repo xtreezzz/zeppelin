@@ -16,8 +16,6 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import org.apache.zeppelin.storage.*;
-import org.apache.zeppelin.storage.ZLog.ET;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +24,8 @@ import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
+import ru.tinkoff.zeppelin.storage.*;
+import ru.tinkoff.zeppelin.storage.ZLog.ET;
 
 import javax.annotation.PostConstruct;
 

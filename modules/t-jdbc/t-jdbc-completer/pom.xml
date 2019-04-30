@@ -47,12 +47,44 @@
       <version>1.0.0-T-SNAPSHOT</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.zeppelin</groupId>
+      <artifactId>t-jdbc-commons</artifactId>
+      <version>1.0.0-T-SNAPSHOT</version>
+    </dependency>
+
     <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.6</version>
     </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.metamodel/MetaModel-jdbc -->
+    <dependency>
+      <groupId>org.apache.metamodel</groupId>
+      <artifactId>MetaModel-jdbc</artifactId>
+      <version>5.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jsqlparser</groupId>
+      <artifactId>jsqlparser</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.9.8</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.8</version>
+    </dependency>
+
+
   </dependencies>
 
 </project>

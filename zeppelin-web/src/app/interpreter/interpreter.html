@@ -11,6 +11,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+<div ng-include src="'app/interpreter/interpreter-create.html'"></div>
 <div class="interpreterHead">
   <div class="header">
     <div class="row">
@@ -19,23 +20,23 @@ limitations under the License.
           Interpreters
         </h3>
         <div class="pull-right" style="margin-top:10px;">
-          <button class="btn btn-default btn-sm"
-                  ng-click="showRepositoryInfo = !showRepositoryInfo">
-            <i class="fa fa-database" ng-style="{color: showRepositoryInfo ? '#3071A9' : 'black' }"></i>
+          <button class="btn btn-default btn-sm">
             Repository
           </button>
           <button class="btn btn-default btn-sm"
-               data-toggle="modal"
-               data-target="#srcModal">
+                  data-toggle="modal"
+                  data-target="#srcModal">
             <i class="fa fa-plus"></i>
             Add Source
           </button>
+          <div ng-include src="'app/interpreter/source-create.html'"></div>
         </div>
       </div>
     </div>
     <div class="row">
       <div class="col-md-12">
-        Manage interpreters settings. You can create / edit / remove settings. Note can bind / unbind these interpreter settings.
+        Manage interpreters settings. You can create / edit / remove settings. Note can bind / unbind these interpreter
+        settings.
       </div>
     </div>
 
@@ -55,48 +56,19 @@ limitations under the License.
       </div>
     </div>
   </div>
-
-  <div class="row" ng-if="showRepositoryInfo">
-    <div class="col-md-12">
-      <hr />
-      <h4>Repositories</h4>
-      <p>Available repository lists. These repositories are used to resolve external dependencies of interpreter.</p>
-      <ul class="noDot">
-        <li class="liVertical" ng-repeat="repo in repositories">
-          <a tabindex="0" class="btn btn-info" role="button"
-             tooltip-append-to-body="true" tooltip-placement="top-left"
-             uib-tooltip="{{repo.url}}">
-            <span class="fa fa-database"></span>
-            {{repo.id}}&nbsp;
-            <span ng-if="!isDefaultRepository(repo.id)" class="fa fa-close blackOpc"
-                  ng-click="removeRepository(repo.id)"></span>
-          </a>
-        </li>
-        <li class="liVertical">
-          <div ng-include src="'app/interpreter/repository-create.html'"></div>
-          <div class="btn btn-default"
-               data-toggle="modal"
-               data-target="#repoModal">
-            <span class="fa fa-plus"></span>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </div>
-
-  <div ng-include src="'app/interpreter/source-create.html'"></div>
 </div>
 
-<div interpreter-item class="box width-full"
-     ng-repeat="source in sources | orderBy: 'interpreterName' | filter: {interpreterName:searchInterpreter}" >
+<div interpreter-item class="box width-full" ng-repeat="source in modules ">
   <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#home-{{source.interpreterName}}">{{source.interpreterName}}</a></li>
-    <li ng-repeat="setting in interpreterSettings | orderBy: 'setting.interpreterName' | filter: { interpreterName: source.interpreterName }">
-      <a data-toggle="tab" href="#{{setting.shebang.substring(1)}}">{{setting.shebang}}</a></li>
+    <li class="active"><a data-toggle="tab" href="#home-{{source.moduleSource.name}}">{{source.moduleSource.name}}</a>
+    </li>
+    <li ng-repeat="setting in source.modules">
+      <a data-toggle="tab" href="#{{setting.configuration.shebang}}">{{setting.configuration.shebang}}</a></li>
     <!-- reverse -->
     <li style="float:right;">
       <div class="pull-right">
-        <button type="button" class="btn btn-default btn-sm" aria-label="Close" ng-click="removeSource(source.interpreterName)">
+        <button type="button" class="btn btn-default btn-sm" aria-label="Close"
+                ng-click="deleteModuleSource(source.moduleSource.id)">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -106,23 +78,23 @@ limitations under the License.
         <button class="btn btn-default btn-sm"
                 data-toggle="modal"
                 data-target="#interpreterModal"
-                onclick="setDefaultInterpreterGroup(source.interpreterName)">
+                ng-click="setSelectedModuleConfiguration(source.moduleSource, null, source.defaultModuleConfiguration, 'CREATE')"
+                ng-if="source.moduleSource.status === 'INSTALLED'">
           <i class="fa fa-plus"></i>
-          Create Interpreter
+          Create
         </button>
-        <div ng-include src="'app/interpreter/interpreter-create.html'"></div>
       </div>
     </li>
   </ul>
 
   <div class="tab-content">
-    <div id="home-{{source.interpreterName}}" class="tab-pane fade in active">
+    <div id="home-{{source.moduleSource.name}}" class="tab-pane fade in active">
       <div class="card bg-light md-12">
         <div class="card-body">
           <h5 class="card-title">
-            {{source.interpreterName}}:&nbsp
+            {{source.moduleSource.name}}:&nbsp
             <!-- img -->
-            <small ng-switch="source.status">
+            <small ng-switch="source.moduleSource.status">
               <small ng-switch-when="INSTALLED">
                 <i style="vertical-align: middle; color: green; margin-right: 3px;" class="fa fa-circle"
                    uib-tooltip="Installed">
@@ -140,44 +112,55 @@ limitations under the License.
               </small>
             </small>
           </h5>
-          <h6 class="card-subtitle mb-2 text-muted">{{source.artifact}}</h6>
+          <h6 class="card-subtitle mb-2 text-muted">{{source.moduleSource.artifact}}</h6>
 
-          <p class="card-text" ng-if="source.status === 'INSTALLED'">You may setup <b>{{source.interpreterName}}</b> interpreter using this artifact.</p>
-          <p class="card-text" ng-if="source.status === 'NOT_INSTALLED'">Install artifact to setup <b>{{source.interpreterName}}</b> interpreter.</p>
-
-          <input type="checkbox" ng-model="source.reinstallOnStart" ng-click="enableReinstall(source)" />
-          <label class="form-check-label" uib-tooltip="Enable artifact reinstall on app restart.">Reinstall on start.</label>
-
+          <input type="checkbox" ng-model="source.moduleSource.reinstallOnStart"
+                 ng-click="setReinstallOnStartModuleSource(source.moduleSource.id, source.moduleSource.reinstallOnStart)"/>
+          <label class="form-check-label" uib-tooltip="Enable artifact reinstall on app restart.">Reinstall on
+            start.</label>
           <hr/>
-          <button class="btn btn-primary" ng-if="source.status === 'NOT_INSTALLED'" ng-click="installSource(source.interpreterName)">Install</button>
-
-          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="uninstallSource(source.interpreterName)">Uninstall</button>
-          <button class="btn btn-danger" ng-if="source.status === 'INSTALLED'" ng-click="reinstallSource(source.interpreterName)">Reinstall</button>
+          <button class="btn btn-primary"
+                  ng-if="source.moduleSource.status === 'NOT_INSTALLED'"
+                  ng-click="installModuleSource(source.moduleSource.id)">
+            Install
+          </button>
+          <button class="btn btn-danger"
+                  ng-if="source.moduleSource.status === 'INSTALLED'"
+                  ng-click="uninstallModuleSource(source.moduleSource.id)">
+            Uninstall
+          </button>
         </div>
       </div>
 
     </div>
 
-    <div id="{{setting.shebang.substring(1)}}" class="tab-pane fade"
-         ng-repeat="setting in interpreterSettings | orderBy: 'setting.interpreterName' | filter: { interpreterName: source.interpreterName }">
-      <div id="{{setting.interpreterName | lowercase}}">
+    <div id="{{moduleSetting.configuration.shebang}}" class="tab-pane fade" ng-repeat="moduleSetting in source.modules">
+      <div id="{{moduleSetting.configuration.humanReadableName}}">
         <div class="row interpreter" style="margin-top: 5px">
           <div class="col-md-12">
-            <h3 class="interpreter-title">{{setting.customInterpreterName}}</h3>
-            <span style="float:right" ng-show="!valueform.$visible" >
-          <button class="btn btn-default btn-xs" ng-click="enableInterpreter(setting.shebang);" ng-disabled="source.status === 'NOT_INSTALLED'">
-              <span ng-if="setting.isEnabled == true" class="fa fa-toggle-on" style="border: none !important; font-size:24px; color:green"></span>
-              <span ng-if="setting.isEnabled != true" class="fa fa-toggle-off" style="border: none !important; font-size:24px; color:red"></span>
+            <h3 class="interpreter-title">{{moduleSetting.configuration.humanReadableName}}</h3>
+            <span style="float:right" ng-show="!valueform.$visible">
+          <button class="btn btn-default btn-xs" ng-disabled="moduleSetting.configuration.status === 'NOT_INSTALLED'">
+              <span ng-if="moduleSetting.configuration.isEnabled == true"
+                    class="fa fa-toggle-on"
+                    ng-click="enableCustomModule(moduleSetting.configuration.id, !moduleSetting.configuration.isEnabled)"
+                    style="border: none !important; font-size:24px; color:green"></span>
+              <span ng-if="moduleSetting.configuration.isEnabled != true"
+                    class="fa fa-toggle-off"
+                    ng-click="enableCustomModule(moduleSetting.configuration.id, !moduleSetting.configuration.isEnabled)"
+                    style="border: none !important; font-size:24px; color:red"></span>
+          </button>
+          <button class="btn btn-default btn-sm"
+                  data-toggle="modal"
+                  data-target="#interpreterModal"
+                  ng-click="setSelectedModuleConfiguration(source.moduleSource, moduleSetting.configuration, moduleSetting.innerConfiguration, 'UPDATE')">
+            <span class="fa fa-pencil"></span> edit
           </button>
           <button class="btn btn-default btn-xs"
-                  ng-click="valueform.$show();
-                  copyOriginInterpreterSettingProperties(setting.shebang)">
-            <span class="fa fa-pencil"></span> edit</button>
-          <button class="btn btn-default btn-xs"
-                  ng-click="restartInterpreterSetting(setting.shebang)">
+                  ng-click="restartCustomModule(moduleSetting.configuration.id)">
             <span class="fa fa-refresh"></span> restart</button>
           <button class="btn btn-default btn-xs"
-                  ng-click="removeInterpreterSetting(setting.shebang)">
+                  ng-click="removeCustomModule(moduleSetting.configuration.id)">
             <span class="fa fa-trash"></span> remove</button>
         </span>
           </div>
@@ -185,209 +168,13 @@ limitations under the License.
 
         <div class="row interpreter">
           <div class="col-md-12">
-            <h5>Option</h5>
-            <div class="row interpreter" style="margin-top: 5px;">
-              <div class="col-md-6">
-                The interpreter will be instantiated
-                <span class="btn-group">
-              <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                      data-toggle="dropdown"
-                      ng-disabled="!valueform.$visible">
-                {{getInterpreterRunningOption(setting.shebang)}} <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" role="menu">
-                <li>
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SHARED')">
-                    Globally
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SCOPED', 'SHARED')">
-                    Per Note
-                  </a>
-                </li>
-                <li ng-if="ticket.principal !== 'anonymous'">
-                  <a style="cursor:pointer"
-                     ng-click="setInterpreterRunningOption(setting.shebang, 'SHARED', 'SCOPED')">
-                    Per User
-                  </a>
-                </li>
-              </ul>
-            </span>
-                in
-                <span class="btn-group">
-              <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                      data-toggle="dropdown"
-                      ng-disabled="!valueform.$visible
-                                   || getInterpreterRunningOption(setting.shebang) === 'Globally'">
-                <span ng-if="getInterpreterRunningOption(setting.shebang) !== 'Per User'">
-                  {{getPerNoteOption(setting.shebang)}}
-                </span>
-                <span ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'">
-                  {{getPerUserOption(setting.shebang)}}
-                </span>
-                  <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" role="menu">
-                <li
-                  ng-if="getInterpreterRunningOption(setting.shebang) === 'Globally'">
-                  <a style="cursor:pointer"
-                     uib-tooltip="Single interpreter instance are shared across notes"
-                     ng-click="setPerNoteOption(setting.shebang, 'SHARED')">
-                    shared per note
-                  </a>
-                </li>
-
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per Note'"
-                     uib-tooltip="Separate Interpreter instance for each note"
-                     ng-click="setPerNoteOption(setting.shebang, 'SCOPED')">
-                    scoped per note
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'"
-                     uib-tooltip="Separate Interpreter instance for each note"
-                     ng-click="setPerUserOption(setting.shebang, 'SCOPED')">
-                    scoped per user
-                  </a>
-                </li>
-
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per Note'"
-                     uib-tooltip="Separate Interpreter process for each note"
-                     ng-click="setPerNoteOption(setting.shebang, 'ISOLATED')">
-                    isolated per note
-                  </a>
-                </li>
-                <li>
-                  <a style="cursor:pointer"
-                     ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'"
-                     uib-tooltip="Separate Interpreter process for each note"
-                     ng-click="setPerUserOption(setting.shebang, 'ISOLATED')">
-                    isolated per user
-                  </a>
-                </li>
-              </ul>
-            </span>
-                process
-                <a class="fa fa-info-circle interpreter-binding-mode-info-link"
-                   aria-hidden="true"
-                   uib-tooltip="Can manage interpreter sessions differently by setting this option. Click this button to learn more"
-                   ng-href="{{getInterpreterBindingModeDocsLink()}}" target="_blank"></a>
-                <span ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User' && ticket.principal !== 'anonymous'">
-              <span ng-if="getPerNoteOption(setting.shebang) === 'SHARED'">
-                <button type="button" class="btn btn-default btn-xs"
-                        ng-click="setPerNoteOption(setting.shebang, 'SCOPED')"
-                        ng-disabled="!valueform.$visible"
-                        data-toggle="dropdown">
-                  <i class="fa fa-plus"></i>
-                </button>
-              </span>
-            </span>
-              </div>
-            </div>
-            <div class="row interpreter"
-                 style="margin-top: 6px;"
-                 ng-if="getInterpreterRunningOption(setting.shebang) === 'Per User'
-                    && ticket.principal !== 'anonymous'
-                    && getPerNoteOption(setting.shebang) !== 'SHARED'">
-              <div class="col-md-12">
-            <span>
-              <span class="hidden-xs" style="padding-left: 190px;">And </span>
-              <span class="visible-xs" style="padding-left: 0px;">And </span>
-              <span class="btn-group">
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                        data-toggle="dropdown"
-                        ng-disabled="true">
-                  <span>
-                    Per Note
-                  </span>
-                  <span class="caret"></span>
-                </button>
-              </span>
-              in
-              <span class="btn-group">
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                        data-toggle="dropdown"
-                        ng-disabled="!valueform.$visible">
-                  <span>
-                    {{getPerNoteOption(setting.shebang)}}
-                  </span>
-                  <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                  <li>
-                    <a style="cursor:pointer"
-                       uib-tooltip="Separate Interpreter instance for each note"
-                       ng-click="setPerNoteOption(setting.shebang, 'SCOPED')">
-                      scoped per note
-                    </a>
-                  </li>
-                  <li>
-                    <a style="cursor:pointer"
-                       uib-tooltip="Separate Interpreter process for each note"
-                       ng-click="setPerNoteOption(setting.shebang, 'ISOLATED')">
-                      isolated per note
-                    </a>
-                  </li>
-                </ul>
-              </span>
-              process
-              <a class="fa fa-info-circle interpreter-binding-mode-info-link"
-                 aria-hidden="true"
-                 uib-tooltip="Can manage interpreter sessions differently by setting this option. Click this button to learn more"
-                 ng-href="{{getInterpreterBindingModeDocsLink()}}" target="_blank"></a>
-              <button type="button" class="btn btn-default btn-xs"
-                      ng-disabled="!valueform.$visible"
-                      ng-click="setPerNoteOption(setting.shebang, 'SHARED')"
-                      data-toggle="dropdown">
-                <i class="fa fa-minus"></i>
-              </button>
-            </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row interpreter" style="margin-top: 5px;"
-             ng-show="getInterpreterRunningOption(setting.shebang)=='Per User' && getPerUserOption(setting.shebang)=='ISOLATED'">
-        </div>
-        <div class="row interpreter">
-          <div class="col-md-12">
             <div class="checkbox remove-margin-top-bottom">
           <span class="input-group" style="line-height:30px;">
             <label>
-              <input type="checkbox" style="width:20px" id="isExistingProcess" ng-model="setting.remoteProcess.isEnabled" ng-disabled="!valueform.$visible"/>
-              Connect to existing process
-            </label>
-          </span>
-            </div>
-          </div>
-        </div>
-        <div class="row interpreter" ng-if="setting.remoteProcess.isEnabled">
-          <div class="col-md-12">
-            <b>Host</b>
-            <input id="newInterpreterSettingHost" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="setting.remoteProcess.host" ng-disabled="!valueform.$visible"  />
-          </div>
-          <div class="col-md-12">
-            <b>Port</b>
-            <input id="newInterpreterSettingPort" input pu-elastic-input
-                   pu-elastic-input-minwidth="180px" ng-model="setting.remoteProcess.port"  ng-disabled="!valueform.$visible" />
-          </div>
-        </div>
-        <div class="row interpreter">
-          <div class="col-md-12">
-            <div class="checkbox remove-margin-top-bottom">
-          <span class="input-group" style="line-height:30px;">
-            <label>
-              <input type="checkbox" style="width:20px !important" id="idShowPermission" ng-click="togglePermissions(setting.interpreterName)" ng-model="setting.permissions.isEnabled" ng-disabled="!valueform.$visible"/>
+              <input type="checkbox" style="width:20px !important" id="idShowPermission"
+                     ng-click="togglePermissions(moduleSetting.configuration.humanReadableName)"
+                     ng-model="moduleSetting.configuration.permissions.isEnabled"
+                     ng-disabled="!valueform.$visible"/>
                Set permission
             </label>
           </span>
@@ -399,9 +186,9 @@ limitations under the License.
           <div class="col-md-12">
             <span class="input-group" style="line-height:30px;">
               <label>
-                Additional JVM options.
-                <span editable-text="setting.jvmOptions" e-form="valueform" e-msd-elastic>
-                {{setting.jvmOptions}}
+                Binded to:
+                <span editable-text="moduleSetting.configuration.jvmOptions" e-form="valueform" e-msd-elastic>
+                {{moduleSetting.configuration.bindedTo}}
                 </span>
               </label>
             </span>
@@ -412,9 +199,23 @@ limitations under the License.
           <div class="col-md-12">
             <span class="input-group" style="line-height:30px;">
               <label>
-                Count of concurrent tasks.
-              <span editable-text="setting.concurrentTasks" e-widget-number e-form="valueform" e-msd-elastic>
-                {{setting.concurrentTasks}}
+                Additional JVM options:
+                <span editable-text="moduleSetting.configuration.jvmOptions" e-form="valueform" e-msd-elastic>
+                {{moduleSetting.configuration.jvmOptions}}
+                </span>
+              </label>
+            </span>
+          </div>
+        </div>
+
+        <div class="row interpreter">
+          <div class="col-md-12">
+            <span class="input-group" style="line-height:30px;">
+              <label>
+                Count of concurrent tasks:
+              <span editable-text="moduleSetting.configuration.concurrentTasks" e-widget-number e-form="valueform"
+                    e-msd-elastic>
+                {{moduleSetting.configuration.concurrentTasks}}
               </span>
               </label>
             </span>
@@ -424,17 +225,20 @@ limitations under the License.
         <div class="row interpreter">
           <div class="col-md-12">
             <!-- permissions -->
-            <div ng-show="setting.permissions.isEnabled" class="permissionsForm">
+            <div ng-show="setting.configuration.permissions.isEnabled" class="permissionsForm">
               <div>
                 <p>
-                  Enter comma separated users and groups in the fields. <br />
+                  Enter comma separated users and groups in the fields. <br/>
                   Empty field (*) implies anyone can run this interpreter.
                 </p>
                 <div>
 
                   <span class="owners">Owners </span>
-                  <select id="{{setting.interpreterName}}Owners" class="form-control" multiple="multiple" ng-disabled="!valueform.$visible">
-                    <option ng-repeat="owner in setting.permissions.owners" selected="selected">{{owner}}</option>
+                  <select id="{{moduleSetting.configuration.name}}Owners" class="form-control" multiple="multiple"
+                          ng-disabled="!valueform.$visible">
+                    <option ng-repeat="owner in moduleSetting.configuration.permissions.owners" selected="selected">
+                      {{owner}}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -443,10 +247,12 @@ limitations under the License.
         </div>
 
         <div class="row interpreter" style="margin-top:20px !important">
-          <div ng-show="_.isEmpty(setting.config.properties) && !valueform.$visible" class="col-md-12 gray40-message">
+          <div ng-show="_.isEmpty(moduleSetting.innerConfiguration.properties)"
+               class="col-md-12 gray40-message">
             <em>Currently there are no properties and dependencies set for this interpreter</em>
           </div>
-          <div class="col-md-12" ng-show="!_.isEmpty(setting.config.properties) || valueform.$visible">
+          <div class="col-md-12"
+               ng-show="!_.isEmpty(moduleSetting.innerConfiguration.properties)">
             <h5>Properties</h5>
             <table class="table table-striped">
               <thead>
@@ -456,57 +262,54 @@ limitations under the License.
                 <th style="width:50%;text-align: center; border: 1px solid black;">description</th>
               </tr>
               </thead>
-              <tr ng-repeat="key in setting.config.properties | sortByKey" >
+              <tr ng-repeat="key in moduleSetting.innerConfiguration.properties | sortByKey">
                 <td style="vertical-align: middle; border: 1px solid black;">{{key}}</td>
                 <td style="vertical-align: middle; border: 1px solid black;">
-              <span ng-if="setting.config.properties[key].type === 'textarea'"
-                    editable-textarea="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
-                 {{setting.config.properties[key].currentValue | breakFilter}}
+              <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'textarea'"
+                    editable-textarea="moduleSetting.innerConfiguration.properties[key].currentValue" e-form="valueform"
+                    e-msd-elastic>
+                 {{moduleSetting.innerConfiguration.properties[key].currentValue | breakFilter}}
               </span>
-                  <span ng-if="setting.config.properties[key].type === 'string'"
-                        editable-text="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].currentValue}}
+                  <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'string'"
+                        editable-text="moduleSetting.innerConfiguration.properties[key].currentValue" e-form="valueform"
+                        e-msd-elastic>
+                {{moduleSetting.innerConfiguration.properties[key].currentValue}}
               </span>
-              <span ng-if="setting.config.properties[key].type === 'number'"
-                        editable-text="setting.config.properties[key].currentValue" e-widget-number e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].currentValue}}
+                  <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'number'"
+                        editable-text="moduleSetting.innerConfiguration.properties[key].currentValue" e-widget-number
+                        e-form="valueform"
+                        e-msd-elastic>
+                {{moduleSetting.innerConfiguration.properties[key].currentValue}}
               </span>
-                  <span ng-if="setting.config.properties[key].type === 'url'"
-                        editable-text="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
-                <a ng-href="{{setting.config.properties[key].currentValue}}">{{setting.config.properties[key].currentValue}}</a>
+                  <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'url'"
+                        editable-text="moduleSetting.innerConfiguration.properties[key].currentValue" e-form="valueform"
+                        e-msd-elastic>
+                <a ng-href="{{moduleSetting.innerConfiguration.properties[key].currentValue}}">
+                  {{moduleSetting.innerConfiguration.properties[key].currentValue}}</a>
               </span>
-                  <span ng-if="setting.config.properties[key].type === 'password'"
-                        editable-password="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].currentValue ? '***' : ''}}
+                  <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'password'"
+                        editable-password="moduleSetting.innerConfiguration.properties[key].currentValue"
+                        e-form="valueform"
+                        e-msd-elastic>
+                {{moduleSetting.innerConfiguration.properties[key].currentValue ? '***' : ''}}
               </span>
-                  <span ng-if="setting.config.properties[key].type === 'checkbox'"
-                        editable-checkbox="setting.config.properties[key].currentValue" e-form="valueform" e-msd-elastic>
-                {{setting.config.properties[key].currentValue}}
+                  <span ng-if="moduleSetting.innerConfiguration.properties[key].type === 'checkbox'"
+                        editable-checkbox="moduleSetting.innerConfiguration.properties[key].currentValue"
+                        e-form="valueform"
+                        e-msd-elastic>
+                {{moduleSetting.innerConfiguration.properties[key].currentValue}}
               </span>
                 </td>
                 <td style="vertical-align: middle; border: 1px solid black;">
-                  {{setting.config.properties[key].description}}
+                  {{moduleSetting.innerConfiguration.properties[key].description}}
                 </td>
               </tr>
             </table>
           </div>
         </div>
-        <div class="row interpreter">
-          <form editable-form name="valueform"
-                onaftersave="updateInterpreterSetting(valueform, setting.shebang)"
-                ng-show="valueform.$visible">
-            <button type="submit" class="btn btn-primary">
-              Save
-            </button>
-            <button type="button" class="btn btn-default"
-                    ng-disabled="valueform.$waiting"
-                    ng-click="valueform.$cancel(); resetInterpreterSetting(setting.shebang)">
-              Cancel
-            </button>
-          </form>
-        </div>
       </div>
 
     </div>
   </div>
+
 </div>

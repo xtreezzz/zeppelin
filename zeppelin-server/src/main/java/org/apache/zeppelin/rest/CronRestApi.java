@@ -21,7 +21,7 @@ import com.google.common.collect.Sets;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
-import org.apache.zeppelin.storage.SchedulerDAO;
+import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;

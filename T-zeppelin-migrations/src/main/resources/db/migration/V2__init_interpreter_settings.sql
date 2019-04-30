@@ -15,68 +15,57 @@
 -- limitations under the License.
 --
 
--- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource.Status
-CREATE DOMAIN INTERPRETER_ARTIFACT_SOURCE_STATUS AS VARCHAR(13) DEFAULT 'NOT_INSTALLED' NOT NULL
-CHECK(VALUE IN ('NOT_INSTALLED', 'INSTALLED'));
-
--- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource
-CREATE TABLE INTERPRETER_ARTIFACT_SOURCE
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource
+CREATE TABLE MODULE_SOURCE
 (
-    id                   BIGSERIAL     PRIMARY KEY,
-    interpreter_name     VARCHAR(255)  NOT NULL UNIQUE,
-    artifact             VARCHAR(255)  NOT NULL,
-    --TODO(egorklimov ): CHECK (artifact ~* {REGEXP})
-    status               interpreter_artifact_source_status,
-    "path"               VARCHAR(1024) UNIQUE,
-    reinstall_on_start   BOOLEAN       NOT NULL DEFAULT FALSE
+  ID                 BIGSERIAL PRIMARY KEY,
+  NAME               VARCHAR(255) NOT NULL UNIQUE,
+  TYPE               VARCHAR(255) NOT NULL,
+  ARTIFACT           VARCHAR(255) NOT NULL,
+  STATUS             VARCHAR(255) NOT NULL,
+  PATH               VARCHAR(1024) UNIQUE,
+  REINSTALL_ON_START BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
--- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.BaseInterpreterConfig
-CREATE TABLE BASE_INTERPRETER_CONFIG
+-- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration
+CREATE TABLE MODULE_INNER_CONFIGURATION
 (
-    id                BIGSERIAL     PRIMARY KEY,
-    "group"           VARCHAR(100)  REFERENCES INTERPRETER_ARTIFACT_SOURCE(interpreter_name) ON DELETE CASCADE ON UPDATE CASCADE,
-    "name"            VARCHAR(100)  NOT NULL,
-    class_name        TEXT          NOT NULL,
-    properties        JSON          NOT NULL,
-    editor            JSON          NOT NULL
+  ID         BIGSERIAL PRIMARY KEY,
+  CLASS_NAME TEXT NOT NULL,
+  PROPERTIES JSON NOT NULL,
+  EDITOR     JSON NOT NULL
 );
 
--- Represents ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption.ProcessType
-CREATE DOMAIN INTERPRETER_PROCESS_TYPE AS VARCHAR(10) DEFAULT 'SHARED' NOT NULL
-CHECK(VALUE IN ('SHARED', 'SCOPED', 'ISOLATED'));
 
 -- Represents InterpreterOption
-CREATE TABLE INTERPRETER_OPTION
+CREATE TABLE MODULE_CONFIGURATION
 (
-    id                       BIGSERIAL      PRIMARY KEY,
-    shebang                  VARCHAR(100)   NOT NULL UNIQUE CHECK (shebang ~* '%([\w\.]+)(\(.*?\))?'),
-    custom_interpreter_name  VARCHAR(255)   NOT NULL,
-    interpreter_name         VARCHAR(255)   NOT NULL,
-    per_note                 interpreter_process_type,
-    per_user                 interpreter_process_type,
-    jvm_options              VARCHAR(255)   NOT NULL DEFAULT '',
-    concurrent_tasks         SMALLINT       NOT NULL DEFAULT 1 CHECK (concurrent_tasks > 0),
-    config_id                BIGINT         REFERENCES BASE_INTERPRETER_CONFIG (id) ON DELETE CASCADE ON UPDATE CASCADE,
-    remote_process           JSON           NOT NULL DEFAULT '{"host": "", "port": -1, "isEnabled": false}'::json,
-    permissions              JSON           NOT NULL DEFAULT '{"isEnabled": false, "owners": []}'::json,
-    is_enabled               BOOLEAN        NOT NULL DEFAULT FALSE
+  ID                  BIGSERIAL PRIMARY KEY,
+  SHEBANG             VARCHAR(100)  NOT NULL UNIQUE,
+  HUMAN_READABLE_NAME VARCHAR(255)  NOT NULL,
+  BINDED_TO           VARCHAR(100)  NULL,
+  JVM_OPTIONS         VARCHAR(1024) NOT NULL DEFAULT '',
+  CONCURRENT_TASKS    SMALLINT      NOT NULL DEFAULT 1 CHECK (CONCURRENT_TASKS > 0),
+  CONFIG_ID           BIGINT REFERENCES MODULE_INNER_CONFIGURATION (ID) ON DELETE CASCADE ON UPDATE CASCADE,
+  SOURCE_ID           BIGINT REFERENCES MODULE_SOURCE (ID),
+  PERMISSIONS         JSON          NOT NULL DEFAULT '{"isEnabled": false, "owners": []}'::JSON,
+  IS_ENABLED          BOOLEAN       NOT NULL DEFAULT FALSE
 );
 
 -- Represents org.apache.zeppelin.Repository
 CREATE TABLE REPOSITORY
 (
-    id               BIGSERIAL    PRIMARY KEY,
-    repository_id    VARCHAR(100) NOT NULL UNIQUE,
-    snapshot         BOOLEAN      NOT NULL DEFAULT FALSE,
-    url              VARCHAR(255) NOT NULL,
-    --TODO(egorklimov): CHECK (url ~* '(?:(?:https?):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])'),
-    username         VARCHAR(255),
-    password         VARCHAR(255),
-    proxy_protocol   VARCHAR      DEFAULT 'HTTP'
+  id             BIGSERIAL PRIMARY KEY,
+  repository_id  VARCHAR(100) NOT NULL UNIQUE,
+  snapshot       BOOLEAN      NOT NULL DEFAULT FALSE,
+  url            VARCHAR(255) NOT NULL,
+  --TODO(egorklimov): CHECK (url ~* '(?:(?:https?):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])'),
+  username       VARCHAR(255),
+  password       VARCHAR(255),
+  proxy_protocol VARCHAR               DEFAULT 'HTTP'
     CHECK (proxy_protocol IN ('HTTP', 'HTTPS')),
-    proxy_host       VARCHAR(255),
-    proxy_port       VARCHAR(255),
-    proxy_login      VARCHAR(255),
-    proxy_password   VARCHAR(255)
+  proxy_host     VARCHAR(255),
+  proxy_port     VARCHAR(255),
+  proxy_login    VARCHAR(255),
+  proxy_password VARCHAR(255)
 );

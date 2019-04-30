@@ -17,7 +17,7 @@
 
 package ru.tinkoff.zeppelin.engine.server;
 
-import org.apache.zeppelin.storage.ZLog;
+import ru.tinkoff.zeppelin.storage.ZLog;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteCompleterThriftService;
 
 import java.util.Map;

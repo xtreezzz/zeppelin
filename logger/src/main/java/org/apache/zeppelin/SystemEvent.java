@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.StringJoiner;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.storage.ZLog.ET;
 
 public class SystemEvent implements Serializable {
 

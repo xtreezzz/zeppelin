@@ -17,12 +17,16 @@
 
 package ru.tinkoff.zeppelin.engine;
 
+import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleInnerConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterArtifactSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterOption;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.*;
 import ru.tinkoff.zeppelin.engine.handler.*;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
@@ -50,7 +54,9 @@ public class NoteExecutorService {
   private final AbortHandler abortHandler;
   private final PendingHandler pendingHandler;
   private final InterpreterDeadHandler interpreterDeadHandler;
-  private final InterpreterSettingService interpreterSettingService;
+  private final ModuleConfigurationDAO moduleConfigurationDAO;
+  private final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO;
+  private final ModuleSourcesDAO moduleSourcesDAO;
   private final InterpreterStarterHandler interpreterStarterHandler;
   private final SchedulerHandler schedulerHandler;
   private final ExecutionHandler executionHandler;
@@ -59,7 +65,9 @@ public class NoteExecutorService {
   public NoteExecutorService(final AbortHandler abortHandler,
                              final PendingHandler pendingHandler,
                              final InterpreterDeadHandler interpreterDeadHandler,
-                             final InterpreterSettingService interpreterSettingService,
+                             final ModuleConfigurationDAO moduleConfigurationDAO,
+                             final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO,
+                             final ModuleSourcesDAO moduleSourcesDAO,
                              final InterpreterStarterHandler interpreterStarterHandler,
                              final SchedulerHandler schedulerHandler,
                              final ExecutionHandler executionHandler,
@@ -67,7 +75,9 @@ public class NoteExecutorService {
     this.abortHandler = abortHandler;
     this.pendingHandler = pendingHandler;
     this.interpreterDeadHandler = interpreterDeadHandler;
-    this.interpreterSettingService = interpreterSettingService;
+    this.moduleConfigurationDAO = moduleConfigurationDAO;
+    this.moduleInnerConfigurationDAO = moduleInnerConfigurationDAO;
+    this.moduleSourcesDAO = moduleSourcesDAO;
     this.interpreterStarterHandler = interpreterStarterHandler;
     this.schedulerHandler = schedulerHandler;
     this.executionHandler = executionHandler;
@@ -80,23 +90,25 @@ public class NoteExecutorService {
     final List<Job> jobs = pendingHandler.loadJobs();
     for (final Job job : jobs) {
       try {
-        final InterpreterOption option = interpreterSettingService.getOption(job.getShebang());
+        final ModuleConfiguration config = moduleConfigurationDAO.getByShebang(job.getShebang());
+        final ModuleInnerConfiguration innerConfig = moduleInnerConfigurationDAO.getById(config.getModuleInnerConfigId());
         final AbstractRemoteProcess process = AbstractRemoteProcess.get(job.getShebang(), RemoteProcessType.INTERPRETER);
         if (process != null
                 && process.getStatus() == AbstractRemoteProcess.Status.READY
-                && option != null) {
-          pendingHandler.handle(job, process, option);
+                && config != null) {
+          pendingHandler.handle(job, process, config, innerConfig);
         } else if (process != null
                 && process.getStatus() == AbstractRemoteProcess.Status.STARTING
-                && option != null) {
+                && config != null) {
           final String str = ";";
         } else {
-          final InterpreterArtifactSource source = option != null
-                  ? interpreterSettingService.getSource(option.getInterpreterName())
+          final ModuleSource source = config != null
+                  ? moduleSourcesDAO.get(config.getModuleSourceId())
                   : null;
 
           interpreterStarterHandler.handle(job,
-                  option,
+                  config,
+                  innerConfig,
                   source,
                   serverBootstrap.getServer().getRemoteServerClassPath(),
                   serverBootstrap.getServer().getAddr(),
@@ -129,13 +141,13 @@ public class NoteExecutorService {
       if(process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
         continue;
       }
-      final InterpreterOption option = interpreterSettingService.getOption(shebang);
+      final ModuleConfiguration config = moduleConfigurationDAO.getByShebang(shebang);
       final PingResult pingResult = process.ping();
 
       if (pingResult == null
               || pingResult.status == PingResultStatus.KILL_ME
-              || option == null
-              || !option.isEnabled()) {
+              || config == null
+              || !config.isEnabled()) {
 
         process.forceKill();
         AbstractRemoteProcess.remove(process.getShebang(), RemoteProcessType.INTERPRETER);

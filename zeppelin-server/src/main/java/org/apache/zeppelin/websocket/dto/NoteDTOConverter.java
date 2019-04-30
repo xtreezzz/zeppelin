@@ -16,12 +16,12 @@
  */
 package org.apache.zeppelin.websocket.dto;
 
-import org.apache.zeppelin.storage.*;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
+import ru.tinkoff.zeppelin.storage.*;
 
 
 @Component

@@ -36,6 +36,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.tinkoff.zeppelin.commons.jdbc.JDBCInstallation;
+import ru.tinkoff.zeppelin.commons.jdbc.JDBCInterpolation;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
@@ -245,15 +247,13 @@ public class JDBCInterpreter extends Interpreter {
                                        @Nonnull final Map<String, String> configuration) {
     if (isOpened() && isAlive()) {
       final Map<String, String> params = new HashMap<>();
-      params.put("Z_ENV_NOTE_ID", noteContext.get("Z_ENV_NOTE_ID"));
-      params.put("Z_ENV_PARAGRAPH_ID", noteContext.get("Z_ENV_PARAGRAPH_ID"));
-      params.put("Z_ENV_USER_NAME", userContext.get("Z_ENV_USER_NAME"));
-      params.put("Z_ENV_USER_ROLES", userContext.get("Z_ENV_USER_ROLES"));
+      params.putAll(noteContext);
+      params.putAll(userContext);
 
       final String precode = configuration.get("query.precode");
       if (precode != null && !precode.trim().equals("")) {
         final InterpreterResult precodeResult = executeQuery(
-                JDBCInterpolation.interpolate(precode, params, getAllEnvVariables(precode)),
+                JDBCInterpolation.interpolate(precode, params),
                 false
         );
         if (precodeResult.code().equals(Code.ERROR)) {
@@ -262,14 +262,14 @@ public class JDBCInterpreter extends Interpreter {
       }
 
       final InterpreterResult queryResult = executeQuery(
-              JDBCInterpolation.interpolate(st, params, getAllEnvVariables(st)),
+              JDBCInterpolation.interpolate(st, params),
               true
       );
 
       final String postcode = configuration.get("query.postcode");
       if (postcode != null && !postcode.trim().equals("")) {
         final InterpreterResult postcodeResult = executeQuery(
-                JDBCInterpolation.interpolate(postcode, params, getAllEnvVariables(postcode)),
+                JDBCInterpolation.interpolate(postcode, params),
                 false
         );
         if (postcodeResult.code().equals(Code.ERROR)) {

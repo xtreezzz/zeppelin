@@ -66,13 +66,15 @@ public class RemoteCompleterThread extends AbstractRemoteProcessThread implement
     Completer completer = null;
     try {
       completer = acquire();
-      if (!completer.isReusableForConfiguration(configuration) || !completer.isAlive()) {
-        throw new RuntimeException("Completer EOL");
-      }
 
       if (!completer.isOpened()) {
         completer.open(configuration, this.processClasspath);
       }
+
+      if (!completer.isReusableForConfiguration(configuration) || !completer.isAlive()) {
+        throw new RuntimeException("Completer EOL");
+      }
+
       final String result = completer.complete(st, cursorPosition, noteContext, userContext, configuration);
 
       release(completer);
@@ -101,7 +103,7 @@ public class RemoteCompleterThread extends AbstractRemoteProcessThread implement
           return completer;
 
         } finally {
-          if (createdObjects < size) {
+          if (createdObjects > size) {
             isLocked.set(true);
           }
         }

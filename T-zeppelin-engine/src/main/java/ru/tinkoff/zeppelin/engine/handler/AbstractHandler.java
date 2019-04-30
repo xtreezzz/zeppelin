@@ -16,20 +16,17 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.regex.Pattern;
-import org.apache.zeppelin.storage.*;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
 import ru.tinkoff.zeppelin.engine.EventService;
 import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
+import ru.tinkoff.zeppelin.storage.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for handlers

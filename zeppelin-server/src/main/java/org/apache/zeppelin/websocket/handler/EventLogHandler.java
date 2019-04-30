@@ -18,8 +18,8 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
-import org.apache.zeppelin.storage.ZLog;
-import org.apache.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
+import ru.tinkoff.zeppelin.storage.ZLog.ET;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;

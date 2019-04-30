@@ -16,10 +16,10 @@
  */
 package ru.tinkoff.zeppelin.engine;
 
-import org.apache.zeppelin.storage.FullParagraphDAO;
-import org.apache.zeppelin.storage.NoteDAO;
-import org.apache.zeppelin.storage.NoteRevisionDAO;
-import org.apache.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.NoteRevisionDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;

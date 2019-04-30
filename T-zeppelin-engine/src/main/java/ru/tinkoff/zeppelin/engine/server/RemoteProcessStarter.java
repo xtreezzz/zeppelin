@@ -25,8 +25,8 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteResultHandler;
 import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.zeppelin.storage.ZLog;
-import org.apache.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
+import ru.tinkoff.zeppelin.storage.ZLog.ET;
 
 
 /**

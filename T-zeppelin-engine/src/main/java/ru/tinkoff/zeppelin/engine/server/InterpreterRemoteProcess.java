@@ -17,7 +17,7 @@
 
 package ru.tinkoff.zeppelin.engine.server;
 
-import org.apache.zeppelin.storage.ZLog;
+import ru.tinkoff.zeppelin.storage.ZLog;
 import ru.tinkoff.zeppelin.interpreter.thrift.CancelResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;

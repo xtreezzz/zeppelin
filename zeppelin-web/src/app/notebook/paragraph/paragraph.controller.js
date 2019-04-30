@@ -129,7 +129,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   let getInterpreterSettings = function() {
-    $http.get(baseUrlSrv.getRestApiBase() + '/interpreter/setting')
+    $http.get(baseUrlSrv.getRestApiBase() + '/modules/setting')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
         // if shebang exists, but interpreter not found - block input
@@ -987,11 +987,18 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
 
       $scope.$on('callCompletion', function(event, data) {
+        console.log('callCompletion : ');
         if($scope.paragraphFocused) {
-          $http.post(baseUrlSrv.getRestApiBase() + '/completion/' + $scope.note.id + '/'
-          + $scope.paragraph.id, {
-            buf: data.buf,
-            cursor: data.pos,
+          $http({
+            method: 'POST',
+            url: baseUrlSrv.getRestApiBase() + '/completion/' + $scope.note.id + '/' + $scope.paragraph.id,
+            headers: {
+              'Content-Type': 'text/plain',
+            },
+            data: {
+              buf: data.buf,
+              cursor: data.pos,
+            },
           })
             .success(function(data, status, headers, config) {
               $rootScope.$broadcast('completionList', data.body);

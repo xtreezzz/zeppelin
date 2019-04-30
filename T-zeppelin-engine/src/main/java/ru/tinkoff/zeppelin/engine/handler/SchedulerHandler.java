@@ -16,8 +16,6 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import org.apache.zeppelin.storage.*;
-import org.apache.zeppelin.storage.ZLog.ET;
 import org.quartz.CronExpression;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,10 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
+import ru.tinkoff.zeppelin.storage.*;
+import ru.tinkoff.zeppelin.storage.ZLog.ET;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
