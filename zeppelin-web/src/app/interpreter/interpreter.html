@@ -172,7 +172,7 @@ limitations under the License.
           <span class="input-group" style="line-height:30px;">
             <label>
               <input type="checkbox" style="width:20px !important" id="idShowPermission"
-                     ng-click="togglePermissions(moduleSetting.configuration.humanReadableName)"
+                     ng-click="togglePermissions(moduleSetting.configuration.shebang)"
                      ng-model="moduleSetting.configuration.permissions.isEnabled"
                      ng-disabled="!valueform.$visible"/>
                Set permission
@@ -182,7 +182,7 @@ limitations under the License.
           </div>
         </div>
 
-        <div class="row interpreter">
+        <div class="row interpreter" ng-if="moduleSetting.configuration.bindedTo">
           <div class="col-md-12">
             <span class="input-group" style="line-height:30px;">
               <label>
@@ -225,16 +225,16 @@ limitations under the License.
         <div class="row interpreter">
           <div class="col-md-12">
             <!-- permissions -->
-            <div ng-show="setting.configuration.permissions.isEnabled" class="permissionsForm">
+            <div ng-show="moduleSetting.configuration.permissions.isEnabled" class="permissionsForm">
               <div>
                 <p>
                   Enter comma separated users and groups in the fields. <br/>
-                  Empty field (*) implies anyone can run this interpreter.
+                  Empty field (*) implies anyone can run this interpreter. <br/>
+                  {{moduleSetting.configuration.shebang}}Owners
                 </p>
                 <div>
-
                   <span class="owners">Owners </span>
-                  <select id="{{moduleSetting.configuration.name}}Owners" class="form-control" multiple="multiple"
+                  <select id="{{moduleSetting.configuration.shebang}}Owners" class="form-control" multiple="multiple"
                           ng-disabled="!valueform.$visible">
                     <option ng-repeat="owner in moduleSetting.configuration.permissions.owners" selected="selected">
                       {{owner}}

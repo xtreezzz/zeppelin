@@ -17,25 +17,28 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.zeppelin.rest.JsonResponse;
-import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
-import ru.tinkoff.zeppelin.storage.ModuleInnerConfigurationDAO;
-import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.option.Permissions;
-import ru.tinkoff.zeppelin.engine.ModuleSettingService;
-import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource.Type;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.option.Permissions;
+import ru.tinkoff.zeppelin.engine.ModuleSettingService;
+import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
+import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleInnerConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 
 @RestController
 @RequestMapping("/api/modules")
@@ -204,6 +207,7 @@ public class ModuleRestApi {
   public static class DeleteModuleSourceDTO {
     public long id;
   }
+
   @PostMapping(value = "/deleteModuleSource", produces = "application/json")
   public ResponseEntity deleteModuleSource(@RequestBody final String message) {
     try {
@@ -345,6 +349,7 @@ public class ModuleRestApi {
 
     public ModuleInnerConfiguration config;
   }
+
   @GetMapping(value = "/setting", produces = "application/json")
   public ResponseEntity listSettings() {
     try {
@@ -372,4 +377,92 @@ public class ModuleRestApi {
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
+
+  /**
+   * Lists only interpreters.
+   *
+   * @return
+   */
+  @GetMapping(value = "/setting/interpreters", produces = "application/json")
+  public ResponseEntity listInterpretersSettings() {
+    try {
+
+      final List<ConfigurationDTO> result = new ArrayList<>();
+      final List<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
+      for (final ModuleConfiguration configuration : configurations) {
+        if (moduleSourcesDAO.get(configuration.getId()).getType().equals(Type.COMPLETER)) {
+          continue;
+        }
+
+        final ModuleInnerConfiguration inner = moduleInnerConfigurationDAO.getById(configuration.getModuleInnerConfigId());
+        final ConfigurationDTO conf = new ConfigurationDTO();
+        conf.id = configuration.getId();
+        conf.shebang = configuration.getShebang();
+        conf.humanReadableName = configuration.getHumanReadableName();
+        conf.bindedTo = configuration.getBindedTo();
+        conf.jvmOptions = configuration.getJvmOptions();
+        conf.concurrentTasks = configuration.getConcurrentTasks();
+        conf.permissions = configuration.getPermissions();
+        conf.isEnabled = configuration.isEnabled();
+        conf.config = inner;
+        result.add(conf);
+      }
+
+      return new JsonResponse<>(HttpStatus.OK, "", result).build();
+    } catch (final Exception e) {
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * List of dependency resolving repositories.
+   */
+  @GetMapping(value = "/repository", produces = "application/json")
+  public ResponseEntity listRepositories() {
+    try {
+      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingService.getAllRepositories()).build();
+    } catch (final Exception e) {
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * Add new repository.
+   *
+   * @param message Repository
+   */
+    //  @PostMapping(value = "/repository", produces = "application/json")
+    //  public ResponseEntity addRepository(@RequestBody final String message) {
+    //    try {
+    //      final Repository request = Repository.fromJson(message);
+    //      interpreterSettingService.saveRepository(request);
+    //      logger.info("New repository {} added", request.getId());
+    //      return new JsonResponse(HttpStatus.OK).build();
+    //    } catch (final Exception e) {
+    //      logger.error("Exception in InterpreterRestApi while creating repository ", e);
+    //      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+    //          ExceptionUtils.getStackTrace(e)).build();
+    //    }
+    //  }
+    //
+    //  /**
+    //   * Delete repository.
+    //   *
+    //   * @param repoId ID of repository
+    //   */
+    //  @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
+    //  public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
+    //    try {
+    //      logger.info("Remove repository {}", repoId);
+    //      interpreterSettingService.removeRepository(repoId);
+    //      return new JsonResponse(HttpStatus.OK).build();
+    //    } catch (final Exception e) {
+    //      logger.error("Exception in InterpreterRestApi while deleting repository ", e);
+    //      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+    //          ExceptionUtils.getStackTrace(e)).build();
+    //    }
+    //  }
+
 }

@@ -7,7 +7,7 @@
         "defaultValue": "jdbc:postgresql://localhost:5432/",
         "currentValue": "jdbc:postgresql://localhost:5432/",
         "description": "The URL for JDBC.",
-        "type": "string"
+        "type": "textarea"
       },
       "connection.user": {
         "envName": null,
@@ -15,7 +15,7 @@
         "defaultValue": "gpadmin",
         "currentValue": "gpadmin",
         "description": "The JDBC user name",
-        "type": "string"
+        "type": "textarea"
       },
       "connection.password": {
         "envName": null,
@@ -31,7 +31,7 @@
         "defaultValue": "org.postgresql.Driver",
         "currentValue": "org.postgresql.Driver",
         "description": "JDBC Driver Name",
-        "type": "string"
+        "type": "textarea"
       },
       "driver.artifact": {
         "envName": null,

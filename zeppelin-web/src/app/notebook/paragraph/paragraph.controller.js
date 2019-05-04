@@ -129,7 +129,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   let getInterpreterSettings = function() {
-    $http.get(baseUrlSrv.getRestApiBase() + '/modules/setting')
+    $http.get(baseUrlSrv.getRestApiBase() + '/modules/setting/interpreters')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
         // if shebang exists, but interpreter not found - block input
@@ -1058,6 +1058,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               }
             };
             if (data) {
+              console.error('callCompletion data:', data);
               let completions = [];
               $rootScope.completionLineWidth = -1;
               for (let c in data) {

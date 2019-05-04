@@ -27,9 +27,82 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   $scope._ = _;
   ngToast.dismiss();
 
+  // Get configuration for interpreter owners selectors.
+  // see https://select2.org/configuration/options-api
+  let getOwnersSelectConfiguration = function() {
+    let selectJson = {
+      tags: true,
+      minimumInputLength: 3,
+      multiple: true,
+      tokenSeparators: [',', ' '],
+      ajax: {
+        url: function(params) {
+          if (!params.term) {
+            return false;
+          }
+          return baseUrlSrv.getRestApiBase() + '/security/userlist/' + params.term;
+        },
+        delay: 250,
+        processResults: function(data, params) {
+          let results = [];
+
+          if (data.body.users.length !== 0) {
+            let users = [];
+            for (let len = 0; len < data.body.users.length; len++) {
+              users.push({
+                'id': data.body.users[len].trim(),
+                'text': data.body.users[len].trim(),
+              });
+            }
+            results.push({
+              'text': 'Users :',
+              'children': users,
+            });
+          }
+          if (data.body.roles.length !== 0) {
+            let roles = [];
+            for (let len = 0; len < data.body.roles.length; len++) {
+              roles.push({
+                'id': data.body.roles[len].trim(),
+                'text': data.body.roles[len].trim(),
+              });
+            }
+            results.push({
+              'text': 'Roles :',
+              'children': roles,
+            });
+          }
+          return {
+            results: results,
+            pagination: {
+              more: false,
+            },
+          };
+        },
+        cache: false,
+      },
+    };
+    return selectJson;
+  };
+
+  $scope.togglePermissions = function(interpreterShebang) {
+    // re-initialize given selector
+    angular.element('#' + interpreterShebang + 'Owners').select2(getOwnersSelectConfiguration());
+  };
 
   $scope.$on('ngRenderFinished', function(event, data) {
-
+    // re-initialize all selectors
+    console.error('ngRenderFinished');
+    for (let moduleIdx = 0; moduleIdx < $scope.modules.length; moduleIdx++) {
+      if ($scope.modules[moduleIdx].modules) {
+        for (let configurationIdx = 0; configurationIdx < $scope.modules[moduleIdx].modules.length;
+             configurationIdx++) {
+          let shebang = $scope.modules[moduleIdx].modules[configurationIdx].configuration.shebang;
+          angular.element('#' + shebang + 'Owners').select2(getOwnersSelectConfiguration());
+        }
+      }
+    }
+    angular.element('#newInterpreterOwners').select2(getOwnersSelectConfiguration());
   });
 
   let getModuleSources = function() {
@@ -153,8 +226,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     console.log('moduleConfiguration ', moduleConfiguration);
     console.log('innerConfiguration ', innerConfiguration);
 
-    $scope.creatingModuleConfiguration.moduleSource = moduleSource;
-    $scope.creatingModuleConfiguration.innerConfiguration = innerConfiguration;
+    $scope.creatingModuleConfiguration.moduleSource = angular.copy(moduleSource);
+    $scope.creatingModuleConfiguration.innerConfiguration = angular.copy(innerConfiguration);
 
     if(moduleConfiguration === null) {
       $scope.creatingModuleConfiguration.moduleConfiguration = {};
@@ -169,14 +242,15 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners = [];
       $scope.creatingModuleConfiguration.moduleConfiguration.isEnabled = false;
     } else {
-      $scope.creatingModuleConfiguration.moduleConfiguration = moduleConfiguration;
+      $scope.creatingModuleConfiguration.moduleConfiguration = angular.copy(moduleConfiguration);
     }
 
     $scope.creatingModuleConfigurationMode = mode;
   };
 
   $scope.addCustomModuleConfiguration = function() {
-    console.log('$scope.creatingModuleConfiguration ', $scope.creatingModuleConfiguration);
+    $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners =
+    angular.element('#newInterpreterOwners').val();
 
     $http({
       method: 'POST',
@@ -195,7 +269,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   };
 
   $scope.updateCustomModuleConfiguration = function() {
-    console.log('$scope.creatingModuleConfiguration ', $scope.creatingModuleConfiguration);
+    let owners = angular.element('#newInterpreterOwners').val();
+    for (let i = 0; i < owners.length; i++) {
+      console.error(owners[i] === owners[i].trim());
+      owners[i] = owners[i].trim();
+      console.error(owners[i] === owners[i].trim());
+    }
+    $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners = angular.copy(owners);
 
     $http({
       method: 'POST',

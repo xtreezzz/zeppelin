@@ -61,12 +61,15 @@ limitations under the License.
                       <div>
                         <p>
                           Enter comma separated users and groups in the fields. <br />
-                          Empty field (*) implies anyone can run this interpreter.
+                          Empty field (*) implies anyone can run this interpreter. <br/>
+                          {{creatingModuleConfiguration.moduleConfiguration.permissions.owners}}
                         </p>
                         <div>
                           <span class="owners">Owners </span>
                           <select id="newInterpreterOwners" class="form-control" multiple="multiple">
-                            <option ng-repeat="owner in creatingModuleConfiguration.moduleConfiguration.permissions.owners" selected="selected">{{owner}}</option>
+                            <option ng-repeat="owner in creatingModuleConfiguration.moduleConfiguration.permissions.owners" selected="selected">
+                              {{owner}}
+                            </option>
                           </select>
                         </div>
                       </div>

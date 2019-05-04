@@ -7,7 +7,7 @@
       "defaultValue": "",
       "currentValue": "",
       "description": "Path to temp storage of python interpreter results",
-      "type": "string"
+      "type": "textarea"
     },
     "python.jep.library.file": {
       "envName": "PYTHON_JEP_LIBRARY_FILE",
@@ -15,7 +15,7 @@
       "defaultValue": "",
       "currentValue": "",
       "description": "Path to JEP *.so library",
-      "type": "string"
+      "type": "textarea"
     },
     "python.jep.config.include.paths": {
       "envName": "PYTHON_JEP_CONFIG_INCLUDE_PATHS",
@@ -23,7 +23,7 @@
       "defaultValue": "",
       "currentValue": "",
       "description": "Adds a path of directories separated by File.pathSeparator that will be appended to the sub-intepreter's sys.path",
-      "type": "string"
+      "type": "textarea"
     },
     "python.jep.config.python.home": {
       "envName": "PYTHON_JEP_CONFIG_PYTHON_HOME",
@@ -31,7 +31,7 @@
       "defaultValue": "",
       "currentValue": "",
       "description": "Set the python's home location, if not specified then use standard",
-      "type": "string"
+      "type": "textarea"
     },
     "python.watchdog.time": {
       "envName": "PYTHON_WATCHDOG_TIME",
@@ -47,7 +47,7 @@
       "defaultValue": "",
       "currentValue": "",
       "description": "Additional JVM args(used for inner JVM)",
-      "type": "string"
+      "type": "textarea"
     }
   },
   "editor": {
