@@ -140,6 +140,7 @@ public class ModuleRestApi {
   public static class UninstallModuleConfigurationDTO {
     public long id;
   }
+
   @PostMapping(value = "/uninstallModuleSource", produces = "application/json")
   public ResponseEntity uninstallModuleSource(@RequestBody final String message) {
     try {
@@ -159,6 +160,7 @@ public class ModuleRestApi {
     public long id;
     public boolean reinstall;
   }
+
   @PostMapping(value = "/setReinstallOnStartModuleSource", produces = "application/json")
   public ResponseEntity setReinstallOnStartModuleSource(@RequestBody final String message) {
     try {
@@ -180,6 +182,7 @@ public class ModuleRestApi {
     public String artifact;
     public String type;
   }
+
   @PostMapping(value = "/addModuleSource", produces = "application/json")
   public ResponseEntity addModuleSource(@RequestBody final String message) {
     try {
@@ -241,6 +244,11 @@ public class ModuleRestApi {
   public ResponseEntity addModuleConfiguration(@RequestBody final String message) {
     try {
       final AddModuleConfigurationDTO addModuleConfigurationDTO = new Gson().fromJson(message, AddModuleConfigurationDTO.class);
+
+      if (addModuleConfigurationDTO.moduleConfiguration.getHumanReadableName().trim().isEmpty()
+          || addModuleConfigurationDTO.moduleConfiguration.getShebang().trim().isEmpty()) {
+        return new JsonResponse<>(HttpStatus.BAD_REQUEST, "Please fill in interpreter name and shebang").build();
+      }
 
       final ModuleInnerConfiguration innerConfiguration
               = moduleInnerConfigurationDAO.persist(addModuleConfigurationDTO.innerConfiguration);
