@@ -31,9 +31,6 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   // see https://select2.org/configuration/options-api
   let getOwnersSelectConfiguration = function() {
     let selectJson = {
-      tags: true,
-      minimumInputLength: 3,
-      multiple: true,
       tokenSeparators: [',', ' '],
       ajax: {
         url: function(params) {
@@ -50,8 +47,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
             let users = [];
             for (let len = 0; len < data.body.users.length; len++) {
               users.push({
-                'id': data.body.users[len].trim(),
-                'text': data.body.users[len].trim(),
+                'id': data.body.users[len],
+                'text': data.body.users[len],
               });
             }
             results.push({
@@ -63,8 +60,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
             let roles = [];
             for (let len = 0; len < data.body.roles.length; len++) {
               roles.push({
-                'id': data.body.roles[len].trim(),
-                'text': data.body.roles[len].trim(),
+                'id': data.body.roles[len],
+                'text': data.body.roles[len],
               });
             }
             results.push({
@@ -81,29 +78,16 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         },
         cache: false,
       },
+      width: ' ',
+      tags: true,
+      minimumInputLength: 3,
     };
     return selectJson;
   };
 
   $scope.togglePermissions = function(interpreterShebang) {
-    // re-initialize given selector
-    angular.element('#' + interpreterShebang + 'Owners').select2(getOwnersSelectConfiguration());
-  };
-
-  $scope.$on('ngRenderFinished', function(event, data) {
-    // re-initialize all selectors
-    console.error('ngRenderFinished');
-    for (let moduleIdx = 0; moduleIdx < $scope.modules.length; moduleIdx++) {
-      if ($scope.modules[moduleIdx].modules) {
-        for (let configurationIdx = 0; configurationIdx < $scope.modules[moduleIdx].modules.length;
-             configurationIdx++) {
-          let shebang = $scope.modules[moduleIdx].modules[configurationIdx].configuration.shebang;
-          angular.element('#' + shebang + 'Owners').select2(getOwnersSelectConfiguration());
-        }
-      }
-    }
     angular.element('#newInterpreterOwners').select2(getOwnersSelectConfiguration());
-  });
+  };
 
   let getModuleSources = function() {
     $http.get(baseUrlSrv.getRestApiBase() + '/modules/list').then(function(res) {
@@ -221,6 +205,16 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
       });
   };
 
+  /**
+   * Gets permissions from select2 element and removes it.
+   */
+  function getModulePermissions() {
+    $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners =
+    [...new Set(angular.element('#newInterpreterOwners').val())];
+    angular.element('.permissionsForm select').find('option:not([is-select2="false"])').remove();
+    angular.element('#newInterpreterOwners').select2(getOwnersSelectConfiguration());
+  }
+
   $scope.setSelectedModuleConfiguration = function(moduleSource, moduleConfiguration, innerConfiguration, mode) {
     console.log('moduleSource ', moduleSource);
     console.log('moduleConfiguration ', moduleConfiguration);
@@ -246,11 +240,13 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
     }
 
     $scope.creatingModuleConfigurationMode = mode;
+    if ($scope.creatingModuleConfiguration.moduleConfiguration.isEnabled) {
+      $scope.togglePermissions();
+    }
   };
 
   $scope.addCustomModuleConfiguration = function() {
-    $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners =
-    angular.element('#newInterpreterOwners').val();
+    getModulePermissions();
 
     $http({
       method: 'POST',
@@ -269,13 +265,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   };
 
   $scope.updateCustomModuleConfiguration = function() {
-    let owners = angular.element('#newInterpreterOwners').val();
-    for (let i = 0; i < owners.length; i++) {
-      console.error(owners[i] === owners[i].trim());
-      owners[i] = owners[i].trim();
-      console.error(owners[i] === owners[i].trim());
-    }
-    $scope.creatingModuleConfiguration.moduleConfiguration.permissions.owners = angular.copy(owners);
+    getModulePermissions();
 
     $http({
       method: 'POST',
@@ -375,6 +365,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   let init = function() {
     getModuleSources();
+    angular.element('#newInterpreterOwners').select2(getOwnersSelectConfiguration());
   };
 
   $scope.getInterpreterBindingModeDocsLink = function() {

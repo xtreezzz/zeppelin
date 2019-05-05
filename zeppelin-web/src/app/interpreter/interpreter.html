@@ -228,18 +228,13 @@ limitations under the License.
             <div ng-show="moduleSetting.configuration.permissions.isEnabled" class="permissionsForm">
               <div>
                 <p>
-                  Enter comma separated users and groups in the fields. <br/>
-                  Empty field (*) implies anyone can run this interpreter. <br/>
-                  {{moduleSetting.configuration.shebang}}Owners
+                  List of users and groups with access to this module.<br/>
+                  Empty field (*) implies anyone can use it.
                 </p>
                 <div>
-                  <span class="owners">Owners </span>
-                  <select id="{{moduleSetting.configuration.shebang}}Owners" class="form-control" multiple="multiple"
-                          ng-disabled="!valueform.$visible">
-                    <option ng-repeat="owner in moduleSetting.configuration.permissions.owners" selected="selected">
-                      {{owner}}
-                    </option>
-                  </select>
+                  <span class="badge badge-pill badge-light" ng-repeat="owner in moduleSetting.configuration.permissions.owners" ng-disabled="!valueform.$visible">
+                    {{owner}}
+                  </span>
                 </div>
               </div>
             </div>
