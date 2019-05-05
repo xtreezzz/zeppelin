@@ -86,7 +86,7 @@
       "language": "sql",
       "enableLiveAutocompletion": true,
       "editOnDblClick": false,
-      "completionSupport": true,
+      "completionSupport": false,
       "completionKey": "TAB"
     }
   }

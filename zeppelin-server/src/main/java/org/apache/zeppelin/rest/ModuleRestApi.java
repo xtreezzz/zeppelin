@@ -390,7 +390,8 @@ public class ModuleRestApi {
       final List<ConfigurationDTO> result = new ArrayList<>();
       final List<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
       for (final ModuleConfiguration configuration : configurations) {
-        if (moduleSourcesDAO.get(configuration.getId()).getType().equals(Type.COMPLETER)) {
+        final ModuleSource source = moduleSourcesDAO.get(configuration.getModuleSourceId());
+        if (source != null && source.getType().equals(Type.COMPLETER)) {
           continue;
         }
 

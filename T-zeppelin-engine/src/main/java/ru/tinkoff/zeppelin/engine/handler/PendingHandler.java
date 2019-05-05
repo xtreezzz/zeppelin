@@ -16,6 +16,9 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +34,15 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
-import ru.tinkoff.zeppelin.storage.*;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.JobBatchDAO;
+import ru.tinkoff.zeppelin.storage.JobDAO;
+import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
+import ru.tinkoff.zeppelin.storage.JobResultDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.ZLog;
 import ru.tinkoff.zeppelin.storage.ZLog.ET;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Class for handle pending jobs
@@ -145,6 +151,9 @@ public class PendingHandler extends AbstractHandler {
   }
 
   private boolean userIsInterpreterOwner(Job job, ModuleConfiguration option) {
+    if (!option.getPermissions().isEnabled()) {
+      return true;
+    }
     List<String> owners = option.getPermissions().getOwners();
     if (owners.isEmpty()) {
       return true;

@@ -1011,19 +1011,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
       let remoteCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
-          let langTools = ace.require('ace/ext/language_tools');
           let defaultKeywords = new Set();
           // eslint-disable-next-line handle-callback-err
-          let getDefaultKeywords = function(err, completions) {
-            if (completions !== undefined) {
-              completions.forEach(function(c) {
-                defaultKeywords.add(c.value);
-              });
-            }
-          };
-          if (langTools.keyWordCompleter !== undefined) {
-            langTools.keyWordCompleter.getCompletions(editor, session, pos, prefix, getDefaultKeywords);
-          }
 
           if (!editor.isFocused()) {
             return;
@@ -1058,7 +1047,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               }
             };
             if (data) {
-              console.error('callCompletion data:', data);
               let completions = [];
               $rootScope.completionLineWidth = -1;
               for (let c in data) {
@@ -1102,8 +1090,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         },
       };
 
-      langTools.setCompleters([remoteCompleter, langTools.keyWordCompleter, langTools.snippetCompleter,
-        langTools.textCompleter]);
+      langTools.setCompleters([remoteCompleter]);
 
       $scope.editor.setOptions({
         fontSize: $scope.paragraph.config.fontSize + 'pt',
