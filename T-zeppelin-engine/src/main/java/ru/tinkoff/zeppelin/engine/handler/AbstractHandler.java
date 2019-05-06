@@ -198,8 +198,13 @@ abstract class AbstractHandler {
     batch.setEndedAt(null);
     final JobBatch saved = jobBatchDAO.persist(batch);
 
+    boolean hasParagraphToExecute = false;
     for (int i = 0; i < paragraphs.size(); i++) {
       final Paragraph p = paragraphs.get(i);
+
+      if(!(boolean)p.getConfig().getOrDefault("enabled", true)) {
+        continue;
+      }
 
       final ParagraphDTO before = fullParagraphDAO.getById(p.getId());
 
@@ -233,7 +238,13 @@ abstract class AbstractHandler {
 
       final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
       EventService.publish(job.getNoteId(), before, after);
+      hasParagraphToExecute = true;
     }
+
+    if(!hasParagraphToExecute) {
+      throw new RuntimeException("Empty note.");
+    }
+
     saved.setStatus(JobBatch.Status.PENDING);
     jobBatchDAO.update(saved);
     note.setBatchJobId(batch.getId());
