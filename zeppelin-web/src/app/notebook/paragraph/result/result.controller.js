@@ -217,7 +217,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
   }
 
   $scope.$on('updateResult', function(event, result, newConfig, paragraphRef, index) {
-    if (paragraph.id !== paragraphRef.id || index !== resultIndex) {
+    if (paragraph.id !== paragraphRef.id || index !== resultIndex || !result.data) {
       return;
     }
 
