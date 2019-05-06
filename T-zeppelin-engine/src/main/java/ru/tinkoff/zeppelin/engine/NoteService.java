@@ -105,10 +105,6 @@ public class NoteService {
     return savedParagraph;
   }
 
-  public Paragraph persistParagraphSilently(final Paragraph paragraph) {
-    return paragraphDAO.persist(paragraph);
-  }
-
   public Paragraph updateParagraph(final Note note, final Paragraph paragraph) {
     final ParagraphDTO before = fullParagraphDAO.getById(paragraph.getId());
 

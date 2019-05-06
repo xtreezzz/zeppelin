@@ -141,7 +141,7 @@ public class NoteHandler extends AbstractHandler {
       paragraph.setUpdated(LocalDateTime.now());
       paragraph.setPosition(0);
       paragraph.setJobId(null);
-      noteService.persistParagraphSilently(paragraph);
+      noteService.persistParagraph(note, paragraph);
 
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
@@ -184,10 +184,9 @@ public class NoteHandler extends AbstractHandler {
       cloneParagraph.setJobId(null);
       cloneParagraph.getConfig().putAll(paragraph.getConfig());
       cloneParagraph.getFormParams().putAll(paragraph.getFormParams());
-      noteService.persistParagraphSilently(cloneParagraph);
+      noteService.persistParagraph(cloneNote, cloneParagraph);
     }
 
-    connectionManager.removeSubscribersFromAllNote(conn);
     conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", cloneNote).toSend());
     sendListNotesInfo(conn);
   }

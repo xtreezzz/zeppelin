@@ -128,7 +128,7 @@ public class ConnectionManager {
     }
   }
 
-  @Scheduled(fixedDelay = 50)
+  @Scheduled(fixedDelay = 5)
   private void getEvents() {
     while (true) {
       final EventService.Event event = EventService.getEvent();

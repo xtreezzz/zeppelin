@@ -177,7 +177,7 @@ public class NotebookRestApi extends AbstractRestApi {
       cloneParagraph.setJobId(null);
       cloneParagraph.getConfig().putAll(paragraph.getConfig());
       cloneParagraph.getFormParams().putAll(paragraph.getFormParams());
-      noteService.persistParagraphSilently(cloneParagraph);
+      noteService.persistParagraph(cloneNote, cloneParagraph);
     }
     JsonObject response = new JsonObject();
     response.addProperty("clone_note_id", cloneNote.getId());
