@@ -15,7 +15,7 @@
 angular.module('zeppelinWebApp').controller('CronCtrl', CronCtrl);
 
 function CronCtrl($scope, $http, baseUrlSrv) {
-  $scope.$on('setNoteContent', function(event, note) {
+  $scope.$on('initCron', function(event, note) {
     noteId = note.databaseId;
     loadCronConfiguration();
   });

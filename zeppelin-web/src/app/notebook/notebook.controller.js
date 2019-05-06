@@ -1590,6 +1590,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   });
 
   $scope.$on('setNoteContent', function(event, note) {
+    setTimeout(() => $rootScope.$broadcast('initCron', note), 100);
     if (note === undefined) {
       $location.path('/');
     }
