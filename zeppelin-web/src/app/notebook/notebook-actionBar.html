@@ -101,26 +101,26 @@ limitations under the License.
         <i class="fa fa-download"></i>
       </button>
 
-      <button type="button"
-              class="btn btn-primary btn-xs"
-              ng-class="isNoteRunning() ? 'disabled' : ''"
-              ng-if="ticket.principal && ticket.principal !== 'anonymous'"
-              ng-hide="viewOnly || note.config.personalizedMode !== 'true'"
-              ng-click="toggleNotePersonalizedMode()"
-              tooltip-placement="bottom" uib-tooltip="Switch to collaboration mode {{isOwner ? '' : '(owner can change)'}}"
-              ng-disabled="revisionView">
-        <i class="fa fa-user"></i>
-      </button>
-      <button type="button"
-              class="btn btn-default btn-xs"
-              ng-class="isNoteRunning() ? 'disabled' : ''"
-              ng-if="ticket.principal && ticket.principal !== 'anonymous'"
-              ng-hide="viewOnly || note.config.personalizedMode === 'true'"
-              ng-click="toggleNotePersonalizedMode()"
-              tooltip-placement="bottom" uib-tooltip="Switch to personal mode {{isOwner ? '' : '(owner can change)'}}"
-              ng-disabled="revisionView">
-        <i class="fa fa-users"></i>
-      </button>
+<!--      <button type="button"-->
+<!--              class="btn btn-primary btn-xs"-->
+<!--              ng-class="isNoteRunning() ? 'disabled' : ''"-->
+<!--              ng-if="ticket.principal && ticket.principal !== 'anonymous'"-->
+<!--              ng-hide="viewOnly || note.config.personalizedMode !== 'true'"-->
+<!--              ng-click="toggleNotePersonalizedMode()"-->
+<!--              tooltip-placement="bottom" uib-tooltip="Switch to collaboration mode {{isOwner ? '' : '(owner can change)'}}"-->
+<!--              ng-disabled="revisionView">-->
+<!--        <i class="fa fa-user"></i>-->
+<!--      </button>-->
+<!--      <button type="button"-->
+<!--              class="btn btn-default btn-xs"-->
+<!--              ng-class="isNoteRunning() ? 'disabled' : ''"-->
+<!--              ng-if="ticket.principal && ticket.principal !== 'anonymous'"-->
+<!--              ng-hide="viewOnly || note.config.personalizedMode === 'true'"-->
+<!--              ng-click="toggleNotePersonalizedMode()"-->
+<!--              tooltip-placement="bottom" uib-tooltip="Switch to personal mode {{isOwner ? '' : '(owner can change)'}}"-->
+<!--              ng-disabled="revisionView">-->
+<!--        <i class="fa fa-users"></i>-->
+<!--      </button>-->
       <button type="button"
               class="btn btn-default btn-xs"
               ng-class="{'disabled': isNoteRunning(), 'select-mode-background': isSelectionMode()}"
