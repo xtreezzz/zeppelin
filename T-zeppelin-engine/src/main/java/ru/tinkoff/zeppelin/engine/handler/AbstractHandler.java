@@ -187,7 +187,8 @@ abstract class AbstractHandler {
       final Note note,
       final List<Paragraph> paragraphs,
       final String username,
-      final Set<String> roles) {
+      final Set<String> roles,
+      final int priority) {
     final JobBatch batch = new JobBatch();
     batch.setId(0L);
     batch.setNoteId(note.getId());
@@ -208,6 +209,7 @@ abstract class AbstractHandler {
       job.setNoteId(note.getId());
       job.setParagraphId(p.getId());
       job.setIndex(i);
+      job.setPriority(priority);
       job.setShebang(p.getShebang());
       job.setStatus(Job.Status.PENDING);
       job.setInterpreterProcessUUID(null);

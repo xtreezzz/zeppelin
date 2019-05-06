@@ -66,6 +66,6 @@ public class ExecutionHandler extends AbstractHandler{
         String.format("Batch for note[id=%s] with paragraphs[%s] published by user[name=%s;roles=%s]",
             note.getId(), paragraphs.toString(), username, roles.toString()),
         username);
-    publishBatch(note, paragraphs, username, roles);
+    publishBatch(note, paragraphs, username, roles, 0);
   }
 }

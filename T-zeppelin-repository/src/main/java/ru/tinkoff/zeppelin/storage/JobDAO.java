@@ -43,6 +43,7 @@ public class JobDAO {
           "                 NOTE_ID,\n" +
           "                 PARAGRAPH_ID,\n" +
           "                 INDEX_NUMBER,\n" +
+          "                 PRIORITY,\n" +
           "                 SHEBANG,\n" +
           "                 STATUS,\n" +
           "                 USER_NAME,\n" +
@@ -56,6 +57,7 @@ public class JobDAO {
           "        :NOTE_ID,\n" +
           "        :PARAGRAPH_ID,\n" +
           "        :INDEX_NUMBER,\n" +
+          "        :PRIORITY,\n" +
           "        :SHEBANG,\n" +
           "        :STATUS,\n" +
           "        :USER_NAME,\n" +
@@ -71,6 +73,7 @@ public class JobDAO {
           "    NOTE_ID                  = :NOTE_ID,\n" +
           "    PARAGRAPH_ID             = :PARAGRAPH_ID,\n" +
           "    INDEX_NUMBER             = :INDEX_NUMBER,\n" +
+          "    PRIORITY                 = :PRIORITY,\n" +
           "    SHEBANG                  = :SHEBANG,\n" +
           "    STATUS                   = :STATUS,\n" +
           "    USER_NAME                = :USER_NAME,\n" +
@@ -88,6 +91,7 @@ public class JobDAO {
           "       NOTE_ID,\n" +
           "       PARAGRAPH_ID,\n" +
           "       INDEX_NUMBER,\n" +
+          "       PRIORITY,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
           "       USER_NAME,\n" +
@@ -106,6 +110,7 @@ public class JobDAO {
           "       NOTE_ID,\n" +
           "       PARAGRAPH_ID,\n" +
           "       INDEX_NUMBER,\n" +
+          "       PRIORITY,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
           "       USER_NAME,\n" +
@@ -124,6 +129,7 @@ public class JobDAO {
           "       NOTE_ID,\n" +
           "       PARAGRAPH_ID,\n" +
           "       INDEX_NUMBER,\n" +
+          "       PRIORITY,\n" +
           "       SHEBANG,\n" +
           "       STATUS,\n" +
           "       USER_NAME,\n" +
@@ -144,6 +150,7 @@ public class JobDAO {
           "  J.NOTE_ID,\n" +
           "  J.PARAGRAPH_ID,\n" +
           "  J.INDEX_NUMBER,\n" +
+          "  J.PRIORITY,\n" +
           "  J.SHEBANG,\n" +
           "  J.STATUS,\n" +
           "  J.USER_NAME,\n" +
@@ -158,7 +165,7 @@ public class JobDAO {
           "WHERE JB.STATUS IN ('PENDING', 'RUNNING')\n" +
           "      AND J.STATUS != 'DONE'" +
           "      AND NOT EXISTS(SELECT * FROM JOB J2 WHERE J2.BATCH_ID = JB.ID AND J2.STATUS IN('RUNNING', 'ERROR'))\n" +
-          "ORDER BY J.BATCH_ID, J.INDEX_NUMBER;";
+          "ORDER BY J.BATCH_ID, J.PRIORITY DESC, J.INDEX_NUMBER;";
 
 
   private static final String SELECT_JOBS_WITH_DEAD_INTERPRETER = "" +
@@ -167,6 +174,7 @@ public class JobDAO {
           "       J.NOTE_ID,\n" +
           "       J.PARAGRAPH_ID,\n" +
           "       J.INDEX_NUMBER,\n" +
+          "       J.PRIORITY,\n" +
           "       J.SHEBANG,\n" +
           "       J.STATUS,\n" +
           "       J.USER_NAME,\n" +
@@ -187,6 +195,7 @@ public class JobDAO {
           "       J.NOTE_ID,\n" +
           "       J.PARAGRAPH_ID,\n" +
           "       J.INDEX_NUMBER,\n" +
+          "       J.PRIORITY,\n" +
           "       J.SHEBANG,\n" +
           "       J.STATUS,\n" +
           "       J.USER_NAME,\n" +
@@ -225,6 +234,7 @@ public class JobDAO {
     final Long noteId = resultSet.getLong("NOTE_ID");
     final Long paragraphId = resultSet.getLong("PARAGRAPH_ID");
     final Integer index = resultSet.getInt("INDEX_NUMBER");
+    final Integer priority = resultSet.getInt("PRIORITY");
     final String shebang = resultSet.getString("SHEBANG");
     final Job.Status status = Job.Status.valueOf(resultSet.getString("STATUS"));
     final String username = resultSet.getString("USER_NAME");
@@ -252,6 +262,7 @@ public class JobDAO {
     job.setNoteId(noteId);
     job.setParagraphId(paragraphId);
     job.setIndex(index);
+    job.setPriority(priority);
     job.setShebang(shebang);
     job.setStatus(status);
     job.setUsername(username);
@@ -271,6 +282,7 @@ public class JobDAO {
             .addValue("NOTE_ID", job.getNoteId())
             .addValue("PARAGRAPH_ID", job.getParagraphId())
             .addValue("INDEX_NUMBER", job.getIndex())
+            .addValue("PRIORITY", job.getPriority())
             .addValue("SHEBANG", job.getShebang())
             .addValue("STATUS", job.getStatus().name())
             .addValue("USER_NAME", job.getUsername())
@@ -292,6 +304,7 @@ public class JobDAO {
             .addValue("NOTE_ID", job.getNoteId())
             .addValue("PARAGRAPH_ID", job.getParagraphId())
             .addValue("INDEX_NUMBER", job.getIndex())
+            .addValue("PRIORITY", job.getPriority())
             .addValue("SHEBANG", job.getShebang())
             .addValue("STATUS", job.getStatus().name())
             .addValue("USER_NAME", job.getUsername())

@@ -86,7 +86,7 @@ public class SchedulerHandler extends AbstractHandler {
             scheduler.getNoteId(), scheduler.getUser(), scheduler.getRoles(),
             scheduler.getLastExecution(), scheduler.getNextExecution(), scheduler.getExpression()),
         scheduler.getUser());
-    publishBatch(note, paragraphs, scheduler.getUser(), scheduler.getRoles());
+    publishBatch(note, paragraphs, scheduler.getUser(), scheduler.getRoles(), 100);
 
     final CronExpression cronExpression;
     try {

@@ -158,7 +158,6 @@ public class NoteExecutorService {
     interpreterDeadHandler.handle(liveInterpretersPID);
   }
 
-  //TODO(SAN) (fix new cron time)
   @Scheduled(fixedDelay = 10_000)
   private void notesScheduler() {
     final List<Scheduler> triggered = schedulerHandler.loadJobs();

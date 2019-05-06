@@ -30,7 +30,6 @@ public class Job {
     CANCELED,
     ABORTING,
     ABORTED
-    ;
   }
 
   private long id;
@@ -38,6 +37,7 @@ public class Job {
   private long noteId;
   private long paragraphId;
   private long index;
+  private long priority;
   private String shebang;
   private Status status;
   private String interpreterProcessUUID;
@@ -87,6 +87,14 @@ public class Job {
 
   public void setIndex(final long index) {
     this.index = index;
+  }
+
+  public long getPriority() {
+    return priority;
+  }
+
+  public void setPriority(final long priority) {
+    this.priority = priority;
   }
 
   public Status getStatus() {
