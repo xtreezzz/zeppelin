@@ -16,6 +16,7 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import org.apache.commons.lang3.StringUtils;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
@@ -221,7 +222,8 @@ abstract class AbstractHandler {
       final JobPayload jobPayload = new JobPayload();
       jobPayload.setId(0L);
       jobPayload.setJobId(job.getId());
-      jobPayload.setPayload(FormsProcessor.injectFormValues(p.getText(), p.getFormParams()));
+      String payload = StringUtils.firstNonEmpty(p.getSelectedText(), p.getText());
+      jobPayload.setPayload(FormsProcessor.injectFormValues(payload, p.getFormParams()));
       jobPayloadDAO.persist(jobPayload);
 
       p.setJobId(job.getId());

@@ -40,6 +40,8 @@ public class Paragraph implements Serializable {
   private Long jobId;
   private Long revisionId;
 
+  private transient String selectedText;
+
   //paragraph configs like isOpen, colWidth, etc
   private Map<String, Object> config;
 
@@ -115,6 +117,14 @@ public class Paragraph implements Serializable {
 
   public void setText(final String text) {
     this.text = text;
+  }
+
+  public String getSelectedText() {
+    return selectedText;
+  }
+
+  public void setSelectedText(final String selectedText) {
+    this.selectedText = selectedText;
   }
 
   public String getShebang() {

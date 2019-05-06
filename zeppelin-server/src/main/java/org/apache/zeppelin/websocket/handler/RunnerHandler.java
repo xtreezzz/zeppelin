@@ -70,6 +70,8 @@ public class RunnerHandler extends AbstractHandler {
     final Note note = safeLoadNote("noteId", fromMessage, Permission.WRITER, authenticationInfo, conn);
     final Paragraph p = safeLoadParagraph("id", fromMessage, note);
 
+    p.setSelectedText(fromMessage.getOrDefault("selectedText", null));
+
     noteExecutorService.run(note,
             Lists.newArrayList(p),
             authenticationInfo.getUser(),
