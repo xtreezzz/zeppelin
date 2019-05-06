@@ -32,6 +32,10 @@ public class SimpleExternalProcess {
     processThread.setRequired(true);
     options.addOption(processThread);
 
+    final Option concurrentTask = new Option("ct", "concurrentTask", true, "pool size");
+    concurrentTask.setRequired(true);
+    options.addOption(concurrentTask);
+
     final Option host = new Option("h", "host", true, "zeppelin thrift server host");
     host.setRequired(true);
     options.addOption(host);
@@ -73,6 +77,7 @@ public class SimpleExternalProcess {
     }
 
     final String processThreadClass = cmd.getOptionValue("processThread");
+    final int concurrentTaskCount = Integer.parseInt(cmd.getOptionValue("concurrentTask"));
 
     final String zeppelinServerHost = cmd.getOptionValue("host");
     final String zeppelinServerPort = cmd.getOptionValue("port");
@@ -90,7 +95,8 @@ public class SimpleExternalProcess {
             processShebang,
             processType,
             processClassPath,
-            processClassName
+            processClassName,
+            concurrentTaskCount
     );
 
     Signal.handle(new Signal("TERM"), signal -> {

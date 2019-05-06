@@ -47,7 +47,7 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
 
   private static final Map<RemoteProcessType, Map<String, AbstractRemoteProcess>> processMap = new ConcurrentHashMap<>();
 
-  public static void starting(final String shebang, final RemoteProcessType processType) {
+  static void starting(final String shebang, final RemoteProcessType processType) {
     ZLog.log(ET.PROCESS_STARTED,
             String.format("Process started by shebang=%s", shebang),
             String.format("New interpreter process added to process map by shebang=%s", shebang),
@@ -95,32 +95,24 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
             "Unknown");
   }
 
-  static void handleProcessCompleteEvent(final String shebang, final RemoteProcessType processType) {
+  static void remove(final String shebang, final RemoteProcessType processType) {
     if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
 
-    final AbstractRemoteProcess foundedProcess = processMap.get(processType).remove(shebang);
-    if (foundedProcess == null) {
+    final AbstractRemoteProcess removedProcess = processMap.get(processType).remove(shebang);
+    if (removedProcess == null) {
       ZLog.log(ET.COMPLETED_PROCESS_NOT_FOUND,
               String.format("System error, finished process by shebang: %s not found", shebang),
               String.format("Interpreter process with shebang=%s not exist in process map", shebang),
               "Unknown");
     } else {
       ZLog.log(ET.PROCESS_COMPLETED,
-              String.format("Process with shebang=%s and uuid=%s finished", foundedProcess.getShebang(), foundedProcess.uuid),
+              String.format("Process with shebang=%s and uuid=%s finished", removedProcess.getShebang(), removedProcess.uuid),
               String.format("Process finished, details: shebang=%s, host=%s, port=%s, process uuid=%s, status=%s",
-                      foundedProcess.getShebang(), foundedProcess.host, foundedProcess.port, foundedProcess.uuid, foundedProcess.status),
+                      removedProcess.getShebang(), removedProcess.host, removedProcess.port, removedProcess.uuid, removedProcess.status),
               "Unknown");
     }
-  }
-
-  public static void remove(final String shebang, final RemoteProcessType processType) {
-    if (!processMap.containsKey(processType)) {
-      processMap.put(processType, new ConcurrentHashMap<>());
-    }
-
-    processMap.get(processType).remove(shebang);
   }
 
   public static AbstractRemoteProcess get(final String shebang, final RemoteProcessType processType) {

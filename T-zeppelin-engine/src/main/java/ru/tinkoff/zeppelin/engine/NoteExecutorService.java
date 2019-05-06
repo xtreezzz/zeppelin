@@ -150,7 +150,6 @@ public class NoteExecutorService {
               || !config.isEnabled()) {
 
         process.forceKill();
-        AbstractRemoteProcess.remove(process.getShebang(), RemoteProcessType.INTERPRETER);
       } else {
         liveInterpretersPID.add(process.getUuid());
       }

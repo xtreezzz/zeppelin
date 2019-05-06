@@ -36,6 +36,7 @@ public abstract class AbstractRemoteProcessThread extends Thread implements Remo
   private String processShebang;
   private String processType;
   private String processClassName;
+  int poolSize;
   String processClasspath;
 
   private TServerSocket serverTransport;
@@ -51,13 +52,15 @@ public abstract class AbstractRemoteProcessThread extends Thread implements Remo
             final String processShebang,
             final String processType,
             final String processClassPath,
-            final String processClassName) {
+            final String processClassName,
+            final int poolSize) {
     this.zeppelinServerHost = zeppelinServerHost;
     this.zeppelinServerPort = zeppelinServerPort;
     this.processShebang = processShebang;
     this.processType = processType;
     this.processClasspath = processClassPath;
     this.processClassName = processClassName;
+    this.poolSize = poolSize;
   }
 
 

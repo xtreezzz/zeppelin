@@ -35,7 +35,28 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
 
   private final ConcurrentLinkedQueue<Interpreter> cachedInstances = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Interpreter> workingInstances = new ConcurrentLinkedQueue<>();
-  private final ExecutorService executor = Executors.newFixedThreadPool(10);
+  private ExecutorService executor = null;
+
+
+  @Override
+  void init(final String zeppelinServerHost,
+            final String zeppelinServerPort,
+            final String processShebang,
+            final String processType,
+            final String processClassPath,
+            final String processClassName,
+            final int poolSize) {
+
+    super.init(zeppelinServerHost,
+            zeppelinServerPort,
+            processShebang,
+            processType,
+            processClassPath,
+            processClassName,
+            poolSize);
+
+    executor = Executors.newFixedThreadPool(this.poolSize);
+  }
 
   @Override
   protected TProcessor getProcessor() {

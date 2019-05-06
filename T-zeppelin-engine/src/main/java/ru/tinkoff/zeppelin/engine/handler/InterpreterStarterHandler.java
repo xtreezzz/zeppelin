@@ -81,21 +81,16 @@ public class InterpreterStarterHandler extends AbstractHandler {
       return;
     }
 
-    AbstractRemoteProcess.starting(job.getShebang(), RemoteProcessType.INTERPRETER);
-    try {
-      RemoteProcessStarter.start(
-              job.getShebang(),
-              RemoteProcessType.INTERPRETER,
-              source.getPath(),
-              innerConfig.getClassName(),
-              remoteServerClassPath,
-              thriftAddr,
-              thriftPort,
-              config.getJvmOptions(),
-              Configuration.getInstanceMarkerPrefix());
-    } catch (final Exception e) {
-      AbstractRemoteProcess.remove(job.getShebang(), RemoteProcessType.INTERPRETER);
-    }
+    RemoteProcessStarter.start(
+            job.getShebang(),
+            RemoteProcessType.INTERPRETER,
+            source.getPath(),
+            innerConfig.getClassName(),
+            remoteServerClassPath,
+            thriftAddr,
+            thriftPort,
+            config.getJvmOptions(),
+            config.getConcurrentTasks(),
+            Configuration.getInstanceMarkerPrefix());
   }
-
 }

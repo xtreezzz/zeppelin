@@ -59,13 +59,13 @@ public class CompletionService {
   }
 
   public List<InterpreterCompletion> complete(final Note note,
-                                               final Paragraph paragraph,
-                                               final String payload,
-                                               final int cursorPosition,
-                                               final String user,
-                                               final Set<String> roles) {
+                                              final Paragraph paragraph,
+                                              final String payload,
+                                              final int cursorPosition,
+                                              final String user,
+                                              final Set<String> roles) {
     try {
-      final List<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
+      final Collection<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
 
       final ModuleConfiguration config = configurations.stream()
               .filter(configuration -> paragraph.getShebang().equals(configuration.getBindedTo()))
@@ -73,7 +73,7 @@ public class CompletionService {
               .findFirst()
               .orElse(null);
 
-      if(config == null) {
+      if (config == null) {
         return new ArrayList<>();
       }
       final ModuleInnerConfiguration innerConfig = moduleInnerConfigurationDAO.getById(config.getModuleInnerConfigId());
@@ -115,33 +115,28 @@ public class CompletionService {
 
         return Lists.newArrayList(new Gson().fromJson(result, InterpreterCompletion[].class));
 
-      } else if (process != null
-              && process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
-        final String str = ";";
+      } else if (process != null && process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
+        return new ArrayList<>();
+
       } else {
 
         final ModuleSource source = moduleSourcesDAO.get(config.getModuleSourceId());
 
-        if (!config.isEnabled()
-                || source == null || source.getStatus() != ModuleSource.Status.INSTALLED) {
+        if (!config.isEnabled() || source == null || source.getStatus() != ModuleSource.Status.INSTALLED) {
           return new ArrayList<>();
         }
 
-        AbstractRemoteProcess.starting(config.getShebang(), RemoteProcessType.COMPLETER);
-        try {
-          RemoteProcessStarter.start(
-                  config.getShebang(),
-                  RemoteProcessType.COMPLETER,
-                  source.getPath(),
-                  innerConfig.getClassName(),
-                  serverBootstrap.getServer().getRemoteServerClassPath(),
-                  serverBootstrap.getServer().getAddr(),
-                  serverBootstrap.getServer().getPort(),
-                  config.getJvmOptions(),
-                  Configuration.getInstanceMarkerPrefix());
-        } catch (final Exception e) {
-          AbstractRemoteProcess.remove(config.getShebang(), RemoteProcessType.COMPLETER);
-        }
+        RemoteProcessStarter.start(
+                config.getShebang(),
+                RemoteProcessType.COMPLETER,
+                source.getPath(),
+                innerConfig.getClassName(),
+                serverBootstrap.getServer().getRemoteServerClassPath(),
+                serverBootstrap.getServer().getAddr(),
+                serverBootstrap.getServer().getPort(),
+                config.getJvmOptions(),
+                config.getConcurrentTasks(),
+                Configuration.getInstanceMarkerPrefix());
       }
     } catch (final Exception e) {
       //log this

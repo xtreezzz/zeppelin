@@ -46,6 +46,7 @@ public class RemoteProcessStarter {
                            final String thriftAddr,
                            final long thriftPort,
                            final String jvmOptions,
+                           final int concurrentTask,
                            final String zeppelinInstance) {
 
     final String cmd = String.format("java " +
@@ -54,6 +55,7 @@ public class RemoteProcessStarter {
                     " -cp \"./*:%s/*\"" +
                     " %s" +
                     " -pt %s" +
+                    " -ct %s" +
                     " -h %s" +
                     " -p %s" +
                     " -sb %s" +
@@ -65,6 +67,7 @@ public class RemoteProcessStarter {
             remoteServerClassPath,
             processType.getRemoteServerClass().getName(),
             processType.getRemoteThreadClass().getName(),
+            concurrentTask,
             thriftAddr,
             thriftPort,
             shebang,
@@ -89,7 +92,7 @@ public class RemoteProcessStarter {
     final ExecuteResultHandler handler = new ExecuteResultHandler() {
       @Override
       public void onProcessComplete(final int exitValue) {
-        AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
+        AbstractRemoteProcess.remove(shebang, processType);
         ZLog.log(ET.INTERPRETER_PROCESS_FINISHED,
                 "Interpreter process finished, cmd: " + cmd,
                 "Interpreter process finished, cmd: " + cmd,
@@ -98,7 +101,7 @@ public class RemoteProcessStarter {
 
       @Override
       public void onProcessFailed(final ExecuteException e) {
-        AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
+        AbstractRemoteProcess.remove(shebang, processType);
         ZLog.log(ET.INTERPRETER_PROCESS_FAILED,
                 "Interpreter process failed, cmd: " + cmd,
                 "Error occured during process execution, cmd: " + cmd + ", error: " + e.getMessage(),
@@ -107,9 +110,10 @@ public class RemoteProcessStarter {
     };
 
     try {
+      AbstractRemoteProcess.starting(shebang, processType);
       executor.execute(cmdLine, new HashMap<>(), handler);
     } catch (final IOException e) {
-      AbstractRemoteProcess.handleProcessCompleteEvent(shebang, processType);
+      AbstractRemoteProcess.remove(shebang, processType);
     }
   }
 }

@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RemoteCompleterThread extends AbstractRemoteProcessThread implements RemoteCompleterThriftService.Iface {
 
-  private final BlockingQueue<Completer> pool = new ArrayBlockingQueue<>(10, true);
-  private final AtomicBoolean isLocked = new AtomicBoolean(false);
+  private BlockingQueue<Completer> pool = null;
+  private AtomicBoolean isLocked = null;
   private volatile int createdObjects = 0;
-  private volatile int size = 10;
+  private volatile int size = 0;
 
   @Override
   void init(final String zeppelinServerHost,
@@ -41,14 +41,20 @@ public class RemoteCompleterThread extends AbstractRemoteProcessThread implement
             final String processShebang,
             final String processType,
             final String processClassPath,
-            final String processClassName) {
+            final String processClassName,
+            final int poolSize) {
 
     super.init(zeppelinServerHost,
             zeppelinServerPort,
             processShebang,
             processType,
             processClassPath,
-            processClassName);
+            processClassName,
+            poolSize);
+
+    pool = new ArrayBlockingQueue<>(this.poolSize, true);
+    isLocked = new AtomicBoolean(false);
+    size = this.poolSize;
   }
 
   @Override
@@ -103,7 +109,7 @@ public class RemoteCompleterThread extends AbstractRemoteProcessThread implement
           return completer;
 
         } finally {
-          if (createdObjects > size) {
+          if (createdObjects >= size) {
             isLocked.set(true);
           }
         }

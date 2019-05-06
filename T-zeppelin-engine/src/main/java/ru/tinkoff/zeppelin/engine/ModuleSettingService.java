@@ -32,6 +32,7 @@ import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,11 +53,21 @@ public class ModuleSettingService {
 
   @PostConstruct
   private void init() {
+    final Collection<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
     moduleSourcesDAO.getAll().stream()
             .filter(ModuleSource::isReinstallOnStart)
             .forEach(src -> {
               uninstallSource(src, false);
               installSource(src, true, false);
+
+              // enable configurations
+              for (final ModuleConfiguration configuration : configurations) {
+                if (configuration.getModuleSourceId() == src.getId()) {
+                  final ModuleConfiguration mc = moduleConfigurationDAO.getById(configuration.getId());
+                  mc.setEnabled(true);
+                  moduleConfigurationDAO.update(mc);
+                }
+              }
             });
   }
 
@@ -64,7 +75,7 @@ public class ModuleSettingService {
                                          final boolean installSources,
                                          final boolean checkNames) {
 
-    final List<ModuleSource> sources = moduleSourcesDAO.getAll();
+    final Collection<ModuleSource> sources = moduleSourcesDAO.getAll();
     // 1 check that name does not exist
     final boolean hasSameName = sources.stream()
             .anyMatch(s -> s.getName().equals(source.getName()));
@@ -116,7 +127,7 @@ public class ModuleSettingService {
 
   public synchronized void uninstallSource(@Nonnull final ModuleSource source, final boolean delete) {
 
-    final List<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll()
+    final Collection<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll()
             .stream()
             .filter(c -> c.getModuleSourceId() == source.getId())
             .collect(Collectors.toList());
