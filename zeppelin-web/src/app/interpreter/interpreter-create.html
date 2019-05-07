@@ -13,7 +13,7 @@ limitations under the License.
 -->
 <div id="interpreterModal" class="modal fade" role="dialog"
      tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg" style="width: 90%">
     <!-- Modal content-->
     <div class="modal-content">
       <div class="modal-header">
@@ -90,7 +90,7 @@ limitations under the License.
                 <div class="row interpreter">
                   <div class="col-md-12">
                     <span class="input-group" style="line-height:30px;">
-                      <label>
+                      <label style="width: 600px">
                         Set additional JVM options.
                         <input type="text" msd-elastic ng-model="creatingModuleConfiguration.moduleConfiguration.jvmOptions" />
                       </label>
@@ -113,9 +113,9 @@ limitations under the License.
                   <h5>Properties</h5>
                   <table class="table table-striped properties">
                     <tr>
-                      <th style="width:25%;text-align: center; border: 1px solid black;">name</th>
-                      <th style="width:25%;text-align: center; border: 1px solid black;">value</th>
-                      <th style="width:50%;text-align: center; border: 1px solid black;">description</th>
+                      <th style="width:20%;text-align: center; border: 1px solid black;">name</th>
+                      <th style="width:40%;text-align: center; border: 1px solid black;">value</th>
+                      <th style="width:40%;text-align: center; border: 1px solid black;">description</th>
                     </tr>
                     <tr ng-repeat="key in creatingModuleConfiguration.innerConfiguration.properties | sortByKey">
                       <td style="vertical-align: middle; border: 1px solid black;">{{key}}</td>
