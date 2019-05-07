@@ -20,7 +20,6 @@ package org.apache.zeppelin.websocket.handler;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,8 +38,10 @@ import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
+import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 
 
 @Component
@@ -49,13 +50,16 @@ public class NoteHandler extends AbstractHandler {
   private static final String TRASH_FOLDER = "~Trash";
 
   private final NoteDTOConverter noteDTOConverter;
+  private final SchedulerDAO schedulerDAO;
 
   @Autowired
   public NoteHandler(final NoteService noteService,
-                     final ConnectionManager connectionManager,
-                     final NoteDTOConverter noteDTOConverter) {
+      final ConnectionManager connectionManager,
+      final NoteDTOConverter noteDTOConverter,
+      final SchedulerDAO schedulerDAO) {
     super(connectionManager, noteService);
     this.noteDTOConverter = noteDTOConverter;
+    this.schedulerDAO = schedulerDAO;
   }
 
 
@@ -197,6 +201,14 @@ public class NoteHandler extends AbstractHandler {
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
     note.setPath("/" + TRASH_FOLDER + normalizePath(note.getPath()));
     noteService.updateNote(note);
+
+    //disable scheduler
+    Scheduler scheduler = schedulerDAO.getByNote(note.getId());
+    if (scheduler != null) {
+      scheduler.setEnabled(false);
+      schedulerDAO.update(scheduler);
+    }
+
     sendListNotesInfo(conn);
   }
 

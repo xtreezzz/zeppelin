@@ -29,8 +29,6 @@ import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.message.NoteRequest;
 import org.apache.zeppelin.websocket.ConnectionManager;
-import org.apache.zeppelin.websocket.Operation;
-import org.apache.zeppelin.websocket.SockMessage;
 import org.apache.zeppelin.websocket.handler.AbstractHandler.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +38,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
+import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 
 @RestController
 @RequestMapping("/api/notebook")
@@ -57,14 +56,19 @@ public class NotebookRestApi extends AbstractRestApi {
   private static final Logger LOG = LoggerFactory.getLogger(NotebookRestApi.class);
 
   private final LuceneSearch luceneSearch;
+  private final SchedulerDAO schedulerDAO;
+
+  private static final String TRASH_FOLDER = "~Trash";
 
   @Autowired
   public NotebookRestApi(
       final LuceneSearch luceneSearch,
       final ConnectionManager connectionManager,
-      final NoteService noteRepository) {
+      final NoteService noteRepository,
+      final SchedulerDAO schedulerDAO) {
     super(noteRepository, connectionManager);
     this.luceneSearch = luceneSearch;
+    this.schedulerDAO = schedulerDAO;
   }
 
   @PostMapping(produces = "application/json")
@@ -197,6 +201,16 @@ public class NotebookRestApi extends AbstractRestApi {
     updateIfNotNull(request::getRunners, p -> clearAndAdd(p, note.getRunners()));
     updateIfNotNull(request::getReaders, p -> clearAndAdd(p, note.getReaders()));
     noteService.updateNote(note);
+
+    //disable scheduler if note moved in trash
+    if (note.getPath().startsWith(TRASH_FOLDER)) {
+      Scheduler scheduler = schedulerDAO.getByNote(note.getId());
+      if (scheduler != null) {
+        scheduler.setEnabled(false);
+        schedulerDAO.update(scheduler);
+      }
+    }
+
     return new JsonResponse(HttpStatus.OK, "Note updated").build();
   }
 
