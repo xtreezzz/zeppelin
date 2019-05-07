@@ -63,8 +63,8 @@ abstract class AbstractHandler {
   }
 
   void setRunningState(final Job job,
-                        final String interpreterProcessUUID,
-                        final String interpreterJobUUID) {
+                       final String interpreterProcessUUID,
+                       final String interpreterJobUUID) {
 
     final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
@@ -85,8 +85,8 @@ abstract class AbstractHandler {
   }
 
   void setSuccessResult(final Job job,
-                                final JobBatch batch,
-                                final InterpreterResult interpreterResult) {
+                        final JobBatch batch,
+                        final InterpreterResult interpreterResult) {
 
     final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
@@ -112,29 +112,29 @@ abstract class AbstractHandler {
 
 
   void setErrorResult(final Job job,
-                              final JobBatch batch,
-                              final InterpreterResult interpreterResult) {
+                      final JobBatch batch,
+                      final InterpreterResult interpreterResult) {
 
     setFailedResult(job, Job.Status.ERROR, batch, JobBatch.Status.ERROR, interpreterResult);
   }
 
   void setAbortResult(final Job job,
-                              final JobBatch batch,
-                              final InterpreterResult interpreterResult) {
+                      final JobBatch batch,
+                      final InterpreterResult interpreterResult) {
 
     setFailedResult(job, Job.Status.ABORTED, batch, JobBatch.Status.ABORTED, interpreterResult);
   }
 
   void setFailedResult(final Job job,
-                               final Job.Status jobStatus,
-                               final JobBatch batch,
-                               final JobBatch.Status jobBatchStatus,
-                               final InterpreterResult interpreterResult) {
+                       final Job.Status jobStatus,
+                       final JobBatch batch,
+                       final JobBatch.Status jobBatchStatus,
+                       final InterpreterResult interpreterResult) {
 
-    if(job != null) {
+    if (job != null) {
       final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
-      if(interpreterResult != null) {
+      if (interpreterResult != null) {
         persistMessages(job, interpreterResult.message());
       }
 
@@ -146,7 +146,7 @@ abstract class AbstractHandler {
       EventService.publish(job.getNoteId(), before, after);
     }
 
-    if(batch != null) {
+    if (batch != null) {
       final List<Job> jobs = jobDAO.loadByBatch(batch.getId());
       for (final Job j : jobs) {
         final ParagraphDTO beforeInner = fullParagraphDAO.getById(j.getParagraphId());
@@ -184,11 +184,11 @@ abstract class AbstractHandler {
   }
 
   void publishBatch(
-      final Note note,
-      final List<Paragraph> paragraphs,
-      final String username,
-      final Set<String> roles,
-      final int priority) {
+          final Note note,
+          final List<Paragraph> paragraphs,
+          final String username,
+          final Set<String> roles,
+          final int priority) {
     final JobBatch batch = new JobBatch();
     batch.setId(0L);
     batch.setNoteId(note.getId());
@@ -202,7 +202,7 @@ abstract class AbstractHandler {
     for (int i = 0; i < paragraphs.size(); i++) {
       final Paragraph p = paragraphs.get(i);
 
-      if(!(boolean)p.getConfig().getOrDefault("enabled", true)) {
+      if (!(boolean) p.getConfig().getOrDefault("enabled", true)) {
         continue;
       }
 
@@ -241,8 +241,11 @@ abstract class AbstractHandler {
       hasParagraphToExecute = true;
     }
 
-    if(!hasParagraphToExecute) {
-      throw new RuntimeException("Empty note.");
+    // in case of empty note
+    // delete batch and return
+    if (!hasParagraphToExecute) {
+      jobBatchDAO.delete(saved.getId());
+      return;
     }
 
     saved.setStatus(JobBatch.Status.PENDING);

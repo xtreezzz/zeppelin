@@ -51,6 +51,11 @@ public class JobBatchDAO {
             "  ENDED_AT   = :ENDED_AT\n" +
             "WHERE ID = :ID;";
 
+    private static final String DELETE_BATCH = "" +
+            "DELETE\n" +
+            "FROM JOB_BATCH\n" +
+            "WHERE ID = :ID;";
+
     private static final String LOAD_BATCH_BY_ID = "SELECT * FROM job_batch WHERE ID = :ID;";
 
     private static final String LOAD_ABORTING = "SELECT * FROM job_batch WHERE STATUS = :STATUS;";
@@ -114,6 +119,12 @@ public class JobBatchDAO {
                 .addValue("ID", jobBatch.getId());
         namedParameterJdbcTemplate.update(UPDATE_BATCH, parameters);
         return jobBatch;
+    }
+
+    public void delete(final long id) {
+        final SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ID", id);
+        namedParameterJdbcTemplate.update(DELETE_BATCH, parameters);
     }
 
     public JobBatch get(final Long batchId) {
