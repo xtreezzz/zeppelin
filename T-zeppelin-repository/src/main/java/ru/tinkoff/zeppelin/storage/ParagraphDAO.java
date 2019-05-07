@@ -101,7 +101,7 @@ public class ParagraphDAO {
           "       FORM_PARAMS,\n" +
           "       REVISION_ID\n" +
           "FROM PARAGRAPHS\n" +
-          "WHERE REVISION_ID = 0;";
+          "WHERE REVISION_ID ISNULL;";
 
   private final static String SELECT_PARAGRAPH_BY_ID = "" +
           "SELECT ID,\n" +

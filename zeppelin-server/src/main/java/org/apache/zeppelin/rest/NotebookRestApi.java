@@ -20,10 +20,7 @@ package org.apache.zeppelin.rest;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
@@ -219,28 +216,19 @@ public class NotebookRestApi extends AbstractRestApi {
     permSet.addAll(newPersm);
   }
 
-  //TODO(SAN) not implemented
   @GetMapping(value = "/search", produces = "application/json")
   public ResponseEntity search(@RequestParam("q") final String queryTerm) {
     LOG.info("Searching notes for: {}", queryTerm);
-
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    final HashSet<String> userAndRoles = new HashSet<>();
-    userAndRoles.add(authenticationInfo.getUser());
-    userAndRoles.addAll(authenticationInfo.getRoles());
-
+    final List<Map<String, String>> result = new ArrayList<>();
     final List<Map<String, String>> notesFound = luceneSearch.query(queryTerm);
     for (int i = 0; i < notesFound.size(); i++) {
       final String[] ids = notesFound.get(i).get("id").split("/", 2);
       final String noteId = ids[0];
-      //if (!notePermissionsService.isOwner(noteId, userAndRoles) &&
-      //        !notePermissionsService.isReader(noteId, userAndRoles) &&
-      //        !notePermissionsService.isWriter(noteId, userAndRoles) &&
-      //        !notePermissionsService.isRunner(noteId, userAndRoles)) {
-      //  notesFound.remove(i);
-      //  i--;
-      //}
+      Note note = noteService.getNote(noteId);
+      if(userHasReaderPermission(note)) {
+        result.add(notesFound.get(i));
+      }
     }
-    return new JsonResponse(HttpStatus.OK, notesFound).build();
+    return new JsonResponse(HttpStatus.OK, result).build();
   }
 }

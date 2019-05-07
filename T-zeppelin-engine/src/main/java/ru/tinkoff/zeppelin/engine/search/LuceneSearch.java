@@ -193,7 +193,7 @@ public class LuceneSearch {
     Document doc = new Document();
 
     doc.add(new StringField(ID_FIELD, note.getUuid(), Field.Store.YES));
-    doc.add(new StringField("title", note.getName(), Field.Store.YES));
+    doc.add(new StringField("title", note.getPath(), Field.Store.YES));
 
     doc.add(new TextField(SEARCH_FIELD_TEXT, note.getName(), Field.Store.YES));
     indexWriter.addDocument(doc);
@@ -208,7 +208,7 @@ public class LuceneSearch {
     Document doc = new Document();
 
     doc.add(new StringField(ID_FIELD, id, Field.Store.YES));
-    doc.add(new StringField("title", note.getName(), Field.Store.YES));
+    doc.add(new StringField("title", note.getPath(), Field.Store.YES));
     doc.add(new TextField(SEARCH_FIELD_TEXT, paragraph.getText(), Field.Store.YES));
 
     if (paragraph.getTitle() != null) {
