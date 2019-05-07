@@ -96,7 +96,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
   //TODO(SAN) not implemented
   @GetMapping(value = "/{noteId}/export", produces = "application/json")
-  public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) throws IOException {
+  public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) {
 //    checkIfUserCanRead(noteId, "Insufficient privileges you cannot export this note");
     final String exportJson = null;//zeppelinRepository.exportNote(noteId);
     return new JsonResponse<>(HttpStatus.OK, "", exportJson).build();
@@ -104,13 +104,13 @@ public class NotebookRestApi extends AbstractRestApi {
 
   //TODO(SAN) not implemented
   @PostMapping(value = "/import", produces = "application/json")
-  public ResponseEntity importNote(final String noteJson) throws IOException {
+  public ResponseEntity importNote(final String noteJson) {
     final Note note = null;//zeppelinRepository.importNote(null, noteJson, getServiceContext().getAutheInfo());
     return new JsonResponse<>(HttpStatus.OK, "", note.getId()).build();
   }
 
   @PostMapping(value = "/create", produces = "application/json")
-  public ResponseEntity createNote(@RequestBody final String message) throws IOException {
+  public ResponseEntity createNote(@RequestBody final String message) {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     LOG.info("Create new note by JSON {}", message);
@@ -133,7 +133,7 @@ public class NotebookRestApi extends AbstractRestApi {
   }
 
   @GetMapping(value = "/{noteId}/delete", produces = "application/json")
-  public ResponseEntity deleteNote(@PathVariable("noteId") final long noteId) throws IOException {
+  public ResponseEntity deleteNote(@PathVariable("noteId") final long noteId) {
     LOG.info("Delete note {} ", noteId);
     final Note note = secureLoadNote(noteId, Permission.OWNER);
     noteService.deleteNote(note);
@@ -187,7 +187,7 @@ public class NotebookRestApi extends AbstractRestApi {
   @PostMapping(value = "/{noteId}/update", produces = "application/json")
   public ResponseEntity updateNote(
       @PathVariable("noteId") final long noteId,
-      @RequestBody final String message) throws IOException {
+      @RequestBody final String message) {
     LOG.info("rename note by JSON {}", message);
     final NoteRequest request = NoteRequest.fromJson(message);
     final Note note = secureLoadNote(noteId, Permission.OWNER);
@@ -203,21 +203,6 @@ public class NotebookRestApi extends AbstractRestApi {
   private void clearAndAdd(final Set<String> newPersm, final Set<String> permSet) {
     permSet.clear();
     permSet.addAll(newPersm);
-  }
-
-  //TODO(SAN) not implemented
-  @PutMapping(value = "/{noteId}/clear", produces = "application/json")
-  public ResponseEntity clearAllParagraphOutput(@PathVariable("noteId") final String noteId)
-      throws IOException {
-    LOG.info("clear all paragraph output of note {}", noteId);
-
-    final Note note = noteService.getNote(noteId);
-
-    //note.clearAllParagraphOutput();
-
-    connectionManager.broadcast(note.getId(), new SockMessage(Operation.NOTE).put("note", note));
-
-    return new JsonResponse(HttpStatus.OK, "").build();
   }
 
   //TODO(SAN) not implemented

@@ -73,7 +73,7 @@ public class ParagraphRestApi extends AbstractRestApi {
   @PostMapping(value = "/create", produces = "application/json")
   public ResponseEntity createParagraph(
       @PathVariable("noteId") final long noteId,
-      @RequestBody final String message) throws IOException {
+      @RequestBody final String message) {
 //    LOG.info("insert paragraph {} {}", noteId, message);
     final Note note = secureLoadNote(noteId, Permission.OWNER);
     final ParagraphRequest request = ParagraphRequest.fromJson(message);
@@ -119,7 +119,7 @@ public class ParagraphRestApi extends AbstractRestApi {
   public ResponseEntity updateParagraph(
       @PathVariable("noteId") final long noteId,
       @PathVariable("paragraphId") final long paragraphId,
-      @RequestBody final String message) throws IOException {
+      @RequestBody final String message) {
 //    LOG.info("{} will update paragraph {} {}", authenticationInfo.getUser(), noteId, paragraphId);
     final ParagraphRequest request = ParagraphRequest.fromJson(message);
 
@@ -169,7 +169,7 @@ public class ParagraphRestApi extends AbstractRestApi {
 
   @GetMapping(value = "/{paragraphId}/delete", produces = "application/json")
   public ResponseEntity deleteParagraph(@PathVariable("noteId") final long noteId,
-      @PathVariable("paragraphId") final long paragraphId) throws IOException {
+      @PathVariable("paragraphId") final long paragraphId) {
 //    LOG.info("delete paragraph {} {}", noteId, paragraphId);
     final Note note = secureLoadNote(noteId, Permission.OWNER);
     Paragraph paragraph = getParagraph(note, paragraphId);

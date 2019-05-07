@@ -67,23 +67,16 @@ public class NoteService {
 
   public Note persistNote(final Note note) {
     final Note saved = noteDAO.persist(note);
-
-    EventService.publish(EventService.Type.NOTE_CREATED, note);
-
     return saved;
   }
 
   public Note updateNote(final Note note) {
     final Note updated = noteDAO.update(note);
-
-    EventService.publish(EventService.Type.NOTE_UPDATED, note);
-
     return updated;
   }
 
   public void deleteNote(final Note note) {
     noteDAO.remove(note);
-    EventService.publish(EventService.Type.NOTE_REMOVED, note);
   }
 
   public List<Paragraph> getParagraphs(final Note note) {

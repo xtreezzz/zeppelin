@@ -15,15 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.zeppelin.utils;
+package org.apache.zeppelin.rest;
 
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Properties;
 
-/**
- * TODO(moon) : add description.
- */
 public class Util {
   private static final String PROJECT_PROPERTIES_VERSION_KEY = "version";
   private static final String GIT_PROPERTIES_COMMIT_ID_KEY = "git.commit.id.abbrev";

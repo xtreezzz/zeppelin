@@ -24,7 +24,7 @@ import java.util.Map;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
-public class ParagraphRequest implements JsonSerializable {
+public class ParagraphRequest {
 
   private static final Gson gson = new Gson();
 

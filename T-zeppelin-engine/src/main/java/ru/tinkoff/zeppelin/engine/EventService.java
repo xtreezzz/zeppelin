@@ -29,20 +29,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @since 1.0
  */
 public class EventService {
-  public enum Type {
-    NOTE_CREATED,
-    NOTE_UPDATED,
-    NOTE_REMOVED,
-
-    PARAGRAPH_ADDED,
-    PARAGRAPH_UPDATED,
-    PARAGRAPH_REMOVED,
-
-    JOB_BATCH_STATUS_CHANGED,
-    JOB_STATUS_CHANGED,
-    JOB_RESULT_RECEIVED,
-  }
-
   public static class Event {
     private final Long noteId;
     private final ParagraphDTO before;
@@ -71,9 +57,6 @@ public class EventService {
 
   public static Event getEvent() {
     return paragraphEvents.poll();
-  }
-
-  public static void publish(Type type, Object ... args) {
   }
 
   public static void publish(final long noteId, final ParagraphDTO before, final ParagraphDTO after) {

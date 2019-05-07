@@ -23,7 +23,7 @@ import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteRevision;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
-public class NoteRequest implements JsonSerializable {
+public class NoteRequest {
 
   private static final Gson gson = new Gson();
 

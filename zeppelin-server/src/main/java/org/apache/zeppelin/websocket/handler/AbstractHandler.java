@@ -19,15 +19,12 @@ package org.apache.zeppelin.websocket.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.zeppelin.notebook.display.Input;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.rest.exception.ForbiddenException;
 import org.apache.zeppelin.rest.exception.NoteNotFoundException;
 import org.apache.zeppelin.rest.exception.ParagraphNotFoundException;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
@@ -42,8 +39,7 @@ public abstract class AbstractHandler {
 
   protected static Gson gson = new GsonBuilder()
           .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-          .setPrettyPrinting()
-          .registerTypeAdapterFactory(Input.TypeAdapterFactory).create();
+          .setPrettyPrinting().create();
 
   protected final ConnectionManager connectionManager;
   protected final NoteService noteService;

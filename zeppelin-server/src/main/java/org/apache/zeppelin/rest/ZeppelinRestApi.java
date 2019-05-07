@@ -16,7 +16,6 @@
  */
 package org.apache.zeppelin.rest;
 
-import org.apache.zeppelin.utils.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
