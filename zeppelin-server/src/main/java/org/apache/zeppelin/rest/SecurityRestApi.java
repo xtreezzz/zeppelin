@@ -18,6 +18,9 @@ package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.realm.Realm;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.realm.ShiroSecurityService;
@@ -73,53 +76,33 @@ public class SecurityRestApi {
   @GetMapping(value = "/userlist/{searchText}", produces = "application/json")
   public ResponseEntity getUserList(@PathVariable("searchText") final String searchText) {
 
-    final List<String> autoSuggestUserList = new ArrayList<>();
-    final List<String> autoSuggestRoleList = new ArrayList<>();
-
-    if (ShiroSecurityService.get() == null) {
-      final Map<String, List> returnListMap = new HashMap<>();
-      returnListMap.put("users", autoSuggestUserList);
-      returnListMap.put("roles", autoSuggestRoleList);
-      return new JsonResponse(HttpStatus.OK, "", returnListMap).build();
-    }
+    final Map<String, Set<String>> emptyResultObj = new HashMap<>();
+    emptyResultObj.put("users", new HashSet<>());
+    emptyResultObj.put("roles", new HashSet<>());
+    final ResponseEntity emptyResult = new JsonResponse(HttpStatus.OK, "", emptyResultObj).build();
 
     final int numUsersToFetch = 5;
-    final List<String> usersList = ShiroSecurityService.get().getMatchedUsers(searchText, numUsersToFetch);
-    final List<String> rolesList = ShiroSecurityService.get().getMatchedRoles();
-
-
-
-
-    Collections.sort(usersList);
-    Collections.sort(rolesList);
-    usersList.sort((o1, o2) -> {
-      if (o1.matches(searchText + "(.*)") && o2.matches(searchText + "(.*)")) {
-        return 0;
-      } else if (o1.matches(searchText + "(.*)")) {
-        return -1;
-      }
-      return 0;
-    });
-    int maxLength = 0;
-    for (final String user : usersList) {
-      if (StringUtils.containsIgnoreCase(user, searchText)) {
-        autoSuggestUserList.add(user);
-        maxLength++;
-      }
-      if (maxLength == numUsersToFetch) {
-        break;
-      }
+    final Set<String> usersList = new HashSet<>();
+    final Set<String> rolesList = new HashSet<>();
+    // get security manager
+    final DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager) SecurityUtils.getSecurityManager();
+    if(securityManager == null) {
+      return emptyResult;
+    }
+    final Collection<Realm> realms = securityManager.getRealms();
+    if(realms == null || realms.isEmpty()) {
+      return emptyResult;
     }
 
-    for (final String role : rolesList) {
-      if (StringUtils.containsIgnoreCase(role, searchText)) {
-        autoSuggestRoleList.add(role);
-      }
+    for (final Realm realm : realms) {
+      final ShiroSecurityService securityService = (ShiroSecurityService) realm;
+      usersList.addAll(securityService.getMatchedUsers(searchText, numUsersToFetch));
+      rolesList.addAll(securityService.getMatchedRoles(searchText, numUsersToFetch));
     }
 
-    final Map<String, List> returnListMap = new HashMap<>();
-    returnListMap.put("users", autoSuggestUserList);
-    returnListMap.put("roles", autoSuggestRoleList);
+    final Map<String, Set<String>> returnListMap = new HashMap<>();
+    returnListMap.put("users", usersList);
+    returnListMap.put("roles", rolesList);
 
     return new JsonResponse(HttpStatus.OK, "", returnListMap).build();
 

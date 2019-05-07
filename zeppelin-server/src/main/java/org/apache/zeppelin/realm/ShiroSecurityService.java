@@ -34,16 +34,6 @@ public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
 
   private final Logger LOGGER = LoggerFactory.getLogger(ShiroSecurityService.class);
 
-  private static ShiroSecurityService instance = null;
-
-  public static ShiroSecurityService get() {return instance;}
-
-  public ShiroSecurityService() {
-    if (instance == null) {
-      instance = this;
-    }
-  }
-
   String getPrincipal() {
     final Subject subject = org.apache.shiro.SecurityUtils.getSubject();
 
@@ -63,18 +53,19 @@ public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
   public List<String> getMatchedUsers(final String searchText, final int numUsersToFetch) {
     final List<String> usersList = new ArrayList<>();
     try {
-      final LdapContext ctx = instance.getLdapContextFactory().getSystemLdapContext();
-      usersList.addAll(instance.searchForUserName(searchText, ctx, numUsersToFetch));
+      final LdapContext ctx = getLdapContextFactory().getSystemLdapContext();
+      usersList.addAll(searchForUserName(searchText, ctx, numUsersToFetch));
     } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from ActiveDirectory Realm", e);
     }
     return usersList;
   }
 
-  public List<String> getMatchedRoles() {
+  public List<String> getMatchedRoles(final String searchText, final int numUsersToFetch) {
     final List<String> rolesList = new ArrayList<>();
     try {
-      rolesList.addAll(instance.getListRoles().keySet());
+      final LdapContext ctx = getLdapContextFactory().getSystemLdapContext();
+      rolesList.addAll(getListRoles(searchText, ctx, numUsersToFetch));
     } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from ActiveDirectory Realm", e);
     }
@@ -85,7 +76,7 @@ public class ShiroSecurityService extends ActiveDirectoryGroupRealm {
   Set<String> getAssociatedRoles(final String principal) {
     final Set<String> roles = new HashSet<>();
     try {
-      roles.addAll(instance.queryForAuthorizationInfo(principal, instance.getLdapContextFactory()).getRoles());
+      roles.addAll(queryForAuthorizationInfo(principal, getLdapContextFactory()).getRoles());
     } catch (final Exception e) {
       LOGGER.error("Error retrieving User list from ActiveDirectory Realm", e);
     }

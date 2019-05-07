@@ -19,15 +19,15 @@ package org.apache.zeppelin.realm;
 
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.util.ThreadContext;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 
 public class AuthorizationService {
 
@@ -41,9 +41,33 @@ public class AuthorizationService {
   }
 
   public static AuthenticationInfo getAuthenticationInfo() {
-    final String principal = ShiroSecurityService.get() != null && ShiroSecurityService.get().getPrincipal() != null
-            ? ShiroSecurityService.get().getPrincipal()
-            : principalThreadLocal.get();
+    // get security manager
+    final DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager)SecurityUtils.getSecurityManager();
+    if(securityManager == null) {
+      final AuthenticationInfo authenticationInfo = new AuthenticationInfo(ANONYMOUS, new HashSet<>());
+      cache.put(ANONYMOUS, authenticationInfo);
+      return authenticationInfo;
+    }
+
+    final Collection<Realm> realms = securityManager.getRealms();
+    if(realms == null || realms.isEmpty()) {
+      final AuthenticationInfo authenticationInfo = new AuthenticationInfo(ANONYMOUS, new HashSet<>());
+      cache.put(ANONYMOUS, authenticationInfo);
+      return authenticationInfo;
+    }
+
+    String principal = null;
+    for (final Realm realm : realms) {
+      final ShiroSecurityService securityService = (ShiroSecurityService)realm;
+      if(securityService.getPrincipal() != null) {
+        principal = securityService.getPrincipal();
+        break;
+      }
+    }
+    if(principal == null) {
+      principal = principalThreadLocal.get();
+    }
+
     if(principal == null || ANONYMOUS.equals(principal)) {
       final AuthenticationInfo authenticationInfo = new AuthenticationInfo(ANONYMOUS, new HashSet<>());
       cache.put(ANONYMOUS, authenticationInfo);
@@ -53,8 +77,17 @@ public class AuthorizationService {
     if (cache.containsKey(principal)) {
       return cache.get(principal);
     } else {
+      // load groups
+      Set<String> principalRoles = new HashSet<>();
+      for (final Realm realm : realms) {
+        final ShiroSecurityService securityService = (ShiroSecurityService)realm;
+        if(securityService.getPrincipal() != null) {
+          principalRoles = securityService.getAssociatedRoles(principal);
+          break;
+        }
+      }
       final AuthenticationInfo authenticationInfo
-              = new AuthenticationInfo(principal, ShiroSecurityService.get().getAssociatedRoles(principal));
+              = new AuthenticationInfo(principal, principalRoles);
 
       cache.put(principal, authenticationInfo);
       return authenticationInfo;

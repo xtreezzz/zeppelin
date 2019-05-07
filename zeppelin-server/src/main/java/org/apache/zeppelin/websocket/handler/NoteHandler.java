@@ -17,13 +17,6 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
@@ -42,6 +35,14 @@ import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
+
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -65,7 +66,7 @@ public class NoteHandler extends AbstractHandler {
 
   public void sendListNotesInfo(final WebSocketSession conn) throws IOException {
     final List<NoteInfo> notesInfo = noteService.getAllNotes().stream()
-        .filter(this::userHasOwnerPermission)
+        .filter(this::userHasReaderPermission)
         .map(NoteInfo::new)
         .collect(Collectors.toList());
 
@@ -328,6 +329,20 @@ public class NoteHandler extends AbstractHandler {
     userRoles.add(authenticationInfo.getUser());
 
     return userRoles.removeAll(admin) || userRoles.removeAll(note.getOwners());
+  }
+
+  private boolean userHasReaderPermission(final Note note) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+
+    final Set<String> admin = new HashSet<>();
+    admin.addAll(Configuration.getAdminUsers());
+    admin.addAll(Configuration.getAdminGroups());
+
+    final Set<String> userRoles = new HashSet<>();
+    userRoles.addAll(authenticationInfo.getRoles());
+    userRoles.add(authenticationInfo.getUser());
+
+    return userRoles.removeAll(admin) || userRoles.removeAll(note.getReaders());
   }
 
   private static String normalizePath(String path) {
