@@ -80,8 +80,6 @@ public class LuceneSearch {
   public LuceneSearch(final NoteDAO noteDAO, final ParagraphDAO paragraphDAO) {
     this.noteDAO = noteDAO;
     this.paragraphDAO = paragraphDAO;
-    this.directory = new RAMDirectory();
-    this.indexWriterConfig = new IndexWriterConfig(new StandardAnalyzer());
   }
 
   @Scheduled(fixedDelay = 1 * 60 * 60 * 1000 /* 1 hours */)
@@ -228,6 +226,8 @@ public class LuceneSearch {
 
   private void open() {
     try {
+      this.directory = new RAMDirectory();
+      this.indexWriterConfig = new IndexWriterConfig(new StandardAnalyzer());
       this.indexWriter = new IndexWriter(directory, indexWriterConfig);
     } catch (Exception e) {
       logger.error("Failed to .open() the notebook index", e);
@@ -238,7 +238,12 @@ public class LuceneSearch {
     try {
       indexWriter.close();
     } catch (Exception e) {
-      logger.error("Failed to .close() the notebook index", e);
+      // SKIP
+    }
+    try {
+      directory.close();
+    } catch (Exception e) {
+      // SKIP
     }
   }
 }
