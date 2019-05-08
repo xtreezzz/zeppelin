@@ -70,7 +70,7 @@ public class JDBCInterpolation {
     final String preparedPayload = query.substring(0, cursorPosition) + marker + query.substring(cursorPosition);
 
     final String afterInject = interpolate(preparedPayload, intpContext);
-    final int resultCursorPosition = afterInject.indexOf(marker);
+    final int resultCursorPosition = afterInject.indexOf(marker) - 1;
     final String resultPayload = afterInject.replace(marker, StringUtils.EMPTY);
 
     return new InterpolateResponse(resultPayload, resultCursorPosition);
