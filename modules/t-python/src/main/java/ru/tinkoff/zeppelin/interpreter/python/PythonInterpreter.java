@@ -159,7 +159,8 @@ public class PythonInterpreter extends Interpreter {
                       " -output_file \"%s\"" +
                       " -params_file \"%s\"" +
                       " -jep_include_paths \"%s\"" +
-                      " -jep_python_home \"%s\"",
+                      " -jep_python_home \"%s\"" +
+                      " -storage_dir \"%s\"",
               additionalJvmArgs,
               classPath,
               jepDestFile.getParentFile().getAbsolutePath(),
@@ -167,7 +168,8 @@ public class PythonInterpreter extends Interpreter {
               outputFile.getAbsolutePath(),
               paramsFile.getAbsolutePath(),
               configuration.getOrDefault("python.jep.config.include.paths", StringUtils.EMPTY),
-              configuration.getOrDefault("python.jep.config.python.home", StringUtils.EMPTY)
+              configuration.getOrDefault("python.jep.config.python.home", StringUtils.EMPTY),
+              noteContext.get("Z_ENV_NOTE_STORAGE_DIR")
       );
 
       // start server process
@@ -237,7 +239,7 @@ public class PythonInterpreter extends Interpreter {
               break;
             case "txt":
             case "out":
-            case "params":
+            //case "params": // DEBUG
               type = InterpreterResult.Message.Type.TEXT;
               break;
             default:

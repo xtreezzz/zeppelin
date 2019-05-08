@@ -144,4 +144,12 @@ public class RemoteProcessServer {
   public String getRemoteServerClassPath() {
     return remoteServerClassPath;
   }
+
+  public TServerSocket getServerSocket() {
+    return serverSocket;
+  }
+
+  public TThreadPoolServer getThriftServer() {
+    return thriftServer;
+  }
 }

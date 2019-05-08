@@ -16,18 +16,13 @@
  */
 package ru.tinkoff.zeppelin.interpreter.python;
 
-import jep.Jep;
-import jep.JepConfig;
-import jep.JepException;
-import jep.MainInterpreter;
-import jep.PyConfig;
+import jep.*;
 import org.apache.commons.cli.*;
 import sun.misc.Signal;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.nio.file.Files;
+import java.util.*;
 
 public class PythonInterpreterProcess {
 
@@ -74,6 +69,14 @@ public class PythonInterpreterProcess {
     pythonHomePath.setRequired(false);
     options.addOption(pythonHomePath);
 
+    final Option noteStorageDir = new Option("storage_dir",
+            "storage_dir",
+            true,
+            "Note storage dir"
+    );
+    noteStorageDir.setRequired(false);
+    options.addOption(noteStorageDir);
+
     CommandLine cmd = null;
     try {
       cmd = new DefaultParser().parse(options, args);
@@ -87,6 +90,7 @@ public class PythonInterpreterProcess {
     final String pathToParamsFile = cmd.getOptionValue("params_file");
     final String jepIncludePaths = cmd.getOptionValue("jep_include_paths");
     final String jepPythonHome = cmd.getOptionValue("jep_python_home");
+    final String noteStorage = cmd.getOptionValue("storage_dir");
 
     final JepConfig jepConfig = new JepConfig()
             .setRedirectOutputStreams(true)
@@ -99,8 +103,8 @@ public class PythonInterpreterProcess {
     }
 
     final File output = new File(pathToOutput);
-    try (final FileOutputStream fis = new FileOutputStream(output, true);
-         final BufferedOutputStream bos = new BufferedOutputStream(fis);
+    try (final FileOutputStream fos = new FileOutputStream(output, true);
+         final BufferedOutputStream bos = new BufferedOutputStream(fos);
          final PrintStream ps = new PrintStream(bos)) {
 
       System.getenv("PYTHONPATH");
@@ -112,9 +116,10 @@ public class PythonInterpreterProcess {
         System.exit(1);
       });
 
-      try(final Jep jep = new Jep(jepConfig)) {
+      try (final Jep jep = new Jep(jepConfig)) {
         jep.setInteractive(true);
 
+        // inject values into python
         // load runtime properties from file
         Properties properties = new Properties();
         properties.load(new FileInputStream(pathToParamsFile));
@@ -123,21 +128,43 @@ public class PythonInterpreterProcess {
         final Map<String, Object> params = new HashMap<>();
         for (String key : properties.stringPropertyNames()) {
           params.put(key, properties.get(key).toString());
-          if(properties.get(key).toString().equals("ZEPPELIN_NULL")) {
+          if (properties.get(key).toString().equals("ZEPPELIN_NULL")) {
             continue;
           }
           jep.set(key, properties.get(key).toString());
         }
 
+        Files.createDirectories(new File(noteStorage).toPath());
+
+        final File noteContextFile = new File(noteStorage + "/note.context");
+        if(noteContextFile.exists()) {
+          FileInputStream fis = new FileInputStream(noteContextFile);
+          ObjectInputStream ois = new ObjectInputStream(fis);
+          final List<PythonInterpreterEnvObject> envObjects = (List<PythonInterpreterEnvObject>) ois.readObject();
+
+          for (final PythonInterpreterEnvObject envObject : envObjects) {
+            jep.set(envObject.getName(), Class.forName(envObject.getClassName()).cast(envObject.getPayload()));
+          }
+        }
+
         // execute script
         jep.runScript(pathToScript);
 
-        // read updated valuest from pythin process
-        for (Map.Entry<String,Object> entry : params.entrySet()) {
-          properties.put(entry.getKey(), jep.getValue(entry.getKey()).toString());
+        // read updated values from pythin process
+        final List<PythonInterpreterEnvObject> envResult = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+          if (params.get(entry.getKey()).equals("ZEPPELIN_NULL")) {
+            final PythonInterpreterEnvObject pieo = new PythonInterpreterEnvObject(
+                    entry.getKey(),
+                    jep.getValue(entry.getKey()).getClass().getName(),
+                    jep.getValue(entry.getKey())
+            );
+            envResult.add(pieo);
+          }
         }
-        // store updated properties into file
-        properties.store(new FileOutputStream(pathToParamsFile), null);
+        FileOutputStream fout = new FileOutputStream(noteContextFile);
+        ObjectOutputStream oos = new ObjectOutputStream(fout);
+        oos.writeObject(envResult);
 
       } catch (final JepException je) {
         ps.println(je.getLocalizedMessage());
