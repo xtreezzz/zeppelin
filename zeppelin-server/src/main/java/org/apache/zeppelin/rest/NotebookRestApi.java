@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
+import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
@@ -123,6 +124,12 @@ public class NotebookRestApi extends AbstractRestApi {
       note.getRunners().add(authenticationInfo.getUser());
       note.getWriters().add(authenticationInfo.getUser());
       note.getOwners().add(authenticationInfo.getUser());
+
+      note.getReaders().addAll(Configuration.getDefaultReaders());
+      note.getRunners().addAll(Configuration.getDefaultRunners());
+      note.getWriters().addAll(Configuration.getDefaultWriters());
+      note.getOwners().addAll(Configuration.getDefaultOwners());
+
       noteService.persistNote(note);
 
       JsonObject response = new JsonObject();
@@ -162,6 +169,11 @@ public class NotebookRestApi extends AbstractRestApi {
     cloneNote.getRunners().add(authenticationInfo.getUser());
     cloneNote.getWriters().add(authenticationInfo.getUser());
     cloneNote.getOwners().add(authenticationInfo.getUser());
+
+    cloneNote.getReaders().addAll(Configuration.getDefaultReaders());
+    cloneNote.getRunners().addAll(Configuration.getDefaultRunners());
+    cloneNote.getWriters().addAll(Configuration.getDefaultWriters());
+    cloneNote.getOwners().addAll(Configuration.getDefaultOwners());
     cloneNote = noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParagraphs(note);

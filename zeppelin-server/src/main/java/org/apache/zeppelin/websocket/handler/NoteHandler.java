@@ -133,6 +133,11 @@ public class NoteHandler extends AbstractHandler {
       note.getRunners().add(authenticationInfo.getUser());
       note.getWriters().add(authenticationInfo.getUser());
       note.getOwners().add(authenticationInfo.getUser());
+
+      note.getReaders().addAll(Configuration.getDefaultReaders());
+      note.getRunners().addAll(Configuration.getDefaultRunners());
+      note.getWriters().addAll(Configuration.getDefaultWriters());
+      note.getOwners().addAll(Configuration.getDefaultOwners());
       noteService.persistNote(note);
 
       // it's an empty note. so add one paragraph
@@ -173,6 +178,12 @@ public class NoteHandler extends AbstractHandler {
     cloneNote.getRunners().add(authenticationInfo.getUser());
     cloneNote.getWriters().add(authenticationInfo.getUser());
     cloneNote.getOwners().add(authenticationInfo.getUser());
+
+    cloneNote.getReaders().addAll(Configuration.getDefaultReaders());
+    cloneNote.getRunners().addAll(Configuration.getDefaultRunners());
+    cloneNote.getWriters().addAll(Configuration.getDefaultWriters());
+    cloneNote.getOwners().addAll(Configuration.getDefaultOwners());
+
     cloneNote = noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParagraphs(note);

@@ -31,6 +31,12 @@ public class Configuration {
   private final Set<String> adminUsers;
   private final Set<String> adminGroups;
 
+
+  private final Set<String> defaultReaders;
+  private final Set<String> defaultWriters;
+  private final Set<String> defaultRunners;
+  private final Set<String> defaultOwners;
+
   private final String thriftAddress;
   private final int thriftPort;
 
@@ -46,7 +52,12 @@ public class Configuration {
                         @Value("${zeppelin.thrift.port}") final int thriftPort,
                         @Value("${zeppelin.instance.markerPrefix}") final String instanceMarkerPrefix,
                         @Value("${zeppelin.metaserver.address}") final String metaserverLocation,
-                        @Value("${zeppelin.home_node}") final String homeNodeId) {
+                        @Value("${zeppelin.home_node}") final String homeNodeId,
+                        @Value("${zeppelin.note.defaultReaders}") final String defaultReaders,
+                        @Value("${zeppelin.note.defaultWriters}") final String defaultWriters,
+                        @Value("${zeppelin.note.defaultRunners}") final String defaultRunners,
+                        @Value("${zeppelin.note.defaultOwners}") final String defaultOwners
+                        ) {
     this.adminUsers = parseString(admin_users, ",");
     this.adminGroups = parseString(admin_group, ",");
     this.thriftAddress = thriftAddress;
@@ -54,6 +65,10 @@ public class Configuration {
     this.instanceMarkerPrefix = instanceMarkerPrefix;
     this.metaserverLocation = metaserverLocation;
     this.homeNodeId = homeNodeId;
+    this.defaultReaders = parseString(defaultReaders, ",");
+    this.defaultWriters = parseString(defaultWriters, ",");
+    this.defaultRunners = parseString(defaultRunners, ",");
+    this.defaultOwners = parseString(defaultOwners, ",");
     instance = this;
   }
 
@@ -90,6 +105,14 @@ public class Configuration {
   public static String getHomeNodeId() {
     return instance.homeNodeId;
   }
+
+  public static Set<String> getDefaultReaders() { return instance.defaultReaders; }
+
+  public static Set<String> getDefaultWriters() { return instance.defaultWriters; }
+
+  public static Set<String> getDefaultRunners() { return instance.defaultRunners; }
+
+  public static Set<String> getDefaultOwners() { return instance.defaultOwners; }
 
   private Set<String> parseString(final String param, final String delimeter) {
     return Arrays.stream(param.split(delimeter)).map(String::trim).collect(Collectors.toSet());
