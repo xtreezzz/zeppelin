@@ -37,6 +37,8 @@ public class Configuration {
   private final Set<String> defaultRunners;
   private final Set<String> defaultOwners;
 
+  private final String noteContextStorageDir;
+
   private final String thriftAddress;
   private final int thriftPort;
 
@@ -56,7 +58,8 @@ public class Configuration {
                         @Value("${zeppelin.note.defaultReaders}") final String defaultReaders,
                         @Value("${zeppelin.note.defaultWriters}") final String defaultWriters,
                         @Value("${zeppelin.note.defaultRunners}") final String defaultRunners,
-                        @Value("${zeppelin.note.defaultOwners}") final String defaultOwners
+                        @Value("${zeppelin.note.defaultOwners}") final String defaultOwners,
+                        @Value("${zeppelin.note.context.storage}") final String noteContextStorageDir
                         ) {
     this.adminUsers = parseString(admin_users, ",");
     this.adminGroups = parseString(admin_group, ",");
@@ -69,6 +72,7 @@ public class Configuration {
     this.defaultWriters = parseString(defaultWriters, ",");
     this.defaultRunners = parseString(defaultRunners, ",");
     this.defaultOwners = parseString(defaultOwners, ",");
+    this.noteContextStorageDir = noteContextStorageDir;
     instance = this;
   }
 
@@ -113,6 +117,10 @@ public class Configuration {
   public static Set<String> getDefaultRunners() { return instance.defaultRunners; }
 
   public static Set<String> getDefaultOwners() { return instance.defaultOwners; }
+
+  public static String getNoteContextStorageDir() {
+    return instance.noteContextStorageDir;
+  }
 
   private Set<String> parseString(final String param, final String delimeter) {
     return Arrays.stream(param.split(delimeter)).map(String::trim).collect(Collectors.toSet());

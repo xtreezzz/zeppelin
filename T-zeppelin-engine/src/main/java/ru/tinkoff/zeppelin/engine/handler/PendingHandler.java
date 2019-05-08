@@ -103,7 +103,7 @@ public class PendingHandler extends AbstractHandler {
 
     noteContext.put("Z_ENV_MARKER_PREFIX", Configuration.getInstanceMarkerPrefix());
 
-    noteContext.put("Z_ENV_NOTE_STORAGE_DIR", new File("noteContext/" + note.getUuid()).getAbsolutePath());
+    noteContext.put("Z_ENV_NOTE_STORAGE_DIR", new File(Configuration.getNoteContextStorageDir(), note.getUuid()).getAbsolutePath());
 
     // prepare usercontext
     final Map<String, String> userContext = new HashMap<>();
