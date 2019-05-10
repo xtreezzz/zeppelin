@@ -59,7 +59,7 @@ public class InterpreterCompletion implements Comparable<InterpreterCompletion> 
     this.meta = meta;
     this.description = description;
 
-    final Set<String> preferedKeywords = new HashSet<>(
+    final Set<String> preferredKeywords = new HashSet<>(
         Arrays.asList("select", "*", "join", "from", "update", "insert", "delete", "with", "set", "on"));
 
     if (meta.equals("column")) {
@@ -68,7 +68,7 @@ public class InterpreterCompletion implements Comparable<InterpreterCompletion> 
       this.score = 700;
     } else if (meta.equals("schema")) {
       this.score = 500;
-    } else if (preferedKeywords.contains(value)) {
+    } else if (preferredKeywords.contains(value)) {
       this.score = 400;
     } else {
       this.score = 300;

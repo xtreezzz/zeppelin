@@ -214,7 +214,7 @@ public class JDBCCompleter extends Completer {
    * @param pos cursor position
    * @return completion result
    */
-  public SortedSet<InterpreterCompletion> complete(@Nonnull final String buffer, final int pos) {
+  private SortedSet<InterpreterCompletion> complete(@Nonnull final String buffer, final int pos) {
     final SortedSet<InterpreterCompletion> completions = new TreeSet<>();
 
     // 1. Buffer preprocessing.
@@ -353,7 +353,15 @@ public class JDBCCompleter extends Completer {
    * @return Statement which cursor is pointed to.
    */
   private String getStatement(@Nonnull final String buffer, final int pos) {
-    final String statement = buffer.substring(0, pos).replaceAll("\\s+", " ");
+    String statement;
+    if (buffer.contains("/*") && buffer.contains("*/") && pos > buffer.indexOf("/*")) {
+      // if buffer contains "/**/" comments - cut buffer with whole commented block
+      statement = buffer.substring(0, buffer.lastIndexOf("*/") + 2)
+          .replaceAll("--.*|(\"(?:\\\\[^\"]|\\\\\"|.)*?\")|(?s)/\\*.*?\\*/", "");
+    } else {
+      statement = buffer.substring(0, pos).replaceAll("--.*", "");
+    }
+    statement = statement.replaceAll("\\s+", " ");
     final List<String> statements = Arrays.asList(statement.split(";"));
     if (statements.isEmpty()) {
       return buffer;
@@ -477,6 +485,8 @@ public class JDBCCompleter extends Completer {
                                @Nonnull final String type) {
     for (final String match : tailSet) {
       if (!match.startsWith(prefix)) {
+        // tailSet is sorted, so if the current element does not begin with this prefix,
+        // all of the following elements will also have a different prefix.
         break;
       }
       completions.add(new InterpreterCompletion(match, match, type, ""));
