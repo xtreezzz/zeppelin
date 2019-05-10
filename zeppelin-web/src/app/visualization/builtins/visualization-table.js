@@ -189,7 +189,7 @@ export default class TableVisualization extends Visualization {
       gridElem.css('height', this.targetEl.height() - 10);
       const gridApiId = this.getGridApiId();
       const scope = this.getScope();
-      if(scope[gridApiId]!==undefined) {
+      if(scope !== undefined && scope[gridApiId] !== undefined) {
         scope[gridApiId].core.handleWindowResize();
       }
     }
@@ -392,7 +392,7 @@ export default class TableVisualization extends Visualization {
       // gridApi.selection.on.rowSelectionChangedBatch(scope, () => { self.persistConfigWithGridState(self.config) })
     };
 
-    if (!gridElem || this.isUpdated) {
+    if ((!gridElem || this.isUpdated) && scope) {
       if (this.isUpdated) {
         this.targetEl.find(gridElem).off();
         this.targetEl.find(gridElem).detach();
