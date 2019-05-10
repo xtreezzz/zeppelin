@@ -18,10 +18,30 @@ package ru.tinkoff.zeppelin.completer.jdbc;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Properties;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 import org.apache.metamodel.jdbc.JdbcDataContext;
 import org.apache.metamodel.schema.Column;
@@ -33,18 +53,6 @@ import ru.tinkoff.zeppelin.commons.jdbc.JDBCInstallation;
 import ru.tinkoff.zeppelin.commons.jdbc.JDBCInterpolation;
 import ru.tinkoff.zeppelin.interpreter.Completer;
 import ru.tinkoff.zeppelin.interpreter.InterpreterCompletion;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This is a completer for jdbc interpreter based on JSqlParser and Apache Metamodel.
@@ -62,17 +70,13 @@ public class JDBCCompleter extends Completer {
   private static final String DRIVER_ARTIFACT_KEY = "driver.artifact";
   private static final String DRIVER_MAVEN_REPO_KEY = "driver.maven.repository.url";
 
-  private static final String QUERY_TIMEOUT_KEY = "query.timeout";
-  private static final String QUERY_ROWLIMIT_KEY = "query.rowlimit";
-
   public JDBCCompleter() {
     super();
   }
 
   // Simple database meta: schema -> table -> list of columns.
-  // All keys must be sorted in the natural order for effective key retrieval by prefix.
+  // All elements must be sorted in the natural order for effective key retrieval by prefix.
   private static NavigableMap<String, NavigableMap<String, SortedSet<String>>> database = null;
-
 
   @Override
   public boolean isAlive() {
@@ -195,93 +199,96 @@ public class JDBCCompleter extends Completer {
 
     final JDBCInterpolation.InterpolateResponse response = JDBCInterpolation.interpolate(st, cursorPosition, params);
 
-    final Set<InterpreterCompletion> result = complete(response.getPayload(), response.getCursorPosition());
-    return new Gson().toJson(result);
+    try {
+      final Set<InterpreterCompletion> result = complete(response.getPayload(), response.getCursorPosition());
+      return new Gson().toJson(result);
+    } catch (final Exception e) {
+      return new Gson().toJson(Collections.emptySet());
+    }
   }
 
   /**
-   * Creates autocomplete list. Realization based on JSqlParser.
-   * Whole buffer would be cut down to cursor position, then if JSqlParser could parse result statement
-   * it means that completion called on grammatically corrected query, user wants to complete names that he/she started to write.
-   * If parser failed to process query exception would be thrown, if it contains <S_IDENTIFIER> tag
-   * it means that metadata could be
+   * Creates autocomplete list.
    *
    * @param buffer full text, where completion called.
    * @param pos cursor position
    * @return completion result
    */
-  public Set<InterpreterCompletion> complete(@Nonnull final String buffer, final int pos) {
-    final Set<InterpreterCompletion> completions = new HashSet<>();
+  public SortedSet<InterpreterCompletion> complete(@Nonnull final String buffer, final int pos) {
+    final SortedSet<InterpreterCompletion> completions = new TreeSet<>();
 
-    // if multiplie statements passed - extract which cursor is pointed to
+    // 1. Buffer preprocessing.
+    // 1.1 If multiple statements passed - extract cursor statement (statement ends on cursor position)
+    // e.g "select * from a; select * from !POS! b;" -> "select * from "
     final String statement = getStatement(buffer, pos);
 
-    // statement ends on cursor position - get the whole statement
-    int last = buffer.lastIndexOf(";");
+    // 1.2 Get the whole cursor statement
+    // e.g "select * from a; select * from !POS! b;" -> "select * from b;"
+    int last = buffer.lastIndexOf(';');
     if (last < pos) {
       last = buffer.length();
     }
-    final List<String> tmp = Arrays.asList(buffer.substring(0, last).split(";"));
-    final int skipped = tmp.subList(0, tmp.size() - 1).stream().mapToInt(String::length).sum();
-    final String wholeStatement = tmp.get(tmp.size() - 1);
+    final String wholeStatement = getStatement(buffer, last);
 
-    // get the last word.
-    String lastWord = null;
-    if (buffer.charAt(pos) != ' ') {
+    // 1.3 Get the cursor word and previous word.
+    // if cursor is pointed to space - cursor word is null.
+    String cursorWord = null;
+    String previousWord = null;
+    if (pos > 0 && !buffer.isEmpty()) {
       final List<String> words = Arrays.asList(statement.split("\\s+"));
-      lastWord = words.get(words.size() - 1);
+      if (buffer.charAt(pos - 1) != ' ') {
+        cursorWord = words.get(words.size() - 1);
+        if (words.size() - 2 >= 0) {
+          previousWord = words.get(words.size() - 2);
+        }
+      } else {
+        previousWord = words.get(words.size() - 1);
+      }
     }
 
+    // 1.4 Get tables used in whole statement.
+    final Set<String> tableList = getTablesFromWholeStatement(wholeStatement);
     try {
-      // if statement is incorrect - exception would be thrown
-      final Statement parseExpression = CCJSqlParserUtil.parse(statement);
+      // 2. If statement is incorrect - exception would be thrown
+      CCJSqlParserUtil.parse(statement);
 
-      final Select selectStatement = (Select) parseExpression;
-      final TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-      final List<String> tableList = tablesNamesFinder.getTableList(selectStatement);
-      // default completion list
-      completions.addAll(
-              Stream.of("from", "where", "select", "join", "left", "right", "inner", "outer", "on", "and", "or")
-                      .map(c -> new InterpreterCompletion(c, c, "keyword", ""))
-                      .collect(Collectors.toList())
+      // 3. If statement is correct.
+      // 3.1 Process default completion list.
+      completeWithCandidates(
+          new TreeSet<>(
+              Arrays.asList(
+                  "from", "where", "select", "join", "left", "right", "inner", "outer", "on", "and", "or"
+              )
+          ),
+          cursorWord,
+          completions,
+          "keyword"
       );
-      completeWithMeta(lastWord, completions);
+      // 3.2 Add meta.
+      completeWithMeta(cursorWord, completions, tableList);
     } catch (final JSQLParserException e) {
       if (e.getCause().toString().contains("Was expecting one of:")) {
-        final String errorMsg = e.getCause().toString();
-
-        final String columnPrefix = errorMsg.substring(errorMsg.indexOf("column ") + "column ".length());
-        final int errorPos = Integer.parseInt(
-                columnPrefix.substring(0, columnPrefix.indexOf(".")));
-
-        if (errorPos == pos - skipped) {
-          // error on cursor.
-        }
-
+        // 2.1 Get expected keywords from exception.
         final List<String> expected = Arrays.asList(e.getCause().toString()
                 .substring(e.getCause().toString().indexOf("Was expecting one of:")).split("\n"));
-        final boolean loadMeta = expected.contains("    <S_IDENTIFIER>");
+        // 2.2 Check if meta is required or not.
+        final boolean loadMeta = expected.contains("    <S_IDENTIFIER>")
+            || (cursorWord != null && cursorWord.contains("."))
+            || (previousWord != null && (previousWord.equals("where") || previousWord.equals("on")
+            || previousWord.equals("=")));
+
+        // 2.3 Clean expected list.
         final SortedSet<String> prepared = expected.subList(1, expected.size())
                 .stream()
                 .map(v -> v.trim().replace("\"", "").toLowerCase())
-                .filter(v -> !v.isEmpty() && !v.startsWith("<"))
+                .filter(v -> !v.isEmpty() && !v.startsWith("<") && !v.startsWith("{"))
                 .collect(Collectors.toCollection(TreeSet::new));
 
-        if (lastWord != null) {
-          for (final String match : prepared.tailSet(lastWord)) {
-            if (!match.startsWith(lastWord)) {
-              break;
-            }
-            completions.add(new InterpreterCompletion(match, match, "keyword", ""));
-          }
-        } else {
-          completions.addAll(
-                  prepared.stream().map(c -> new InterpreterCompletion(c, c, "keyword", ""))
-                          .collect(Collectors.toList()));
-        }
-
+        // 2.4 Complete with expected keywords.
+        completeWithCandidates(prepared, cursorWord, completions, "keyword");
         if (loadMeta) {
-          completeWithMeta(lastWord, completions);
+          // 2.5 Complete with meta if needed.
+          completeWithMeta(cursorWord, completions, tableList);
         }
       }
     }
@@ -289,81 +296,170 @@ public class JDBCCompleter extends Completer {
     return completions;
   }
 
+  /**
+   * Gets used table names using JSQLParser.
+   *
+   * @param statement Statement to get names from, never {@code null}.
+   * @return Set of table names used in statement.
+   */
+  private Set<String> getTablesFromWholeStatement(@Nonnull final String statement) {
+    String statementToParse = statement;
+
+    // Try to get names for 3 times, on each step if failed to parse - trying to fix query and rerun search.
+    for (int i = 0; i < 3; ++i) {
+      final Statement parseExpression;
+      try {
+        parseExpression = CCJSqlParserUtil.parse(statementToParse);
+      } catch (final JSQLParserException e) {
+        final List<String> expected = Arrays.asList(e.getCause().toString()
+            .substring(e.getCause().toString().indexOf("Was expecting one of:")).split("\n"));
+        final boolean loadMeta = expected.contains("    <S_IDENTIFIER>");
+
+        if (loadMeta) {
+          // fix query - add "S" to place where <S_IDENTIFIER> is needed.
+          final String errorMsg = e.getCause().toString();
+          final String columnPrefix = errorMsg.substring(errorMsg.indexOf("column ") + "column ".length());
+          final int errorPos = Integer.parseInt(columnPrefix.substring(0, columnPrefix.indexOf('.')));
+
+          statementToParse = String.join(" ",
+              statementToParse.substring(0, errorPos - 1),
+              "S",
+              statementToParse.substring(errorPos - 1)
+          );
+          continue;
+        }
+
+        // faced with another exception - return empty list.
+        return Collections.emptySet();
+      }
+
+      try {
+        // getting names
+        final TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+        return new HashSet<>(tablesNamesFinder.getTableList(parseExpression));
+      } catch (final Exception e) {
+        return Collections.emptySet();
+      }
+    }
+    return Collections.emptySet();
+  }
+
+  /**
+   * Splits buffer by ";" and returns cursor statement (statement ends on cursor pos).
+   * e.g "select * from a; select * from !POS! b;" -> "select * from "
+   *
+   * @param buffer Whole sql script, never {@code null}.
+   * @param pos Cursor position.
+   * @return Statement which cursor is pointed to.
+   */
   private String getStatement(@Nonnull final String buffer, final int pos) {
-    final String statement = buffer.substring(0, pos + 1);
+    final String statement = buffer.substring(0, pos).replaceAll("\\s+", " ");
     final List<String> statements = Arrays.asList(statement.split(";"));
-    if (statements.size() == 0) {
+    if (statements.isEmpty()) {
       return buffer;
     }
     return statements.get(statements.size() - 1);
   }
 
-
   /**
-   * Fills the autocomplete list with database objects (schemas, tables, columns) names.
+   * Fills the autocomplete list with database object names (schemas, tables, columns).
    *
-   * @param lastWord, word on which the cursor, {@code null} if cursor on space.
-   * @param completions, collection to fill.
+   * @param cursorWord, word on which the cursor, {@code null} if cursor on space.
+   * @param completions, collection to fill, nevet {@code null}
    */
-  private void completeWithMeta(@Nullable final String lastWord,
-                                @Nonnull final Set<InterpreterCompletion> completions) {
-    if (lastWord == null) {
-      // add all schemas to completion.
-      completions.addAll(database.keySet()
-              .stream()
-              .map(s -> new InterpreterCompletion(s, s, "schema", ""))
-              .collect(Collectors.toList()));
+  private void completeWithMeta(@Nullable final String cursorWord,
+                                @Nonnull final Set<InterpreterCompletion> completions,
+                                @Nonnull final Set<String> tables) {
+    // 1. If cursor on space
+    if (cursorWord == null) {
+      // 1.1 Complete with schemas.
+      completeWithCandidates(database.navigableKeySet(), null, completions, "schema");
+
+      // 1.2 If tables exists - complete with columns from each table.
+      if (!tables.isEmpty()) {
+        for (final String name : tables) {
+          if (name.contains(".")) {
+            final List<String> nodes = Arrays.asList(name.split("\\."));
+            completeWithCandidates(database.get(nodes.get(0)).get(nodes.get(1)), cursorWord, completions, "column");
+          }
+        }
+      }
       return;
     }
 
-    // assumption: users always write the full path to the column.
-    // split word on nodes, e.g. public.bug -> ['public', 'bug'] to get schema and table names.
-    final List<String> nodes = Arrays.asList(lastWord.split("\\."));
+    // 2. If cursor on word.
+    // ASSUMPTION: users use fully qualified names [schema].[table/view].[column]).
+    // 2.1 split word on nodes, e.g. public.bug -> ['public', 'bug'] to get schema and table names.
+    final List<String> nodes = Arrays.asList(cursorWord.split("\\."));
     final String lastNode = nodes.get(nodes.size() - 1);
     int nodeCnt = nodes.size();
-    if (lastWord.endsWith(".")) {
+    if (cursorWord.endsWith(".")) {
+      // Case: public.bug -> ['public', ''], table name is empty.
       nodeCnt += 1;
     }
 
     if (nodeCnt == 1) {
-      // user started to write schema name
-      completeTailSet(database.navigableKeySet().tailSet(lastWord), lastWord, completions, "schema");
+      // 2.2 if there is one node - user started to write schema name (see assumption above)
+      completeWithCandidates(database.navigableKeySet(), lastNode, completions, "schema");
     } else if (nodeCnt == 2) {
+      // 2.3 if there are two nodes - user started to write table name (see assumption above)
       if (nodes.size() == 1) {
-        // e.g. lastWord was 'public.', schema is written, but table name is empty
+        // 2.3.1 if there is empty table name.
+        // e.g. cursorWord was 'public.', schema is written, but table name is empty
         // fill with names of tables from the corresponding schema.
         if (database.get(nodes.get(0)) != null) {
-          completions.addAll(database.get(nodes.get(0)).navigableKeySet()
-                  .stream()
-                  .map(t -> new InterpreterCompletion(t, t, "table", ""))
-                  .collect(Collectors.toList()));
+          completeWithCandidates(database.get(nodes.get(0)).navigableKeySet(), null, completions,
+              "table");
         }
-        // break assumption: if first node is table name.
+
+        // 2.3.2 BREAK ASSUMPTION: if first node is table name - user started to write column name.
         database.forEach((key, value) -> {
           if (value.get(nodes.get(0)) != null) {
-            completions.addAll(value.get(nodes.get(0))
-                    .stream()
-                    .map(t -> new InterpreterCompletion(t, t, "column", ""))
-                    .collect(Collectors.toList()));
+            completeWithCandidates(value.get(nodes.get(0)), null, completions, "column");
           }
         });
       } else {
-        // user started to write table name
-        completeTailSet(database.get(nodes.get(0)).navigableKeySet(), lastNode, completions, "table");
+        // 2.3.3 table name is not empty.
+        if (database.get(nodes.get(0)) != null) {
+          completeWithCandidates(database.get(nodes.get(0)).navigableKeySet(), lastNode, completions, "table");
+        }
       }
     } else if (nodeCnt == 3) {
+      // 2.4 if there are three nodes - user started to write column name (see assumption above)
       if (nodes.size() == 2) {
-        // e.g. lastWord was 'public.bug.', schema and table is written, but column name is empty
+        // 2.4.1 if there is empty column name.
+        // e.g. cursorWord was 'public.bug.', schema and table is written, but column name is empty
         // fill with names of columns from the corresponding schema and table.
-        completions.addAll(database.get(nodes.get(0)).get(nodes.get(1))
-                .stream()
-                .map(t -> new InterpreterCompletion(t, t, "column", ""))
-                .collect(Collectors.toList()));
-
+        if (database.get(nodes.get(0)) != null && database.get(nodes.get(0)).get(nodes.get(1)) != null) {
+          completeWithCandidates(database.get(nodes.get(0)).get(nodes.get(1)), null, completions, "column");
+        }
       } else {
-        // user started to write column name
-        completeTailSet(database.get(nodes.get(0)).get(nodes.get(1)), lastNode, completions, "column");
+        // 2.4.2 column name is not empty.
+        if (database.get(nodes.get(0)) != null && database.get(nodes.get(0)).get(nodes.get(1)) != null) {
+          completeWithCandidates(database.get(nodes.get(0)).get(nodes.get(1)), lastNode, completions, "column");
+        }
       }
+    }
+  }
+
+  /**
+   * Adds candidates to completion list.
+   *
+   * @param candidates, set of matched words.
+   * @param prefix, prefix to match, {@code null} if no prefix
+   * @param completions collection to fill
+   * @param type completion type
+   */
+  private void completeWithCandidates(@Nonnull final SortedSet<String> candidates,
+                                      @Nullable final String prefix,
+                                      @Nonnull final Set<InterpreterCompletion> completions,
+                                      @Nonnull final String type) {
+    if (prefix != null) {
+      completeTailSet(candidates.tailSet(prefix), prefix, completions, type);
+    } else {
+      completions.addAll(
+          candidates.stream().map(t -> new InterpreterCompletion(t, t, type, ""))
+          .collect(Collectors.toList()));
     }
   }
 
@@ -371,7 +467,7 @@ public class JDBCCompleter extends Completer {
    * Adds words with the same prefix to completion.
    *
    * @param tailSet, set of matched words.
-   * @param prefix, searched prefix
+   * @param prefix, prefix to match.
    * @param completions collection to fill
    * @param type completion type
    */
@@ -381,7 +477,7 @@ public class JDBCCompleter extends Completer {
                                @Nonnull final String type) {
     for (final String match : tailSet) {
       if (!match.startsWith(prefix)) {
-        continue;
+        break;
       }
       completions.add(new InterpreterCompletion(match, match, type, ""));
     }

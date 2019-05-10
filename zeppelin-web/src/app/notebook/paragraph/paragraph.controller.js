@@ -987,7 +987,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       });
 
       $scope.$on('callCompletion', function(event, data) {
-        console.log('callCompletion : ');
         if($scope.paragraphFocused) {
           $http({
             method: 'POST',
@@ -1035,17 +1034,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
               }
               return value;
             };
-            let computeScore = function(meta) {
-              if (meta === 'column') {
-                return 900;
-              } else if (meta === 'table') {
-                return 700;
-              } else if (meta === 'schema') {
-                return 500;
-              } else {
-                return 300;
-              }
-            };
             if (data) {
               let completions = [];
               $rootScope.completionLineWidth = -1;
@@ -1063,7 +1051,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                     value: v.value,
                     meta: v.meta,
                     caption: computeCaption(v.name, v.meta),
-                    score: computeScore(v.meta),
+                    score: v.score,
                     className: v.meta ? 'iconable_' + v.meta : '',
                     description: v.description,
                   });

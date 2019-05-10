@@ -63,14 +63,14 @@ public class JDBCInterpolation {
   }
 
   public static InterpolateResponse interpolate(final String query,
-                                                     int cursorPosition,
-                                                     final Map<String, String> intpContext) {
+                                                int cursorPosition,
+                                                final Map<String, String> intpContext) {
 
     final String marker = "<<<CURSOR_POSITION>>>";
     final String preparedPayload = query.substring(0, cursorPosition) + marker + query.substring(cursorPosition);
 
     final String afterInject = interpolate(preparedPayload, intpContext);
-    final int resultCursorPosition = afterInject.indexOf(marker) - 1;
+    final int resultCursorPosition = afterInject.indexOf(marker);
     final String resultPayload = afterInject.replace(marker, StringUtils.EMPTY);
 
     return new InterpolateResponse(resultPayload, resultCursorPosition);
