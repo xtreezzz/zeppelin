@@ -356,7 +356,9 @@ public class JDBCCompleter extends Completer {
     String statement;
     if (buffer.contains("/*") && buffer.contains("*/") && pos > buffer.indexOf("/*")) {
       // if buffer contains "/**/" comments - cut buffer with whole commented block
-      statement = buffer.substring(0, buffer.lastIndexOf("*/") + 2)
+      final int endOfCommentBLock = buffer.lastIndexOf("*/") + 2;
+      // if comment block ends after pos - cut buffer with the whole block to clean it using regexp
+      statement = buffer.substring(0, endOfCommentBLock > pos ? endOfCommentBLock : pos)
           .replaceAll("--.*|(\"(?:\\\\[^\"]|\\\\\"|.)*?\")|(?s)/\\*.*?\\*/", "");
     } else {
       statement = buffer.substring(0, pos).replaceAll("--.*", "");
