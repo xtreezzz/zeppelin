@@ -252,6 +252,13 @@ public class ModuleRestApi {
     try {
       final AddModuleConfigurationDTO addModuleConfigurationDTO = new Gson().fromJson(message, AddModuleConfigurationDTO.class);
 
+      if (!addModuleConfigurationDTO.moduleConfiguration.getShebang().matches("\\w+")) {
+        return new JsonResponse<>(
+            HttpStatus.BAD_REQUEST,
+            "Shebang is incorrect, it must contains only alphanumeric characters and \"_\""
+        ).build();
+      }
+
       if (addModuleConfigurationDTO.moduleConfiguration.getHumanReadableName().trim().isEmpty()
           || addModuleConfigurationDTO.moduleConfiguration.getShebang().trim().isEmpty()) {
         return new JsonResponse<>(HttpStatus.BAD_REQUEST, "Please fill in interpreter name and shebang").build();
@@ -453,6 +460,12 @@ public class ModuleRestApi {
   public ResponseEntity addRepository(@RequestBody final String message) {
     try {
       final Repository request = Repository.fromJson(message);
+      if (!request.getId().matches("\\w+")) {
+        return new JsonResponse<>(
+            HttpStatus.BAD_REQUEST,
+            "Id is incorrect, it must contains only alphanumeric characters and \"_\""
+        ).build();
+      }
       moduleRepositoryDAO.persist(request);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
