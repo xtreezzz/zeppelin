@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.zeppelin.Repository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +41,7 @@ import ru.tinkoff.zeppelin.engine.ModuleSettingService;
 import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
 import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
 import ru.tinkoff.zeppelin.storage.ModuleInnerConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleRepositoryDAO;
 import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 
 @RestController
@@ -45,6 +49,7 @@ import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 public class ModuleRestApi {
 
   private final ModuleSourcesDAO moduleSourcesDAO;
+  private final ModuleRepositoryDAO moduleRepositoryDAO;
   private final ModuleConfigurationDAO moduleConfigurationDAO;
   private final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO;
   private final ModuleSettingService moduleSettingService;
@@ -52,9 +57,11 @@ public class ModuleRestApi {
   public ModuleRestApi(final ModuleSourcesDAO moduleSourcesDAO,
                        final ModuleConfigurationDAO moduleConfigurationDAO,
                        final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO,
-                       final ModuleSettingService moduleSettingService) {
+                       final ModuleSettingService moduleSettingService,
+                       final ModuleRepositoryDAO moduleRepositoryDAO) {
 
     this.moduleSourcesDAO = moduleSourcesDAO;
+    this.moduleRepositoryDAO = moduleRepositoryDAO;
     this.moduleConfigurationDAO = moduleConfigurationDAO;
     this.moduleInnerConfigurationDAO = moduleInnerConfigurationDAO;
     this.moduleSettingService = moduleSettingService;
@@ -430,7 +437,7 @@ public class ModuleRestApi {
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
     try {
-      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingService.getAllRepositories()).build();
+      return new JsonResponse<>(HttpStatus.OK, "", moduleRepositoryDAO.getAll()).build();
     } catch (final Exception e) {
       return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
@@ -442,36 +449,32 @@ public class ModuleRestApi {
    *
    * @param message Repository
    */
-    //  @PostMapping(value = "/repository", produces = "application/json")
-    //  public ResponseEntity addRepository(@RequestBody final String message) {
-    //    try {
-    //      final Repository request = Repository.fromJson(message);
-    //      interpreterSettingService.saveRepository(request);
-    //      logger.info("New repository {} added", request.getId());
-    //      return new JsonResponse(HttpStatus.OK).build();
-    //    } catch (final Exception e) {
-    //      logger.error("Exception in InterpreterRestApi while creating repository ", e);
-    //      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-    //          ExceptionUtils.getStackTrace(e)).build();
-    //    }
-    //  }
-    //
-    //  /**
-    //   * Delete repository.
-    //   *
-    //   * @param repoId ID of repository
-    //   */
-    //  @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
-    //  public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
-    //    try {
-    //      logger.info("Remove repository {}", repoId);
-    //      interpreterSettingService.removeRepository(repoId);
-    //      return new JsonResponse(HttpStatus.OK).build();
-    //    } catch (final Exception e) {
-    //      logger.error("Exception in InterpreterRestApi while deleting repository ", e);
-    //      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
-    //          ExceptionUtils.getStackTrace(e)).build();
-    //    }
-    //  }
+  @PostMapping(value = "/repository", produces = "application/json")
+  public ResponseEntity addRepository(@RequestBody final String message) {
+    try {
+      final Repository request = Repository.fromJson(message);
+      moduleRepositoryDAO.persist(request);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
+
+  /**
+   * Delete repository.
+   *
+   * @param repoId ID of repository
+   */
+  @DeleteMapping(value = "/repository/{repoId}", produces = "application/json")
+  public ResponseEntity removeRepository(@PathVariable("repoId") final String repoId) {
+    try {
+      moduleRepositoryDAO.delete(repoId);
+      return new JsonResponse(HttpStatus.OK).build();
+    } catch (final Exception e) {
+      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+          ExceptionUtils.getStackTrace(e)).build();
+    }
+  }
 
 }

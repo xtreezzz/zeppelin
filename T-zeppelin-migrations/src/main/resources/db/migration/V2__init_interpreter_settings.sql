@@ -53,19 +53,18 @@ CREATE TABLE MODULE_CONFIGURATION
 );
 
 -- Represents org.apache.zeppelin.Repository
-CREATE TABLE REPOSITORY
+CREATE TABLE MODULE_REPOSITORY
 (
-  id             BIGSERIAL PRIMARY KEY,
-  repository_id  VARCHAR(100) NOT NULL UNIQUE,
-  snapshot       BOOLEAN      NOT NULL DEFAULT FALSE,
-  url            VARCHAR(255) NOT NULL,
-  --TODO(egorklimov): CHECK (url ~* '(?:(?:https?):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])'),
-  username       VARCHAR(255),
-  password       VARCHAR(255),
-  proxy_protocol VARCHAR               DEFAULT 'HTTP'
-    CHECK (proxy_protocol IN ('HTTP', 'HTTPS')),
-  proxy_host     VARCHAR(255),
-  proxy_port     VARCHAR(255),
-  proxy_login    VARCHAR(255),
-  proxy_password VARCHAR(255)
+  ID             BIGSERIAL    PRIMARY KEY,
+  REPOSITORY_ID  VARCHAR(100) NOT NULL UNIQUE,
+  SNAPSHOT       BOOLEAN      NOT NULL DEFAULT FALSE,
+  URL            VARCHAR(255) NOT NULL,
+  USERNAME       VARCHAR(255),
+  PASSWORD       VARCHAR(255),
+  PROXY_PROTOCOL VARCHAR      DEFAULT 'HTTP'
+    CHECK (PROXY_PROTOCOL IN ('HTTP', 'HTTPS')),
+  PROXY_HOST     VARCHAR(255),
+  PROXY_PORT     VARCHAR(255),
+  PROXY_LOGIN    VARCHAR(255),
+  PROXY_PASSWORD VARCHAR(255)
 );

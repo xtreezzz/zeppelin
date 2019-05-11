@@ -17,35 +17,74 @@
 package ru.tinkoff.zeppelin.storage;
 
 import com.google.common.base.Preconditions;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.zeppelin.Repository;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
 @Component
 public class ModuleRepositoryDAO {
 
-  private static final String GET_ALL_REPOSITORIES = "SELECT * FROM repository";
+  private static final String GET_ALL_REPOSITORIES = "" +
+      "SELECT ID,\n" +
+      "       REPOSITORY_ID,\n" +
+      "       SNAPSHOT,\n" +
+      "       URL,\n" +
+      "       USERNAME,\n" +
+      "       PASSWORD,\n" +
+      "       PROXY_PROTOCOL,\n" +
+      "       PROXY_HOST,\n" +
+      "       PROXY_PORT,\n" +
+      "       PROXY_LOGIN,\n" +
+      "       PROXY_PASSWORD\n" +
+      "FROM MODULE_REPOSITORY;";
 
-  private static final String GET_REPOSITORY = "SELECT * FROM repository WHERE repository_id = "
-          + ":repository_id";
+  private static final String GET_BY_ID = "" +
+      "SELECT ID,\n" +
+      "       REPOSITORY_ID,\n" +
+      "       SNAPSHOT,\n" +
+      "       URL,\n" +
+      "       USERNAME,\n" +
+      "       PASSWORD,\n" +
+      "       PROXY_PROTOCOL,\n" +
+      "       PROXY_HOST,\n" +
+      "       PROXY_PORT,\n" +
+      "       PROXY_LOGIN,\n" +
+      "       PROXY_PASSWORD\n" +
+      "FROM MODULE_REPOSITORY" +
+      "WHERE ID = :ID;";
 
-  private static final String PERSIST = "INSERT INTO repository(repository_id, snapshot, "
-          + "url, username, password, proxy_protocol, proxy_host, proxy_port, proxy_login, "
-          + "proxy_password) VALUES (:repository_id, :snapshot, :url, :username, :password, "
-          + ":proxy_protocol, :proxy_host, :proxy_port, :proxy_login, :proxy_password)";
+  private static final String PERSIST = "" +
+      "INSERT INTO MODULE_REPOSITORY (REPOSITORY_ID,\n" +
+      "                               SNAPSHOT,\n" +
+      "                               URL,\n" +
+      "                               USERNAME,\n" +
+      "                               PASSWORD,\n" +
+      "                               PROXY_PROTOCOL,\n" +
+      "                               PROXY_HOST,\n" +
+      "                               PROXY_PORT,\n" +
+      "                               PROXY_LOGIN,\n" +
+      "                               PROXY_PASSWORD)\n" +
+      "VALUES (:REPOSITORY_ID,\n" +
+      "        :SNAPSHOT,\n" +
+      "        :URL,\n" +
+      "        :USERNAME,\n" +
+      "        :PASSWORD,\n" +
+      "        :PROXY_PROTOCOL,\n" +
+      "        :PROXY_HOST,\n" +
+      "        :PROXY_PORT,\n" +
+      "        :PROXY_LOGIN,\n" +
+      "        :PROXY_PASSWORD);";
 
 
-  private static final String DELETE_REPOSITORY = "DELETE FROM Repository WHERE "
-          + "repository_id = :repository_id";
-
+  private static final String DELETE_REPOSITORY = "" +
+          "DELETE FROM MODULE_REPOSITORY WHERE REPOSITORY_ID = :REPOSITORY_ID;";
 
   private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -61,17 +100,17 @@ public class ModuleRepositoryDAO {
     final MapSqlParameterSource parameters = new MapSqlParameterSource();
     try {
       parameters
-              .addValue("repository_id", source.getId())
-              .addValue("snapshot", source.isSnapshot())
-              .addValue("url", source.getUrl())
-              .addValue("username", source.getUsername())
-              .addValue("password", source.getPassword())
-              .addValue("proxy_protocol",
+              .addValue("REPOSITORY_ID", source.getId())
+              .addValue("SNAPSHOT", source.isSnapshot())
+              .addValue("URL", source.getUrl())
+              .addValue("USERNAME", source.getUsername())
+              .addValue("PASSWORD", source.getPassword())
+              .addValue("PROXY_PROTOCOL",
                       source.getProxyProtocol() != null ? source.getProxyProtocol().name() : null)
-              .addValue("proxy_host", source.getProxyHost())
-              .addValue("proxy_port", source.getProxyPort())
-              .addValue("proxy_login", source.getProxyLogin())
-              .addValue("proxy_password", source.getProxyPassword());
+              .addValue("PROXY_HOST", source.getProxyHost())
+              .addValue("PROXY_PORT", source.getProxyPort())
+              .addValue("PROXY_LOGIN", source.getProxyLogin())
+              .addValue("PROXY_PASSWORD", source.getProxyPassword());
     } catch (final Exception e) {
       throw new RuntimeException("Fail to convert repository", e);
     }
@@ -81,16 +120,18 @@ public class ModuleRepositoryDAO {
 
   @Nonnull
   private static Repository mapRow(final ResultSet resultSet, final int i) throws SQLException {
-    return new Repository(resultSet.getBoolean("snapshot"),
-            resultSet.getString("repository_id"),
-            resultSet.getString("url"),
-            resultSet.getString("username"),
-            resultSet.getString("password"),
-            Repository.ProxyProtocol.valueOf(resultSet.getString("proxy_protocol")),
-            resultSet.getString("proxy_host"),
-            resultSet.getInt("proxy_port"),
-            resultSet.getString("proxy_login"),
-            resultSet.getString("proxy_password"));
+    return new Repository(
+            resultSet.getBoolean("SNAPSHOT"),
+            resultSet.getString("REPOSITORY_ID"),
+            resultSet.getString("URL"),
+            resultSet.getString("USERNAME"),
+            resultSet.getString("PASSWORD"),
+            Repository.ProxyProtocol.valueOf(resultSet.getString("PROXY_PROTOCOL")),
+            resultSet.getString("PROXY_HOST"),
+            resultSet.getInt("PROXY_PORT"),
+            resultSet.getString("PROXY_LOGIN"),
+            resultSet.getString("PROXY_PASSWORD")
+    );
   }
 
 
@@ -107,10 +148,10 @@ public class ModuleRepositoryDAO {
   public Repository getById(@Nonnull final String id) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("repository_id", id);
+            .addValue("REPOSITORY_ID", id);
 
     return namedParameterJdbcTemplate.query(
-            GET_REPOSITORY,
+            GET_BY_ID,
             parameters,
             ModuleRepositoryDAO::mapRow)
             .stream()
@@ -123,6 +164,6 @@ public class ModuleRepositoryDAO {
   }
 
   public void delete(@Nonnull final String id) {
-    namedParameterJdbcTemplate.update(DELETE_REPOSITORY, new MapSqlParameterSource("repository_id", id));
+    namedParameterJdbcTemplate.update(DELETE_REPOSITORY, new MapSqlParameterSource("REPOSITORY_ID", id));
   }
 }

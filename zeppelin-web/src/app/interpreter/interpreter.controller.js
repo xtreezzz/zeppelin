@@ -22,6 +22,7 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
   $scope.creatingModuleSource = {};
   $scope.creatingModuleConfiguration = {};
   $scope.creatingModuleConfigurationMode = 'none';
+  $scope.showRepositoryInfo = false;
 
   $scope.searchInterpreter = '';
   $scope._ = _;
@@ -344,8 +345,64 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         $scope.showErrorMessage(res);
       });
   };
-  // common
 
+  $scope.resetNewRepositorySetting = function() {
+    $scope.newRepoSetting = {
+      id: '',
+      url: '',
+      snapshot: false,
+      username: '',
+      password: '',
+      proxyProtocol: 'HTTP',
+      proxyHost: '',
+      proxyPort: null,
+      proxyLogin: '',
+      proxyPassword: '',
+    };
+  };
+
+  let getRepositories = function() {
+    $http.get(baseUrlSrv.getRestApiBase() + '/modules/repository')
+      .success(function(data, status, headers, config) {
+        $scope.repositories = data.body;
+      }).catch(function(res) {
+        $scope.showErrorMessage(res);
+      });
+  };
+
+  $scope.addNewRepository = function() {
+    let request = angular.copy($scope.newRepoSetting);
+
+    $http.post(baseUrlSrv.getRestApiBase() + '/modules/repository', request)
+      .then(function(res) {
+        getRepositories();
+        $scope.resetNewRepositorySetting();
+        angular.element('#repoModal').modal('hide');
+      }).catch(function(res) {
+        $scope.showErrorMessage(res);
+      });
+  };
+
+  $scope.removeRepository = function(repoId) {
+    BootstrapDialog.confirm({
+      closable: true,
+      title: '',
+      message: 'Do you want to delete this repository?',
+      callback: function(result) {
+        if (result) {
+          $http.delete(baseUrlSrv.getRestApiBase() + '/modules/repository/' + repoId)
+            .then(function(res) {
+              let index = _.findIndex($scope.repositories, {'id': repoId});
+              $scope.repositories.splice(index, 1);
+            }).catch(function(res) {
+              $scope.showErrorMessage(res);
+            });
+        }
+      },
+    });
+  };
+
+  // common
   $scope.showErrorMessage = function(res) {
     BootstrapDialog.show({
       closable: false,
@@ -365,6 +422,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
 
   let init = function() {
     getModuleSources();
+    $scope.resetNewRepositorySetting();
+    getRepositories();
     angular.element('#newInterpreterOwners').select2(getOwnersSelectConfiguration());
   };
 

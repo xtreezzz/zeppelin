@@ -17,24 +17,22 @@
 
 package ru.tinkoff.zeppelin.engine;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
-import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
-import ru.tinkoff.zeppelin.storage.ModuleRepositoryDAO;
-import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
 import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
 import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleRepositoryDAO;
+import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 
 @Component
 public class ModuleSettingService {
@@ -178,14 +176,8 @@ public class ModuleSettingService {
   }
 
   @Nonnull
-  public List<Repository> getAllRepositories() {
+  private List<Repository> getAllRepositories() {
     return moduleRepositoryDAO.getAll();
   }
-
-  @Nullable
-  public Repository getRepository(@Nonnull final String id) {
-    return moduleRepositoryDAO.getById(id);
-  }
-
 
 }

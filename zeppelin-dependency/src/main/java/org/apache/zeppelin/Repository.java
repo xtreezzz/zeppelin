@@ -27,9 +27,9 @@ import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.Proxy;
 
 /**
- * A repository hosting interpreter sources.
+ * A repository hosting module sources.
  *
- * @see org.apache.zeppelin.interpreter.configuration.InterpreterArtifactSource
+ * @see ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource
  */
 public class Repository {
 
@@ -46,7 +46,6 @@ public class Repository {
   @Nonnull
   private String id;
 
-  //TODO(egorklimov): add url regexp validation.
   @Nonnull
   private String url;
 
@@ -59,7 +58,6 @@ public class Repository {
   @Nullable
   private ProxyProtocol proxyProtocol;
 
-  //TODO(egorklimov): add port and host regexp validation.
   @Nullable
   private String proxyHost;
 

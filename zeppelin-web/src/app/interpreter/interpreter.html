@@ -20,7 +20,8 @@ limitations under the License.
           Interpreters
         </h3>
         <div class="pull-right" style="margin-top:10px;">
-          <button class="btn btn-default btn-sm">
+          <button class="btn btn-default btn-sm" ng-click="showRepositoryInfo = !showRepositoryInfo">
+            <i class="fa fa-database" ng-style="{color: showRepositoryInfo ? '#3071A9' : 'black' }"></i>
             Repository
           </button>
           <button class="btn btn-default btn-sm"
@@ -33,6 +34,7 @@ limitations under the License.
         </div>
       </div>
     </div>
+
     <div class="row">
       <div class="col-md-12">
         Manage interpreters settings. You can create / edit / remove settings. Note can bind / unbind these interpreter
@@ -43,7 +45,7 @@ limitations under the License.
     <div class="row">
       <div class="col-md-4">
         <div class="input-group" style="margin-top: 10px">
-          <input type="text" ng-model="searchInterpreter"
+          <input type="text" ng-model="searchModule"
                  class="form-control ng-pristine ng-untouched ng-valid ng-empty"
                  ng-model-options="{ updateOn: 'default blur', debounce: { 'default': 300, 'blur': 0 } }"
                  placeholder="Search interpreters"/>
@@ -56,9 +58,37 @@ limitations under the License.
       </div>
     </div>
   </div>
+
+  <div class="row" ng-if="showRepositoryInfo">
+    <div class="col-md-12">
+      <hr />
+      <h4>Repositories</h4>
+      <p>Available repository lists. These repositories are used to resolve external dependencies of interpreter.</p>
+      <ul class="noDot">
+        <li class="liVertical" ng-repeat="repo in repositories">
+          <a tabindex="0" class="btn btn-info" role="button"
+             tooltip-append-to-body="true" tooltip-placement="top-left"
+             uib-tooltip="{{repo.url}}">
+            <span class="fa fa-database"></span>
+            {{repo.id}}&nbsp;
+            <span ng-if="!isDefaultRepository(repo.id)" class="fa fa-close blackOpc"
+                  ng-click="removeRepository(repo.id)"></span>
+          </a>
+        </li>
+        <li class="liVertical">
+          <div ng-include src="'app/interpreter/repository-create.html'"></div>
+          <div class="btn btn-default"
+               data-toggle="modal"
+               data-target="#repoModal">
+            <span class="fa fa-plus"></span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>
 
-<div interpreter-item class="box width-full" ng-repeat="source in modules ">
+<div interpreter-item class="box width-full" ng-repeat="source in modules | orderBy: 'name' | filter: {name:searchModule}">
   <ul class="nav nav-tabs">
     <li class="active"><a data-toggle="tab" href="#home-{{source.moduleSource.name}}">{{source.moduleSource.name}}</a>
     </li>
