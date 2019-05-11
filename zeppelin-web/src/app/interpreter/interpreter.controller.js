@@ -79,6 +79,8 @@ function InterpreterCtrl($rootScope, $scope, $http, baseUrlSrv, websocketMsgSrv,
         },
         cache: false,
       },
+      // needed to work on bootsrap dialog, see https://stackoverflow.com/a/54100010
+      dropdownParent: angular.element('#interpreterModal .modal-content'),
       width: ' ',
       tags: true,
       minimumInputLength: 3,
