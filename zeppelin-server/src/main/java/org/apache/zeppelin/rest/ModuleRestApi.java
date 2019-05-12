@@ -255,7 +255,7 @@ public class ModuleRestApi {
       if (!addModuleConfigurationDTO.moduleConfiguration.getShebang().matches("\\w+")) {
         return new JsonResponse<>(
             HttpStatus.BAD_REQUEST,
-            "Shebang is incorrect, it must contains only alphanumeric characters and \"_\""
+            "Shebang is incorrect, it must contain only alphanumeric characters and \"_\""
         ).build();
       }
 
@@ -463,7 +463,7 @@ public class ModuleRestApi {
       if (!request.getId().matches("\\w+")) {
         return new JsonResponse<>(
             HttpStatus.BAD_REQUEST,
-            "Id is incorrect, it must contains only alphanumeric characters and \"_\""
+            "Id is incorrect, it must contain only alphanumeric characters and \"_\""
         ).build();
       }
       moduleRepositoryDAO.persist(request);
