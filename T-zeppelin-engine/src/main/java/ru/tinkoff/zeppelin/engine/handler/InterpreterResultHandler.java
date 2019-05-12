@@ -16,18 +16,24 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import javax.annotation.PostConstruct;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
-import ru.tinkoff.zeppelin.storage.*;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
-
-import javax.annotation.PostConstruct;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.JobBatchDAO;
+import ru.tinkoff.zeppelin.storage.JobDAO;
+import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
+import ru.tinkoff.zeppelin.storage.JobResultDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Class for handle intepreter results

@@ -18,13 +18,13 @@ package org.apache.zeppelin.websocket.handler;
 
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
-import ru.tinkoff.zeppelin.storage.ZLog;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.SockMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.engine.NoteService;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 @Component
 public class EventLogHandler extends AbstractHandler {

@@ -17,20 +17,19 @@
 package ru.tinkoff.zeppelin.engine.server;
 
 import com.google.gson.Gson;
+import java.util.List;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zeppelin.Repository;
-import ru.tinkoff.zeppelin.storage.ZLog;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.handler.InterpreterResultHandler;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.ZeppelinThriftService;
-
-import java.util.List;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Thrift server for external interpreter process

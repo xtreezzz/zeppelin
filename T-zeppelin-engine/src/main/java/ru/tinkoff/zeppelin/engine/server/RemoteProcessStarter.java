@@ -19,14 +19,13 @@ package ru.tinkoff.zeppelin.engine.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteResultHandler;
 import org.apache.commons.exec.ExecuteWatchdog;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
 
 
 /**

@@ -16,19 +16,22 @@
  */
 package ru.tinkoff.zeppelin.engine.server;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
-import ru.tinkoff.zeppelin.storage.ZLog;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteProcessThriftService;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.ParameterizedType;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 
 /**

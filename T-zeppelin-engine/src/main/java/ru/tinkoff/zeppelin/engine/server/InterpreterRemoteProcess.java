@@ -17,12 +17,12 @@
 
 package ru.tinkoff.zeppelin.engine.server;
 
-import ru.tinkoff.zeppelin.storage.ZLog;
+import java.util.Map;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 import ru.tinkoff.zeppelin.interpreter.thrift.CancelResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
-
-import java.util.Map;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterpreterThriftService.Client> {
 
@@ -36,7 +36,7 @@ public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterp
                          final Map<String, String> configuration) {
     final RemoteInterpreterThriftService.Client client = getConnection();
     if(client == null) {
-      ZLog.log(ZLog.ET.PUSH_FAILED_CLIENT_NOT_FOUND,
+      ZLog.log(ET.PUSH_FAILED_CLIENT_NOT_FOUND,
               String.format("Push failed: client not found, uuid=%s", this.uuid),
               String.format("Push failed: client not found, process details=%s", this.toString()),
               "Unknown");
@@ -46,7 +46,7 @@ public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterp
     try {
       return client.push(payload, noteContext, userContext, configuration);
     } catch (final Throwable throwable) {
-      ZLog.log(ZLog.ET.PUSH_FAILED,
+      ZLog.log(ET.PUSH_FAILED,
               String.format("Push failed, uuid=%s", this.uuid),
               String.format("Error occurred during push, process details=%s, error=%s",
                       this.toString(), throwable.getMessage()), "Unknown");
@@ -65,7 +65,7 @@ public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterp
     try {
       return client.cancel(interpreterJobUUID);
     } catch (final Throwable throwable) {
-      ZLog.log(ZLog.ET.JOB_CANCEL_FAILED,
+      ZLog.log(ET.JOB_CANCEL_FAILED,
               String.format("Failed to cancel job with uuid: %s", interpreterJobUUID),
               String.format("Exception thrown during job canceling: cancelResult[%s]",
                       throwable.toString()),
