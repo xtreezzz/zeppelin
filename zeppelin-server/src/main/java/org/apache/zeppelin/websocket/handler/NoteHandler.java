@@ -17,6 +17,13 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
@@ -35,14 +42,6 @@ import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
-
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -90,6 +89,7 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void getNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
+    //TODO: add log to count users
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
     connectionManager.addSubscriberToNode(note.getId(), conn);

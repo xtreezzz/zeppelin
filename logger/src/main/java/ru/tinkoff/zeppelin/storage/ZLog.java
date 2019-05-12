@@ -18,11 +18,12 @@ package ru.tinkoff.zeppelin.storage;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
-import org.apache.zeppelin.SystemEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.SystemEvent;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 
 
 /**
@@ -31,67 +32,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ZLog {
 
-  /**
-   * Type of system event.
-   */
-  public enum ET {
-    UI_EVENT,
-    INTERPRETER_PROCESS_NOT_FOUND,
-    JOB_CANCEL_FAILED,
-    JOB_CANCEL_ACCEPTED,
-    JOB_CANCEL_NOT_FOUND,
-    JOB_CANCEL_ERRORED,
-    JOB_CANCEL_ALREADY_RUNNING,
-    JOB_SUBMITTED_FOR_EXECUTION,
-    GOT_JOB,
-    GOT_ABORTED_JOB,
-    INTERPRETER_INSTALL,
-    INTERPRETER_ALREADY_INSTALLED,
-    INTERPRETER_SUCCESSFULLY_INSTALLED,
-    INTERPRETER_INSTALLATION_FAILED,
-    INTERPRETER_SUCCESSFULLY_UNINSTALLED,
-    INTERPRETER_DELETION_FAILED,
-    INTERPRETER_CONFIGURATION_REQUESTED,
-    INTERPRETER_CONFIGURAION_FOUND,
-    INTERPRETER_CONFIGURATION_PROCESSING_FAILED,
-    PROCESS_STARTED,
-    REMOTE_CONNECTION_REGISTERED,
-    BAD_REMOTE_CONNECTION,
-    COMPLETED_PROCESS_NOT_FOUND,
-    PROCESS_COMPLETED,
-    CONNECTION_FAILED,
-    FAILED_TO_RELEASE_CONNECTION,
-    FORCE_KILL_REQUESTED,
-    PUSH_FAILED_CLIENT_NOT_FOUND,
-    PUSH_FAILED,
-    PING_FAILED_CLIENT_NOT_FOUND,
-    PING_FAILED,
-    FORCE_KILL_FAILED_CLIENT_NOT_FOUND,
-    FORCE_KILL_FAILED,
-    INTERPRETER_EVENT_SERVER_STARTING,
-    INTERPRETER_EVENT_SERVER_START_FAILED,
-    INTERPRETER_EVENT_SERVER_STARTED,
-    INTERPRETER_EVENT_SERVER_STOPPED,
-    INTERPRETER_PROCESS_START_REQUESTED,
-    INTERPRETER_PROCESS_FINISHED,
-    INTERPRETER_PROCESS_FAILED,
-    JOB_READY_FOR_EXECUTION,
-    JOB_REQUEST_IS_EMPTY,
-    JOB_ACCEPTED,
-    JOB_DECLINED,
-    JOB_REQUEST_ERRORED,
-    JOB_UNDEFINED,
-    JOB_READY_FOR_EXECUTION_BY_SCHEDULER,
-    SCHEDULED_JOB_ERRORED,
-    JOB_SCHEDULED,
-    JOB_NOT_FOUND,
-    INTERPRETER_RESULT_NOT_FOUND,
-    SUCCESSFUL_RESULT,
-    ABORTED_RESULT,
-    ERRORED_RESULT,
-    ACCESS_ERROR
-  }
-
   private static final Logger logger = LoggerFactory.getLogger(ZLog.class);
 
   private final ApplicationContext applicationContext;
@@ -99,9 +39,9 @@ public class ZLog {
   private static ZLog instance;
 
   @Nonnull
-  private final EventLogDAO storage;
+  private final SystemEventDAO storage;
 
-  public ZLog(@Nonnull final EventLogDAO storage, final ApplicationContext applicationContext) {
+  public ZLog(@Nonnull final SystemEventDAO storage, final ApplicationContext applicationContext) {
     this.storage = storage;
     this.applicationContext = applicationContext;
   }

@@ -21,20 +21,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import javax.annotation.Nonnull;
-import org.apache.zeppelin.SystemEvent;
-import ru.tinkoff.zeppelin.storage.ZLog.ET;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.SystemEvent;
+import ru.tinkoff.zeppelin.SystemEvent.ET;
 
 /**
  * Data Access Object for {@link SystemEvent}
  */
 @Component
-class EventLogDAO {
+public class SystemEventDAO {
 
   @Nonnull
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -87,7 +87,7 @@ class EventLogDAO {
       "SELECT ID FROM SYSTEM_EVENT_TYPE WHERE NAME = :NAME";
 
   @Autowired
-  public EventLogDAO(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
+  public SystemEventDAO(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
     Preconditions.checkNotNull(jdbcTemplate);
     this.jdbcTemplate = jdbcTemplate;
     this.keyHolder = new GeneratedKeyHolder();
