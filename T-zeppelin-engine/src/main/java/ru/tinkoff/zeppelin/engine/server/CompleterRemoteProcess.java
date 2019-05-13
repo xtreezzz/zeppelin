@@ -18,8 +18,9 @@
 package ru.tinkoff.zeppelin.engine.server;
 
 import java.util.Map;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteCompleterThriftService;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 public class CompleterRemoteProcess extends AbstractRemoteProcess<RemoteCompleterThriftService.Client> {
@@ -36,9 +37,9 @@ public class CompleterRemoteProcess extends AbstractRemoteProcess<RemoteComplete
     final RemoteCompleterThriftService.Client client = getConnection();
     if (client == null) {
       ZLog.log(ET.PUSH_FAILED_CLIENT_NOT_FOUND,
-              String.format("Push failed: client not found, uuid=%s", this.uuid),
-              String.format("Push failed: client not found, process details=%s", this.toString()),
-              "Unknown");
+          String.format("Не удалось вызвать автокомплит: клиент не найден, uuid=%s", this.uuid),
+          String.format("Не удалось вызвать автокомплит: клиент не найден, информация о процессе=%s", this.toString()),
+          SystemEvent.SYSTEM_USERNAME);
       return null;
     }
 
@@ -46,9 +47,9 @@ public class CompleterRemoteProcess extends AbstractRemoteProcess<RemoteComplete
       return client.compete(payload, cursorPosition, noteContext, userContext, configuration);
     } catch (final Throwable throwable) {
       ZLog.log(ET.PUSH_FAILED,
-              String.format("Push failed, uuid=%s", this.uuid),
-              String.format("Error occurred during push, process details=%s, error=%s",
-                      this.toString(), throwable.getMessage()), "Unknown");
+          String.format("Не удалось вызвать автокомплит: uuid=%s", this.uuid),
+          String.format("Ошибка в ходе вызова автокомплита, описание процесса=%s, ошибка=%s",
+              this.toString(), throwable.getMessage()), SystemEvent.SYSTEM_USERNAME);
       return null;
     } finally {
       releaseConnection(client);

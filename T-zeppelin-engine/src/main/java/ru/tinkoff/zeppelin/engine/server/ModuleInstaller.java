@@ -30,8 +30,9 @@ import org.apache.zeppelin.DependencyResolver;
 import org.apache.zeppelin.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 
@@ -57,16 +58,15 @@ public class ModuleInstaller {
   }
 
   public static String install(final String name, final String artifact, final List<Repository> repositories) {
-    ZLog.log(ET.INTERPRETER_INSTALL,
-            String.format("Attempt for install interpreter with artifact: %s", artifact),
-            String.format("Installation called for interpreter with name: %s, artifact: %s, using repos: %s", name, artifact, repositories.toString()),
-            "Unknown");
+    ZLog.log(ET.MODULE_INSTALL,
+        String.format("Начата установка модуля[name=%s, artifact=%s] репозитории=%s", name, artifact, repositories.toString()),
+        SystemEvent.SYSTEM_USERNAME
+    );
     if (isInstalled(name)) {
       final String path = getDirectory(name);
-      ZLog.log(ET.INTERPRETER_ALREADY_INSTALLED,
-              String.format("Interpreter with artifact: %s is already installed", artifact),
-              String.format("Interpreter sources with name: %s and artifact: %s, found in %s",
-                      name, artifact, path), "Unknown");
+      ZLog.log(ET.MODULE_ALREADY_INSTALLED,
+          String.format("Модуль[name=%s, artifact=%s], уже установлен в %s", name, artifact, path),
+          SystemEvent.SYSTEM_USERNAME);
       return path;
     }
 
@@ -74,20 +74,18 @@ public class ModuleInstaller {
     try {
       final DependencyResolver dependencyResolver = new DependencyResolver(repositories);
       dependencyResolver.load(artifact, folderToStore);
-      ZLog.log(ET.INTERPRETER_SUCCESSFULLY_INSTALLED,
-              String.format("Interpreter \"%s\" installed successfully", name),
-              String.format("Interpreter \"%s\" installed by artifact %s to %s", name, artifact, folderToStore.getAbsolutePath()),
-              "Unknown");
+      ZLog.log(ET.MODULE_SUCCESSFULLY_INSTALLED,
+          String.format("Модуль \"%s\" успешно установлен [%s]", name, folderToStore.getAbsolutePath()),
+          SystemEvent.SYSTEM_USERNAME
+      );
       return folderToStore.getAbsolutePath();
     } catch (final Exception e) {
       LOG.error("Error while install interpreter", e);
+      ZLog.log(ET.MODULE_INSTALLATION_FAILED,
+          String.format("Ошибка при установке модуля \"%s\"", name),
+          String.format("Ошибка при установке модуля[name=%s;artifact=%s,destination folder=%s], ошибка: %s",
+              name, artifact, folderToStore.getAbsolutePath(), e.getMessage()));
       uninstallInterpreter(name);
-      ZLog.log(ET.INTERPRETER_INSTALLATION_FAILED,
-              String.format("Exception thrown during interpreter installation, name: %s, destination folder %s would be deleted",
-                      name, folderToStore.getAbsolutePath()),
-              String.format("Error occured during installation interpreter[name=%s;artifact=%s,destination folder=%s], error: %s",
-                      name, artifact, folderToStore.getAbsolutePath(), e.getMessage()),
-              "Unknown");
       return "";
     }
   }
@@ -96,25 +94,24 @@ public class ModuleInstaller {
     final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
     try {
       FileUtils.deleteDirectory(folderToStore);
-      ZLog.log(ET.INTERPRETER_SUCCESSFULLY_UNINSTALLED,
-              String.format("Interpreter[name=%s] sources deleted", name),
-              String.format("Folder %s deleted, interpreter[name=%s] uninstalled",
-                      folderToStore.getAbsolutePath(), name), "Unknown");
+      ZLog.log(ET.MODULE_SUCCESSFULLY_UNINSTALLED,
+          String.format("Модуль \"%s\" успешно удален", name),
+          SystemEvent.SYSTEM_USERNAME);
     } catch (final Exception e) {
       LOG.error("Error while remove interpreter", e);
-      ZLog.log(ET.INTERPRETER_DELETION_FAILED,
-              String.format("Failed to uninstall interpreter[name=%s]", name),
-              String.format("Error occured during folder deletion[path=%s], error: %s", folderToStore.getAbsolutePath(),
-                      e.getMessage()), "Unknown");
+      ZLog.log(ET.MODULE_DELETION_FAILED,
+              String.format("Ошибка при удалении модуля \"%s\"", name),
+              String.format("Ошибка при удалении модуля[path=%s], ошибка: %s",
+                  folderToStore.getAbsolutePath(), e.getMessage()));
     }
   }
 
   public static ModuleInnerConfiguration getDefaultConfig(final String name) {
     final File folderToStore = new File(DESTINATION_FOLDER + name + "/");
-    ZLog.log(ET.INTERPRETER_CONFIGURATION_REQUESTED,
-            String.format("Requested for interpreter[name:%s] configuration", name),
-            String.format("Requested for \"interpreter-setting.json\" in %s", folderToStore.getAbsolutePath()),
-            "Unknown");
+    ZLog.log(ET.MODULE_CONFIGURATION_REQUESTED,
+            String.format("Попытка получения конфигурации модуля \"%s\"", name),
+            String.format("Попытка прочитать файл \"interpreter-setting.json\" в %s",
+                folderToStore.getAbsolutePath()), SystemEvent.SYSTEM_USERNAME);
 
     URLClassLoader classLoader = null;
     try {
@@ -128,16 +125,16 @@ public class ModuleInstaller {
       classLoader = URLClassLoader.newInstance(urls.toArray(new URL[0]));
       final String config = IOUtils.toString(classLoader.getResourceAsStream("interpreter-setting.json"), "UTF-8");
       final ModuleInnerConfiguration result = new Gson().fromJson(config, ModuleInnerConfiguration.class);
-      ZLog.log(ET.INTERPRETER_CONFIGURAION_FOUND,
-              String.format("Configuration for interpreter %s successfully found", name),
-              String.format("\"interpreter-setting.json\" for interpreter[%s] in %s successfully parsed",
-                      name, folderToStore.getAbsolutePath()), "Unknown");
+      ZLog.log(ET.MODULE_CONFIGURAION_FOUND,
+              String.format("Конфигурация для модуля \"%s\" успешно получена", name),
+              String.format("Файл \"interpreter-setting.json\" для модуля \"%s\" в %s успешно считан",
+                      name, folderToStore.getAbsolutePath()), SystemEvent.SYSTEM_USERNAME);
       return result;
     } catch (final Exception e) {
-      ZLog.log(ET.INTERPRETER_CONFIGURATION_PROCESSING_FAILED,
-              String.format("Failed to get configuration for interpreter[name=%s]", name),
-              String.format("Error occurred during processing interpreter[name=%s, path=%s] configuration, error: %s",
-                      name, folderToStore.getAbsolutePath(), e.getMessage()), "Unknown");
+      ZLog.log(ET.MODULE_CONFIGURATION_PROCESSING_FAILED,
+              String.format("Ошибка при получении конфигурации для модуля \"%s\"", name),
+              String.format("Ошибка при получении конфигурации для модуля[name=%s, path=%s], ошибка: %s",
+                      name, folderToStore.getAbsolutePath(), e.getMessage()), SystemEvent.SYSTEM_USERNAME);
       throw new IllegalArgumentException("Wrong config format", e);
     } finally {
       if (classLoader != null) {

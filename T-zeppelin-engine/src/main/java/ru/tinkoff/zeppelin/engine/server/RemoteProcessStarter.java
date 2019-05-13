@@ -26,7 +26,8 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteResultHandler;
 import org.apache.commons.exec.ExecuteWatchdog;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 
@@ -76,10 +77,10 @@ public class RemoteProcessStarter {
             interpreterClassPath,
             interpreterClassName
     );
-    ZLog.log(ET.INTERPRETER_PROCESS_START_REQUESTED,
-            "Requested to start interpreter, cmd: " + cmd,
-            "Requested to start interpreter, cmd: " + cmd,
-            "Unknown");
+    ZLog.log(ET.REMOTE_PROCESS_START_REQUESTED,
+        String.format("Попытка запустить удаленный процесс по адресу: %s:%s", thriftAddr, thriftPort),
+        String.format("Попытка запустить удаленный процесс, cnd: %s", cmd),
+        SystemEvent.SYSTEM_USERNAME);
 
     // start server process
     final CommandLine cmdLine = CommandLine.parse(cmd);
@@ -94,19 +95,19 @@ public class RemoteProcessStarter {
       @Override
       public void onProcessComplete(final int exitValue) {
         AbstractRemoteProcess.remove(shebang, processType);
-        ZLog.log(ET.INTERPRETER_PROCESS_FINISHED,
-                "Interpreter process finished, cmd: " + cmd,
-                "Interpreter process finished, cmd: " + cmd,
-                "Unknown");
+        ZLog.log(ET.REMOTE_PROCESS_FINISHED,
+            String.format("Удаленный процесс по адресу %s:%S успешно завершен", thriftAddr, thriftPort),
+            String.format("Удаленный процесс успешно завершен, cmd: %s", cmd),
+            SystemEvent.SYSTEM_USERNAME);
       }
 
       @Override
       public void onProcessFailed(final ExecuteException e) {
         AbstractRemoteProcess.remove(shebang, processType);
-        ZLog.log(ET.INTERPRETER_PROCESS_FAILED,
-                "Interpreter process failed, cmd: " + cmd,
-                "Error occured during process execution, cmd: " + cmd + ", error: " + e.getMessage(),
-                "Unknown");
+        ZLog.log(ET.REMOTE_PROCESS_FAILED,
+            String.format("Критическая ошибка в удаленном процессе по адресу %s:%s", thriftAddr, thriftPort),
+            String.format("Критическая ошибка в удаленном процессе, cmd: %s, error: %s", cmd, e.getMessage()),
+            SystemEvent.SYSTEM_USERNAME);
       }
     };
 

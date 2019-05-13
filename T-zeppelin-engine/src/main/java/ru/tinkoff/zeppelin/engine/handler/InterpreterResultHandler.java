@@ -22,7 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
@@ -34,6 +34,7 @@ import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
 import ru.tinkoff.zeppelin.storage.JobResultDAO;
 import ru.tinkoff.zeppelin.storage.NoteDAO;
 import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
@@ -78,8 +79,8 @@ public class InterpreterResultHandler extends AbstractHandler {
     Job job = getWithTimeout(interpreterJobUUID);
 
     if (job == null) {
-      ZLog.log(ET.JOB_NOT_FOUND, "Job not found by uuid=" + interpreterJobUUID,
-          "Job not found by uuid=" + interpreterJobUUID,"Unknown");
+      ZLog.log(ET.JOB_NOT_FOUND, "Задача не найдена, interpreterJobUUID=" + interpreterJobUUID,
+          SystemEvent.SYSTEM_USERNAME);
       return;
     }
 
@@ -88,26 +89,21 @@ public class InterpreterResultHandler extends AbstractHandler {
 
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
     ZLog.log(ET.GOT_JOB,
-        String.format("Got result [batch status=%s, batch id=%s] for job: id=%s, noteId=%s, paragraphId=%s",
+        String.format("Получен батч[status=%s, id=%s] для задачи[id=%s, noteId=%s, paragraphId=%s]",
             batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagraphId()),
-        String.format("Got result [batch status=%s, batch id=%s] for job: id=%s, noteId=%s, paragraphId=%s",
-            batch.getStatus(), batch.getId(), job.getId(), job.getNoteId(), job.getParagraphId()),
-        "Unknown");
+        SystemEvent.SYSTEM_USERNAME);
 
     if (batch.getStatus() == JobBatch.Status.ABORTING || batch.getStatus() == JobBatch.Status.ABORTED) {
-      ZLog.log(ET.GOT_ABORTED_JOB,
-          String.format("Batch status is %s", batch.getStatus()),
-          String.format("Incorrect interpreter behaviour during handling job abort, process for existing job not found: job[%s]", job.toString()),
-          "Unknown");
+      ZLog.log(ET.GOT_ABORTED_BATCH, "Батч находится в статусе " + batch.getStatus(), SystemEvent.SYSTEM_USERNAME);
       setAbortResult(job, batch, interpreterResult);
       return;
     }
 
     if (interpreterResult == null) {
       ZLog.log(ET.INTERPRETER_RESULT_NOT_FOUND,
-          String.format("Handler got null result, interpreterJobUUID=%s", interpreterJobUUID),
-          String.format("Handler got null result, interpreterJobUUID=%s", interpreterJobUUID),
-          "Unknown");
+          "Полученный результат равен \"null\", interpreterJobUUID=" + interpreterJobUUID,
+          SystemEvent.SYSTEM_USERNAME
+      );
 
       setErrorResult(job, batch, PredefinedInterpreterResults.ERROR_WHILE_INTERPRET);
       return;
@@ -116,24 +112,20 @@ public class InterpreterResultHandler extends AbstractHandler {
     switch (interpreterResult.code()) {
       case SUCCESS:
         ZLog.log(ET.SUCCESSFUL_RESULT,
-            String.format("Got successful result for job with id=%s", interpreterJobUUID),
-            String.format("Got successful result for job with id=%s", interpreterJobUUID),
-            "Unknown");
+            "Задача успешно выполнена interpreterJobUUID=" + interpreterJobUUID,
+            SystemEvent.SYSTEM_USERNAME
+        );
 
         setSuccessResult(job, batch, interpreterResult);
         break;
       case ABORTED:
-        ZLog.log(ET.ABORTED_RESULT,
-            String.format("Got aborted result for job with id=%s", interpreterJobUUID),
-            String.format("Got aborted result for job with id=%s", interpreterJobUUID),
-            "Unknown");
+        ZLog.log(ET.ABORTED_RESULT, "Задача отменена interpreterJobUUID=%s" + interpreterJobUUID,
+            SystemEvent.SYSTEM_USERNAME);
         setAbortResult(job, batch, interpreterResult);
         break;
       case ERROR:
-        ZLog.log(ET.ERRORED_RESULT,
-            String.format("Got errored result for job with id=%s", interpreterJobUUID),
-            String.format("Got errored result for job with id=%s", interpreterJobUUID),
-            "Unknown");
+        ZLog.log(ET.ERRORED_RESULT, "Задача завершена с ошибкой interpreterJobUUID=" + interpreterJobUUID,
+            SystemEvent.SYSTEM_USERNAME);
         setErrorResult(job, batch, interpreterResult);
         break;
     }

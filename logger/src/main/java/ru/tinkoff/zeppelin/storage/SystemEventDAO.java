@@ -16,19 +16,19 @@
  */
 package ru.tinkoff.zeppelin.storage;
 
-import com.google.common.base.Preconditions;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.SystemEvent;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 
 /**
  * Data Access Object for {@link SystemEvent}
@@ -36,134 +36,137 @@ import ru.tinkoff.zeppelin.SystemEvent.ET;
 @Component
 public class SystemEventDAO {
 
-  @Nonnull
-  private final NamedParameterJdbcTemplate jdbcTemplate;
+  private static final String GET_ALL_TYPES = "" +
+      "SELECT ID,\n" +
+      "       NAME\n" +
+      "FROM SYSTEM_EVENT_TYPE;";
 
-  @Nonnull
-  private final KeyHolder keyHolder;
+  private static final String GET_ALL_EVENTS = "" +
+      "SELECT ID,\n" +
+      "       USERNAME,\n" +
+      "       EVENT_TYPE,\n" +
+      "       MESSAGE,\n" +
+      "       DESCRIPTION,\n"+
+      "       ACTION_TIME\n" +
+      "FROM SYSTEM_EVENT\n" +
+      "ORDER BY ACTION_TIME DESC\n" +
+      "LIMIT 1000;";
 
-  //====================== GET =====================
-  private static final String GET_ALL_EVENTS =
-      "SELECT ID,  FROM SYSTEM_EVENT\n "
-          + "ORDER BY ACTION_TIME DESC;";
-
-  private static final String GET_LAST_EVENT =
-      "SELECT * FROM SYSTEM_EVENT\n "
-          + "ORDER BY ACTION_TIME DESC\n "
-          + "LIMIT 1;";
-
-  //----------------- USER SPECIFIC ----------------
-  private static final String GET_LAST_USER_EVENT =
-      "SELECT * FROM SYSTEM_EVENT\n "
-          + "WHERE USERNAME = :USERNAME\n "
-          + "ORDER BY ACTION_TIME DESC\n "
-          + "LIMIT 1";
-
-  private static final String GET_ALL_USER_EVENTS =
-      "SELECT * FROM SYSTEM_EVENT\n "
-          + "WHERE USERNAME = :USERNAME\n "
-          + "ORDER BY ACTION_TIME DESC;";
-
-  private static final String GET_N_USER_EVENTS =
-      "SELECT * FROM SYSTEM_EVENT\n "
-          + "WHERE USERNAME = :USERNAME\n "
-          + "ORDER BY ACTION_TIME DESC\n "
-          + "LIMIT :N";
-
-  //=================== INSERT ====================
-  private static final String LOG =
+  private static final String PERSIST =
       "INSERT INTO SYSTEM_EVENT (USERNAME,\n "
-          + "                   EVENT_TYPE,\n "
-          + "                   MESSAGE,\n "
-          + "                   DESCRIPTION,\n "
-          + "                   ACTION_TIME)\n "
+          + "                    EVENT_TYPE,\n "
+          + "                    MESSAGE,\n "
+          + "                    DESCRIPTION,\n "
+          + "                    ACTION_TIME)\n "
           + "VALUES (:USERNAME,\n"
           + "        :EVENT_TYPE,\n"
           + "        :MESSAGE,\n"
           + "        :DESCRIPTION,\n"
           + "        :ACTION_TIME);";
 
-  private static final String GET_EVENT_TYPE_ID =
-      "SELECT ID FROM SYSTEM_EVENT_TYPE WHERE NAME = :NAME";
+  private static final String GET_EVENT_TYPE_BY_NAME = "" +
+      "SELECT ID,\n" +
+      "       NAME\n" +
+      "FROM SYSTEM_EVENT_TYPE\n" +
+      "WHERE NAME = :NAME";
+
+  private static final String GET_EVENT_TYPE_BY_ID = "" +
+      "SELECT ID,\n" +
+      "       NAME\n" +
+      "FROM SYSTEM_EVENT_TYPE\n" +
+      "WHERE ID = :ID";
+
+  @Nonnull
+  private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
   public SystemEventDAO(@Nonnull final NamedParameterJdbcTemplate jdbcTemplate) {
-    Preconditions.checkNotNull(jdbcTemplate);
     this.jdbcTemplate = jdbcTemplate;
-    this.keyHolder = new GeneratedKeyHolder();
   }
 
-  private long getEventType(@Nonnull final ET type) {
-    Preconditions.checkNotNull(type);
-    return jdbcTemplate.queryForObject(
-        GET_EVENT_TYPE_ID,
-        convertSystemEventTypeToParameters(type),
-        ((resultSet, i) -> Long.parseLong(resultSet.getString("id")))
+  public List<SystemEventType> getAllTypes() {
+    final SqlParameterSource parameters = new MapSqlParameterSource();
+
+    return jdbcTemplate.query(
+        GET_ALL_TYPES,
+        parameters,
+        SystemEventDAO::mapTypeRow
     );
   }
 
-  SystemEvent log(@Nonnull final SystemEvent event) {
-    Preconditions.checkNotNull(event);
-    final int affectedRows =
-        jdbcTemplate.update(LOG, convertSystemEventToParameters(event), keyHolder);
+  @Nullable
+  public SystemEventType getTypeByName(@Nonnull final String name) {
 
-    if (affectedRows == 0) {
-      // LOGGER.error
-      throw new RuntimeException("Fail to save event " + event);
-    }
-    event.setDatabaseId((Long) keyHolder.getKeys().get("ID"));
-    return event;
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+        .addValue("NAME", name);
+
+    return jdbcTemplate.query(
+        GET_EVENT_TYPE_BY_NAME,
+        parameters,
+        SystemEventDAO::mapTypeRow)
+        .stream()
+        .findFirst()
+        .orElse(null);
   }
 
-  @Nonnull
-  private MapSqlParameterSource convertSystemEventToParameters(
-      @Nonnull final SystemEvent event) {
-    Preconditions.checkNotNull(event);
-    final MapSqlParameterSource parameters = new MapSqlParameterSource();
-    try {
-      parameters
-          .addValue("USERNAME", event.getUsername())
-          .addValue("EVENT_TYPE", getEventType(event.getType()))
-          .addValue("MESSAGE", event.getMessage())
-          .addValue("DESCRIPTION", event.getDescription())
-          .addValue("ACTION_TIME", event.getActionTime());
-    } catch (final Exception e) {
-      throw new RuntimeException("Fail to convert event", e);
-    }
-    Preconditions.checkNotNull(parameters);
-    return parameters;
+  @Nullable
+  public SystemEventType getTypeById(final long id) {
+
+    final SqlParameterSource parameters = new MapSqlParameterSource()
+        .addValue("ID", id);
+
+    return jdbcTemplate.query(
+        GET_EVENT_TYPE_BY_ID,
+        parameters,
+        SystemEventDAO::mapTypeRow)
+        .stream()
+        .findFirst()
+        .orElse(null);
   }
 
-  @Nonnull
-  private MapSqlParameterSource convertSystemEventTypeToParameters(
-      @Nonnull final ET type) {
-    Preconditions.checkNotNull(type);
-    final MapSqlParameterSource parameters = new MapSqlParameterSource();
-    try {
-      parameters.addValue("NAME", type.name());
-    } catch (final Exception e) {
-      throw new RuntimeException("Fail to convert event", e);
-    }
-    Preconditions.checkNotNull(parameters);
-    return parameters;
+  public List<SystemEvent> getAllEvents() {
+    final SqlParameterSource parameters = new MapSqlParameterSource();
+
+    return jdbcTemplate.query(
+        GET_ALL_EVENTS,
+        parameters,
+        SystemEventDAO::mapRow
+    );
   }
 
-  @Nonnull
-  private SystemEvent convertResultSetToSystemEvent(@Nonnull final ResultSet resultSet)
-      throws SQLException {
-    Preconditions.checkNotNull(resultSet);
+  SystemEvent persist(@Nonnull final SystemEventDTO event) {
+    final SystemEventType type = getTypeByName(event.getEventType());
+    if (type == null) {
+      throw new RuntimeException(String.format("Type %s is not defined", event.getEventType()));
+    }
 
-    final long id = resultSet.getLong("ID");
-    final String username = resultSet.getString("USERNAME");
-    final ET eventType = ET.valueOf(resultSet.getString("EVENT_TYPE"));
-    final String message = resultSet.getString("MESSAGE");
-    final String description = resultSet.getString("DESCRIPTION");
-    final LocalDateTime actionTime = resultSet.getObject("ACTION_TIME", LocalDateTime.class);
+    final MapSqlParameterSource parameters = new MapSqlParameterSource()
+        .addValue("USERNAME", event.getUsername())
+        .addValue("EVENT_TYPE", type.getDatabaseId())
+        .addValue("MESSAGE", event.getMessage())
+        .addValue("DESCRIPTION", event.getDescription())
+        .addValue("ACTION_TIME", event.getActionTime());
 
-    Preconditions.checkNotNull(username);
-    Preconditions.checkNotNull(eventType);
-    Preconditions.checkNotNull(message);
-    Preconditions.checkNotNull(actionTime);
-    return new SystemEvent(id, eventType, username, message, description, actionTime);
+    jdbcTemplate.update(PERSIST, parameters);
+    return new SystemEvent(type.getDatabaseId(), event.getUsername(), event.getMessage(), event.getDescription(), event.getActionTime());
+  }
+
+  private static SystemEvent mapRow(final ResultSet resultSet, final int i) throws SQLException {
+
+    return new SystemEvent(
+        resultSet.getLong("EVENT_TYPE"),
+        resultSet.getString("USERNAME"),
+        resultSet.getString("MESSAGE"),
+        resultSet.getString("DESCRIPTION"),
+        resultSet.getObject("ACTION_TIME", LocalDateTime.class)
+    );
+  }
+
+  private static SystemEventType mapTypeRow(final ResultSet resultSet, final int i) throws SQLException {
+
+    return new SystemEventType(
+        ET.valueOf(resultSet.getString("NAME")),
+        resultSet.getLong("ID")
+    );
   }
 }

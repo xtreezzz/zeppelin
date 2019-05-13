@@ -16,6 +16,8 @@
  */
 package org.apache.zeppelin.rest;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.zeppelin.rest.message.JsonResponse;
 import org.springframework.http.HttpStatus;
@@ -23,7 +25,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.storage.SystemEventDAO;
+import ru.tinkoff.zeppelin.storage.SystemEventDTO;
+import ru.tinkoff.zeppelin.storage.SystemEventType;
 
 @RestController
 @RequestMapping("/api/monitoring")
@@ -36,9 +41,28 @@ public class MonitoringRestApi {
   }
 
   @GetMapping(value = "/list", produces = "application/json")
-  public ResponseEntity listModules() {
+  public ResponseEntity listEvents() {
     try {
-      return new JsonResponse(HttpStatus.OK, "").build();
+      final List<SystemEventDTO> result = new ArrayList<>();
+      final List<SystemEvent> events = systemEventDAO.getAllEvents();
+
+      for (final SystemEvent event : events) {
+        final SystemEventType type = systemEventDAO.getTypeById(event.getTypeId());
+        if (type == null) {
+          continue;
+        }
+
+        result.add(
+            new SystemEventDTO(
+                event.getUsername(),
+                type.getName().name(),
+                event.getMessage(),
+                event.getDescription(),
+                event.getActionTime()
+            )
+        );
+      }
+      return new JsonResponse(HttpStatus.OK, "", result).build();
     } catch (final Exception e) {
       return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
