@@ -24,12 +24,10 @@ import org.springframework.http.ResponseEntity;
 /**
  * Json response builder.
  */
-public class JsonResponse<T> {
+public class JsonResponse {
   private HttpStatus status;
   private String message;
-  private final T body;
-  //transient ArrayList<Coo> cookies;
-  transient boolean pretty = false;
+  private final Object body;
 
   public JsonResponse(final HttpStatus status) {
     this.status = status;
@@ -43,13 +41,13 @@ public class JsonResponse<T> {
     this.body = null;
   }
 
-  public JsonResponse(final HttpStatus status, final T body) {
+  public JsonResponse(final HttpStatus status, final Object body) {
     this.status = status;
     this.message = null;
     this.body = body;
   }
 
-  public JsonResponse(final HttpStatus status, final String message, final T body) {
+  public JsonResponse(final HttpStatus status, final String message, final Object body) {
     this.status = status;
     this.message = message;
     this.body = body;
@@ -78,9 +76,6 @@ public class JsonResponse<T> {
   @Override
   public String toString() {
     final GsonBuilder gsonBuilder = new GsonBuilder();
-    if (pretty) {
-      gsonBuilder.setPrettyPrinting();
-    }
     final Gson gson = gsonBuilder.create();
     return gson.toJson(this);
   }

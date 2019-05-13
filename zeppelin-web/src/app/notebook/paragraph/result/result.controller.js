@@ -240,7 +240,9 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
      */
     if (paragraph.id === data.paragraphId &&
       resultIndex === data.index &&
-      (paragraph.status === ParagraphStatus.PENDING || paragraph.status === ParagraphStatus.RUNNING)) {
+      (paragraph.status === ParagraphStatus.PENDING
+        || paragraph.status === ParagraphStatus.RUNNING
+        || status === ParagraphStatus.ABORTING)) {
       // Check if result type is eiter TEXT or TABLE, if not then treat it like TEXT
       if ([DefaultDisplayType.TEXT, DefaultDisplayType.TABLE].indexOf($scope.type) < 0) {
         $scope.type = DefaultDisplayType.TEXT;
@@ -805,7 +807,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
   };
 
   const commitVizConfigChange = function(config, vizId) {
-    if ([ParagraphStatus.RUNNING, ParagraphStatus.PENDING].indexOf(paragraph.status) < 0) {
+    if ([ParagraphStatus.RUNNING, ParagraphStatus.PENDING, ParagraphStatus.ABORTING].indexOf(paragraph.status) < 0) {
       let newConfig = angular.copy($scope.config);
       if (!newConfig.graph) {
         newConfig.graph = {};

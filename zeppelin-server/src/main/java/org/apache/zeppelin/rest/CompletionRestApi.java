@@ -81,11 +81,11 @@ public class CompletionRestApi {
                       authenticationInfo.getUser(),
                       authenticationInfo.getRoles())
       );
-      return new JsonResponse<>(HttpStatus.OK, "", completions).build();
+      return new JsonResponse(HttpStatus.OK, "", completions).build();
 
     } else {
       //LOGIC ERROR
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "Paragraph not found").build();
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Paragraph not found").build();
     }
   }
 }

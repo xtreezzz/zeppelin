@@ -118,9 +118,9 @@ public class ModuleRestApi {
         moduleSettingsDTO.modules.add(moduleSettingBlockDTO);
       }
 
-      return new JsonResponse<>(HttpStatus.OK, "", moduleSettingsDTO).build();
+      return new JsonResponse(HttpStatus.OK, "", moduleSettingsDTO).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -137,9 +137,9 @@ public class ModuleRestApi {
 
       moduleSettingService.installSource(moduleSource, true, false);
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -156,9 +156,9 @@ public class ModuleRestApi {
 
       moduleSettingService.uninstallSource(moduleSource, false);
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -177,9 +177,9 @@ public class ModuleRestApi {
       moduleSource.setReinstallOnStart(setReinstallOnStartModuleSourceDTO.reinstall);
       moduleSourcesDAO.update(moduleSource);
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -206,10 +206,10 @@ public class ModuleRestApi {
       );
 
       moduleSettingService.installSource(moduleSource, false, true);
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
 
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -236,9 +236,9 @@ public class ModuleRestApi {
 
       moduleSourcesDAO.delete(deleteModuleSourceDTO.id);
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -253,7 +253,7 @@ public class ModuleRestApi {
       final AddModuleConfigurationDTO addModuleConfigurationDTO = new Gson().fromJson(message, AddModuleConfigurationDTO.class);
 
       if (!addModuleConfigurationDTO.moduleConfiguration.getShebang().matches("\\w+")) {
-        return new JsonResponse<>(
+        return new JsonResponse(
             HttpStatus.BAD_REQUEST,
             "Shebang is incorrect, it must contain only alphanumeric characters and \"_\""
         ).build();
@@ -261,7 +261,7 @@ public class ModuleRestApi {
 
       if (addModuleConfigurationDTO.moduleConfiguration.getHumanReadableName().trim().isEmpty()
           || addModuleConfigurationDTO.moduleConfiguration.getShebang().trim().isEmpty()) {
-        return new JsonResponse<>(HttpStatus.BAD_REQUEST, "Please fill in interpreter name and shebang").build();
+        return new JsonResponse(HttpStatus.BAD_REQUEST, "Please fill in interpreter name and shebang").build();
       }
 
       final ModuleInnerConfiguration innerConfiguration
@@ -271,9 +271,9 @@ public class ModuleRestApi {
       moduleConfiguration.setModuleInnerConfigId(innerConfiguration.getId());
       moduleConfigurationDAO.persist(moduleConfiguration);
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -291,7 +291,7 @@ public class ModuleRestApi {
 
     moduleSettingService.restart(updateModuleConfigurationDTO.moduleConfiguration.getShebang());
 
-    return new JsonResponse<>(HttpStatus.OK, "", "").build();
+    return new JsonResponse(HttpStatus.OK, "", "").build();
   }
 
 
@@ -309,9 +309,9 @@ public class ModuleRestApi {
 
       moduleSettingService.restart(moduleConfiguration.getShebang());
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -326,9 +326,9 @@ public class ModuleRestApi {
       final ModuleConfiguration moduleConfiguration = moduleConfigurationDAO.getById(restartModuleDTO.id);
       moduleSettingService.restart(moduleConfiguration.getShebang());
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -346,9 +346,9 @@ public class ModuleRestApi {
 
       moduleSettingService.restart(moduleConfiguration.getShebang());
 
-      return new JsonResponse<>(HttpStatus.OK, "", "").build();
+      return new JsonResponse(HttpStatus.OK, "", "").build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -393,9 +393,9 @@ public class ModuleRestApi {
         result.add(conf);
       }
 
-      return new JsonResponse<>(HttpStatus.OK, "", result).build();
+      return new JsonResponse(HttpStatus.OK, "", result).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
               ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -431,9 +431,9 @@ public class ModuleRestApi {
         result.add(conf);
       }
 
-      return new JsonResponse<>(HttpStatus.OK, "", result).build();
+      return new JsonResponse(HttpStatus.OK, "", result).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -444,9 +444,9 @@ public class ModuleRestApi {
   @GetMapping(value = "/repository", produces = "application/json")
   public ResponseEntity listRepositories() {
     try {
-      return new JsonResponse<>(HttpStatus.OK, "", moduleRepositoryDAO.getAll()).build();
+      return new JsonResponse(HttpStatus.OK, "", moduleRepositoryDAO.getAll()).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -461,7 +461,7 @@ public class ModuleRestApi {
     try {
       final Repository request = Repository.fromJson(message);
       if (!request.getId().matches("\\w+")) {
-        return new JsonResponse<>(
+        return new JsonResponse(
             HttpStatus.BAD_REQUEST,
             "Id is incorrect, it must contain only alphanumeric characters and \"_\""
         ).build();
@@ -469,7 +469,7 @@ public class ModuleRestApi {
       moduleRepositoryDAO.persist(request);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
     }
   }
@@ -485,7 +485,7 @@ public class ModuleRestApi {
       moduleRepositoryDAO.delete(repoId);
       return new JsonResponse(HttpStatus.OK).build();
     } catch (final Exception e) {
-      return new JsonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+      return new JsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
           ExceptionUtils.getStackTrace(e)).build();
     }
   }

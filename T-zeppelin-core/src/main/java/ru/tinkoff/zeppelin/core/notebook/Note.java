@@ -31,7 +31,7 @@ import org.apache.zeppelin.utils.IdHashes;
  */
 public class Note implements Serializable {
 
-  private final static String TRASH_FOLDER = "~Trash";
+  public final static String TRASH_FOLDER = "~Trash";
 
   private Long id;
   private Long batchJobId;
@@ -41,8 +41,6 @@ public class Note implements Serializable {
   private NoteRevision revision;
 
   private Map<String, Object> formParams;
-
-  private boolean isRunning = false;
 
   private Scheduler scheduler;
 
@@ -94,14 +92,6 @@ public class Note implements Serializable {
 
   public Map<String, Object> getFormParams() {
     return formParams;
-  }
-
-  public boolean isRunning() {
-    return isRunning;
-  }
-
-  public void setRunning(final boolean running) {
-    isRunning = running;
   }
 
   public void setScheduler(final Scheduler scheduler) {

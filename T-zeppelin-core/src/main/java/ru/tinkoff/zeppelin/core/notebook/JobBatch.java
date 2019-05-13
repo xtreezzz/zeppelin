@@ -16,12 +16,17 @@
  */
 package ru.tinkoff.zeppelin.core.notebook;
 
+import com.google.common.collect.Sets;
+
+import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class JobBatch {
 
   public enum Status {
+
     SAVING,
     PENDING,
     RUNNING,
@@ -31,6 +36,8 @@ public class JobBatch {
     ABORTING,
     ABORTED,
     ;
+
+    public static final Set<Status> running = Sets.newHashSet(Status.PENDING, Status.RUNNING, Status.ABORTING);
   }
 
   private long id;

@@ -60,7 +60,6 @@ public class NoteDTOConverter {
         for (final Paragraph p : noteService.getParagraphs(note)) {
             noteDTO.getParagraphs().add(fullParagraphDAO.getById(p.getId()));
         }
-        noteDTO.setRunning(note.isRunning());
         noteDTO.setScheduler(note.getScheduler());
         noteDTO.getConfig().put("looknfeel", false);
 

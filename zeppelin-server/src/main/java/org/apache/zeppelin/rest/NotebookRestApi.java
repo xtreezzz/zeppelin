@@ -18,10 +18,6 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.JsonObject;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.rest.message.NoteRequest;
@@ -32,13 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
@@ -46,6 +36,14 @@ import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notebook")
@@ -55,8 +53,6 @@ public class NotebookRestApi extends AbstractRestApi {
 
   private final LuceneSearch luceneSearch;
   private final SchedulerDAO schedulerDAO;
-
-  private static final String TRASH_FOLDER = "~Trash";
 
   @Autowired
   public NotebookRestApi(
@@ -75,7 +71,7 @@ public class NotebookRestApi extends AbstractRestApi {
         .filter(this::userHasReaderPermission)
         .map(NoteRequest::new)
         .collect(Collectors.toList());
-    return new JsonResponse<>(HttpStatus.OK, "List of all available for read notes", response).build();
+    return new JsonResponse(HttpStatus.OK, "List of all available for read notes", response).build();
   }
 
   @GetMapping(produces = "application/json")
@@ -88,7 +84,7 @@ public class NotebookRestApi extends AbstractRestApi {
       @PathVariable("noteId") final long noteId,
       @RequestBody final List<String> requestedFields) {
     NoteRequest noteRequest = new NoteRequest(secureLoadNote(noteId, Permission.READER));
-    return new JsonResponse<>(HttpStatus.OK, "Note info", noteRequest).build();
+    return new JsonResponse(HttpStatus.OK, "Note info", noteRequest).build();
   }
 
   @GetMapping(value = "/{noteId}", produces = "application/json")
@@ -101,14 +97,14 @@ public class NotebookRestApi extends AbstractRestApi {
   public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) {
 //    checkIfUserCanRead(noteId, "Insufficient privileges you cannot export this note");
     final String exportJson = null;//zeppelinRepository.exportNote(noteId);
-    return new JsonResponse<>(HttpStatus.OK, "", exportJson).build();
+    return new JsonResponse(HttpStatus.OK, "", exportJson).build();
   }
 
   //TODO(SAN) not implemented
   @PostMapping(value = "/import", produces = "application/json")
   public ResponseEntity importNote(final String noteJson) {
     final Note note = null;//zeppelinRepository.importNote(null, noteJson, getServiceContext().getAutheInfo());
-    return new JsonResponse<>(HttpStatus.OK, "", note.getId()).build();
+    return new JsonResponse(HttpStatus.OK, "", note.getId()).build();
   }
 
   @PostMapping(value = "/create", produces = "application/json")
@@ -134,7 +130,7 @@ public class NotebookRestApi extends AbstractRestApi {
 
       JsonObject response = new JsonObject();
       response.addProperty("note_id", note.getId());
-      return new JsonResponse<>(HttpStatus.OK, "Note created", response).build();
+      return new JsonResponse(HttpStatus.OK, "Note created", response).build();
     } catch (final Exception e) {
       throw new IllegalStateException("Failed to create note.", e);
     }
@@ -194,7 +190,7 @@ public class NotebookRestApi extends AbstractRestApi {
     }
     JsonObject response = new JsonObject();
     response.addProperty("clone_note_id", cloneNote.getId());
-    return new JsonResponse<>(HttpStatus.OK, "Note cloned", response).build();
+    return new JsonResponse(HttpStatus.OK, "Note cloned", response).build();
   }
 
   @PostMapping(value = "/{noteId}/update", produces = "application/json")
@@ -212,7 +208,7 @@ public class NotebookRestApi extends AbstractRestApi {
     noteService.updateNote(note);
 
     //disable scheduler if note moved in trash
-    if (note.getPath().startsWith(TRASH_FOLDER)) {
+    if (note.getPath().startsWith(Note.TRASH_FOLDER)) {
       Scheduler scheduler = schedulerDAO.getByNote(note.getId());
       if (scheduler != null) {
         scheduler.setEnabled(false);

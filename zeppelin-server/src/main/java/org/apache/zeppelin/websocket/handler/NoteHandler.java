@@ -17,13 +17,6 @@
 
 package org.apache.zeppelin.websocket.handler;
 
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
@@ -36,18 +29,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
-import ru.tinkoff.zeppelin.core.notebook.NoteInfo;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @Component
 public class NoteHandler extends AbstractHandler {
-
-  private static final String TRASH_FOLDER = "~Trash";
 
   private final NoteDTOConverter noteDTOConverter;
   private final SchedulerDAO schedulerDAO;
@@ -62,7 +60,15 @@ public class NoteHandler extends AbstractHandler {
     this.schedulerDAO = schedulerDAO;
   }
 
+  public static class NoteInfo {
+    String id;
+    String path;
 
+    public NoteInfo(Note note) {
+      id = note.getUuid();
+      path = note.getPath();
+    }
+  }
   public void sendListNotesInfo(final WebSocketSession conn) throws IOException {
     final List<NoteInfo> notesInfo = noteService.getAllNotes().stream()
         .filter(this::userHasReaderPermission)
@@ -211,7 +217,7 @@ public class NoteHandler extends AbstractHandler {
   public void moveNoteToTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
-    note.setPath("/" + TRASH_FOLDER + normalizePath(note.getPath()));
+    note.setPath("/" + Note.TRASH_FOLDER + normalizePath(note.getPath()));
     noteService.updateNote(note);
 
     //disable scheduler
@@ -228,11 +234,11 @@ public class NoteHandler extends AbstractHandler {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("id", fromMessage, Permission.OWNER, authenticationInfo, conn);
 
-    if (!note.getPath().startsWith("/" + TRASH_FOLDER)) {
+    if (!note.getPath().startsWith("/" + Note.TRASH_FOLDER)) {
       throw new IOException("Can not restore this note " + note.getPath() + " as it is not in trash folder");
     }
 
-    final String destNotePath = note.getPath().replace("/" + TRASH_FOLDER, "");
+    final String destNotePath = note.getPath().replace("/" + Note.TRASH_FOLDER, "");
     note.setPath(normalizePath(destNotePath));
     noteService.updateNote(note);
     sendListNotesInfo(conn);
@@ -241,7 +247,7 @@ public class NoteHandler extends AbstractHandler {
   public void restoreFolder(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final String folderPath = normalizePath(fromMessage.getNotNull("id")) + "/";
 
-    if (!folderPath.startsWith("/" + TRASH_FOLDER)) {
+    if (!folderPath.startsWith("/" + Note.TRASH_FOLDER)) {
       throw new IOException("Can't restore folder: '" + folderPath + "' as it is not in trash folder");
     }
 
@@ -249,7 +255,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(this::userHasOwnerPermission)
         .filter(note -> note.getPath().startsWith(folderPath))
         .forEach(note -> {
-          String notePath = normalizePath(note.getPath().substring(TRASH_FOLDER.length() + 1));
+          String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
           note.setPath(notePath);
           noteService.updateNote(note);
         });
@@ -280,7 +286,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(note -> note.getPath().startsWith(folderPath))
         .filter(this::userHasOwnerPermission)
         .forEach(note -> {
-          String notePath = "/" + TRASH_FOLDER + normalizePath(note.getPath());
+          String notePath = "/" + Note.TRASH_FOLDER + normalizePath(note.getPath());
           note.setPath(notePath);
           noteService.updateNote(note);
         });
@@ -299,7 +305,7 @@ public class NoteHandler extends AbstractHandler {
 
   public void emptyTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     noteService.getAllNotes().stream()
-        .filter(note -> note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+        .filter(note -> note.getPath().startsWith("/" + Note.TRASH_FOLDER + "/"))
         .filter(this::userHasOwnerPermission)
         .forEach(noteService::deleteNote);
     sendListNotesInfo(conn);
@@ -308,9 +314,9 @@ public class NoteHandler extends AbstractHandler {
   public void restoreAll(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     noteService.getAllNotes().stream()
         .filter(this::userHasOwnerPermission)
-        .filter(note -> note.getPath().startsWith("/" + TRASH_FOLDER + "/"))
+        .filter(note -> note.getPath().startsWith("/" + Note.TRASH_FOLDER + "/"))
         .forEach(note -> {
-          String notePath = normalizePath(note.getPath().substring(TRASH_FOLDER.length() + 1));
+          String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
           note.setPath(notePath);
           noteService.updateNote(note);
         });

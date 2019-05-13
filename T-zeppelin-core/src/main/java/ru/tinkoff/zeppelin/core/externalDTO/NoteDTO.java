@@ -36,8 +36,6 @@ public class NoteDTO {
 
     private List<ParagraphDTO> paragraphs = new ArrayList<>();
 
-    private boolean isRunning = false;
-
     private Scheduler scheduler;
 
     private Map<String, Object> config = new HashMap<>();
@@ -96,14 +94,6 @@ public class NoteDTO {
 
     public void setParagraphs(List<ParagraphDTO> paragraphs) {
         this.paragraphs = paragraphs;
-    }
-
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    public void setRunning(boolean running) {
-        isRunning = running;
     }
 
     public Scheduler getScheduler() {

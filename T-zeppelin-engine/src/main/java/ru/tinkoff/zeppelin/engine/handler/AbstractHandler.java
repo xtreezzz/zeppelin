@@ -16,6 +16,7 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
@@ -266,6 +267,6 @@ abstract class AbstractHandler {
       return false;
     }
     Status status = jobBatch.getStatus();
-    return status.equals(Status.PENDING) || status.equals(Status.RUNNING);
+    return Status.running.contains(status);
   }
 }

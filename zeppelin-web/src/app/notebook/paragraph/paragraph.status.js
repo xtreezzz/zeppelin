@@ -17,7 +17,8 @@ export const ParagraphStatus = {
   PENDING: 'PENDING',
   RUNNING: 'RUNNING',
   FINISHED: 'FINISHED',
-  ABORT: 'ABORT',
+  ABORTED: 'ABORTED',
+  ABORTING: 'ABORTING',
   ERROR: 'ERROR',
 };
 
@@ -30,5 +31,7 @@ export function isParagraphRunning(paragraph) {
     return false;
   }
 
-  return status === ParagraphStatus.PENDING || status === ParagraphStatus.RUNNING;
+  return status === ParagraphStatus.PENDING
+    || status === ParagraphStatus.RUNNING
+    || status === ParagraphStatus.ABORTING;
 }

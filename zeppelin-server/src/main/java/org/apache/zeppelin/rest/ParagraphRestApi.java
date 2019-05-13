@@ -1,12 +1,6 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.JsonObject;
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.rest.message.ParagraphRequest;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -14,15 +8,16 @@ import org.apache.zeppelin.websocket.handler.AbstractHandler.Permission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
+
+import java.security.InvalidParameterException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notebook/{noteId}/paragraph")
@@ -43,7 +38,7 @@ public class ParagraphRestApi extends AbstractRestApi {
 //    LOG.info("get paragraph {} {}", noteId, paragraphId);
     final Note note = secureLoadNote(noteId, Permission.READER);
     final ParagraphRequest response = new ParagraphRequest(getParagraph(note, paragraphId));
-    return new JsonResponse<>(HttpStatus.OK, "Paragraph info", response).build();
+    return new JsonResponse(HttpStatus.OK, "Paragraph info", response).build();
   }
 
   @GetMapping(value = "/{paragraphId}", produces = "application/json")
@@ -62,7 +57,7 @@ public class ParagraphRestApi extends AbstractRestApi {
     List<ParagraphRequest> response = noteService.getParagraphs(note).stream()
         .map(ParagraphRequest::new)
         .collect(Collectors.toList());
-    return new JsonResponse<>(HttpStatus.OK, "All note's paragraphs info", response).build();
+    return new JsonResponse(HttpStatus.OK, "All note's paragraphs info", response).build();
   }
 
   @GetMapping(value = "/get_all", produces = "application/json")
@@ -112,7 +107,7 @@ public class ParagraphRestApi extends AbstractRestApi {
 
     JsonObject response = new JsonObject();
     response.addProperty("paragraph_id", paragraph.getId());
-    return new JsonResponse<>(HttpStatus.OK, "Paragraph created", response).build();
+    return new JsonResponse(HttpStatus.OK, "Paragraph created", response).build();
   }
 
   @PostMapping(value = "/{paragraphId}/update", produces = "application/json")
