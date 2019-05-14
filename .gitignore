@@ -133,3 +133,5 @@ tramp
 
 # Git properties
 **/git.properties
+
+/workingDir

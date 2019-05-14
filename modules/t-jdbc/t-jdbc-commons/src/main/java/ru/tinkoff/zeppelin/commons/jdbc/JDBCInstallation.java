@@ -44,7 +44,9 @@ public class JDBCInstallation {
    * @return Absolute path to driver directory, {@code null} if installation failed.
    */
   @Nullable
-  public static String installDriver(@Nonnull final String artifact, final String repositoryURL) {
+  public static String installDriver(@Nonnull final String artifact,
+                                     final List<String> dependency,
+                                     final String repositoryURL) {
     if (isInstalled(artifact)) {
       return getDirectory(artifact);
     }
@@ -59,6 +61,9 @@ public class JDBCInstallation {
 
       final DependencyResolver dependencyResolver = new DependencyResolver(repos);
       dependencyResolver.load(artifact, folderToStore);
+      for (final String dep : dependency) {
+        dependencyResolver.load(dep, folderToStore);
+      }
       return folderToStore.getAbsolutePath();
     } catch (final Exception e) {
       uninstallDriver(artifact);

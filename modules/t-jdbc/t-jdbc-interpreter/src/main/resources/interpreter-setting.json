@@ -41,6 +41,14 @@
         "description": "JDBC Driver Maven Artifact",
         "type": "textarea"
       },
+      "driver.artifact.dependency": {
+        "envName": null,
+        "propertyName": "driver.artifact.dependency",
+        "defaultValue": "",
+        "currentValue": "",
+        "description": "JDBC Driver dependencies. Separator ';'",
+        "type": "textarea"
+      },
       "driver.maven.repository.url": {
         "envName": null,
         "propertyName": "driver.maven.repository.url",

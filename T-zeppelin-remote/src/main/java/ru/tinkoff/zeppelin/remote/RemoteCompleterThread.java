@@ -86,7 +86,7 @@ public class RemoteCompleterThread extends AbstractRemoteProcessThread implement
       release(completer);
 
       return result;
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       if (completer != null) {
         try {
           completer.close();

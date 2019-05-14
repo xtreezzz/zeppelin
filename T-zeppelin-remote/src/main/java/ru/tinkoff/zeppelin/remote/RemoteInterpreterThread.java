@@ -96,12 +96,17 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
                 interpreter.open(configuration, this.processClasspath);
               }
               result = interpreter.interpretV2(st, noteContext, userContext, configuration);
-            } catch (Exception e) {
-              result = PredefinedInterpreterResults.ERROR_WHILE_INTERPRET;
+            } catch (Throwable e) {
+              result = new InterpreterResult(
+                      InterpreterResult.Code.ERROR,
+                      new InterpreterResult.Message(
+                              InterpreterResult.Message.Type.TEXT,
+                              e.toString()
+                      ));
             }
             try {
               zeppelin.handleInterpreterResult(interpreter.getSessionUUID(), new Gson().toJson(result));
-            } catch (final Exception e) {
+            } catch (final Throwable e) {
               //skip
             }
             workingInstances.remove(interpreter);
@@ -113,7 +118,7 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
       }
     } catch (final RejectedExecutionException e) {
       return new PushResult(PushResultStatus.DECLINE, "", "");
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       return new PushResult(PushResultStatus.ERROR, "", "");
     }
   }
@@ -128,7 +133,7 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
         }
       }
       return new CancelResult(CancelResultStatus.NOT_FOUND, UUID, processUUID.toString());
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       return new CancelResult(CancelResultStatus.ERROR, UUID, processUUID.toString());
     }
   }
@@ -138,7 +143,7 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
     for (final Interpreter interpreter : workingInstances) {
       try {
         interpreter.cancel();
-      } catch (final Exception e) {
+      } catch (final Throwable e) {
         // log n skip
       }
     }

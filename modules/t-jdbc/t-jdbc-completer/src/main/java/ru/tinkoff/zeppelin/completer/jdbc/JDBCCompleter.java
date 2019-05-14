@@ -24,18 +24,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.Driver;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -68,6 +57,7 @@ public class JDBCCompleter extends Completer {
 
   private static final String DRIVER_CLASS_NAME_KEY = "driver.className";
   private static final String DRIVER_ARTIFACT_KEY = "driver.artifact";
+  private static final String DRIVER_ARTIFACT_DEPENDENCY = "driver.artifact.dependency";
   private static final String DRIVER_MAVEN_REPO_KEY = "driver.maven.repository.url";
 
   public JDBCCompleter() {
@@ -103,6 +93,7 @@ public class JDBCCompleter extends Completer {
       }
       final String className = configuration.get(DRIVER_CLASS_NAME_KEY);
       final String artifact = configuration.get(DRIVER_ARTIFACT_KEY);
+      final String artifactDependencies = configuration.get(DRIVER_ARTIFACT_DEPENDENCY);
       final String user = configuration.get(CONNECTION_USER_KEY);
       final String dbUrl = configuration.get(CONNECTION_URL_KEY);
       final String password = configuration.get(CONNECTION_PASSWORD_KEY);
@@ -117,7 +108,11 @@ public class JDBCCompleter extends Completer {
                 DRIVER_MAVEN_REPO_KEY,
                 "http://repo1.maven.org/maven2/"
         );
-        final String dir = JDBCInstallation.installDriver(artifact, repositpryURL);
+        final List<String> dependencies = new ArrayList<>();
+        if (artifactDependencies != null) {
+          dependencies.addAll(Arrays.asList(artifactDependencies.split(";")));
+        }
+        final String dir = JDBCInstallation.installDriver(artifact, dependencies, repositpryURL);
         if (dir != null && !dir.equals("")) {
           final File driverFolder = new File(dir);
           try {
