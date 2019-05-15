@@ -108,8 +108,8 @@ public class JDBCInterpreter extends Interpreter {
   @Override
   public boolean isAlive() {
     try {
-      return connection != null && !connection.isClosed();
-    } catch (final Exception e) {
+      return connection != null && !connection.isValid(5);
+    } catch (final Throwable e) {
       return false;
     }
   }
@@ -123,7 +123,7 @@ public class JDBCInterpreter extends Interpreter {
   public boolean isOpened() {
     try {
       return connection != null && !connection.isClosed();
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       return false;
     }
   }
@@ -199,10 +199,8 @@ public class JDBCInterpreter extends Interpreter {
   @Override
   public void cancel() {
     try {
-      if (query != null && !query.isClosed()) {
-        query.cancel();
-      }
-    } catch (final Exception e) {
+      query.cancel();
+    } catch (final Throwable e) {
       LOGGER.error("Failed to cancel", e);
     }
   }
@@ -212,12 +210,10 @@ public class JDBCInterpreter extends Interpreter {
    */
   @Override
   public void close() {
-    if (isAlive() && isOpened()) {
+    if (isOpened()) {
       try {
-        if (connection != null) {
-          connection.abort(Runnable::run);
-        }
-      } catch (final Exception e) {
+        connection.abort(Runnable::run);
+      } catch (final Throwable e) {
         LOGGER.error("Failed to close", e);
       }
     }
@@ -248,42 +244,38 @@ public class JDBCInterpreter extends Interpreter {
                                        @Nonnull final Map<String, String> noteContext,
                                        @Nonnull final Map<String, String> userContext,
                                        @Nonnull final Map<String, String> configuration) {
-    if (isOpened() && isAlive()) {
-      final Map<String, String> params = new HashMap<>();
-      params.putAll(noteContext);
-      params.putAll(userContext);
+    final Map<String, String> params = new HashMap<>();
+    params.putAll(noteContext);
+    params.putAll(userContext);
 
-      final String precode = configuration.get("query.precode");
-      if (precode != null && !precode.trim().equals("")) {
-        final InterpreterResult precodeResult = executeQuery(
-                JDBCInterpolation.interpolate(precode, params),
-                false
-        );
-        if (precodeResult.code().equals(Code.ERROR)) {
-          return precodeResult;
-        }
-      }
-
-      final InterpreterResult queryResult = executeQuery(
-              JDBCInterpolation.interpolate(st, params),
-              true
+    final String precode = configuration.get("query.precode");
+    if (precode != null && !precode.trim().equals("")) {
+      final InterpreterResult precodeResult = executeQuery(
+              JDBCInterpolation.interpolate(precode, params),
+              false
       );
-
-      final String postcode = configuration.get("query.postcode");
-      if (postcode != null && !postcode.trim().equals("")) {
-        final InterpreterResult postcodeResult = executeQuery(
-                JDBCInterpolation.interpolate(postcode, params),
-                false
-        );
-        if (postcodeResult.code().equals(Code.ERROR)) {
-          LOGGER.error("Postcode query failed: {}", postcodeResult.message());
-          close();
-        }
+      if (precodeResult.code().equals(Code.ERROR)) {
+        return precodeResult;
       }
-      return queryResult;
     }
-    return new InterpreterResult(Code.ERROR,
-            Collections.singletonList(new Message(Type.TEXT, "Interpreter is not opened")));
+
+    final InterpreterResult queryResult = executeQuery(
+            JDBCInterpolation.interpolate(st, params),
+            true
+    );
+
+    final String postcode = configuration.get("query.postcode");
+    if (postcode != null && !postcode.trim().equals("")) {
+      final InterpreterResult postcodeResult = executeQuery(
+              JDBCInterpolation.interpolate(postcode, params),
+              false
+      );
+      if (postcodeResult.code().equals(Code.ERROR)) {
+        LOGGER.error("Postcode query failed: {}", postcodeResult.message());
+        close();
+      }
+    }
+    return queryResult;
   }
 
   /**

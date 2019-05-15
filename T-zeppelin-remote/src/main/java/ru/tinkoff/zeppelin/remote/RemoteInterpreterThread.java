@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import org.apache.thrift.TProcessor;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
-import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.*;
 
 import java.util.Map;
