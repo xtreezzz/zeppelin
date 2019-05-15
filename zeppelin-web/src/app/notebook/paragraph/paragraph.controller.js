@@ -1873,6 +1873,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.runParagraphFromShortcut($scope.getEditorValue());
       } else if (keyEvent.ctrlKey && keyEvent.shiftKey && keyCode === 13) { // Ctrl + Shift + Enter
         $scope.runAllToOrFromThis($scope.paragraph);
+      } else if (keyEvent.ctrlKey && keyEvent.shiftKey && keyCode === 74) { // Ctrl + Shift + j
+        $scope.linkToParagraphInContext();
       } else if (keyEvent.ctrlKey && keyEvent.altKey && keyCode === 67) { // Ctrl + Alt + c
         $scope.cancelParagraph($scope.paragraph);
       } else if (keyEvent.ctrlKey && keyEvent.altKey && keyCode === 68) { // Ctrl + Alt + d
