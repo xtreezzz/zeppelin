@@ -19,6 +19,8 @@ package ru.tinkoff.zeppelin.engine.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -110,7 +112,7 @@ public class RemoteProcessStarter {
 
     try {
       AbstractRemoteProcess.starting(shebang, processType);
-      executor.execute(cmdLine, new HashMap<>(), handler);
+      executor.execute(cmdLine, System.getenv(), handler);
     } catch (final IOException e) {
       AbstractRemoteProcess.remove(shebang, processType);
     }

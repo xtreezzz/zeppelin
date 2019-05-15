@@ -192,9 +192,8 @@ public class PythonInterpreter extends Interpreter {
       };
 
       final Map<String, String> env = new HashMap<>();
-      /* for future */
-      //env.put("PYTHONPATH", "");
-      //env.put("PYTHONHOME", "");
+      env.putAll(System.getenv());
+      env.putAll(params);
 
       try {
         executor.execute(CommandLine.parse(cmd), env, handler);
@@ -260,7 +259,7 @@ public class PythonInterpreter extends Interpreter {
       }
       return result;
 
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.ERROR);
       result.add(new InterpreterResult.Message(InterpreterResult.Message.Type.TEXT, e.getLocalizedMessage()));
       return result;

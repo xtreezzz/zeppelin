@@ -74,17 +74,14 @@ public class AuthorizationService {
       return authenticationInfo;
     }
 
-    if (cache.containsKey(principal)) {
+    if (cache.containsKey(principal) && !cache.get(principal).getRoles().isEmpty()) {
       return cache.get(principal);
     } else {
       // load groups
       Set<String> principalRoles = new HashSet<>();
       for (final Realm realm : realms) {
         final ShiroSecurityService securityService = (ShiroSecurityService)realm;
-        if(securityService.getPrincipal() != null) {
-          principalRoles = securityService.getAssociatedRoles(principal);
-          break;
-        }
+          principalRoles.addAll(securityService.getAssociatedRoles(principal));
       }
       final AuthenticationInfo authenticationInfo
               = new AuthenticationInfo(principal, principalRoles);
