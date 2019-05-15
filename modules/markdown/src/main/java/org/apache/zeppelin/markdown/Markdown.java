@@ -17,12 +17,12 @@
 
 package org.apache.zeppelin.markdown;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
-
-import java.util.Map;
 
 /**
  * MarkdownInterpreter interpreter for Zeppelin.
@@ -92,7 +92,11 @@ public class Markdown extends Interpreter {
                                          final Map<String, String> userContext,
                                          final Map<String, String> configuration) {
         try {
-            final String html = parser.render(st);
+            final Map<String, String> params = new HashMap<>();
+            params.putAll(noteContext);
+            params.putAll(userContext);
+
+            final String html = parser.render(interpolate(st, params));
             final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.SUCCESS);
             result.message().add(new InterpreterResult.Message(InterpreterResult.Message.Type.HTML, html));
             return result;
@@ -102,5 +106,14 @@ public class Markdown extends Interpreter {
             result.message().add(new InterpreterResult.Message(InterpreterResult.Message.Type.TEXT, ""));
             return result;
         }
+    }
+
+    private static String interpolate(final String st,
+                                      final Map<String, String> intpContext) {
+        String afterInject = st;
+        for (final String var : intpContext.keySet()) {
+            afterInject = afterInject.replaceAll(var, intpContext.get(var));
+        }
+        return afterInject;
     }
 }
