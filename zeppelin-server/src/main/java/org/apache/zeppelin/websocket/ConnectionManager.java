@@ -66,13 +66,13 @@ public class ConnectionManager {
     sendColaborativeStatus(sessions);
   }
 
-  public void removeSubscriberFromNote(final Long noteId, final WebSocketSession socket) {
+  private void removeSubscriberFromNote(final Long noteId, final WebSocketSession socket) {
     LOGGER.debug("Remove connection {} from note: {}", socket, noteId);
     final Queue<WebSocketSession> sessions = noteSocketMap.get(noteId);
     if (sessions != null) {
       sessions.remove(socket);
+      sendColaborativeStatus(sessions);
     }
-    sendColaborativeStatus(sessions);
   }
 
   private void sendColaborativeStatus(final Queue<WebSocketSession> sessions) {
@@ -120,10 +120,20 @@ public class ConnectionManager {
     }
     LOGGER.debug("SEND >> " + m);
     for (final WebSocketSession session : sessions) {
-      try {
-        session.sendMessage(m.toSend());
-      } catch (final Exception e) {
-        LOGGER.error("Send error: " + m, e);
+      int i = 5;
+      while (i > 0) {
+        try {
+          i--;
+          session.sendMessage(m.toSend());
+          break;
+        } catch (final Exception e) {
+          LOGGER.error("Send error: " + m, e);
+          try {
+            Thread.sleep(10);
+          } catch (final Exception e1) {
+            //SKIP
+          }
+        }
       }
     }
   }

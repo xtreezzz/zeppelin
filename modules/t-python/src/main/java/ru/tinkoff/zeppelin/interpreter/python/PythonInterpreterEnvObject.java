@@ -24,11 +24,11 @@ public class PythonInterpreterEnvObject implements Serializable {
 
   private final String name;
   private final String className;
-  private final Object payload;
+  private final byte[] payload;
 
   public PythonInterpreterEnvObject(final String name,
                                     final String className,
-                                    final Object payload) {
+                                    final byte[] payload) {
     this.name = name;
     this.className = className;
     this.payload = payload;
@@ -42,7 +42,7 @@ public class PythonInterpreterEnvObject implements Serializable {
     return className;
   }
 
-  public Object getPayload() {
+  public byte[] getPayload() {
     return payload;
   }
 

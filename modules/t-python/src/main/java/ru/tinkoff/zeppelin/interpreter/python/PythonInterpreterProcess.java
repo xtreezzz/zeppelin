@@ -142,8 +142,12 @@ public class PythonInterpreterProcess {
           ObjectInputStream ois = new ObjectInputStream(fis);
           final List<PythonInterpreterEnvObject> envObjects = (List<PythonInterpreterEnvObject>) ois.readObject();
 
+          jep.eval("import pickle");
           for (final PythonInterpreterEnvObject envObject : envObjects) {
-            jep.set(envObject.getName(), Class.forName(envObject.getClassName()).cast(envObject.getPayload()));
+            //jep.set(envObject.getName(), Class.forName(envObject.getClassName()).cast(envObject.getPayload()));
+
+            jep.set(envObject.getName() + "_ZZ",  new String(envObject.getPayload()));
+            jep.eval(envObject.getName() + "=  pickle.loads(" + envObject.getName() + "_ZZ" + ")");
           }
         }
 
@@ -154,10 +158,11 @@ public class PythonInterpreterProcess {
         final List<PythonInterpreterEnvObject> envResult = new ArrayList<>();
         for (Map.Entry<String, Object> entry : params.entrySet()) {
           if (params.get(entry.getKey()).equals("ZEPPELIN_NULL")) {
+            jep.eval("import pickle");
             final PythonInterpreterEnvObject pieo = new PythonInterpreterEnvObject(
                     entry.getKey(),
                     jep.getValue(entry.getKey()).getClass().getName(),
-                    jep.getValue(entry.getKey())
+                    jep.getValue_bytearray("pickle.dumps(" + entry.getKey() + ")")
             );
             envResult.add(pieo);
           }
