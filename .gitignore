@@ -135,3 +135,4 @@ tramp
 **/git.properties
 
 /workingDir
+!/bin/note-teleport/NotesTeleport.jar
