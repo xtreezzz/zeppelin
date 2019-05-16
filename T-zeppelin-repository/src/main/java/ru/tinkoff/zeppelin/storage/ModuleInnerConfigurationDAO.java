@@ -26,7 +26,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.InterpreterProperty;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleProperty;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -86,10 +86,10 @@ public class ModuleInnerConfigurationDAO {
     final long id = resultSet.getLong("id");
     final String className = resultSet.getString("class_name");
 
-    final Map<String, InterpreterProperty> properties =
+    final Map<String, ModuleProperty> properties =
             new Gson().fromJson(
                     resultSet.getString("properties"),
-                    new TypeToken<Map<String, InterpreterProperty>>() {
+                    new TypeToken<Map<String, ModuleProperty>>() {
                     }.getType()
             );
     final Map<String, Object> editor =

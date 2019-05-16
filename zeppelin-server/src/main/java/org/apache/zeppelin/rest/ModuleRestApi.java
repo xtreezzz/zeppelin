@@ -18,6 +18,8 @@ package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
@@ -115,8 +117,11 @@ public class ModuleRestApi {
           moduleSettingBlockDTO.modules.add(moduleDTO);
         }
 
+        moduleSettingBlockDTO.modules.sort(Comparator.comparing(o -> o.configuration.getShebang()));
         moduleSettingsDTO.modules.add(moduleSettingBlockDTO);
       }
+
+      moduleSettingsDTO.modules.sort(Comparator.comparing(o -> o.moduleSource.getName()));
 
       return new JsonResponse(HttpStatus.OK, "", moduleSettingsDTO).build();
     } catch (final Exception e) {

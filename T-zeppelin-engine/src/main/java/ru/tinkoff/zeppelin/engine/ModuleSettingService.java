@@ -17,20 +17,26 @@
 
 package ru.tinkoff.zeppelin.engine;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.Repository;
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleProperty;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
 import ru.tinkoff.zeppelin.engine.server.ModuleInstaller;
 import ru.tinkoff.zeppelin.engine.server.RemoteProcessType;
 import ru.tinkoff.zeppelin.storage.ModuleConfigurationDAO;
+import ru.tinkoff.zeppelin.storage.ModuleInnerConfigurationDAO;
 import ru.tinkoff.zeppelin.storage.ModuleRepositoryDAO;
 import ru.tinkoff.zeppelin.storage.ModuleSourcesDAO;
 
@@ -40,20 +46,24 @@ public class ModuleSettingService {
   private final ModuleRepositoryDAO moduleRepositoryDAO;
   private final ModuleSourcesDAO moduleSourcesDAO;
   private final ModuleConfigurationDAO moduleConfigurationDAO;
+  private final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO;
 
   public ModuleSettingService(final ModuleRepositoryDAO moduleRepositoryDAO,
                               final ModuleSourcesDAO moduleSourcesDAO,
-                              final ModuleConfigurationDAO moduleConfigurationDAO) {
+                              final ModuleConfigurationDAO moduleConfigurationDAO,
+                              final ModuleInnerConfigurationDAO moduleInnerConfigurationDAO) {
     this.moduleRepositoryDAO = moduleRepositoryDAO;
     this.moduleSourcesDAO = moduleSourcesDAO;
     this.moduleConfigurationDAO = moduleConfigurationDAO;
+    this.moduleInnerConfigurationDAO = moduleInnerConfigurationDAO;
   }
 
   @PostConstruct
   private void init() {
     final Collection<ModuleConfiguration> configurations = moduleConfigurationDAO.getAll();
     moduleSourcesDAO.getAll().stream()
-            .filter(ModuleSource::isReinstallOnStart)
+            .filter(ms -> ms.isReinstallOnStart() && ms.getStatus() == ModuleSource.Status.INSTALLED
+                    || ms.getStatus() == ModuleSource.Status.INSTALLED && !ModuleInstaller.isInstalled(ms.getName()))
             .forEach(src -> {
               uninstallSource(src, false);
               installSource(src, true, false);
@@ -97,12 +107,54 @@ public class ModuleSettingService {
     }
 
     //2 check configuration file
+    final ModuleInnerConfiguration baseConfig;
     try {
-      ModuleInstaller.getDefaultConfig(source.getName());
+      baseConfig = ModuleInstaller.getDefaultConfig(source.getName());
     } catch (final Exception e) {
       ModuleInstaller.uninstallInterpreter(source.getName());
       throw new RuntimeException("Wrong zeppelin module configuration: " + e.getMessage());
     }
+
+    // update modules configuration
+    moduleConfigurationDAO.getAll().stream()
+            .filter(mc -> mc.getModuleSourceId() == source.getId())
+            .map(mc -> moduleInnerConfigurationDAO.getById(mc.getModuleInnerConfigId()))
+            .map(mic -> {
+              final Map<String, ModuleProperty> baseProps = baseConfig.getProperties();
+              final Map<String, ModuleProperty> currProps = mic.getProperties();
+
+              final List<String> currPropsList = new ArrayList<>(currProps.keySet());
+              for (final String name : currPropsList) {
+                if (!baseProps.containsKey(name)) {
+                  currProps.remove(name);
+                }
+              }
+              final List<String> basePropsList = new ArrayList<>(baseProps.keySet());
+              for (final String name : basePropsList) {
+                if (!currProps.containsKey(name)) {
+                  currProps.put(name, baseProps.get(name));
+                }
+              }
+
+              final Map<String, Object> baseEditor = baseConfig.getEditor();
+              final Map<String, Object> currEditor = mic.getEditor();
+
+              final List<String> currEditorList = new ArrayList<>(currEditor.keySet());
+              for (final String name : currEditorList) {
+                if (!baseEditor.containsKey(name)) {
+                  currEditor.remove(name);
+                }
+              }
+
+              final List<String> baseEditorList = new ArrayList<>(baseEditor.keySet());
+              for (final String name : baseEditorList) {
+                if (!currEditor.containsKey(name)) {
+                  currEditor.put(name, baseEditor.get(name));
+                }
+              }
+              return mic;
+            })
+            .forEach(mic -> moduleInnerConfigurationDAO.update(mic));
 
     if (!installSources) {
       ModuleInstaller.uninstallInterpreter(source.getName());

@@ -32,7 +32,7 @@ public class ModuleInnerConfiguration implements Serializable {
 
   private final String className;
 
-  private final Map<String, InterpreterProperty> properties;
+  private final Map<String, ModuleProperty> properties;
 
   private final Map<String, Object> editor;
 
@@ -40,7 +40,7 @@ public class ModuleInnerConfiguration implements Serializable {
   public ModuleInnerConfiguration(
           final long id,
           final String className,
-          final Map<String, InterpreterProperty> properties,
+          final Map<String, ModuleProperty> properties,
           final Map<String, Object> editor) {
     Preconditions.checkNotNull(className);
     Preconditions.checkNotNull(properties);
@@ -67,7 +67,7 @@ public class ModuleInnerConfiguration implements Serializable {
   }
 
   @Nonnull
-  public Map<String, InterpreterProperty> getProperties() {
+  public Map<String, ModuleProperty> getProperties() {
     Preconditions.checkNotNull(properties);
     return properties;
   }

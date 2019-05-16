@@ -29,7 +29,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * Property for registered interpreter
  */
-public class InterpreterProperty implements Serializable {
+public class ModuleProperty implements Serializable {
 
   /**
    * Types of interpreter properties
@@ -71,9 +71,9 @@ public class InterpreterProperty implements Serializable {
   @Nonnull
   private String type;
 
-  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
-      @Nonnull final Object defaultValue, @Nonnull final Object currentValue,
-      @Nonnull final String description, @Nonnull final String type) {
+  public ModuleProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+                        @Nonnull final Object defaultValue, @Nonnull final Object currentValue,
+                        @Nonnull final String description, @Nonnull final String type) {
     this.envName = envName;
     this.propertyName = propertyName;
     this.defaultValue = defaultValue;
@@ -82,9 +82,9 @@ public class InterpreterProperty implements Serializable {
     this.type = type;
   }
 
-  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
-      @Nonnull final Object defaultValue, @Nonnull final String description,
-      @Nonnull final String type) {
+  public ModuleProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+                        @Nonnull final Object defaultValue, @Nonnull final String description,
+                        @Nonnull final String type) {
     this.envName = envName;
     this.propertyName = propertyName;
     this.defaultValue = defaultValue;
@@ -92,8 +92,8 @@ public class InterpreterProperty implements Serializable {
     this.type = type;
   }
 
-  public InterpreterProperty(@Nonnull final String envName, @Nonnull final String propertyName,
-      @Nonnull final String defaultValue, @Nonnull final String description) {
+  public ModuleProperty(@Nonnull final String envName, @Nonnull final String propertyName,
+                        @Nonnull final String defaultValue, @Nonnull final String description) {
     this(envName, propertyName, defaultValue, description, Type.TEXTAREA.getValue());
   }
 
@@ -192,7 +192,7 @@ public class InterpreterProperty implements Serializable {
       return false;
     }
 
-    final InterpreterProperty that = (InterpreterProperty) o;
+    final ModuleProperty that = (ModuleProperty) o;
 
     return new EqualsBuilder()
         .append(envName, that.envName)
