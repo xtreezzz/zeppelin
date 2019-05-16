@@ -48,6 +48,14 @@
       "currentValue": "",
       "description": "Additional JVM args(used for inner JVM)",
       "type": "textarea"
+    },
+    "python.env.cache.folder": {
+      "envName": "PYTHON_ENV_CACHE_FOLDER",
+      "propertyName": "python.env.cache.folder",
+      "defaultValue": "./noteContext",
+      "currentValue": "./noteContext",
+      "description": "path to cache folder",
+      "type": "textarea"
     }
   },
   "editor": {

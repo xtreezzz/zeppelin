@@ -150,6 +150,11 @@ public class PythonInterpreter extends Interpreter {
       final String outputDest = instanceTempDir.getAbsolutePath() + "/" + getSessionUUID() + ".out";
       final File outputFile = new File(outputDest);
 
+      // craeate noteContext path
+      final File noteEnvFolder = new File(
+              configuration.getOrDefault("python.env.cache.folder", "./noteContext"),
+              params.get("Z_ENV_NOTE_UUID")
+      );
       // run java
       final String cmd = String.format("java " +
                       "%s" +
@@ -170,7 +175,7 @@ public class PythonInterpreter extends Interpreter {
               paramsFile.getAbsolutePath(),
               configuration.getOrDefault("python.jep.config.include.paths", StringUtils.EMPTY),
               configuration.getOrDefault("python.jep.config.python.home", StringUtils.EMPTY),
-              noteContext.get("Z_ENV_NOTE_STORAGE_DIR")
+              noteEnvFolder.getAbsolutePath()
       );
 
       // start server process
