@@ -107,7 +107,6 @@ public class PythonInterpreterProcess {
          final BufferedOutputStream bos = new BufferedOutputStream(fos);
          final PrintStream ps = new PrintStream(bos)) {
 
-      System.getenv("PYTHONPATH");
       System.setOut(ps);
       System.setErr(ps);
       Signal.handle(new Signal("TERM"), signal -> {
@@ -136,16 +135,15 @@ public class PythonInterpreterProcess {
 
         Files.createDirectories(new File(noteStorage).toPath());
 
+        final Map<String, PythonInterpreterEnvObject> envObjects = new HashMap<>();
         final File noteContextFile = new File(noteStorage + "/note.context");
         if(noteContextFile.exists()) {
           FileInputStream fis = new FileInputStream(noteContextFile);
           ObjectInputStream ois = new ObjectInputStream(fis);
-          final List<PythonInterpreterEnvObject> envObjects = (List<PythonInterpreterEnvObject>) ois.readObject();
 
+          envObjects.putAll((Map<String, PythonInterpreterEnvObject>) ois.readObject());
           jep.eval("import pickle");
-          for (final PythonInterpreterEnvObject envObject : envObjects) {
-            //jep.set(envObject.getName(), Class.forName(envObject.getClassName()).cast(envObject.getPayload()));
-
+          for (final PythonInterpreterEnvObject envObject : envObjects.values()) {
             jep.set(envObject.getName() + "_ZZ",  new String(envObject.getPayload()));
             jep.eval(envObject.getName() + "=  pickle.loads(" + envObject.getName() + "_ZZ" + ")");
           }
@@ -155,7 +153,6 @@ public class PythonInterpreterProcess {
         jep.runScript(pathToScript);
 
         // read updated values from pythin process
-        final List<PythonInterpreterEnvObject> envResult = new ArrayList<>();
         for (Map.Entry<String, Object> entry : params.entrySet()) {
           if (params.get(entry.getKey()).equals("ZEPPELIN_NULL")) {
             jep.eval("import pickle");
@@ -164,23 +161,23 @@ public class PythonInterpreterProcess {
                     jep.getValue(entry.getKey()).getClass().getName(),
                     jep.getValue_bytearray("pickle.dumps(" + entry.getKey() + ")")
             );
-            envResult.add(pieo);
+            envObjects.put(pieo.getName(), pieo);
           }
         }
         FileOutputStream fout = new FileOutputStream(noteContextFile);
         ObjectOutputStream oos = new ObjectOutputStream(fout);
-        oos.writeObject(envResult);
+        oos.writeObject(envObjects);
 
       } catch (final JepException je) {
         ps.println(je.getLocalizedMessage());
         throw new RuntimeException("Error");
 
-      } catch (final Exception e) {
+      } catch (final Throwable e) {
         e.printStackTrace(ps);
         throw new RuntimeException("Error");
       }
 
-    } catch (final Exception e) {
+    } catch (final Throwable e) {
       System.exit(1);
     }
     System.exit(0);

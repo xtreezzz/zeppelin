@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
+@SuppressWarnings("unused")
 public class PythonInterpreter extends Interpreter {
 
   private String classPath;
