@@ -41,7 +41,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 @RestController
-@RequestMapping("api/notebook/cron")
+@RequestMapping("api")
 public class CronRestApi {
 
   private static final Logger LOG = LoggerFactory.getLogger(CronRestApi.class);
@@ -64,7 +64,7 @@ public class CronRestApi {
    *
    * @return JSON with status.OK
    */
-  @PostMapping(value = "/{noteId}", produces = "application/json")
+  @PostMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
   public ResponseEntity registerCronJob(
       @PathVariable("noteId") final String noteIdParam,
       @RequestBody Map<String, String> params
@@ -134,7 +134,7 @@ public class CronRestApi {
    *
    * @return JSON with status.OK
    */
-  @GetMapping(value = "/check_valid", produces = "application/json")
+  @GetMapping(value = "/cron/check_valid", produces = "application/json")
   public ResponseEntity checkCronExpression(@RequestParam("cronExpression") final String expression)
       throws IllegalArgumentException {
     if (!CronExpression.isValidExpression(expression)) {
@@ -149,7 +149,7 @@ public class CronRestApi {
    * @param noteIdParam ID of Note
    * @return JSON with status.OK
    */
-  @DeleteMapping(value = "/{noteId}", produces = "application/json")
+  @DeleteMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
   public ResponseEntity removeCronJob(@PathVariable("noteId") final String noteIdParam)
       throws IOException, IllegalArgumentException {
     LOG.info("Remove cron job note {}", noteIdParam);
@@ -172,7 +172,7 @@ public class CronRestApi {
    * @param noteIdParam ID of Note
    * @return JSON with status.OK
    */
-  @GetMapping(value = "/{noteId}", produces = "application/json")
+  @GetMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
   public ResponseEntity getCronJob(@PathVariable("noteId") final String noteIdParam)
       throws IllegalArgumentException {
     LOG.info("Get cron job note {}", noteIdParam);

@@ -25,7 +25,7 @@ function CronCtrl($scope, $http, baseUrlSrv) {
   });
 
   function loadCronConfiguration() {
-    $http.get(`${baseUrlSrv.getRestApiBase()}/notebook/cron/` + noteId).then((response) => {
+    $http.get(`${baseUrlSrv.getRestApiBase()}/notebook/${noteId}/cron/`).then((response) => {
       $scope.cron.enable = response.data.body.enable;
       $scope.initCron(response.data.body.cron);
     });
@@ -303,7 +303,7 @@ function CronCtrl($scope, $http, baseUrlSrv) {
       return;
     }
     $http.get(
-      `${baseUrlSrv.getRestApiBase()}/notebook/cron/check_valid?cronExpression=` + exp)
+      `${baseUrlSrv.getRestApiBase()}/cron/check_valid?cronExpression=` + exp)
     .then(function(response) {
       if (response.data.status === 'OK') {
         $scope.cron.isValidCronExpression = response.data.message === 'valid';
