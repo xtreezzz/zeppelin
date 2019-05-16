@@ -244,10 +244,12 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
         || paragraph.status === ParagraphStatus.RUNNING
         || status === ParagraphStatus.ABORTING)) {
       // Check if result type is eiter TEXT or TABLE, if not then treat it like TEXT
-      if ([DefaultDisplayType.TEXT, DefaultDisplayType.TABLE].indexOf($scope.type) < 0) {
+      if ([DefaultDisplayType.TEXT,
+        DefaultDisplayType.TEXT_APPEND,
+        DefaultDisplayType.TABLE].indexOf($scope.type) < 0) {
         $scope.type = DefaultDisplayType.TEXT;
       }
-      if ($scope.type === DefaultDisplayType.TEXT) {
+      if ($scope.type === DefaultDisplayType.TEXT || $scope.type === DefaultDisplayType.TEXT_APPEND) {
         appendTextOutput(data.data);
       } else if ($scope.type === DefaultDisplayType.TABLE) {
         appendTableOutput(data);
@@ -316,7 +318,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
       return `${baseDOMId}_html`;
     } else if (type === DefaultDisplayType.ANGULAR) {
       return `${baseDOMId}_angular`;
-    } else if (type === DefaultDisplayType.TEXT) {
+    } else if (type === DefaultDisplayType.TEXT || type === DefaultDisplayType.TEXT_APPEND) {
       return `${baseDOMId}_text`;
     } else if (type === DefaultDisplayType.ELEMENT) {
       return `${baseDOMId}_elem`;
@@ -333,7 +335,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
         renderHtml(targetElemId, data);
       } else if (type === DefaultDisplayType.ANGULAR) {
         renderAngular(targetElemId, data);
-      } else if (type === DefaultDisplayType.TEXT) {
+      } else if (type === DefaultDisplayType.TEXT || type === DefaultDisplayType.TEXT_APPEND) {
         renderText(targetElemId, data, refresh);
       } else if (type === DefaultDisplayType.ELEMENT) {
         renderElem(targetElemId, data);

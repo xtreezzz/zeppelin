@@ -52,7 +52,10 @@ function ResizableDirective() {
           let colStep = window.innerWidth / 12;
           elem.off('resizestop');
           let conf = angular.copy(resizableConfig);
-          if (resize.graphType === 'TABLE' || resize.graphType === 'NETWORK' || resize.graphType === 'TEXT') {
+          if (resize.graphType === 'TABLE'
+            || resize.graphType === 'NETWORK'
+            || resize.graphType === 'TEXT'
+            || resize.graphType === 'TEXT_APPEND') {
             conf.grid = [colStep, 10];
             conf.minHeight = 100;
           } else {

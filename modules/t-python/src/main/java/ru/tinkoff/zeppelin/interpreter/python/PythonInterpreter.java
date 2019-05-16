@@ -18,11 +18,9 @@ package ru.tinkoff.zeppelin.interpreter.python;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -39,6 +37,7 @@ public class PythonInterpreter extends Interpreter {
 
   private String classPath;
   private ExecuteWatchdog watchdog;
+  private int lastAppendCursor;
 
   public PythonInterpreter() {
     super();
@@ -100,7 +99,7 @@ public class PythonInterpreter extends Interpreter {
     watchdog = new ExecuteWatchdog(watchdogTime);
 
     final String additionalJvmArgs = configuration
-        .getOrDefault("python.subprocess.java.args", StringUtils.EMPTY);
+            .getOrDefault("python.subprocess.java.args", StringUtils.EMPTY);
 
     try {
       if (!instanceTempDir.mkdirs()) {
@@ -214,9 +213,11 @@ public class PythonInterpreter extends Interpreter {
         return result;
       }
 
+      lastAppendCursor = 0;
       while (interpreterResults.isEmpty()) {
         try {
-          Thread.sleep(50);
+          appendOutput(instanceTempDir);
+          Thread.sleep(100);
         } catch (final Exception e) {
           // SKIP
         }
@@ -244,7 +245,7 @@ public class PythonInterpreter extends Interpreter {
               break;
             case "txt":
             case "out":
-            //case "params": // DEBUG
+              //case "params": // DEBUG
               type = InterpreterResult.Message.Type.TEXT;
               break;
             default:
@@ -254,7 +255,7 @@ public class PythonInterpreter extends Interpreter {
             String payload = String.format(
                     "<div style='width:auto;height:auto'>" +
                             "<img src=data:image/%s;base64,%s  style='width=auto;height:auto'/>" +
-                     "</div>",
+                            "</div>",
                     extension,
                     new String(Base64.getEncoder().encode(FileUtils.readFileToByteArray(file))));
             result.add(new InterpreterResult.Message(InterpreterResult.Message.Type.HTML, payload));
@@ -276,6 +277,31 @@ public class PythonInterpreter extends Interpreter {
       } catch (final Exception e) {
         // SKIP
       }
+    }
+  }
+
+  private void appendOutput(final File instanceTempDir) {
+    final File[] files;
+    if ((files = instanceTempDir.listFiles()) == null) {
+      return;
+    }
+
+    final File out = Arrays.stream(files)
+            .filter(f -> "out".equals(FilenameUtils.getExtension(f.getName()).toLowerCase()))
+            .findFirst()
+            .orElse(null);
+    if (out == null) {
+      return;
+    }
+
+    try {
+      final String data = FileUtils.readFileToString(out, "UTF-8");
+      if (data.length() > lastAppendCursor) {
+        getResultAppender().accept(data.substring(lastAppendCursor));
+        lastAppendCursor = data.length();
+      }
+    } catch (final Exception e) {
+      //SKIP
     }
   }
 }

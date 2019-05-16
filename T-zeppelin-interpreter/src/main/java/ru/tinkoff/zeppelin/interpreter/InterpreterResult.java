@@ -69,6 +69,7 @@ public class InterpreterResult implements Serializable {
 
     public enum Type {
       TEXT,
+      TEXT_APPEND,
       HTML,
       ANGULAR,
       TABLE,

@@ -26,6 +26,7 @@ import java.util.*;
 
 public class PythonInterpreterProcess {
 
+  @SuppressWarnings("unchecked")
   public static void main(final String[] args) throws JepException {
 
     final Options options = new Options();
@@ -115,6 +116,22 @@ public class PythonInterpreterProcess {
         System.exit(1);
       });
 
+      // Lambda Runnable
+      final Runnable flusher = () -> {
+        while (!Thread.interrupted()) {
+          try {
+            ps.flush();
+            bos.flush();
+            fos.flush();
+            Thread.sleep(10);
+          } catch (final Exception e) {
+            //Skip
+          }
+        }
+      };
+      final Thread flusherThread = new Thread(flusher);
+      flusherThread.start();
+
       try (final Jep jep = new Jep(jepConfig)) {
         jep.setInteractive(true);
 
@@ -137,20 +154,21 @@ public class PythonInterpreterProcess {
 
         final Map<String, PythonInterpreterEnvObject> envObjects = new HashMap<>();
         final File noteContextFile = new File(noteStorage + "/note.context");
-        if(noteContextFile.exists()) {
+        if (noteContextFile.exists()) {
           FileInputStream fis = new FileInputStream(noteContextFile);
           ObjectInputStream ois = new ObjectInputStream(fis);
 
           envObjects.putAll((Map<String, PythonInterpreterEnvObject>) ois.readObject());
           jep.eval("import pickle");
           for (final PythonInterpreterEnvObject envObject : envObjects.values()) {
-            jep.set(envObject.getName() + "_ZZ",  new String(envObject.getPayload()));
+            jep.set(envObject.getName() + "_ZZ", new String(envObject.getPayload()));
             jep.eval(envObject.getName() + "=  pickle.loads(" + envObject.getName() + "_ZZ" + ")");
           }
         }
 
         // execute script
         jep.runScript(pathToScript);
+        flusherThread.interrupt();
 
         // read updated values from pythin process
         for (Map.Entry<String, Object> entry : params.entrySet()) {
@@ -167,6 +185,9 @@ public class PythonInterpreterProcess {
         FileOutputStream fout = new FileOutputStream(noteContextFile);
         ObjectOutputStream oos = new ObjectOutputStream(fout);
         oos.writeObject(envObjects);
+
+        // sleep for 100 ms
+        Thread.sleep(100);
 
       } catch (final JepException je) {
         ps.println(je.getLocalizedMessage());

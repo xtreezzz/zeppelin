@@ -21,6 +21,7 @@ export const DefaultDisplayType = {
   HTML: 'HTML',
   ANGULAR: 'ANGULAR',
   TEXT: 'TEXT',
+  TEXT_APPEND: 'TEXT_APPEND',
   NETWORK: 'NETWORK',
 };
 
@@ -30,6 +31,7 @@ export const DefaultDisplayMagic = {
   '%html': DefaultDisplayType.HTML,
   '%angular': DefaultDisplayType.ANGULAR,
   '%text': DefaultDisplayType.TEXT,
+  '%text_append': DefaultDisplayType.TEXT_APPEND,
   '%network': DefaultDisplayType.NETWORK,
 };
 

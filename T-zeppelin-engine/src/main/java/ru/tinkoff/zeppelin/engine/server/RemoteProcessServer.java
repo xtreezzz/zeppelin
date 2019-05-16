@@ -17,7 +17,6 @@
 package ru.tinkoff.zeppelin.engine.server;
 
 import com.google.gson.Gson;
-import java.util.List;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -30,6 +29,8 @@ import ru.tinkoff.zeppelin.interpreter.PredefinedInterpreterResults;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.ZeppelinThriftService;
 import ru.tinkoff.zeppelin.storage.ZLog;
+
+import java.util.List;
 
 /**
  * Thrift server for external interpreter process
@@ -73,11 +74,20 @@ public class RemoteProcessServer {
         @Override
         public void handleInterpreterResult(final String UUID, final String payload) {
           try {
-            InterpreterResultHandler.getInstance().handle(UUID, new Gson().fromJson(payload, InterpreterResult.class));
-          } catch (final Exception e) {
+            InterpreterResultHandler.getInstance().handleResult(UUID, new Gson().fromJson(payload, InterpreterResult.class));
+          } catch (final Throwable e) {
             final InterpreterResult error = PredefinedInterpreterResults.ERROR_WHILE_INTERPRET;
             error.add(new InterpreterResult.Message(InterpreterResult.Message.Type.TEXT, e.getMessage()));
-            InterpreterResultHandler.getInstance().handle(UUID, error);
+            InterpreterResultHandler.getInstance().handleResult(UUID, error);
+          }
+        }
+
+        @Override
+        public void handleInterpreterAppend(final String UUID, final String append) {
+          try {
+            InterpreterResultHandler.getInstance().handleAppend(UUID, append);
+          } catch (final Throwable e) {
+            // SKIP
           }
         }
       });

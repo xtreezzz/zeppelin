@@ -42,6 +42,19 @@ public class JobResultDAO {
             "        :TYPE,\n" +
             "        :RESULT);";
 
+    private static final String UPDATE_PAYLOAD = "" +
+            "UPDATE JOB_RESULT\n" +
+            "SET JOB_ID     = :JOB_ID,\n" +
+            "    CREATED_AT = :CREATED_AT,\n" +
+            "    TYPE       = :TYPE,\n" +
+            "    RESULT     = :RESULT\n" +
+            "WHERE ID = :ID;";
+
+    private static final String DELETE_PAYLOAD = "" +
+            "DELETE\n" +
+            "FROM JOB_RESULT\n" +
+            "WHERE ID = :ID;";
+
     private static final String LOAD_PAYLOAD_BY_ID = "SELECT ID,\n" +
             "       JOB_ID,\n" +
             "       CREATED_AT,\n" +
@@ -92,6 +105,23 @@ public class JobResultDAO {
 
         jobResult.setId((Long) holder.getKeys().get("id"));
         return jobResult;
+    }
+
+    public JobResult update(final JobResult jobResult) {
+        final SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("JOB_ID", jobResult.getJobId())
+                .addValue("CREATED_AT", jobResult.getCreatedAt())
+                .addValue("TYPE", jobResult.getType())
+                .addValue("RESULT", jobResult.getResult())
+                .addValue("ID", jobResult.getId());
+        namedParameterJdbcTemplate.update(UPDATE_PAYLOAD, parameters);
+        return jobResult;
+    }
+
+    public void delete(final long id) {
+        final SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ID", id);
+        namedParameterJdbcTemplate.update(DELETE_PAYLOAD, parameters);
     }
 
     public JobResult get(final Long jobResultId) {

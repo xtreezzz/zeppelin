@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.engine.handler;
 
 import javax.annotation.PostConstruct;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -71,28 +72,19 @@ public class InterpreterResultHandler extends AbstractHandler {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handle(final String interpreterJobUUID,
-                     final InterpreterResult interpreterResult) {
+  public void handleResult(final String interpreterJobUUID,
+                           final InterpreterResult interpreterResult) {
 
-    Job job = null;
-    // задержка на закрытие транзакций
-    for (int i = 0; i < 2 * 10 * 60 ; i++ ) {
-      job = jobDAO.getByInterpreterJobUUID(interpreterJobUUID);
-      if (job != null) {
-        break;
-      }
-      try {
-        Thread.sleep(100);
-      } catch (final Exception e) {
-        // SKIp
-      }
-    }
+    Job job = getWithTimeout(interpreterJobUUID);
 
     if (job == null) {
       ZLog.log(ET.JOB_NOT_FOUND, "Job not found by uuid=" + interpreterJobUUID,
           "Job not found by uuid=" + interpreterJobUUID,"Unknown");
       return;
     }
+
+    // clear appended results
+    deleteAppend(job);
 
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
     ZLog.log(ET.GOT_JOB,
@@ -111,7 +103,7 @@ public class InterpreterResultHandler extends AbstractHandler {
       return;
     }
 
-    if(interpreterResult == null) {
+    if (interpreterResult == null) {
       ZLog.log(ET.INTERPRETER_RESULT_NOT_FOUND,
           String.format("Handler got null result, interpreterJobUUID=%s", interpreterJobUUID),
           String.format("Handler got null result, interpreterJobUUID=%s", interpreterJobUUID),
@@ -145,5 +137,39 @@ public class InterpreterResultHandler extends AbstractHandler {
         setErrorResult(job, batch, interpreterResult);
         break;
     }
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void handleAppend(final String interpreterJobUUID,
+                           final String append) {
+
+    Job job = getWithTimeout(interpreterJobUUID);
+    if (job == null) {
+      ZLog.log(ET.JOB_NOT_FOUND, "Job not found by uuid=" + interpreterJobUUID,
+              "Job not found by uuid=" + interpreterJobUUID, "Unknown");
+      return;
+    }
+
+    if (job.getStatus() != Job.Status.RUNNING) {
+      return;
+    }
+    appendOutput(job, append);
+  }
+
+  private Job getWithTimeout(final String interpreterJobUUID) {
+    Job job = null;
+    // задержка на закрытие транзакций
+    for (int i = 0; i < 2 * 10 * 60; i++) {
+      job = jobDAO.getByInterpreterJobUUID(interpreterJobUUID);
+      if (job != null) {
+        break;
+      }
+      try {
+        Thread.sleep(100);
+      } catch (final Exception e) {
+        // SKIp
+      }
+    }
+    return job;
   }
 }

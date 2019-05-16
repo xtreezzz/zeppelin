@@ -16,7 +16,6 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.*;
@@ -29,6 +28,7 @@ import ru.tinkoff.zeppelin.storage.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Base class for handlers
@@ -268,5 +268,35 @@ abstract class AbstractHandler {
     }
     Status status = jobBatch.getStatus();
     return Status.running.contains(status);
+  }
+
+  void appendOutput(final Job job, final String append) {
+    final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
+
+    final List<JobResult> results = jobResultDAO.getByJobId(job.getId()).stream()
+            .filter(j -> InterpreterResult.Message.Type.TEXT_APPEND.name().equals(j.getType()))
+            .collect(Collectors.toList());
+
+    if(results.isEmpty()) {
+      final JobResult jobResult = new JobResult();
+      jobResult.setJobId(job.getId());
+      jobResult.setCreatedAt(LocalDateTime.now());
+      jobResult.setType(InterpreterResult.Message.Type.TEXT_APPEND.name());
+      jobResult.setResult(append);
+      jobResultDAO.persist(jobResult);
+    } else {
+      final JobResult jobResult = results.get(0);
+      jobResult.setResult(jobResult.getResult() + append);
+      jobResultDAO.update(jobResult);
+    }
+
+    final ParagraphDTO after = fullParagraphDAO.getById(job.getParagraphId());
+    EventService.publish(job.getNoteId(), before, after);
+  }
+
+  void deleteAppend(final Job job) {
+    jobResultDAO.getByJobId(job.getId()).stream()
+            .filter(j -> InterpreterResult.Message.Type.TEXT_APPEND.name().equals(j.getType()))
+            .forEach(j -> jobResultDAO.delete(j.getId()));
   }
 }

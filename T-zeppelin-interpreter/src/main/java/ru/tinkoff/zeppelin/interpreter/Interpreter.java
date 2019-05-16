@@ -17,6 +17,7 @@
 package ru.tinkoff.zeppelin.interpreter;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 public abstract class Interpreter extends Base {
 
@@ -32,6 +33,14 @@ public abstract class Interpreter extends Base {
     this.sessionUUID = sessionUUID;
   }
 
+  private Consumer<String> resultAppender;
+  protected Consumer<String> getResultAppender() {
+    return resultAppender;
+  }
+
+  public void setResultAppender(final Consumer<String> resultAppender) {
+    this.resultAppender = resultAppender;
+  }
 
   public Interpreter() { }
 
