@@ -88,6 +88,12 @@ public class ParagraphRestApi extends AbstractRestApi {
       throw new InvalidParameterException("Paragraph 'shebang' not defined");
     }
 
+    if (!StringUtils.isEmpty(request.getTitle()) && request.getTitle().length() > 256) {
+      throw new InvalidParameterException("Max paragraph title length is 256. Current " +
+              request.getTitle().length() +
+              ". Title: " + request.getTitle());
+    }
+
     Paragraph paragraph = new Paragraph();
     paragraph.setNoteId(note.getId());
     paragraph.setTitle(request.getTitle());
