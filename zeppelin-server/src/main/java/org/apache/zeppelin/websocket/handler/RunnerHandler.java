@@ -18,6 +18,10 @@
 package org.apache.zeppelin.websocket.handler;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -30,6 +34,10 @@ import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteExecutorService;
 import ru.tinkoff.zeppelin.engine.NoteService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RunnerHandler extends AbstractHandler {
@@ -57,8 +65,24 @@ public class RunnerHandler extends AbstractHandler {
   public void runAllParagraphs(final WebSocketSession conn, final SockMessage fromMessage) {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("noteId", fromMessage, Permission.RUNNER, authenticationInfo, conn);
+    List<Paragraph> paragraphsForRun = noteService.getParagraphs(note);
+
+    //filter for run several paragraph
+    String json = fromMessage.getOrDefault("paragraphs", null);
+    if (!StringUtils.isEmpty(json)) {
+      JsonArray paragraphs = new JsonParser().parse(json).getAsJsonArray();
+      List<String> paragraphUuids = new ArrayList<>(paragraphs.size());
+      for (JsonElement paragraph : paragraphs) {
+        String uuid = paragraph.getAsJsonObject().get("id").getAsString();
+        paragraphUuids.add(uuid);
+      }
+      paragraphsForRun = paragraphsForRun.stream()
+          .filter(p -> paragraphUuids.contains(p.getUuid()))
+          .collect(Collectors.toList());
+    }
+
     noteExecutorService.run(note,
-            noteService.getParagraphs(note),
+            paragraphsForRun,
             authenticationInfo.getUser(),
             authenticationInfo.getRoles());
   }
