@@ -102,6 +102,11 @@ function WebsocketEventFactory($rootScope, $websocket, $location, baseUrlSrv, ng
         buttons: btn,
       });
     } else if (op === 'PARAGRAPH') {
+      if (data.paragraph.results &&
+        data.paragraph.results.msg &&
+        data.paragraph.results.msg[0].type === 'TEXT_TEMP') {
+        data.paragraph.results.msg[0].type = 'TEXT';
+      }
       $rootScope.$broadcast('updateParagraph', data);
     } else if (op === 'PATCH_PARAGRAPH') {
       $rootScope.$broadcast('patchReceived', data);
