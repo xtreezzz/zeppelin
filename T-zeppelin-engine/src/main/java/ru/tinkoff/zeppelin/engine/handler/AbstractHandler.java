@@ -270,23 +270,23 @@ abstract class AbstractHandler {
     return Status.running.contains(status);
   }
 
-  void appendOutput(final Job job, final String append) {
+  void publishTempOutput(final Job job, final String tempText) {
     final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
     final List<JobResult> results = jobResultDAO.getByJobId(job.getId()).stream()
-            .filter(j -> InterpreterResult.Message.Type.TEXT_APPEND.name().equals(j.getType()))
+            .filter(j -> InterpreterResult.Message.Type.TEXT_TEMP.name().equals(j.getType()))
             .collect(Collectors.toList());
 
     if(results.isEmpty()) {
       final JobResult jobResult = new JobResult();
       jobResult.setJobId(job.getId());
       jobResult.setCreatedAt(LocalDateTime.now());
-      jobResult.setType(InterpreterResult.Message.Type.TEXT_APPEND.name());
-      jobResult.setResult(append);
+      jobResult.setType(InterpreterResult.Message.Type.TEXT_TEMP.name());
+      jobResult.setResult(tempText);
       jobResultDAO.persist(jobResult);
     } else {
       final JobResult jobResult = results.get(0);
-      jobResult.setResult(jobResult.getResult() + append);
+      jobResult.setResult(tempText);
       jobResultDAO.update(jobResult);
     }
 
@@ -294,9 +294,9 @@ abstract class AbstractHandler {
     EventService.publish(job.getNoteId(), before, after);
   }
 
-  void deleteAppend(final Job job) {
+  void removeTempOutput(final Job job) {
     jobResultDAO.getByJobId(job.getId()).stream()
-            .filter(j -> InterpreterResult.Message.Type.TEXT_APPEND.name().equals(j.getType()))
+            .filter(j -> InterpreterResult.Message.Type.TEXT_TEMP.name().equals(j.getType()))
             .forEach(j -> jobResultDAO.delete(j.getId()));
   }
 }

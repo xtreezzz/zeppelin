@@ -33,13 +33,13 @@ public abstract class Interpreter extends Base {
     this.sessionUUID = sessionUUID;
   }
 
-  private Consumer<String> resultAppender;
-  protected Consumer<String> getResultAppender() {
-    return resultAppender;
+  private Consumer<String> tempTextPublisher;
+  protected Consumer<String> getTempTextPublisher() {
+    return tempTextPublisher;
   }
 
-  public void setResultAppender(final Consumer<String> resultAppender) {
-    this.resultAppender = resultAppender;
+  public void setTempTextPublisher(final Consumer<String> tempTextPublisher) {
+    this.tempTextPublisher = tempTextPublisher;
   }
 
   public Interpreter() { }

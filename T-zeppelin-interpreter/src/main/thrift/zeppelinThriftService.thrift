@@ -32,6 +32,6 @@ service ZeppelinThriftService {
 
   void handleInterpreterResult(1: string UUID, 2: string payload);
 
-  void handleInterpreterAppend(1: string UUID, 2: string append);
+  void handleInterpreterTempOutput(1: string UUID, 2: string tempOutput);
 
 }

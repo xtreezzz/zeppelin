@@ -83,9 +83,9 @@ public class RemoteProcessServer {
         }
 
         @Override
-        public void handleInterpreterAppend(final String UUID, final String append) {
+        public void handleInterpreterTempOutput(final String UUID, final String append) {
           try {
-            InterpreterResultHandler.getInstance().handleAppend(UUID, append);
+            InterpreterResultHandler.getInstance().handleTempOutput(UUID, append);
           } catch (final Throwable e) {
             // SKIP
           }

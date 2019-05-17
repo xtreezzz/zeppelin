@@ -23,11 +23,11 @@
         <artifactId>zeppelin</artifactId>
         <groupId>org.apache.zeppelin</groupId>
         <version>1.0.0-T-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>t-python</artifactId>
+    <artifactId>t-python-condition</artifactId>
 
     <dependencies>
         <dependency>
@@ -35,6 +35,12 @@
             <artifactId>T-zeppelin-interpreter</artifactId>
             <version>1.0.0-T-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.zeppelin</groupId>
+            <artifactId>t-python-commons</artifactId>
+            <version>1.0.0-T-SNAPSHOT</version>
         </dependency>
 
         <dependency>

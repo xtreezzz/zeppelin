@@ -84,7 +84,7 @@ public class InterpreterResultHandler extends AbstractHandler {
     }
 
     // clear appended results
-    deleteAppend(job);
+    removeTempOutput(job);
 
     final JobBatch batch = jobBatchDAO.get(job.getBatchId());
     ZLog.log(ET.GOT_JOB,
@@ -140,8 +140,8 @@ public class InterpreterResultHandler extends AbstractHandler {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handleAppend(final String interpreterJobUUID,
-                           final String append) {
+  public void handleTempOutput(final String interpreterJobUUID,
+                               final String append) {
 
     Job job = getWithTimeout(interpreterJobUUID);
     if (job == null) {
@@ -153,7 +153,7 @@ public class InterpreterResultHandler extends AbstractHandler {
     if (job.getStatus() != Job.Status.RUNNING) {
       return;
     }
-    appendOutput(job, append);
+    publishTempOutput(job, append);
   }
 
   private Job getWithTimeout(final String interpreterJobUUID) {

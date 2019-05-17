@@ -33,15 +33,10 @@ import ru.tinkoff.zeppelin.interpreter.Interpreter;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
 
 @SuppressWarnings("unused")
-public class PythonInterpreter extends Interpreter {
+public abstract class AbstractPythonInterpreter extends Interpreter {
 
   private String classPath;
   private ExecuteWatchdog watchdog;
-  private int lastAppendCursor;
-
-  public PythonInterpreter() {
-    super();
-  }
 
   @Override
   public boolean isAlive() {
@@ -77,11 +72,10 @@ public class PythonInterpreter extends Interpreter {
     }
   }
 
-  @Override
-  public InterpreterResult interpretV2(String st,
-                                       Map<String, String> noteContext,
-                                       Map<String, String> userContext,
-                                       Map<String, String> configuration) {
+  PythonInterpreterResult execute(String st,
+                                         Map<String, String> noteContext,
+                                         Map<String, String> userContext,
+                                         Map<String, String> configuration) {
     final Map<String, String> params = new HashMap<>();
     params.putAll(noteContext);
     params.putAll(userContext);
@@ -109,7 +103,8 @@ public class PythonInterpreter extends Interpreter {
         );
         final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.ERROR);
         result.add(errMessage);
-        return result;
+
+        return new PythonInterpreterResult(-1, result);
       }
 
       if (!jepLibrary.exists()) {
@@ -119,7 +114,7 @@ public class PythonInterpreter extends Interpreter {
         );
         final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.ERROR);
         result.add(errMessage);
-        return result;
+        return new PythonInterpreterResult(-1, result);
       }
 
       // copy jep lib into workingDir
@@ -182,17 +177,21 @@ public class PythonInterpreter extends Interpreter {
       executor.setWorkingDirectory(instanceTempDir.getAbsoluteFile());
       executor.setWatchdog(watchdog);
 
-      final ConcurrentLinkedQueue<InterpreterResult> interpreterResults = new ConcurrentLinkedQueue<>();
+      final ConcurrentLinkedQueue<PythonInterpreterResult> interpreterResults = new ConcurrentLinkedQueue<>();
 
       final ExecuteResultHandler handler = new ExecuteResultHandler() {
         @Override
         public void onProcessComplete(final int exitValue) {
-          interpreterResults.add(new InterpreterResult(InterpreterResult.Code.SUCCESS));
+          interpreterResults.add(
+                  new PythonInterpreterResult(exitValue, new InterpreterResult(InterpreterResult.Code.SUCCESS))
+          );
         }
 
         @Override
         public void onProcessFailed(final ExecuteException e) {
-          interpreterResults.add(new InterpreterResult(InterpreterResult.Code.ERROR));
+          interpreterResults.add(
+                  new PythonInterpreterResult(e.getExitValue(), new InterpreterResult(InterpreterResult.Code.ERROR))
+          );
         }
       };
 
@@ -210,20 +209,20 @@ public class PythonInterpreter extends Interpreter {
         );
         final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.ERROR);
         result.add(errMessage);
-        return result;
+        return new PythonInterpreterResult(-1, result);
       }
 
-      lastAppendCursor = 0;
+      int lastAppendCursor = 0;
       while (interpreterResults.isEmpty()) {
         try {
-          appendOutput(instanceTempDir);
+          lastAppendCursor = appendOutput(instanceTempDir, lastAppendCursor);
           Thread.sleep(100);
         } catch (final Exception e) {
           // SKIP
         }
       }
 
-      final InterpreterResult result = interpreterResults.poll();
+      final PythonInterpreterResult result = interpreterResults.poll();
       // read files from dir and add interpreter result
       final File[] files = instanceTempDir.listFiles();
       if (files != null) {
@@ -258,9 +257,13 @@ public class PythonInterpreter extends Interpreter {
                             "</div>",
                     extension,
                     new String(Base64.getEncoder().encode(FileUtils.readFileToByteArray(file))));
-            result.add(new InterpreterResult.Message(InterpreterResult.Message.Type.HTML, payload));
+            result.getInterpreterResult().add(
+                    new InterpreterResult.Message(InterpreterResult.Message.Type.HTML, payload)
+            );
           } else if (type != null) {
-            result.add(new InterpreterResult.Message(type, FileUtils.readFileToString(file, "UTF-8")));
+            result.getInterpreterResult().add(
+                    new InterpreterResult.Message(type, FileUtils.readFileToString(file, "UTF-8"))
+            );
           }
         }
       }
@@ -269,7 +272,7 @@ public class PythonInterpreter extends Interpreter {
     } catch (final Throwable e) {
       final InterpreterResult result = new InterpreterResult(InterpreterResult.Code.ERROR);
       result.add(new InterpreterResult.Message(InterpreterResult.Message.Type.TEXT, e.getLocalizedMessage()));
-      return result;
+      return new PythonInterpreterResult(-1, result);
 
     } finally {
       try {
@@ -280,10 +283,10 @@ public class PythonInterpreter extends Interpreter {
     }
   }
 
-  private void appendOutput(final File instanceTempDir) {
+  private int appendOutput(final File instanceTempDir, int lastAppendCursor) {
     final File[] files;
     if ((files = instanceTempDir.listFiles()) == null) {
-      return;
+      return lastAppendCursor;
     }
 
     final File out = Arrays.stream(files)
@@ -291,17 +294,18 @@ public class PythonInterpreter extends Interpreter {
             .findFirst()
             .orElse(null);
     if (out == null) {
-      return;
+      return lastAppendCursor;
     }
 
     try {
       final String data = FileUtils.readFileToString(out, "UTF-8");
       if (data.length() > lastAppendCursor) {
-        getResultAppender().accept(data.substring(lastAppendCursor));
+        getTempTextPublisher().accept(data);
         lastAppendCursor = data.length();
       }
     } catch (final Exception e) {
       //SKIP
     }
+    return lastAppendCursor;
   }
 }

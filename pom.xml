@@ -69,7 +69,9 @@
     <module>modules/t-jdbc/t-jdbc-interpreter</module>
     <module>modules/t-jdbc/t-jdbc-completer</module>
 
-    <module>modules/t-python</module>
+    <module>modules/t-python/t-python-commons</module>
+    <module>modules/t-python/t-python-interpreter</module>
+    <module>modules/t-python/t-python-condition</module>
     <module>modules/markdown</module>
   </modules>
 

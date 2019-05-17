@@ -87,9 +87,9 @@ public class RemoteInterpreterThread extends AbstractRemoteProcessThread impleme
         executor.submit(() -> {
           synchronized (interpreter) {
             interpreter.setSessionUUID(uuid.toString());
-            interpreter.setResultAppender(s -> {
+            interpreter.setTempTextPublisher(s -> {
               try {
-                zeppelin.handleInterpreterAppend(uuid.toString(), s);
+                zeppelin.handleInterpreterTempOutput(uuid.toString(), s);
               } catch (final Throwable th) {
                 //SKIP
               }
