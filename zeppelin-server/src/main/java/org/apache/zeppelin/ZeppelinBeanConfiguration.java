@@ -17,6 +17,10 @@
 
 package org.apache.zeppelin;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
@@ -32,6 +36,7 @@ import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroWebFilterConfiguration;
 import org.apache.shiro.web.env.IniWebEnvironment;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -41,10 +46,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-
-import javax.sql.DataSource;
-import java.util.Map;
-import java.util.concurrent.Executor;
 
 @Configuration
 @Import({ShiroBeanConfiguration.class,
@@ -65,7 +66,7 @@ public class ZeppelinBeanConfiguration {
           @Value("${spring.datasource.dbcp2.min-idle}") final int minIdle
           ) {
 
-    BasicDataSource bds = new BasicDataSource();
+    final BasicDataSource bds = new BasicDataSource();
     bds.setDriverClassName(driverClassName);
     bds.setUrl(url);
     bds.setUsername(username);
@@ -90,19 +91,19 @@ public class ZeppelinBeanConfiguration {
 
   @ExceptionHandler(UnauthenticatedException.class)
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
-  public void handleException(UnauthenticatedException e) {
+  public void handleException(final UnauthenticatedException e) {
 
   }
 
   @ExceptionHandler(AuthorizationException.class)
   @ResponseStatus(HttpStatus.FORBIDDEN)
-  public void handleException(AuthorizationException e) {
+  public void handleException(final AuthorizationException e) {
 
   }
 
   @Bean
   public Realm realm() {
-    ActiveDirectoryRealm realm = new ActiveDirectoryRealm();
+    final ActiveDirectoryRealm realm = new ActiveDirectoryRealm();
     realm.setCachingEnabled(true);
     return realm;
   }
@@ -118,7 +119,7 @@ public class ZeppelinBeanConfiguration {
   @Bean
   public ShiroFilterChainDefinition shiroFilterChainDefinition(final IniWebEnvironment environment) {
 
-    DefaultShiroFilterChainDefinition chainDefinition = new DefaultShiroFilterChainDefinition();
+    final DefaultShiroFilterChainDefinition chainDefinition = new DefaultShiroFilterChainDefinition();
     for (final Map.Entry<String, String> entry : environment.getIni().get("urls").entrySet()) {
       chainDefinition.addPathDefinition(entry.getKey(), entry.getValue());
     }
@@ -126,8 +127,21 @@ public class ZeppelinBeanConfiguration {
   }
 
   @Bean
-  public CacheManager cacheManager() {
+  public CacheManager shiroCacheManager() {
     return new MemoryConstrainedCacheManager();
+  }
+
+  @Bean
+  public org.springframework.cache.CacheManager cacheManager() {
+    final SimpleCacheManager cacheManager = new SimpleCacheManager();
+    cacheManager.setCaches(
+        Arrays.asList(
+            new ExtendedConcurrentMapCache("module_sources"),
+            new ExtendedConcurrentMapCache("module_configurations"),
+            new ExtendedConcurrentMapCache("module_inner_configurations")
+        )
+    );
+    return cacheManager;
   }
 
   @Bean

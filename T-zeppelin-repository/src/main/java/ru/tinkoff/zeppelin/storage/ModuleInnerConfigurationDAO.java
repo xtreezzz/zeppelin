@@ -19,6 +19,14 @@ package ru.tinkoff.zeppelin.storage;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -28,14 +36,11 @@ import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleProperty;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-
-
 @Component
+@CacheConfig(cacheNames={"module_inner_configurations"})
 public class ModuleInnerConfigurationDAO {
+
+  public static final String CACHE_COMMON_KEY = "GET_ALL";
 
   public static final String GET_ALL = "" +
           "SELECT ID,\n" +
@@ -101,6 +106,7 @@ public class ModuleInnerConfigurationDAO {
     return new ModuleInnerConfiguration(id, className, properties, editor);
   }
 
+  @Cacheable(key = "#root.target.CACHE_COMMON_KEY")
   public List<ModuleInnerConfiguration> getAll() {
 
     final SqlParameterSource parameters = new MapSqlParameterSource();
@@ -112,6 +118,7 @@ public class ModuleInnerConfigurationDAO {
     );
   }
 
+  @Cacheable(key = "#id")
   public ModuleInnerConfiguration getById(final long id) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()
@@ -126,6 +133,7 @@ public class ModuleInnerConfigurationDAO {
             .orElse(null);
   }
 
+  @CachePut(key = "#config.getId()")
   public ModuleInnerConfiguration persist(final ModuleInnerConfiguration config) {
     final KeyHolder holder = new GeneratedKeyHolder();
 
@@ -139,7 +147,7 @@ public class ModuleInnerConfigurationDAO {
     return config;
   }
 
-
+  @CachePut(key = "#config.getId()")
   public ModuleInnerConfiguration update(final ModuleInnerConfiguration config) {
 
     final MapSqlParameterSource parameters = new MapSqlParameterSource()
@@ -152,6 +160,7 @@ public class ModuleInnerConfigurationDAO {
     return config;
   }
 
+  @CacheEvict(key = "#id")
   public void delete(final long id) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()

@@ -18,6 +18,13 @@
 package ru.tinkoff.zeppelin.storage;
 
 import com.google.gson.Gson;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -27,12 +34,11 @@ import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.option.Permissions;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
 @Component
+@CacheConfig(cacheNames={"module_configurations"})
 public class ModuleConfigurationDAO {
+
+  public static final String CACHE_COMMON_KEY = "GET_ALL";
 
   public static final String GET_ALL = "" +
           "SELECT ID,\n" +
@@ -136,6 +142,7 @@ public class ModuleConfigurationDAO {
     );
   }
 
+  @Cacheable(key = "#root.target.CACHE_COMMON_KEY")
   public List<ModuleConfiguration> getAll() {
 
     final SqlParameterSource parameters = new MapSqlParameterSource();
@@ -147,6 +154,7 @@ public class ModuleConfigurationDAO {
     );
   }
 
+  @Cacheable(key = "#id")
   public ModuleConfiguration getById(final long id) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()
@@ -161,6 +169,7 @@ public class ModuleConfigurationDAO {
             .orElse(null);
   }
 
+  //TODO: add cache.
   public ModuleConfiguration getByShebang(final String shebang) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()
@@ -175,6 +184,7 @@ public class ModuleConfigurationDAO {
             .orElse(null);
   }
 
+  @CachePut(key = "#config.getId()")
   public ModuleConfiguration persist(final ModuleConfiguration config) {
     final KeyHolder holder = new GeneratedKeyHolder();
 
@@ -195,6 +205,7 @@ public class ModuleConfigurationDAO {
   }
 
 
+  @CachePut(key = "#config.getId()")
   public ModuleConfiguration update(final ModuleConfiguration config) {
 
     final MapSqlParameterSource parameters = new MapSqlParameterSource()
@@ -213,6 +224,7 @@ public class ModuleConfigurationDAO {
     return config;
   }
 
+  @CacheEvict(key = "#id")
   public void delete(final long id) {
 
     final SqlParameterSource parameters = new MapSqlParameterSource()

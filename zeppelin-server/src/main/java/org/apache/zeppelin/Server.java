@@ -22,12 +22,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.ServletComponentScan;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @ServletComponentScan
 @SpringBootApplication
 @EnableScheduling
+@EnableCaching
 @EnableConfigurationProperties
 @ComponentScan(basePackages = {"org.apache.zeppelin", "ru.tinkoff.zeppelin"})
 public class Server {

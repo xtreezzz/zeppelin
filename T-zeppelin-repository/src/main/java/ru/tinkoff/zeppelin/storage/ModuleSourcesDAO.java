@@ -16,18 +16,26 @@
  */
 package ru.tinkoff.zeppelin.storage;
 
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.stereotype.Component;
-import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleSource;
 
 @Component
+@CacheConfig(cacheNames={"module_sources"})
 public class ModuleSourcesDAO {
+
+  public static final String CACHE_COMMON_KEY = "GET_ALL";
 
   private static final String GET_ALL = "" +
           "SELECT ID,\n" +
@@ -96,8 +104,8 @@ public class ModuleSourcesDAO {
     );
   }
 
+  @Cacheable(key = "#root.target.CACHE_COMMON_KEY")
   public List<ModuleSource> getAll() {
-
     final SqlParameterSource parameters = new MapSqlParameterSource();
 
     return namedParameterJdbcTemplate.query(
@@ -106,9 +114,8 @@ public class ModuleSourcesDAO {
             ModuleSourcesDAO::mapRow);
   }
 
-
+  @Cacheable(key = "#id")
   public ModuleSource get(final long id) {
-
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("ID", id);
 
@@ -122,8 +129,8 @@ public class ModuleSourcesDAO {
   }
 
 
-  public void update(final ModuleSource source) {
-
+  @CachePut(key = "#source.getId()")
+  public ModuleSource update(final ModuleSource source) {
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("ID", source.getId())
             .addValue("NAME", source.getName())
@@ -134,9 +141,13 @@ public class ModuleSourcesDAO {
             .addValue("REINSTALL_ON_START", source.isReinstallOnStart());
 
     namedParameterJdbcTemplate.update(UPDATE, parameters);
+    return source;
   }
 
-  public void persist(final ModuleSource source) {
+  @CachePut(key = "#source.getId()")
+  public ModuleSource persist(final ModuleSource source) {
+    final KeyHolder holder = new GeneratedKeyHolder();
+
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("NAME", source.getName())
             .addValue("TYPE", source.getType().name())
@@ -145,12 +156,16 @@ public class ModuleSourcesDAO {
             .addValue("PATH", source.getPath())
             .addValue("REINSTALL_ON_START", source.isReinstallOnStart());
 
-    namedParameterJdbcTemplate.update(PERSIST, parameters);
+    namedParameterJdbcTemplate.update(PERSIST, parameters, holder);
+    source.setId((Long) holder.getKeys().get("id"));
+    return source;
   }
 
+  @CacheEvict(key = "#id")
   public void delete(final long id) {
     final SqlParameterSource parameters = new MapSqlParameterSource()
             .addValue("ID", id);
+
 
     namedParameterJdbcTemplate.update(DELETE, parameters);
   }
