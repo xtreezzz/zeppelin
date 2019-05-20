@@ -159,10 +159,10 @@ public class PythonInterpreterProcess {
           ObjectInputStream ois = new ObjectInputStream(fis);
 
           envObjects.putAll((Map<String, PythonInterpreterEnvObject>) ois.readObject());
-          jep.eval("import pickle");
+          jep.eval("import pickle as zpickle");
           for (final PythonInterpreterEnvObject envObject : envObjects.values()) {
-            jep.set(envObject.getName() + "_ZZ", new String(envObject.getPayload()));
-            jep.eval(envObject.getName() + "=  pickle.loads(" + envObject.getName() + "_ZZ" + ")");
+            jep.set(envObject.getName() + "_ZZ", new NDArray<>(envObject.getPayload()));
+            jep.eval(envObject.getName() + " =  zpickle.loads(" + envObject.getName() + "_ZZ)");
           }
         }
 
@@ -173,11 +173,11 @@ public class PythonInterpreterProcess {
         // read updated values from pythin process
         for (Map.Entry<String, Object> entry : params.entrySet()) {
           if (params.get(entry.getKey()).equals("ZEPPELIN_NULL")) {
-            jep.eval("import pickle");
+            jep.eval("import pickle as zpickle");
             final PythonInterpreterEnvObject pieo = new PythonInterpreterEnvObject(
                     entry.getKey(),
                     jep.getValue(entry.getKey()).getClass().getName(),
-                    jep.getValue_bytearray("pickle.dumps(" + entry.getKey() + ")")
+                    jep.getValue_bytearray("zpickle.dumps(" + entry.getKey() + ", protocol=0)")
             );
             envObjects.put(pieo.getName(), pieo);
           }
