@@ -113,7 +113,7 @@ function WebsocketMessageService($rootScope, websocketEvents) {
     },
 
     copyParagraph: function(newIndex, paragraphTitle, paragraphData,
-                            paragraphConfig, paragraphParams) {
+                            paragraphConfig, paragraphParams, shebang) {
       websocketEvents.sendNewEvent({
         op: 'COPY_PARAGRAPH',
         data: {
@@ -122,6 +122,7 @@ function WebsocketMessageService($rootScope, websocketEvents) {
           paragraph: paragraphData,
           config: paragraphConfig,
           params: paragraphParams,
+          shebang: shebang,
         },
       });
     },

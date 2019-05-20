@@ -144,7 +144,8 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
           // set default shebang if interpreter exist, disable editor otherwise.
           if ($scope.interpreterSettings && $scope.interpreterSettings.length > 0) {
             $scope.paragraph.shebang = $scope.interpreterSettings[0].shebang;
-            $scope.commitParagraph($scope.paragraph);
+            // it breaks paragraph cloning
+            // $scope.commitParagraph($scope.paragraph);
           } else {
             if ($scope.editor) {
               $scope.editor.setReadOnly(true);
@@ -643,7 +644,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     config.editorHide = false;
 
     websocketMsgSrv.copyParagraph(newIndex, $scope.paragraph.title, data,
-      config, $scope.paragraph.settings.params);
+      config, $scope.paragraph.settings.params, $scope.paragraph.shebang);
   };
 
   $scope.removeParagraph = function(paragraph) {
