@@ -62,6 +62,13 @@ public abstract class AbstractPythonInterpreter extends Interpreter {
   public void cancel() {
     if (watchdog != null) {
       watchdog.destroyProcess();
+
+      // valid only for ExecuteWatchdog
+      try {
+        watchdog.timeoutOccured(null);
+      } catch (final Throwable th) {
+        //SKIP
+      }
     }
   }
 
@@ -69,13 +76,20 @@ public abstract class AbstractPythonInterpreter extends Interpreter {
   public void close() {
     if (watchdog != null) {
       watchdog.destroyProcess();
+
+      // valid only for ExecuteWatchdog
+      try {
+        watchdog.timeoutOccured(null);
+      } catch (final Throwable th) {
+        //SKIP
+      }
     }
   }
 
   PythonInterpreterResult execute(String st,
-                                         Map<String, String> noteContext,
-                                         Map<String, String> userContext,
-                                         Map<String, String> configuration) {
+                                  Map<String, String> noteContext,
+                                  Map<String, String> userContext,
+                                  Map<String, String> configuration) {
     final Map<String, String> params = new HashMap<>();
     params.putAll(noteContext);
     params.putAll(userContext);
