@@ -16,7 +16,7 @@ import './note-import.css';
 
 angular.module('zeppelinWebApp').controller('NoteImportCtrl', NoteImportCtrl);
 
-function NoteImportCtrl($scope, $timeout, websocketMsgSrv) {
+function NoteImportCtrl($scope, $timeout, websocketMsgSrv, $http, baseUrlSrv, $location) {
   'ngInject';
 
   let vm = this;
@@ -104,27 +104,12 @@ function NoteImportCtrl($scope, $timeout, websocketMsgSrv) {
   };
 
   vm.processImportJson = function(result) {
-    if (typeof result !== 'object') {
-      try {
-        result = JSON.parse(result);
-      } catch (e) {
-        $scope.note.errorText = 'JSON parse exception';
-        $scope.$apply();
-        return;
-      }
-    }
-    if (result.paragraphs && result.paragraphs.length > 0) {
-      if (!$scope.note.noteImportName) {
-        $scope.note.noteImportName = result.name;
-      } else {
-        result.name = $scope.note.noteImportName;
-      }
-      websocketMsgSrv.importNote(result);
-      // angular.element('#noteImportModal').modal('hide');
-    } else {
-      $scope.note.errorText = 'Invalid JSON';
-    }
-    $scope.$apply();
+    $http.post(baseUrlSrv.getRestApiBase() + '/notebook/import', result)
+      .success((result) => {
+        vm.resetFlags();
+        angular.element('#noteImportModal').modal('hide');
+        $location.path('/notebook/' + result.body.uuid);
+      });
   };
 
   /*

@@ -20,7 +20,6 @@ import com.google.gson.Gson;
 import java.util.Map;
 import java.util.Set;
 
-import ru.tinkoff.zeppelin.core.notebook.JobBatch;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.NoteRevision;
 
@@ -38,19 +37,21 @@ public class NoteRequest {
 
   // use only for send note back to user
   private Long id;
+  private String uuid;
   private NoteRevision revision;
   private Map<String, Object> formParams;
   private boolean isRunning;
 
-  public NoteRequest(final Note secureLoadNote) {
-    path = secureLoadNote.getPath();
-    owners = secureLoadNote.getOwners();
-    readers = secureLoadNote.getReaders();
-    runners = secureLoadNote.getRunners();
-    writers = secureLoadNote.getWriters();
-    id = secureLoadNote.getId();
-    revision = secureLoadNote.getRevision();
-    formParams = secureLoadNote.getFormParams();
+  public NoteRequest(final Note note) {
+    path = note.getPath();
+    owners = note.getOwners();
+    readers = note.getReaders();
+    runners = note.getRunners();
+    writers = note.getWriters();
+    id = note.getId();
+    uuid = note.getUuid();
+    revision = note.getRevision();
+    formParams = note.getFormParams();
   }
 
   public NoteRequest() {
@@ -81,7 +82,7 @@ public class NoteRequest {
   }
 
   public static NoteRequest fromJson(final String json) {
-    NoteRequest noteRequest = gson.fromJson(json, NoteRequest.class);
+    final NoteRequest noteRequest = gson.fromJson(json, NoteRequest.class);
     if (noteRequest.path != null) {
       noteRequest.path = normalizePath(noteRequest.path);
     }

@@ -17,13 +17,13 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.realm.ShiroSecurityService;
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

@@ -253,6 +253,11 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     limit = event.configurations['zeppelin.websocket.max.text.message.size'];
   });
 
+  let exportNoteFromServer = function(callback) {
+    $http.get(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.databaseId + '/export')
+      .success((data) => callback(data.body));
+  };
+
   $scope.exportNote = function() {
     let jsonContent = JSON.stringify($scope.note);
     if (jsonContent.length > limit) {
@@ -262,12 +267,16 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
         message: 'Do you still want to export this note?',
         callback: function(result) {
           if (result) {
-            saveAsService.saveAs(jsonContent, $scope.note.name, 'json');
+            exportNoteFromServer((jsonContent) => {
+              saveAsService.saveAs(jsonContent, $scope.note.name, 'json');
+            });
           }
         },
       });
     } else {
-      saveAsService.saveAs(jsonContent, $scope.note.name, 'json');
+      exportNoteFromServer((jsonContent) => {
+        saveAsService.saveAs(jsonContent, $scope.note.name, 'json');
+      });
     }
   };
 

@@ -17,120 +17,124 @@
 
 package org.apache.zeppelin.rest;
 
-import com.google.common.collect.Sets;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
-import org.apache.zeppelin.rest.exception.NoteNotFoundException;
-import ru.tinkoff.zeppelin.storage.SchedulerDAO;
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.Operation;
 import org.apache.zeppelin.websocket.SockMessage;
+import org.apache.zeppelin.websocket.handler.AbstractHandler.Permission;
 import org.quartz.CronExpression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.NoteService;
+import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
 @RestController
 @RequestMapping("api")
-public class CronRestApi {
+public class CronRestApi extends AbstractRestApi {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CronRestApi.class);
-
-  private final NoteService noteRepository;
   private final SchedulerDAO schedulerDAO;
   private final ConnectionManager connectionManager;
 
   public CronRestApi(
-      final NoteService noteRepository,
+      final NoteService noteService,
       final SchedulerDAO schedulerDAO,
-      ConnectionManager connectionManager) {
-    this.noteRepository = noteRepository;
+      final ConnectionManager connectionManager) {
+    super(noteService, connectionManager);
     this.schedulerDAO = schedulerDAO;
     this.connectionManager = connectionManager;
   }
 
   /**
-   * Register cron job REST API.
-   *
+   * Register cron job | Endpoint: <b>POST - /api/notebook/{noteId}/cron</b>.
+   * Json object:
+   * <table border="1">
+   *   <tr><td><b> Name </b></td><td><b> Type </b></td><td><b> Required </b></td><td><b> Description </b></td><tr>
+   *   <tr><td>    expression </td> <td> String    </td>  <td> FALSE  </td>         <td> Cron expression text </td></tr>
+   *   <tr><td>    enable     </td> <td> Boolean   </td>  <td> FALSE  </td>         <td> Cron enable status (Default: true) </td></tr>
+   * </table>
    * @return JSON with status.OK
    */
-  @PostMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
+  @PutMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
   public ResponseEntity registerCronJob(
       @PathVariable("noteId") final String noteIdParam,
-      @RequestBody Map<String, String> params
+      @RequestBody final Map<String, String> params
   ) throws IllegalArgumentException {
-
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    String expression = params.get("expression");
-    String isEnableParam = params.get("enable");
-    long noteId = Long.parseLong(noteIdParam);
-    boolean isEnable = isEnableParam == null ? true : Boolean.valueOf(isEnableParam);
-    LOG.info("Register cron job note={} request cron msg={}", noteId, expression);
 
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserCanRun(noteId, "Insufficient privileges you cannot set a cron job for this note");
+    final String expression = params.get("expression");
+    final Boolean isEnable = params.get("enable") != null ? Boolean.parseBoolean(params.get("enable")) : null;
 
-    final CronExpression cronExpression;
-    try {
-      cronExpression = new CronExpression(expression);
-    } catch (final Exception e) {
-      return new JsonResponse(HttpStatus.BAD_REQUEST, "wrong cron expressions.").build();
-    }
-
+    final long noteId = Long.parseLong(noteIdParam);
+    final Note note = secureLoadNote(noteId, Permission.OWNER);
     Scheduler scheduler = schedulerDAO.getByNote(note.getId());
 
-    if (scheduler != null) {
+    if (scheduler == null && expression == null) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST,"No expression found").build();
+    }
 
-      scheduler.setExpression(expression);
-      scheduler.setEnabled(isEnable);
-      if(isEnable) {
-        final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
-        final LocalDateTime nextExecution = LocalDateTime
-                .ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
-        scheduler.setNextExecution(nextExecution);
-      }
-      scheduler = schedulerDAO.update(scheduler);
-    } else {
-      final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
-      final LocalDateTime nextExecution = LocalDateTime
-          .ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
+    boolean isNewCronScheduler = false;
+    if (scheduler == null) {
+      isNewCronScheduler = true;
       scheduler = new Scheduler(
           null,
           note.getId(),
-          isEnable,
-          expression,
+          true,
+          null,
           authenticationInfo.getUser(),
           new HashSet<>(authenticationInfo.getRoles()),
-          nextExecution,
-          nextExecution
+          null,
+          null
       );
-      scheduler = schedulerDAO.persist(scheduler);
     }
 
-    HashMap<String, Object> responce = new HashMap<>(2);
-    responce.put("newCronExpression", scheduler.getExpression());
-    responce.put("enable", scheduler.isEnabled());
-    SockMessage message = new SockMessage(Operation.NOTE_UPDATED);
+    // get CronExpression
+    final CronExpression cronExpression;
+    try {
+      cronExpression = new CronExpression(expression == null ? scheduler.getExpression() : expression);
+    } catch (final Exception e) {
+      return new JsonResponse(HttpStatus.BAD_REQUEST, "wrong cron expressions").build();
+    }
+
+    updateIfNotNull(() -> expression, scheduler::setExpression);
+    updateIfNotNull(() -> isEnable, scheduler::setEnabled);
+
+    // update execution date
+    final Date nextExecutionDate = cronExpression.getNextValidTimeAfter(new Date());
+    final LocalDateTime nextExecution = LocalDateTime
+        .ofInstant(nextExecutionDate.toInstant(), ZoneId.systemDefault());
+    scheduler.setNextExecution(nextExecution);
+    if (scheduler.getLastExecution() == null) {
+      scheduler.setLastExecution(scheduler.getNextExecution());
+    }
+
+
+    scheduler = isNewCronScheduler ? schedulerDAO.persist(scheduler) : schedulerDAO.update(scheduler);
+
+    // broadcast event
+    final SockMessage message = new SockMessage(Operation.NOTE_UPDATED);
     message.put("path", note.getPath());
     message.put("config", note.getFormParams());
     message.put("info", null);
     connectionManager.broadcast(note.getId(), message);
-    return new JsonResponse(HttpStatus.OK, responce).build();
+
+    // send response
+    final HashMap<String, Object> response = new HashMap<>(2);
+    response.put("newCronExpression", scheduler.getExpression());
+    response.put("enable", scheduler.isEnabled());
+    return new JsonResponse(HttpStatus.OK, response).build();
   }
 
   /**
-   * Check valid cron expression REST API.
+   * Check valid cron expression | Endpoint: <b>POST - /api/cron/check_valid</b>
    *
    * @return JSON with status.OK
    */
@@ -144,30 +148,7 @@ public class CronRestApi {
   }
 
   /**
-   * Remove cron job REST API.
-   *
-   * @param noteIdParam ID of Note
-   * @return JSON with status.OK
-   */
-  @DeleteMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
-  public ResponseEntity removeCronJob(@PathVariable("noteId") final String noteIdParam)
-      throws IOException, IllegalArgumentException {
-    LOG.info("Remove cron job note {}", noteIdParam);
-
-    long noteId = Long.parseLong(noteIdParam);
-
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserIsOwner(noteId,
-        "Insufficient privileges you cannot remove this cron job from this note");
-
-    note.getScheduler().setEnabled(false);
-    //zeppelinRepository.refreshCron(note.getNoteId());
-    return new JsonResponse(HttpStatus.OK).build();
-  }
-
-  /**
-   * Get cron job REST API.
+   * Get cron job REST API | Endpoint: <b>POST - /api/notebook/{noteId}/cron</b>
    *
    * @param noteIdParam ID of Note
    * @return JSON with status.OK
@@ -175,62 +156,14 @@ public class CronRestApi {
   @GetMapping(value = "/notebook/{noteId}/cron", produces = "application/json")
   public ResponseEntity getCronJob(@PathVariable("noteId") final String noteIdParam)
       throws IllegalArgumentException {
-    LOG.info("Get cron job note {}", noteIdParam);
-
-    long noteId = Long.parseLong(noteIdParam);
-    final Note note = noteRepository.getNote(noteId);
-    checkIfNoteIsNotNull(note);
-    checkIfUserCanRead(noteId, "Insufficient privileges you cannot get cron information");
-    Scheduler scheduler = schedulerDAO.getByNote(note.getId());
+    final long noteId = Long.parseLong(noteIdParam);
+    final Note note = secureLoadNote(noteId, Permission.READER);
+    final Scheduler scheduler = schedulerDAO.getByNote(note.getId());
     final Map<String, Object> response = new HashMap<>();
     response.put("cron", scheduler == null ? null : scheduler.getExpression());
-    response.put("enable", scheduler == null ? false : scheduler.isEnabled());
+    response.put("enable", scheduler != null && scheduler.isEnabled());
 
     return new JsonResponse(HttpStatus.OK, response).build();
   }
 
-  /**
-   * Check if the current user own the given note.
-   */
-  private void checkIfUserIsOwner(final Long noteId, final String errorMsg) {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(authenticationInfo.getUser());
-    userAndRoles.addAll(authenticationInfo.getRoles());
-    //if (!notePermissionsService.isOwner(userAndRoles, noteId)) {
-    //  throw new ForbiddenException(errorMsg);
-    //}
-  }
-
-  /**
-   * Check if the current user can access (at least he have to be reader) the given note.
-   */
-  private void checkIfUserCanRead(final Long noteId, final String errorMsg) {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(authenticationInfo.getUser());
-    userAndRoles.addAll(authenticationInfo.getRoles());
-    //if (!notePermissionsService.hasReadAuthorization(userAndRoles, noteId)) {
-    //  throw new ForbiddenException(errorMsg);
-    //}
-  }
-
-  /**
-   * Check if the current user can run the given note.
-   */
-  private void checkIfUserCanRun(final Long noteId, final String errorMsg) {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    final Set<String> userAndRoles = Sets.newHashSet();
-    userAndRoles.add(authenticationInfo.getUser());
-    userAndRoles.addAll(authenticationInfo.getRoles());
-    //if (!notePermissionsService.hasRunAuthorization(userAndRoles, noteId)) {
-    // throw new ForbiddenException(errorMsg);
-    //}
-  }
-
-  private void checkIfNoteIsNotNull(final Note note) {
-    if (note == null) {
-      throw new NoteNotFoundException("note not found");
-    }
-  }
 }

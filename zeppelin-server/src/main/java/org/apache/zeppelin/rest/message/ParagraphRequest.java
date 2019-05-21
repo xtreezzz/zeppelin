@@ -17,11 +17,11 @@
 package org.apache.zeppelin.rest.message;
 
 import com.google.gson.Gson;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.util.Map;
-import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class ParagraphRequest {
@@ -68,6 +68,10 @@ public class ParagraphRequest {
     return position;
   }
 
+  public void setPosition(final Integer position) {
+    this.position = position;
+  }
+
   public String getShebang() {
     return shebang;
   }
@@ -84,9 +88,28 @@ public class ParagraphRequest {
     return gson.toJson(this);
   }
 
+  public Paragraph getAsParagraph() {
+    final Paragraph paragraph = new Paragraph();
+    paragraph.setTitle(title);
+    paragraph.setText(text);
+    paragraph.setShebang(shebang);
+    paragraph.setCreated(LocalDateTime.now());
+    paragraph.setUpdated(LocalDateTime.now());
+    paragraph.setPosition(position);
+    if (config != null) {
+      paragraph.getConfig().putAll(config);
+    }
+    if (formParams != null) {
+      paragraph.getFormParams().putAll(formParams);
+    }
+    return paragraph;
+  }
+
   public static ParagraphRequest fromJson(final String json) {
-    ParagraphRequest paragraph = gson.fromJson(json, ParagraphRequest.class);
+    final ParagraphRequest paragraph = gson.fromJson(json, ParagraphRequest.class);
     paragraph.checkParagraph();
+    paragraph.title = paragraph.title == null ? "" : paragraph.title;
+    paragraph.text = paragraph.text == null ? "" : paragraph.text;
     return paragraph;
   }
 
@@ -96,7 +119,7 @@ public class ParagraphRequest {
 
       // check config.colWidth
       if (config.get("colWidth") != null) {
-        double colWidth = (double) config.get("colWidth");
+        final double colWidth = (double) config.get("colWidth");
         if (colWidth < 1 || colWidth > 12) {
           throw new InvalidParameterException(
               "Paragraph 'config.colWidth' it should be in [1..12] current: " + colWidth);
@@ -105,7 +128,7 @@ public class ParagraphRequest {
 
       // check config.fontSize
       if (config.get("fontSize") != null) {
-        double fontSize = (double) config.get("fontSize");
+        final double fontSize = (double) config.get("fontSize");
         if (fontSize < 9 || fontSize > 20) {
           throw new InvalidParameterException(
               "Paragraph 'config.fontSize' it should be in [9..20] current: " + fontSize);

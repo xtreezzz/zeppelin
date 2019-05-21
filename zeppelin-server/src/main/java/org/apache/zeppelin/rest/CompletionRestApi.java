@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

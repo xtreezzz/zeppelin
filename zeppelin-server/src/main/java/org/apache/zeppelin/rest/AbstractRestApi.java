@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.zeppelin.rest;
 
 import org.apache.zeppelin.realm.AuthenticationInfo;
@@ -30,7 +46,7 @@ abstract class AbstractRestApi {
   }
 
   Note secureLoadNote(final long noteId, final Permission permission) {
-    Note note = noteService.getNote(noteId);
+    final Note note = noteService.getNote(noteId);
 
     if (note == null) {
       throw new NoteNotFoundException("Can't find note with id " + noteId);
@@ -74,7 +90,7 @@ abstract class AbstractRestApi {
   }
 
   <T> void updateIfNotNull(final Supplier<T> getter, final Consumer<T> setter) {
-    T requestParam = getter.get();
+    final T requestParam = getter.get();
     if (requestParam != null) {
       setter.accept(requestParam);
     }
@@ -87,15 +103,15 @@ abstract class AbstractRestApi {
     return userRolesContains(admin);
   }
 
-  boolean userHasOwnerPermission(final Note note) {
+  private boolean userHasOwnerPermission(final Note note) {
     return userRolesContains(note.getOwners()) || userHasAdminPermission();
   }
 
-  boolean userHasWriterPermission(final Note note) {
+  private boolean userHasWriterPermission(final Note note) {
     return userRolesContains(note.getWriters()) || userHasAdminPermission();
   }
 
-  boolean userHasRunnerPermission(final Note note) {
+  private boolean userHasRunnerPermission(final Note note) {
     return userRolesContains(note.getRunners()) || userHasAdminPermission();
   }
 
@@ -105,14 +121,14 @@ abstract class AbstractRestApi {
 
   private static Set<String> getUserAvailableRoles() {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-    Set<String> userRoles = new HashSet<>();
+    final Set<String> userRoles = new HashSet<>();
     userRoles.add(authenticationInfo.getUser());
     userRoles.addAll(authenticationInfo.getRoles());
     return userRoles;
   }
 
   private boolean userRolesContains(final Set<String> neededRoles) {
-    for (String availableRole : getUserAvailableRoles()) {
+    for (final String availableRole : getUserAvailableRoles()) {
       if (neededRoles.contains(availableRole)) {
         return true;
       }

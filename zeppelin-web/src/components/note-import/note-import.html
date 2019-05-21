@@ -28,7 +28,7 @@ limitations under the License.
       <div class="modal-body modal-body-import">
         <div class="form-group">
           <label for="noteImportName">Import As</label>
-          <input class="form-control note-name-input" id="noteImportName"
+          <input class="form-control note-name-input disable" id="noteImportName"
                  placeholder="Insert Note Name" type="text"
                  ng-model="note.noteImportName" />
         </div>
@@ -50,7 +50,7 @@ limitations under the License.
                      ng-model="note.importFile" onchange="angular.element(this).scope().importFile(this)" />
             </div>
           </div>
-          <div class="import-btn-image">
+          <div class="import-btn-image disable">
             <a href="javascript:void(0);" ng-click="uploadURL()" class="fa fa-link">
               <p class="modal-body-import-desc">Add from URL</p>
             </a>

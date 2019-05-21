@@ -17,10 +17,13 @@
 
 package org.apache.zeppelin.rest;
 
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.apache.zeppelin.rest.message.NoteRequest;
+import org.apache.zeppelin.rest.message.ParagraphRequest;
 import org.apache.zeppelin.websocket.ConnectionManager;
 import org.apache.zeppelin.websocket.handler.AbstractHandler.Permission;
 import org.slf4j.Logger;
@@ -37,7 +40,7 @@ import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.engine.search.LuceneSearch;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,81 +57,41 @@ public class NotebookRestApi extends AbstractRestApi {
   private final LuceneSearch luceneSearch;
   private final SchedulerDAO schedulerDAO;
 
+  private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
   @Autowired
   public NotebookRestApi(
       final LuceneSearch luceneSearch,
       final ConnectionManager connectionManager,
-      final NoteService noteRepository,
+      final NoteService noteService,
       final SchedulerDAO schedulerDAO) {
-    super(noteRepository, connectionManager);
+    super(noteService, connectionManager);
     this.luceneSearch = luceneSearch;
     this.schedulerDAO = schedulerDAO;
   }
 
+  /**
+   * Create new note | Endpoint: <b>POST - /api/notebook</b>
+   * @param message Json with parameters for creating note
+   *                <table border="1">
+   *                <tr><td><b> Name </b></td><td><b> Type </b></td><td><b> Required </b></td><td><b> Description </b></td><tr>
+   *                <tr><td>    path    </td>    <td> String   </td>   <td> TRUE  </td>          <td> Notes path </td></tr>
+   *                <tr><td>    owners  </td>    <td> [String] </td>   <td> FALSE </td>          <td> Notes owners  roles array </td></tr>
+   *                <tr><td>    readers </td>    <td> [String] </td>   <td> FALSE </td>          <td> Notes readers roles array </td></tr>
+   *                <tr><td>    runners </td>    <td> [String] </td>   <td> FALSE </td>          <td> Notes runners roles array </td></tr>
+   *                <tr><td>    writers </td>    <td> [String] </td>   <td> FALSE </td>          <td> Notes writers roles array </td></tr>
+   *                </table>
+   * @return New notes id. Example: <code>{"note_id" : 768}</code>
+   */
   @PostMapping(produces = "application/json")
-  public ResponseEntity getNoteList(@RequestBody final List<String> requestedFields) {
-    final List<NoteRequest> response = noteService.getAllNotes().stream()
-        .filter(this::userHasReaderPermission)
-        .map(NoteRequest::new)
-        .collect(Collectors.toList());
-    return new JsonResponse(HttpStatus.OK, "List of all available for read notes", response).build();
-  }
-
-  @GetMapping(produces = "application/json")
-  public ResponseEntity getNoteList() {
-    return getNoteList(null);
-  }
-
-  @PostMapping(value = "/{noteId}", produces = "application/json")
-  public ResponseEntity getNote(
-      @PathVariable("noteId") final long noteId,
-      @RequestBody final List<String> requestedFields) {
-    NoteRequest noteRequest = new NoteRequest(secureLoadNote(noteId, Permission.READER));
-    return new JsonResponse(HttpStatus.OK, "Note info", noteRequest).build();
-  }
-
-  @GetMapping(value = "/{noteId}", produces = "application/json")
-  public ResponseEntity getNote(@PathVariable("noteId") final long noteId) {
-    return getNote(noteId, null);
-  }
-
-  //TODO(SAN) not implemented
-  @GetMapping(value = "/{noteId}/export", produces = "application/json")
-  public ResponseEntity exportNote(@PathVariable("noteId") final String noteId) {
-//    checkIfUserCanRead(noteId, "Insufficient privileges you cannot export this note");
-    final String exportJson = null;//zeppelinRepository.exportNote(noteId);
-    return new JsonResponse(HttpStatus.OK, "", exportJson).build();
-  }
-
-  //TODO(SAN) not implemented
-  @PostMapping(value = "/import", produces = "application/json")
-  public ResponseEntity importNote(final String noteJson) {
-    final Note note = null;//zeppelinRepository.importNote(null, noteJson, getServiceContext().getAutheInfo());
-    return new JsonResponse(HttpStatus.OK, "", note.getId()).build();
-  }
-
-  @PostMapping(value = "/create", produces = "application/json")
   public ResponseEntity createNote(@RequestBody final String message) {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
-
-    LOG.info("Create new note by JSON {}", message);
-
     try {
       final NoteRequest request = NoteRequest.fromJson(message);
       final Note note = new Note(request.getPath());
-      note.getReaders().add(authenticationInfo.getUser());
-      note.getRunners().add(authenticationInfo.getUser());
-      note.getWriters().add(authenticationInfo.getUser());
-      note.getOwners().add(authenticationInfo.getUser());
-
-      note.getReaders().addAll(Configuration.getDefaultReaders());
-      note.getRunners().addAll(Configuration.getDefaultRunners());
-      note.getWriters().addAll(Configuration.getDefaultWriters());
-      note.getOwners().addAll(Configuration.getDefaultOwners());
-
+      addCurrentUserToOwners(note);
       noteService.persistNote(note);
 
-      JsonObject response = new JsonObject();
+      final JsonObject response = new JsonObject();
       response.addProperty("note_id", note.getId());
       return new JsonResponse(HttpStatus.OK, "Note created", response).build();
     } catch (final Exception e) {
@@ -136,22 +99,52 @@ public class NotebookRestApi extends AbstractRestApi {
     }
   }
 
-  @GetMapping(value = "/{noteId}/delete", produces = "application/json")
-  public ResponseEntity deleteNote(@PathVariable("noteId") final long noteId) {
-    LOG.info("Delete note {} ", noteId);
+  /**
+   * Update note by id | Endpoint: <b>PUT /api/notebook/{noteId}</b>
+   * @param noteId Notes id
+   * @param message Json with parameters for updating note. Description in {@link #createNote(String)}
+   * @return Success message
+   */
+  @PutMapping(value = "/{noteId}", produces = "application/json")
+  public ResponseEntity updateNote(
+      @PathVariable("noteId") final long noteId,
+      @RequestBody final String message) {
+    LOG.info("rename note by JSON {}", message);
+    final NoteRequest request = NoteRequest.fromJson(message);
     final Note note = secureLoadNote(noteId, Permission.OWNER);
-    noteService.deleteNote(note);
-    return new JsonResponse(HttpStatus.OK, "Note deleted").build();
+    updateIfNotNull(request::getPath, note::setPath);
+    updateIfNotNull(request::getOwners, p -> clearAndAdd(p, note.getOwners()));
+    updateIfNotNull(request::getWriters, p -> clearAndAdd(p, note.getWriters()));
+    updateIfNotNull(request::getRunners, p -> clearAndAdd(p, note.getRunners()));
+    updateIfNotNull(request::getReaders, p -> clearAndAdd(p, note.getReaders()));
+    noteService.updateNote(note);
+
+    //disable scheduler if note moved in trash
+    if (note.getPath().startsWith(Note.TRASH_FOLDER)) {
+      final Scheduler scheduler = schedulerDAO.getByNote(note.getId());
+      if (scheduler != null) {
+        scheduler.setEnabled(false);
+        schedulerDAO.update(scheduler);
+      }
+    }
+
+    return new JsonResponse(HttpStatus.OK, "Note updated").build();
   }
 
+  /**
+   * Clone note by id | Endpoint: <b>POST - /api/notebook/{noteId}/clone</b>
+   * @param noteId Notes id
+   * @param message Json with one parameter <code>path</code>. New path for cloned note
+   * @return Json with cloned notes id. Example: <code>{"note_id" : 768}</code>
+   */
+  @SuppressWarnings("Duplicates")
   @PostMapping(value = "/{noteId}/clone", produces = "application/json")
   public ResponseEntity cloneNote(
       @PathVariable("noteId") final long noteId,
-      @RequestBody final String message) throws IOException, IllegalArgumentException {
-    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+      @RequestBody final String message) throws IllegalArgumentException {
     LOG.info("clone note by JSON {}", message);
 
-    Note note = secureLoadNote(noteId, Permission.READER);
+    final Note note = secureLoadNote(noteId, Permission.READER);
     final NoteRequest request = NoteRequest.fromJson(message);
 
     Note cloneNote = new Note(request.getPath());
@@ -161,15 +154,7 @@ public class NotebookRestApi extends AbstractRestApi {
     cloneNote.getRunners().clear();
     cloneNote.getWriters().clear();
     cloneNote.getOwners().clear();
-    cloneNote.getReaders().add(authenticationInfo.getUser());
-    cloneNote.getRunners().add(authenticationInfo.getUser());
-    cloneNote.getWriters().add(authenticationInfo.getUser());
-    cloneNote.getOwners().add(authenticationInfo.getUser());
-
-    cloneNote.getReaders().addAll(Configuration.getDefaultReaders());
-    cloneNote.getRunners().addAll(Configuration.getDefaultRunners());
-    cloneNote.getWriters().addAll(Configuration.getDefaultWriters());
-    cloneNote.getOwners().addAll(Configuration.getDefaultOwners());
+    addCurrentUserToOwners(cloneNote);
     cloneNote = noteService.persistNote(cloneNote);
 
     final List<Paragraph> paragraphs = noteService.getParagraphs(note);
@@ -188,35 +173,107 @@ public class NotebookRestApi extends AbstractRestApi {
       cloneParagraph.getFormParams().putAll(paragraph.getFormParams());
       noteService.persistParagraph(cloneNote, cloneParagraph);
     }
-    JsonObject response = new JsonObject();
-    response.addProperty("clone_note_id", cloneNote.getId());
+    final JsonObject response = new JsonObject();
+    response.addProperty("note_id", cloneNote.getId());
     return new JsonResponse(HttpStatus.OK, "Note cloned", response).build();
   }
 
-  @PostMapping(value = "/{noteId}/update", produces = "application/json")
-  public ResponseEntity updateNote(
-      @PathVariable("noteId") final long noteId,
-      @RequestBody final String message) {
-    LOG.info("rename note by JSON {}", message);
-    final NoteRequest request = NoteRequest.fromJson(message);
-    final Note note = secureLoadNote(noteId, Permission.OWNER);
-    updateIfNotNull(request::getPath, note::setPath);
-    updateIfNotNull(request::getOwners, p -> clearAndAdd(p, note.getOwners()));
-    updateIfNotNull(request::getWriters, p -> clearAndAdd(p, note.getWriters()));
-    updateIfNotNull(request::getRunners, p -> clearAndAdd(p, note.getRunners()));
-    updateIfNotNull(request::getReaders, p -> clearAndAdd(p, note.getReaders()));
-    noteService.updateNote(note);
+  /**
+   * Get note info by id | Endpoint: <b>GET - /api/notebook/{noteId}</b>
+   * @param noteId Notes id
+   * @return All info about note
+   */
+  @GetMapping(value = "/{noteId:\\d+}", produces = "application/json")
+  public ResponseEntity getNote(@PathVariable("noteId") final long noteId) {
+    final NoteRequest noteRequest = new NoteRequest(secureLoadNote(noteId, Permission.READER));
+    return new JsonResponse(HttpStatus.OK, "Note info", noteRequest).build();
+  }
 
-    //disable scheduler if note moved in trash
-    if (note.getPath().startsWith(Note.TRASH_FOLDER)) {
-      Scheduler scheduler = schedulerDAO.getByNote(note.getId());
-      if (scheduler != null) {
-        scheduler.setEnabled(false);
-        schedulerDAO.update(scheduler);
-      }
+  /**
+   * Get note info by uuid | Endpoint: <b>GET - /api/notebook/{noteUUID}</b>
+   * @param noteUUID Notes uuid
+   * @return All info about note
+   */
+  @GetMapping(value = "/{noteUUID:\\w+[^0-9]\\w+}", produces = "application/json")
+  public ResponseEntity getNoteByUUID(@PathVariable("noteUUID") final String noteUUID) {
+    final Note note = noteService.getNote(noteUUID);
+    if (!userHasReaderPermission(note)) {
+      return new JsonResponse(HttpStatus.UNAUTHORIZED, "You can't see this note").build();
+    }
+    return new JsonResponse(HttpStatus.OK, "Note info", new NoteRequest(note)).build();
+  }
+
+  /**
+   * Get all notes | Endpoint: <b>GET - /api/notebook</b>
+   * @return List of all the current user’s readable notes
+   */
+  @GetMapping(produces = "application/json")
+  public ResponseEntity getNoteList() {
+    final List<JsonObject> response = noteService.getAllNotes().stream()
+        .filter(this::userHasReaderPermission)
+        .map(n -> {
+          JsonObject json = new JsonObject();
+          json.addProperty("path", n.getPath());
+          json.addProperty("id", n.getId());
+          json.addProperty("uuid", n.getUuid());
+          return json;
+        })
+        .collect(Collectors.toList());
+    return new JsonResponse(HttpStatus.OK, "List of all available for read notes", response).build();
+  }
+
+  /**
+   * Export note to json | Endpoint: <b>GET - /api/notebook/{noteId}/export</b>
+   * @param noteId Notes id
+   * @return Json сontaining a serialized note with paragraphs
+   */
+  @GetMapping(value = "/{noteId}/export", produces = "application/json")
+  public ResponseEntity exportNote(@PathVariable("noteId") final long noteId) {
+    final Note note = secureLoadNote(noteId, Permission.READER);
+    final NoteRequest noteRequest = new NoteRequest(note);
+    final JsonObject json = gson.toJsonTree(noteRequest).getAsJsonObject();
+
+    final List<ParagraphRequest> paragraphs = noteService.getParagraphs(note).stream()
+        .map(ParagraphRequest::new)
+        .collect(Collectors.toList());
+
+    json.add("paragraphs", gson.toJsonTree(paragraphs));
+    return new JsonResponse(HttpStatus.OK, "Note with paragraphs json data", gson.toJson(json)).build();
+  }
+
+  /**
+   * Import note from json | Endpoint: <b>POST /api/notebook/import</b>
+   * @param noteJson Json сontaining a serialized note with paragraphs
+   *                 derived from that {@link #exportNote(long)} method
+   * @return New notes info
+   */
+  @PostMapping(value = "/import", produces = "application/json")
+  public ResponseEntity importNote(@RequestBody final String noteJson) {
+    final NoteRequest request = NoteRequest.fromJson(noteJson);
+    Note note = new Note(request.getPath());
+    note.setPath(note.getPath() + "_imported");
+    note.getOwners().addAll(request.getOwners());
+    note.getWriters().addAll(request.getWriters());
+    note.getRunners().addAll(request.getRunners());
+    note.getReaders().addAll(request.getReaders());
+    addCurrentUserToOwners(note);
+    note = noteService.persistNote(note);
+
+    final JsonElement paragraphsJson = new JsonParser()
+        .parse(noteJson)
+        .getAsJsonObject()
+        .get("paragraphs");
+
+    final Type type = new TypeToken<List<ParagraphRequest>>() {
+    }.getType();
+    final List<ParagraphRequest> paragraphs = gson.fromJson(paragraphsJson, type);
+    for (final ParagraphRequest paragraphRequest : paragraphs) {
+      final Paragraph paragraph = paragraphRequest.getAsParagraph();
+      paragraph.setNoteId(note.getId());
+      noteService.persistParagraph(note, paragraph);
     }
 
-    return new JsonResponse(HttpStatus.OK, "Note updated").build();
+    return new JsonResponse(HttpStatus.OK, "Imported Note info", new NoteRequest(note)).build();
   }
 
   private void clearAndAdd(final Set<String> newPersm, final Set<String> permSet) {
@@ -224,19 +281,46 @@ public class NotebookRestApi extends AbstractRestApi {
     permSet.addAll(newPersm);
   }
 
+  /**
+   * Delete note by id | Endpoint: <b>DELETE - /api/notebook/{noteId}</b>
+   * @param noteId Notes id
+   * @return Success message
+   */
+  @DeleteMapping(value = "/{noteId}", produces = "application/json")
+  public ResponseEntity deleteNote(@PathVariable("noteId") final long noteId) {
+    LOG.info("Delete note {} ", noteId);
+    final Note note = secureLoadNote(noteId, Permission.OWNER);
+    noteService.deleteNote(note);
+    return new JsonResponse(HttpStatus.OK, "Note deleted").build();
+  }
+
+  //TODO(SAN) Add documentation
   @GetMapping(value = "/search", produces = "application/json")
   public ResponseEntity search(@RequestParam("q") final String queryTerm) {
     LOG.info("Searching notes for: {}", queryTerm);
     final List<Map<String, String>> result = new ArrayList<>();
     final List<Map<String, String>> notesFound = luceneSearch.query(queryTerm);
-    for (int i = 0; i < notesFound.size(); i++) {
-      final String[] ids = notesFound.get(i).get("id").split("/", 2);
+    for (final Map<String, String> stringStringMap : notesFound) {
+      final String[] ids = stringStringMap.get("id").split("/", 2);
       final String noteId = ids[0];
-      Note note = noteService.getNote(noteId);
-      if(userHasReaderPermission(note)) {
-        result.add(notesFound.get(i));
+      final Note note = noteService.getNote(noteId);
+      if (userHasReaderPermission(note)) {
+        result.add(stringStringMap);
       }
     }
     return new JsonResponse(HttpStatus.OK, result).build();
+  }
+
+  private void addCurrentUserToOwners(final Note note) {
+    final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
+    note.getReaders().addAll(Configuration.getDefaultReaders());
+    note.getRunners().addAll(Configuration.getDefaultRunners());
+    note.getWriters().addAll(Configuration.getDefaultWriters());
+    note.getOwners().addAll(Configuration.getDefaultOwners());
+
+    note.getReaders().add(authenticationInfo.getUser());
+    note.getRunners().add(authenticationInfo.getUser());
+    note.getWriters().add(authenticationInfo.getUser());
+    note.getOwners().add(authenticationInfo.getUser());
   }
 }

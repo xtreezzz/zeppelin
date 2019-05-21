@@ -26,8 +26,8 @@ public class Util {
   private static final String GIT_PROPERTIES_COMMIT_ID_KEY = "git.commit.id.abbrev";
   private static final String GIT_PROPERTIES_COMMIT_TS_KEY = "git.commit.time";
 
-  private static Properties projectProperties;
-  private static Properties gitProperties;
+  private static final Properties projectProperties;
+  private static final Properties gitProperties;
 
   static {
     projectProperties = new Properties();
@@ -35,7 +35,7 @@ public class Util {
     try {
       projectProperties.load(Util.class.getResourceAsStream("/project.properties"));
       gitProperties.load(Util.class.getResourceAsStream("/git.properties"));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       //Fail to read project.properties
     }
   }
@@ -55,7 +55,7 @@ public class Util {
    *
    * @return Latest Zeppelin commit id
    */
-  public static String getGitCommitId() {
+  static String getGitCommitId() {
     return StringUtils.defaultIfEmpty(gitProperties.getProperty(GIT_PROPERTIES_COMMIT_ID_KEY),
             StringUtils.EMPTY);
   }
@@ -65,7 +65,7 @@ public class Util {
    *
    * @return Latest Zeppelin commit timestamp
    */
-  public static String getGitTimestamp() {
+  static String getGitTimestamp() {
     return StringUtils.defaultIfEmpty(gitProperties.getProperty(GIT_PROPERTIES_COMMIT_TS_KEY),
             StringUtils.EMPTY);
   }

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.zeppelin.helium.HeliumBundleFactory;
 import org.apache.zeppelin.helium.V2.HeliumEnabledRegistries;
 import org.apache.zeppelin.helium.V2.HeliumRegistry;
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

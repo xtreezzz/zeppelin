@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 
+import org.apache.zeppelin.rest.message.JsonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,7 @@ public class FavoriteNotesRestApi {
     this.saveExecServ = Executors.newSingleThreadScheduledExecutor();
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @PostConstruct
   public void init() throws IOException {
     dataFile = new File("favorite-notes/meta.json");

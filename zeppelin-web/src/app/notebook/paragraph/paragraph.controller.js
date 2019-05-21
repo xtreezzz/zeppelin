@@ -924,7 +924,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       }
     }
 
-    $http.post(
+    $http.put(
       baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.parentNote.databaseId +
       '/paragraph/' + $scope.paragraph.databaseId + '/set_forms_values',
       params
