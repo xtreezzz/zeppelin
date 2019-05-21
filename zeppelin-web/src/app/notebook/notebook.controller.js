@@ -1580,6 +1580,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
       return;
     }
     let newIndex = -1;
+    let paragraphShebang = $scope.note.paragraphs[0].shebang;
     for (let i = 0; i < $scope.note.paragraphs.length; i++) {
       if ($scope.note.paragraphs[i].id === paragraphId) {
         // determine position of where to add new paragraph; default is below
@@ -1588,6 +1589,9 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
         } else {
           newIndex = i + 1;
         }
+        if (i > 0) {
+          paragraphShebang = $scope.note.paragraphs[i - 1].shebang;
+        }
         break;
       }
     }
@@ -1595,7 +1599,11 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
     if (newIndex < 0 || newIndex > $scope.note.paragraphs.length) {
       return;
     }
-    websocketMsgSrv.insertParagraph(newIndex);
+
+    $http.post(baseUrlSrv.getRestApiBase() + `/notebook/${$scope.note.databaseId}/paragraph`, {
+      position: newIndex,
+      shebang: paragraphShebang,
+    });
   });
 
   $scope.$on('setNoteContent', function(event, note) {
