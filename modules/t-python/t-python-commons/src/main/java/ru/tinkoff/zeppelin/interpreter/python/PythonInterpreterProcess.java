@@ -78,6 +78,14 @@ public class PythonInterpreterProcess {
     noteStorageDir.setRequired(false);
     options.addOption(noteStorageDir);
 
+    final Option autoimpoerModules = new Option("auto_import",
+            "auto_import",
+            true,
+            "auto import modules"
+    );
+    autoimpoerModules.setRequired(false);
+    options.addOption(autoimpoerModules);
+
     CommandLine cmd = null;
     try {
       cmd = new DefaultParser().parse(options, args);
@@ -92,6 +100,7 @@ public class PythonInterpreterProcess {
     final String jepIncludePaths = cmd.getOptionValue("jep_include_paths");
     final String jepPythonHome = cmd.getOptionValue("jep_python_home");
     final String noteStorage = cmd.getOptionValue("storage_dir");
+    final String autoimport = cmd.getOptionValue("auto_import");
 
     final JepConfig jepConfig = new JepConfig()
             .setRedirectOutputStreams(true)
@@ -166,6 +175,18 @@ public class PythonInterpreterProcess {
           }
         }
 
+
+        // inject autiomported modules
+        final List<String> modules = autoimport.length() > 1
+                ? Arrays.asList(autoimport.split(";"))
+                : new ArrayList<>();
+        for (final String module : modules) {
+          final String[] data = module.split(":");
+          if (data.length != 2) {
+            continue;
+          }
+          jep.eval(String.format("import %s as %s", data[0], data[1]));
+        }
         // execute script
         jep.runScript(pathToScript);
         flusherThread.interrupt();

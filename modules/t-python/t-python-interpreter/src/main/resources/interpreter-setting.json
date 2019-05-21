@@ -56,6 +56,14 @@
       "currentValue": "./noteContext",
       "description": "path to cache folder",
       "type": "textarea"
+    },
+    "python.autoimport": {
+      "envName": "PYTHON_AUTOIMPORT",
+      "propertyName": "python.autoimport",
+      "defaultValue": "",
+      "currentValue": "",
+      "description": "autoimported modules. Separated by ';'. Example module:name;module2:name2 -> import module as name & import module2 as name2",
+      "type": "textarea"
     }
   },
   "editor": {

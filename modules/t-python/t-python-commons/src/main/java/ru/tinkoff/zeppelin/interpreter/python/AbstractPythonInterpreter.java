@@ -174,7 +174,8 @@ public abstract class AbstractPythonInterpreter extends Interpreter {
                       " -params_file \"%s\"" +
                       " -jep_include_paths \"%s\"" +
                       " -jep_python_home \"%s\"" +
-                      " -storage_dir \"%s\"",
+                      " -storage_dir \"%s\"" +
+                      " -auto_import \"%s\"",
               additionalJvmArgs,
               classPath,
               jepDestFile.getParentFile().getAbsolutePath(),
@@ -183,7 +184,8 @@ public abstract class AbstractPythonInterpreter extends Interpreter {
               paramsFile.getAbsolutePath(),
               configuration.getOrDefault("python.jep.config.include.paths", StringUtils.EMPTY),
               configuration.getOrDefault("python.jep.config.python.home", StringUtils.EMPTY),
-              noteEnvFolder.getAbsolutePath()
+              noteEnvFolder.getAbsolutePath(),
+              configuration.getOrDefault("python.autoimport", StringUtils.EMPTY)
       );
 
       // start server process
@@ -210,9 +212,10 @@ public abstract class AbstractPythonInterpreter extends Interpreter {
       };
 
       final Map<String, String> env = new HashMap<>();
+
       env.putAll(System.getenv());
       env.putAll(params);
-
+      env.remove("PYTHONPATH");
       try {
         executor.execute(CommandLine.parse(cmd), env, handler);
 
