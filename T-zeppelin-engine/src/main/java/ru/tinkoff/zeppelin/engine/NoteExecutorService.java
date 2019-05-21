@@ -91,8 +91,14 @@ public class NoteExecutorService {
     for (final Job job : jobs) {
       try {
         final ModuleConfiguration config = moduleConfigurationDAO.getByShebang(job.getShebang());
-        final ModuleInnerConfiguration innerConfig = moduleInnerConfigurationDAO.getById(config.getModuleInnerConfigId());
-        final AbstractRemoteProcess process = AbstractRemoteProcess.get(job.getShebang(), RemoteProcessType.INTERPRETER);
+        final ModuleInnerConfiguration innerConfig = config != null
+                ? moduleInnerConfigurationDAO.getById(config.getModuleInnerConfigId())
+                : null;
+
+        final AbstractRemoteProcess process = job.getShebang() != null
+                ? AbstractRemoteProcess.get(job.getShebang(), RemoteProcessType.INTERPRETER)
+                : null;
+
         if (process != null
                 && process.getStatus() == AbstractRemoteProcess.Status.READY
                 && config != null) {
@@ -138,7 +144,7 @@ public class NoteExecutorService {
     final List<String> shebangs = AbstractRemoteProcess.getShebangs(RemoteProcessType.INTERPRETER);
     for (final String shebang : shebangs) {
       final AbstractRemoteProcess process = AbstractRemoteProcess.get(shebang, RemoteProcessType.INTERPRETER);
-      if(process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
+      if (process.getStatus() == AbstractRemoteProcess.Status.STARTING) {
         continue;
       }
       final ModuleConfiguration config = moduleConfigurationDAO.getByShebang(shebang);
