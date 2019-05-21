@@ -64,7 +64,7 @@ public class NoteHandler extends AbstractHandler {
     String id;
     String path;
 
-    public NoteInfo(Note note) {
+    public NoteInfo(final Note note) {
       id = note.getUuid();
       path = note.getPath();
     }
@@ -131,7 +131,7 @@ public class NoteHandler extends AbstractHandler {
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
-    String notePath = normalizePath(fromMessage.getNotNull("path"));
+    final String notePath = normalizePath(fromMessage.getNotNull("path"));
 
     try {
       final Note note = new Note(notePath);
@@ -171,7 +171,7 @@ public class NoteHandler extends AbstractHandler {
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
 
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
-    String path = normalizePath(fromMessage.getNotNull("name"));
+    final String path = normalizePath(fromMessage.getNotNull("name"));
 
     Note cloneNote = new Note(path);
     cloneNote.setPath(path);
@@ -209,6 +209,8 @@ public class NoteHandler extends AbstractHandler {
       noteService.persistParagraph(cloneNote, cloneParagraph);
     }
 
+    connectionManager.removeNoteSubscribers(note.getId());
+
     conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", cloneNote).toSend());
     sendListNotesInfo(conn);
   }
@@ -221,7 +223,7 @@ public class NoteHandler extends AbstractHandler {
     noteService.updateNote(note);
 
     //disable scheduler
-    Scheduler scheduler = schedulerDAO.getByNote(note.getId());
+    final Scheduler scheduler = schedulerDAO.getByNote(note.getId());
     if (scheduler != null) {
       scheduler.setEnabled(false);
       schedulerDAO.update(scheduler);
@@ -255,7 +257,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(this::userHasOwnerPermission)
         .filter(note -> note.getPath().startsWith(folderPath))
         .forEach(note -> {
-          String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
+          final String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
           note.setPath(notePath);
           noteService.updateNote(note);
         });
@@ -271,7 +273,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(this::userHasOwnerPermission)
         .filter(note -> note.getPath().startsWith(oldFolderPath))
         .forEach(note -> {
-          String notePath =
+          final String notePath =
               normalizePath(note.getPath().replaceFirst(oldFolderPath, newFolderPath));
           note.setPath(notePath);
           noteService.updateNote(note);
@@ -286,7 +288,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(note -> note.getPath().startsWith(folderPath))
         .filter(this::userHasOwnerPermission)
         .forEach(note -> {
-          String notePath = "/" + Note.TRASH_FOLDER + normalizePath(note.getPath());
+          final String notePath = "/" + Note.TRASH_FOLDER + normalizePath(note.getPath());
           note.setPath(notePath);
           noteService.updateNote(note);
         });
@@ -316,7 +318,7 @@ public class NoteHandler extends AbstractHandler {
         .filter(this::userHasOwnerPermission)
         .filter(note -> note.getPath().startsWith("/" + Note.TRASH_FOLDER + "/"))
         .forEach(note -> {
-          String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
+          final String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
           note.setPath(notePath);
           noteService.updateNote(note);
         });
