@@ -1723,28 +1723,31 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.updateParagraph = function(oldPara, newPara, updateCallback) {
-     // 1. can't update on revision view
+     // can't update on revision view
     if ($scope.revisionView === true) {
       return;
     }
 
-     // 2. get status, refreshed
+     // get status, refreshed
     const statusChanged = (newPara.status !== oldPara.status);
     const resultRefreshed = (newPara.dateFinished !== oldPara.dateFinished) ||
        isEmpty(newPara.results) !== isEmpty(oldPara.results) ||
        newPara.status === ParagraphStatus.ERROR ||
        (newPara.status === ParagraphStatus.FINISHED && statusChanged);
 
-     // 3. update texts managed by $scope
+     // update texts managed by $scope
     $scope.updateAllScopeTexts(oldPara, newPara);
 
-     // 4. execute callback to update result
+     // update shebang
+    $scope.paragraph.shebang = newPara.shebang;
+
+     // execute callback to update result
     updateCallback();
 
-     // 5. update remaining paragraph objects
+     // update remaining paragraph objects
     $scope.updateParagraphObjectWhenUpdated(newPara);
 
-     // 6. handle scroll down by key properly if new paragraph is added
+     // handle scroll down by key properly if new paragraph is added
     if (statusChanged || resultRefreshed) {
        // when last paragraph runs, zeppelin automatically appends new paragraph.
        // this broadcast will focus to the newly inserted paragraph
