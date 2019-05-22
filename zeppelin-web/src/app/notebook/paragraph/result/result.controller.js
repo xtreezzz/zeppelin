@@ -217,8 +217,17 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
   }
 
   $scope.$on('updateResult', function(event, result, newConfig, paragraphRef, index) {
-    if (paragraph.id !== paragraphRef.id || index !== resultIndex || !result.data) {
+    if (paragraph.id !== paragraphRef.id || index !== resultIndex) {
       return;
+    }
+
+    if (result === null) {
+      result = {};
+    }
+
+    if (result.data === null) {
+      result.data = '';
+      result.type = 'TEXT';
     }
 
     let refresh = !angular.equals(newConfig, $scope.config) ||
