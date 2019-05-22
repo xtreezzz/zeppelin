@@ -17,11 +17,15 @@
 package org.apache.zeppelin.websocket.dto;
 
 import org.springframework.stereotype.Component;
+import ru.tinkoff.zeppelin.core.externalDTO.InterpreterResultDTO;
 import ru.tinkoff.zeppelin.core.externalDTO.NoteDTO;
+import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.storage.*;
+
+import java.util.List;
 
 
 @Component
@@ -58,7 +62,19 @@ public class NoteDTOConverter {
         noteDTO.setRevision(note.getRevision());
         noteDTO.setFormParams(note.getFormParams());
         for (final Paragraph p : noteService.getParagraphs(note)) {
-            noteDTO.getParagraphs().add(fullParagraphDAO.getById(p.getId()));
+            final ParagraphDTO paragraphDAO = fullParagraphDAO.getById(p.getId());
+
+            if (paragraphDAO.getResults() == null) {
+                paragraphDAO.setResults(new InterpreterResultDTO());
+            }
+
+            // add message if messages list is empty
+            final List<InterpreterResultDTO.Message> messages = paragraphDAO.getResults().getMsg();
+            if (messages.size() == 0) {
+                messages.add(new InterpreterResultDTO.Message("TEXT", ""));
+            }
+
+            noteDTO.getParagraphs().add(paragraphDAO);
         }
         noteDTO.setScheduler(note.getScheduler());
         noteDTO.getConfig().put("looknfeel", false);
