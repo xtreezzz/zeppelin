@@ -318,14 +318,14 @@ table.table-shortcut {
 }
 
 .paragraph .title div {
-  width: 80%;
+  width: fit-content;
   font-weight: bold;
   font-family: 'Roboto', sans-serif;
   font-size: 17px !important;
 }
 
 .paragraph .title input {
-  width: 80%;
+  width: fit-content;
   height: 24px;
   line-height: 1.42857143;
   color: #555;

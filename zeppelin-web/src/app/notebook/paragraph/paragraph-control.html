@@ -117,6 +117,14 @@ limitations under the License.
                    ng-click="turnOnAutoRun(paragraph)"/>
           </form>
         </li>
+
+        <li>
+          <a ng-click="linkToParagraphInContext()"><span class="icon-link"></span>
+            <span class="shortcut-keys">Ctrl+Shift+j</span>
+            Get link
+          </a>
+        </li>
+
         <li>
           <a ng-click="$event.stopPropagation()" class="dropdown">
             <span style="margin-top: 2px;" class="fa fa-arrows-h shortcut-icon"></span>
@@ -215,15 +223,11 @@ limitations under the License.
             {{paragraph.config.enabled ? "Disable" : "Enable"}} run
           </a>
         </li>
+
         <li>
-          <a ng-click="linkToParagraphInContext()"><span class="icon-link"></span>
-            <span class="shortcut-keys">Ctrl+Shift+j</span>
-            Link to paragraph in context</a>
-      </li>
-      <li>
-        <a ng-click="goToSingleParagraph()"><span class="icon-share-alt shortcut-icon"></span>
-            <span class="shortcut-keys">Ctrl+{{ isMac ? 'Option' : 'Alt'}}+W</span>
-            Link single paragraph
+          <a ng-click="goToSingleParagraph()"><span class="icon-share-alt shortcut-icon"></span>
+              <span class="shortcut-keys">Ctrl+{{ isMac ? 'Option' : 'Alt'}}+W</span>
+              Link single paragraph
           </a>
         </li>
         <li>
