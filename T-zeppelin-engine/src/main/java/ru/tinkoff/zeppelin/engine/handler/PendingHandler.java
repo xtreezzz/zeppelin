@@ -99,6 +99,7 @@ public class PendingHandler extends AbstractHandler {
     noteContext.put("Z_ENV_NOTE_ID", String.valueOf(job.getNoteId()));
     noteContext.put("Z_ENV_NOTE_UUID", String.valueOf(note.getUuid()));
     noteContext.put("Z_ENV_PARAGRAPH_ID", String.valueOf(job.getParagraphId()));
+    noteContext.put("Z_ENV_PARAGRAPH_SHEBANG", job.getShebang());
 
     noteContext.put("Z_ENV_MARKER_PREFIX", Configuration.getInstanceMarkerPrefix());
 

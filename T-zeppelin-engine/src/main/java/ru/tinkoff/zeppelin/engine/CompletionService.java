@@ -93,6 +93,7 @@ public class CompletionService {
         noteContext.put("Z_ENV_NOTE_ID", String.valueOf(note.getId()));
         noteContext.put("Z_ENV_NOTE_UUID", String.valueOf(note.getUuid()));
         noteContext.put("Z_ENV_PARAGRAPH_ID", String.valueOf(paragraph.getId()));
+        noteContext.put("Z_ENV_PARAGRAPH_SHEBANG", paragraph.getShebang());
 
         noteContext.put("Z_ENV_MARKER_PREFIX", Configuration.getInstanceMarkerPrefix());
 
