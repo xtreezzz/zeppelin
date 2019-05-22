@@ -654,6 +654,7 @@ function ResultCtrl($scope, $rootScope, $route, $window, $routeParams, $location
 
     let afterLoaded = function() { /** will be overwritten */ };
 
+    delete builtInViz.instance; // redraw every time. it fix second redrawing table.
     if (!builtInViz.instance) { // not instantiated yet
       // render when targetEl is available
       afterLoaded = function(loadedElem) {
