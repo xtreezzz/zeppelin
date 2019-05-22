@@ -16,19 +16,29 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
-import org.apache.commons.lang3.StringUtils;
-import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
-import ru.tinkoff.zeppelin.core.notebook.*;
-import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
-import ru.tinkoff.zeppelin.engine.EventService;
-import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
-import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
-import ru.tinkoff.zeppelin.storage.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
+import ru.tinkoff.zeppelin.core.externalDTO.ParagraphDTO;
+import ru.tinkoff.zeppelin.core.notebook.Job;
+import ru.tinkoff.zeppelin.core.notebook.JobBatch;
+import ru.tinkoff.zeppelin.core.notebook.JobBatch.Status;
+import ru.tinkoff.zeppelin.core.notebook.JobPayload;
+import ru.tinkoff.zeppelin.core.notebook.JobResult;
+import ru.tinkoff.zeppelin.core.notebook.Note;
+import ru.tinkoff.zeppelin.core.notebook.Paragraph;
+import ru.tinkoff.zeppelin.engine.EventService;
+import ru.tinkoff.zeppelin.engine.forms.FormsProcessor;
+import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.JobBatchDAO;
+import ru.tinkoff.zeppelin.storage.JobDAO;
+import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
+import ru.tinkoff.zeppelin.storage.JobResultDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
 
 /**
  * Base class for handlers
@@ -70,6 +80,7 @@ abstract class AbstractHandler {
     final ParagraphDTO before = fullParagraphDAO.getById(job.getParagraphId());
 
     job.setStatus(Job.Status.RUNNING);
+    job.setStartedAt(LocalDateTime.now());
     job.setInterpreterProcessUUID(interpreterProcessUUID);
     job.setInterpreterJobUUID(interpreterJobUUID);
     jobDAO.update(job);

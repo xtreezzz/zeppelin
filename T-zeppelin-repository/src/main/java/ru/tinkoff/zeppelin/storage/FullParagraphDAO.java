@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -47,6 +46,9 @@ public class FullParagraphDAO {
           "       P.POSITION,\n" +
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
+          "       J.STARTED_AT,\n" +
+          "       J.ENDED_AT,\n" +
+          "       J.USER_NAME,\n" +
           "       P.CONFIG,\n" +
           "       P.FORM_PARAMS\n" +
           "FROM PARAGRAPHS P\n" +
@@ -64,6 +66,9 @@ public class FullParagraphDAO {
           "       P.POSITION,\n" +
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
+          "       J.STARTED_AT,\n" +
+          "       J.ENDED_AT,\n" +
+          "       J.USER_NAME,\n" +
           "       P.CONFIG,\n" +
           "       P.FORM_PARAMS\n" +
           "FROM PARAGRAPHS P\n" +
@@ -81,6 +86,9 @@ public class FullParagraphDAO {
           "       P.POSITION,\n" +
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
+          "       J.STARTED_AT,\n" +
+          "       J.ENDED_AT,\n" +
+          "       J.USER_NAME,\n" +
           "       P.CONFIG,\n" +
           "       P.FORM_PARAMS\n" +
           "FROM NOTES N\n" +
@@ -99,6 +107,9 @@ public class FullParagraphDAO {
           "       P.POSITION,\n" +
           "       J.ID AS JOB_ID,\n" +
           "       J.STATUS,\n" +
+          "       J.STARTED_AT,\n" +
+          "       J.ENDED_AT,\n" +
+          "       J.USER_NAME,\n" +
           "       P.CONFIG,\n" +
           "       P.FORM_PARAMS\n" +
           "FROM NOTES N\n" +
@@ -150,9 +161,21 @@ public class FullParagraphDAO {
                     ? resultSet.getTimestamp("UPDATED").toLocalDateTime()
                     : null;
 
+    final LocalDateTime startedAt =
+        null != resultSet.getTimestamp("STARTED_AT")
+            ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
+            : null;
+
+    final LocalDateTime endedAt =
+        null != resultSet.getTimestamp("ENDED_AT")
+            ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
+            : null;
+
+
     final String status = resultSet.getString("STATUS");
     final Integer position = resultSet.getInt("POSITION");
 
+    final String user = resultSet.getString("USER_NAME");
     final Map<String, Object> config = gson.fromJson(resultSet.getString("CONFIG"), configType);
     final Map<String, Object> formParams = gson.fromJson(resultSet.getString("FORM_PARAMS"), configType);
 
@@ -162,7 +185,7 @@ public class FullParagraphDAO {
     paragraphDTO.setId(uuid);
     paragraphDTO.setTitle(title);
     paragraphDTO.setText(text);
-    paragraphDTO.setUser(StringUtils.EMPTY);
+    paragraphDTO.setUser(user);
     paragraphDTO.setShebang(shebang);
     paragraphDTO.setCreated(created);
     paragraphDTO.setUpdated(updated);
@@ -170,6 +193,8 @@ public class FullParagraphDAO {
     paragraphDTO.setConfig(config);
     paragraphDTO.setFormParams(formParams);
     paragraphDTO.setPosition(position);
+    paragraphDTO.setStartedAt(startedAt);
+    paragraphDTO.setEndedAt(endedAt);
     return paragraphDTO;
 
   }

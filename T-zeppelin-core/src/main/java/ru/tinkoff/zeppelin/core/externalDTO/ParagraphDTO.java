@@ -33,6 +33,8 @@ public class ParagraphDTO {
     private String shebang;
     private LocalDateTime created;
     private LocalDateTime updated;
+    private LocalDateTime startedAt;
+    private LocalDateTime endedAt;
     private String status;
     private int position;
 
@@ -156,6 +158,22 @@ public class ParagraphDTO {
         this.position = position;
     }
 
+    public LocalDateTime getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(final LocalDateTime startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public LocalDateTime getEndedAt() {
+        return endedAt;
+    }
+
+    public void setEndedAt(final LocalDateTime endedAt) {
+        this.endedAt = endedAt;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -171,6 +189,8 @@ public class ParagraphDTO {
                 Objects.equals(shebang, that.shebang) &&
                 Objects.equals(created, that.created) &&
                 Objects.equals(updated, that.updated) &&
+                Objects.equals(startedAt, that.startedAt) &&
+                Objects.equals(endedAt, that.endedAt) &&
                 Objects.equals(status, that.status) &&
                 Objects.equals(config, that.config) &&
                 Objects.equals(formParams, that.formParams) &&
@@ -188,6 +208,8 @@ public class ParagraphDTO {
                 shebang,
                 created,
                 updated,
+                startedAt,
+                endedAt,
                 status,
                 position,
                 config,

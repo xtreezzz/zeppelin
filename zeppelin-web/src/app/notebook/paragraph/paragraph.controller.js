@@ -132,24 +132,12 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     $http.get(baseUrlSrv.getRestApiBase() + '/modules/setting/interpreters')
       .then(function(res) {
         $scope.interpreterSettings = res.data.body;
-        // if shebang exists, but interpreter not found - block input
-        if ($scope.paragraph.shebang && $scope.interpreterSettings
-        && _.findIndex($scope.interpreterSettings, {'shebang': $scope.paragraph.shebang}) === -1) {
-          if ($scope.editor) {
-            $scope.editor.setReadOnly(true);
-          }
-        }
-
         if (!$scope.paragraph.shebang) {
-          // set default shebang if interpreter exist, disable editor otherwise.
+          // set default shebang if interpreter exist
           if ($scope.interpreterSettings && $scope.interpreterSettings.length > 0) {
             $scope.paragraph.shebang = $scope.interpreterSettings[0].shebang;
             // it breaks paragraph cloning
             // $scope.commitParagraph($scope.paragraph);
-          } else {
-            if ($scope.editor) {
-              $scope.editor.setReadOnly(true);
-            }
           }
         }
       }).catch(function(res) {
@@ -1306,12 +1294,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.$digest();
       });
     }
-
-    // block editor if there is no interpreters available
-    if ($scope.editor && !$scope.editor.getReadOnly() && (!$scope.interpreterSettings
-    || $scope.interpreterSettings.length === 0)) {
-      $scope.editor.setReadOnly(true);
-    }
   };
 
   let setEditorLanguage = function(session, language) {
@@ -1412,9 +1394,10 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.getExecutionTime = function(pdata) {
-    const end = pdata.dateFinished;
-    const start = pdata.dateStarted;
-    let timeMs = Date.parse(end) - Date.parse(start);
+    const end = convertTime(pdata.endedAt);
+    const start = convertTime(pdata.startedAt);
+
+    let timeMs = end - start;
     if (isNaN(timeMs) || timeMs < 0) {
       if ($scope.isResultOutdated(pdata)) {
         return 'outdated';
@@ -1423,7 +1406,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
 
     const durationFormat = moment.duration((timeMs / 1000), 'seconds').format('h [hrs] m [min] s [sec]');
-    const endFormat = moment(pdata.dateFinished).format('MMMM DD YYYY, h:mm:ss A');
+    const endFormat = moment(end).format('MMMM DD YYYY, h:mm:ss A');
 
     let user = (pdata.user === undefined || pdata.user === null) ? 'anonymous' : pdata.user;
     let desc = `Took ${durationFormat}. Last updated by ${user} at ${endFormat}.`;
@@ -1431,7 +1414,6 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     if ($scope.isResultOutdated(pdata)) {
       desc += ' (outdated)';
     }
-
     return desc;
   };
 
@@ -1440,7 +1422,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.isResultOutdated = function(pdata) {
-    if (pdata.dateUpdated !== undefined && Date.parse(pdata.dateUpdated) > Date.parse(pdata.dateStarted)) {
+    if (pdata.updated !== undefined && Date.parse(pdata.updated) > Date.parse(pdata.startedAt)) {
       return true;
     }
     return false;
@@ -1640,6 +1622,11 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     context.font = font;
     let metrics = context.measureText(text);
     return Math.floor(metrics.width);
+  }
+
+  function convertTime(time) {
+    return new Date(time.date.year, time.date.month - 1, time.date.day, time.time.hour,
+      time.time.minute, time.time.second, Math.floor(time.time.nano / 1000000));
   }
 
   /**
