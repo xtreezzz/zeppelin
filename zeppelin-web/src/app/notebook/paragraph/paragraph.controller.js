@@ -318,13 +318,13 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
                                          paragraphText, paragraphResults,
                                          paragraphStatus, paragraphErrorMessage,
                                          paragraphConfig, paragraphSettingsParam,
-                                         paragraphDateStarted, paragraphDateFinished) {
+                                         paragraphstartedAt, paragraphendedAt) {
     websocketMsgSrv.paragraphExecutedBySpell(
       paragraphId, paragraphTitle,
       paragraphText, paragraphResults,
       paragraphStatus, paragraphErrorMessage,
       paragraphConfig, paragraphSettingsParam,
-      paragraphDateStarted, paragraphDateFinished
+      paragraphstartedAt, paragraphendedAt
     );
   };
 
@@ -336,7 +336,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     console.error('Failed to execute interpret() in spell\n', error);
 
     if (!propagated) {
-      $scope.paragraph.dateFinished = $scope.getFormattedParagraphTime();
+      $scope.paragraph.endedAt = $scope.getFormattedParagraphTime();
     }
 
     if (!propagated) {
@@ -344,7 +344,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.paragraph.id, $scope.paragraph.title,
         paragraphText, [], $scope.paragraph.status, errorMessage,
         $scope.paragraph.config, $scope.paragraph.settings.params,
-        $scope.paragraph.dateStarted, $scope.paragraph.dateFinished);
+        $scope.paragraph.startedAt, $scope.paragraph.endedAt);
     }
   };
 
@@ -380,7 +380,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     const paragraphText = $scope.spellTransaction.paragraphText;
 
     if (!propagated) {
-      $scope.paragraph.dateFinished = $scope.getFormattedParagraphTime();
+      $scope.paragraph.endedAt = $scope.getFormattedParagraphTime();
     }
 
     if (!propagated) {
@@ -389,7 +389,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
         $scope.paragraph.id, $scope.paragraph.title,
         paragraphText, propagable, status, '',
         $scope.paragraph.config, $scope.paragraph.settings.params,
-        $scope.paragraph.dateStarted, $scope.paragraph.dateFinished);
+        $scope.paragraph.startedAt, $scope.paragraph.endedAt);
     }
   };
 
@@ -410,7 +410,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
       const textWithoutMagic = splited[1].replace(/^\s+/g, '');
 
       if (!propagated) {
-        $scope.paragraph.dateStarted = $scope.getFormattedParagraphTime();
+        $scope.paragraph.startedAt = $scope.getFormattedParagraphTime();
       }
 
       // handle actual result message in promise
@@ -1418,7 +1418,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.getElapsedTime = function(paragraph) {
-    return 'Started ' + moment(paragraph.dateStarted).fromNow() + '.';
+    return 'Started ' + moment(convertTime(paragraph.startedAt)).fromNow() + '.';
   };
 
   $scope.isResultOutdated = function(pdata) {
@@ -1634,11 +1634,14 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
    */
   function isUpdateRequired(oldPara, newPara) {
     return (newPara.id === oldPara.id &&
-      (newPara.dateCreated !== oldPara.dateCreated ||
+      (newPara.created !== oldPara.created ||
+      newPara.shebang !== oldPara.shebang ||
       newPara.text !== oldPara.text ||
-      newPara.dateFinished !== oldPara.dateFinished ||
-      newPara.dateStarted !== oldPara.dateStarted ||
-      newPara.dateUpdated !== oldPara.dateUpdated ||
+      newPara.endedAt !== oldPara.endedAt ||
+      newPara.startedAt !== oldPara.startedAt ||
+      newPara.user !== oldPara.user ||
+      newPara.position !== oldPara.position ||
+      newPara.updated !== oldPara.updated ||
       newPara.status !== oldPara.status ||
       newPara.jobName !== oldPara.jobName ||
       newPara.title !== oldPara.title ||
@@ -1677,12 +1680,11 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
     }
 
     /** push the rest */
-    $scope.paragraph.aborted = newPara.aborted;
     $scope.paragraph.user = newPara.user;
-    $scope.paragraph.dateUpdated = newPara.dateUpdated;
-    $scope.paragraph.dateCreated = newPara.dateCreated;
-    $scope.paragraph.dateFinished = newPara.dateFinished;
-    $scope.paragraph.dateStarted = newPara.dateStarted;
+    $scope.paragraph.updated = newPara.updated;
+    $scope.paragraph.created = newPara.created;
+    $scope.paragraph.endedAt = newPara.endedAt;
+    $scope.paragraph.startedAt = newPara.startedAt;
     $scope.paragraph.errorMessage = newPara.errorMessage;
     $scope.paragraph.jobName = newPara.jobName;
     $scope.paragraph.title = newPara.title;
@@ -1717,7 +1719,7 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
 
      // get status, refreshed
     const statusChanged = (newPara.status !== oldPara.status);
-    const resultRefreshed = (newPara.dateFinished !== oldPara.dateFinished) ||
+    const resultRefreshed = (newPara.endedAt !== oldPara.endedAt) ||
        isEmpty(newPara.results) !== isEmpty(oldPara.results) ||
        newPara.status === ParagraphStatus.ERROR ||
        (newPara.status === ParagraphStatus.FINISHED && statusChanged);
