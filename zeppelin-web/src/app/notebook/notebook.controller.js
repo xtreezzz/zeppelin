@@ -1232,7 +1232,7 @@ function NotebookCtrl($scope, $route, $routeParams, $location, $rootScope,
   //   data: $scope.permissions})
 
   $scope.setPermissions = function() {
-    $http.post(baseUrlSrv.getRestApiBase() + '/notebook/' + $scope.note.databaseId + '/update',
+    $http.put(baseUrlSrv.getRestApiBase() + `/notebook/${$scope.note.databaseId}`,
       $scope.permissions, {withCredentials: true})
     .success(function(data, status, headers, config) {
       getPermissions(function() {
