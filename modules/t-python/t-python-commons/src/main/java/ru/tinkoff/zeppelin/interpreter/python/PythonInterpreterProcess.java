@@ -150,31 +150,14 @@ public class PythonInterpreterProcess {
         properties.load(new FileInputStream(pathToParamsFile));
 
         // inject values into python
-        final Map<String, Object> params = new HashMap<>();
         for (String key : properties.stringPropertyNames()) {
-          params.put(key, properties.get(key).toString());
           if (properties.get(key).toString().equals("ZEPPELIN_NULL")) {
             continue;
           }
           jep.set(key, properties.get(key).toString());
         }
-
-        Files.createDirectories(new File(noteStorage).toPath());
-
-        final Map<String, PythonInterpreterEnvObject> envObjects = new HashMap<>();
-        final File noteContextFile = new File(noteStorage + "/note.context");
-        if (noteContextFile.exists()) {
-          FileInputStream fis = new FileInputStream(noteContextFile);
-          ObjectInputStream ois = new ObjectInputStream(fis);
-
-          envObjects.putAll((Map<String, PythonInterpreterEnvObject>) ois.readObject());
-          jep.eval("import pickle as zpickle");
-          for (final PythonInterpreterEnvObject envObject : envObjects.values()) {
-            jep.set(envObject.getName() + "_ZZ", new NDArray<>(envObject.getPayload()));
-            jep.eval(envObject.getName() + " =  zpickle.loads(" + envObject.getName() + "_ZZ)");
-          }
-        }
-
+        jep.eval("import pickle as zpickle");
+        jep.eval("import dill as zdill");
 
         // inject autiomported modules
         final List<String> modules = autoimport.length() > 1
@@ -187,20 +170,78 @@ public class PythonInterpreterProcess {
           }
           jep.eval(String.format("import %s as %s", data[0], data[1]));
         }
+
+        // load current environment
+        final Set<String> envBeforeEval = ((HashMap<String, Object>) jep.getValue("locals()")).keySet();
+
+
+        Files.createDirectories(new File(noteStorage).toPath());
+        final Map<String, PythonInterpreterEnvObject> envObjects = new HashMap<>();
+        final File noteContextFile = new File(noteStorage + "/note.context");
+        if (noteContextFile.exists()) {
+          FileInputStream fis = new FileInputStream(noteContextFile);
+          ObjectInputStream ois = new ObjectInputStream(fis);
+
+          envObjects.putAll((Map<String, PythonInterpreterEnvObject>) ois.readObject());
+
+          for (final PythonInterpreterEnvObject envObject : envObjects.values()) {
+            switch (envObject.getClassName()) {
+              case "FUNC":
+                jep.set(envObject.getName() + "_ZZ", new NDArray<>(envObject.getPayload()));
+                jep.eval(envObject.getName() + " =  zdill.loads(" + envObject.getName() + "_ZZ)");
+                break;
+              case "MODULE":
+                final String[] pair = new String(envObject.getPayload()).split(":");
+                jep.eval(String.format("import %s as %s", pair[0], pair[1]));
+                break;
+              default:
+                jep.set(envObject.getName() + "_ZZ", new NDArray<>(envObject.getPayload()));
+                jep.eval(envObject.getName() + " =  zpickle.loads(" + envObject.getName() + "_ZZ)");
+                jep.eval("del " + envObject.getName() + "_ZZ");
+            }
+          }
+        }
+
+
         // execute script
         jep.runScript(pathToScript);
         flusherThread.interrupt();
 
-        // read updated values from pythin process
-        for (Map.Entry<String, Object> entry : params.entrySet()) {
-          if (params.get(entry.getKey()).equals("ZEPPELIN_NULL")) {
-            jep.eval("import pickle as zpickle");
-            final PythonInterpreterEnvObject pieo = new PythonInterpreterEnvObject(
-                    entry.getKey(),
-                    jep.getValue(entry.getKey()).getClass().getName(),
-                    jep.getValue_bytearray("zpickle.dumps(" + entry.getKey() + ", protocol=0)")
-            );
-            envObjects.put(pieo.getName(), pieo);
+        final Set<String> envAfterEval = ((HashMap<String, Object>) jep.getValue("locals()")).keySet();
+        envAfterEval.removeAll(envBeforeEval);
+
+        for (final String env : envAfterEval) {
+          final String type = jep.getValue("type(" + env + ")").toString();
+          switch (type) {
+            case "<class 'function'>":
+              final PythonInterpreterEnvObject pieoF = new PythonInterpreterEnvObject(
+                      env,
+                      "FUNC",
+                      jep.getValue_bytearray("zdill.dumps(" + env + ")")
+              );
+              envObjects.put(pieoF.getName(), pieoF);
+              break;
+            case "<class 'module'>":
+              final String val = ((String) jep.getValue("pd"));
+              final int startIndex = val.indexOf("'") + 1;
+              final int endIndex = val.indexOf("'", startIndex);
+              final String module = val.substring(startIndex, endIndex);
+
+              final String payload = module + ":" + env;
+              final PythonInterpreterEnvObject pieoM = new PythonInterpreterEnvObject(
+                      env,
+                      "MODULE",
+                      payload.getBytes()
+              );
+              envObjects.put(pieoM.getName(), pieoM);
+              break;
+            default:
+              final PythonInterpreterEnvObject pieoD = new PythonInterpreterEnvObject(
+                      env,
+                      jep.getValue(env).getClass().getName(),
+                      jep.getValue_bytearray("zpickle.dumps(" + env + ", protocol=0)")
+              );
+              envObjects.put(pieoD.getName(), pieoD);
           }
         }
         FileOutputStream fout = new FileOutputStream(noteContextFile);
