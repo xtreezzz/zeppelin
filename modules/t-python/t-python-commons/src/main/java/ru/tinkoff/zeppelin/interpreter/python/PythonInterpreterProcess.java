@@ -222,7 +222,7 @@ public class PythonInterpreterProcess {
               envObjects.put(pieoF.getName(), pieoF);
               break;
             case "<class 'module'>":
-              final String val = ((String) jep.getValue("pd"));
+              final String val = ((String) jep.getValue(env));
               final int startIndex = val.indexOf("'") + 1;
               final int endIndex = val.indexOf("'", startIndex);
               final String module = val.substring(startIndex, endIndex);
