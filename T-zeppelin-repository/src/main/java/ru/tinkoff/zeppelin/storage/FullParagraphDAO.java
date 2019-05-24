@@ -18,6 +18,7 @@ package ru.tinkoff.zeppelin.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -162,14 +164,14 @@ public class FullParagraphDAO {
                     : null;
 
     final LocalDateTime startedAt =
-        null != resultSet.getTimestamp("STARTED_AT")
-            ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
-            : null;
+            null != resultSet.getTimestamp("STARTED_AT")
+                    ? resultSet.getTimestamp("STARTED_AT").toLocalDateTime()
+                    : null;
 
     final LocalDateTime endedAt =
-        null != resultSet.getTimestamp("ENDED_AT")
-            ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
-            : null;
+            null != resultSet.getTimestamp("ENDED_AT")
+                    ? resultSet.getTimestamp("ENDED_AT").toLocalDateTime()
+                    : null;
 
 
     final String status = resultSet.getString("STATUS");
@@ -215,61 +217,24 @@ public class FullParagraphDAO {
     if (paragraphDTO != null && paragraphDTO.getJobId() != 0) {
       parameters = new MapSqlParameterSource()
               .addValue("ID", paragraphDTO.getJobId());
-      resultDTOS.addAll(
-              jdbcTemplate.query(
-                      LOAD_PAYLOAD_BY_JOB_ID,
-                      parameters,
-                      FullParagraphDAO::mapRowResult));
 
+      jdbcTemplate.query(
+              LOAD_PAYLOAD_BY_JOB_ID,
+              parameters,
+              FullParagraphDAO::mapRowResult)
+              .stream()
+              .filter(message -> message.getType() != null)
+              .forEach(resultDTOS::add);
+
+      if (resultDTOS.isEmpty()) {
+        resultDTOS.add(new InterpreterResultDTO.Message("TEXT", " "));
+      }
+      paragraphDTO.setResults(new InterpreterResultDTO(paragraphDTO.getStatus(), resultDTOS));
+    } else if (paragraphDTO != null) {
+
+      resultDTOS.add(new InterpreterResultDTO.Message("TEXT", " "));
       paragraphDTO.setResults(new InterpreterResultDTO(paragraphDTO.getStatus(), resultDTOS));
     }
     return paragraphDTO;
-  }
-
-  public ParagraphDTO getByUUID(final String uuid) {
-    SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("UUID", uuid);
-
-    final ParagraphDTO paragraphDTO = jdbcTemplate.query(
-            GET_BY_PARAGRAPH_UUID,
-            parameters,
-            FullParagraphDAO::mapRow)
-            .stream()
-            .findFirst()
-            .orElse(null);
-
-    final List<InterpreterResultDTO.Message> resultDTOS = new ArrayList<>();
-    if (paragraphDTO != null && paragraphDTO.getJobId() != 0) {
-      parameters = new MapSqlParameterSource()
-              .addValue("ID", paragraphDTO.getJobId());
-      resultDTOS.addAll(
-              jdbcTemplate.query(
-                      LOAD_PAYLOAD_BY_JOB_ID,
-                      parameters,
-                      FullParagraphDAO::mapRowResult));
-
-      paragraphDTO.setResults(new InterpreterResultDTO(paragraphDTO.getStatus(), resultDTOS));
-    }
-    return paragraphDTO;
-  }
-
-  public List<ParagraphDTO> getByNoteId(final Long id) {
-    final SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("ID", id);
-
-    return jdbcTemplate.query(
-            GET_BY_NOTE_ID,
-            parameters,
-            FullParagraphDAO::mapRow);
-  }
-
-  public List<ParagraphDTO> getByNoteUUID(final String uuid) {
-    final SqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("UUID", uuid);
-
-    return jdbcTemplate.query(
-            GET_BY_NOTE_UUID,
-            parameters,
-            FullParagraphDAO::mapRow);
   }
 }
