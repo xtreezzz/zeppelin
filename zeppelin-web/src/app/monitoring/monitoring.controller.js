@@ -28,7 +28,7 @@ function MonitoringCtrl($rootScope, $scope, $http, baseUrlSrv, ngToast, $timeout
       for (let i = 0; i < $scope.events.length; i++) {
         let time = $scope.events[i].actionTime;
         $scope.events[i].actionTime = new Date(
-          time.date.year, time.date.month, time.date.day, time.time.hour, time.time.minute,
+          time.date.year, time.date.month - 1, time.date.day, time.time.hour, time.time.minute,
           time.time.second, Math.floor(time.time.nano / 1000000)
         );
       }
