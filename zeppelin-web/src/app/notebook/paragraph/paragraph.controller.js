@@ -1394,6 +1394,9 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   };
 
   $scope.getExecutionTime = function(pdata) {
+    if (pdata.endedAt === undefined || pdata.startedAt === undefined) {
+      return 'New paragraph.';
+    }
     const end = convertTime(pdata.endedAt);
     const start = convertTime(pdata.startedAt);
 
