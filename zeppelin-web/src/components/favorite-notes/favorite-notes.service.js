@@ -27,7 +27,7 @@ function FavoriteNotesService($rootScope, $http, baseUrlSrv) {
     username = $rootScope.ticket.screenUsername;
     loadPromise = new Promise(function(resolve, reject) {
       $http.get(
-        `${baseUrlSrv.getRestApiBase()}/favorite_notes/get_notes_ids?username=`
+        `${baseUrlSrv.getRestApiBase()}/marked_notes/get_notes_ids?username=`
         + username)
       .then(function(response) {
         if (response.data.status === 'OK') {
@@ -94,7 +94,7 @@ function FavoriteNotesService($rootScope, $http, baseUrlSrv) {
 
     if (loadPromise) {
       loadPromise.then(() => {
-        $http.get(`${baseUrlSrv.getRestApiBase()}/favorite_notes/set_note_status` +
+        $http.get(`${baseUrlSrv.getRestApiBase()}/marked_notes/set_note_status` +
           '?username=' + username +
           '&note_id=' + noteId +
           '&note_type=' + noteType +
