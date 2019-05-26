@@ -86,6 +86,11 @@ limitations under the License.
 
   <div ng-if="!asIframe" class="paragraphFooter">
     <div ng-show="!paragraph.config.tableHide && !viewOnly"
+         id="{{paragraph.id}}_cursorPos"
+         class="cursorPos">
+      {{cursorMsg}}
+    </div>
+    <div ng-show="!paragraph.config.tableHide && !viewOnly"
          id="{{paragraph.id}}_executionTime"
          class="executionTime" ng-bind-html="getExecutionTime(paragraph)">
     </div>

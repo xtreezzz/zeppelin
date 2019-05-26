@@ -30,7 +30,7 @@ const ParagraphExecutor = {
 angular.module('zeppelinWebApp').controller('ParagraphCtrl', ParagraphCtrl);
 
 function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $location,
-                       $timeout, $compile, $http, $q, websocketMsgSrv,
+                       $timeout, $compile, $http, $q, websocketMsgSrv, $interval,
                        baseUrlSrv, ngToast, noteVarShareService,
                        heliumService) {
   'ngInject';
@@ -1392,6 +1392,17 @@ function ParagraphCtrl($scope, $rootScope, $route, $window, $routeParams, $locat
   $scope.getFormattedParagraphTime = () => {
     return moment().toISOString();
   };
+
+  $interval(function() {
+    if ($scope.editor) {
+      let position = $scope.editor.getCursorPosition();
+      if (position !== undefined && position.row !== undefined && position.column !== undefined) {
+        $scope.cursorMsg = `${position.row}:${position.column}`;
+      }
+    } else {
+      $scope.cursorMsg = '';
+    }
+  });
 
   $scope.getExecutionTime = function(pdata) {
     if (pdata.endedAt === undefined || pdata.startedAt === undefined) {
