@@ -16,6 +16,9 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,7 @@ import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfigurati
 import ru.tinkoff.zeppelin.core.notebook.Job;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.engine.Configuration;
+import ru.tinkoff.zeppelin.engine.CredentialService;
 import ru.tinkoff.zeppelin.engine.server.AbstractRemoteProcess;
 import ru.tinkoff.zeppelin.engine.server.InterpreterRemoteProcess;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult;
@@ -32,11 +36,14 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
-import ru.tinkoff.zeppelin.storage.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.JobBatchDAO;
+import ru.tinkoff.zeppelin.storage.JobDAO;
+import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
+import ru.tinkoff.zeppelin.storage.JobResultDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Class for handle pending jobs
@@ -48,6 +55,7 @@ import java.util.Map;
 @Component
 public class PendingHandler extends AbstractHandler {
 
+  private final CredentialService credentialService;
 
   public PendingHandler(final JobBatchDAO jobBatchDAO,
                         final JobDAO jobDAO,
@@ -55,8 +63,10 @@ public class PendingHandler extends AbstractHandler {
                         final JobPayloadDAO jobPayloadDAO,
                         final NoteDAO noteDAO,
                         final ParagraphDAO paragraphDAO,
-                        final FullParagraphDAO fullParagraphDAO) {
+                        final FullParagraphDAO fullParagraphDAO,
+                        final CredentialService credentialService) {
     super(jobBatchDAO, jobDAO, jobResultDAO, jobPayloadDAO, noteDAO, paragraphDAO, fullParagraphDAO);
+    this.credentialService = credentialService;
   }
 
   public List<Job> loadJobs() {
@@ -108,8 +118,11 @@ public class PendingHandler extends AbstractHandler {
     userContext.put("Z_ENV_USER_NAME", job.getUsername());
     userContext.put("Z_ENV_USER_ROLES", job.getRoles().toString());
 
-    // prepare configuration
+    // put all available credentials
+    credentialService.getUserReadableCredentials(job.getUsername())
+        .forEach(c -> userContext.put(c.getKey(), c.getValue()));
 
+    // prepare configuration
     final Map<String, String> configuration = new HashMap<>();
     innerConfig.getProperties()
             .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
