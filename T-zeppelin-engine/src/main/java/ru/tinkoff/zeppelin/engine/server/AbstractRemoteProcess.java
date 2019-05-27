@@ -27,10 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.interpreter.thrift.PingResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RegisterInfo;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteProcessThriftService;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 
@@ -52,24 +53,24 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
 
   static void starting(final String shebang, final RemoteProcessType processType) {
     ZLog.log(ET.PROCESS_STARTED,
-            String.format("Process started by shebang=%s", shebang),
-            String.format("New interpreter process added to process map by shebang=%s", shebang),
-            "Unknown");
+        String.format("Процесс[shebang:%s, type:%s] запускается", shebang, processType.name()),
+        SystemEvent.SYSTEM_USERNAME);
 
     if (!processMap.containsKey(processType)) {
       processMap.put(processType, new ConcurrentHashMap<>());
     }
-  final AbstractRemoteProcess process;
-      switch (processType) {
-        case INTERPRETER:
-          process = new InterpreterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
-          break;
-        case COMPLETER:
-          process = new CompleterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
-          break;
-        default:
-          throw new IllegalArgumentException();
-      }
+    final AbstractRemoteProcess process;
+
+    switch (processType) {
+      case INTERPRETER:
+        process = new InterpreterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
+        break;
+      case COMPLETER:
+        process = new CompleterRemoteProcess(shebang, AbstractRemoteProcess.Status.STARTING, null, -1);
+        break;
+      default:
+        throw new IllegalArgumentException();
+    }
 
     processMap.get(processType).put(shebang, process);
   }
@@ -86,16 +87,18 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
       process.uuid = registerInfo.getProcessUUID();
       process.status = Status.READY;
       ZLog.log(ET.REMOTE_CONNECTION_REGISTERED,
-              String.format("Registered remote connection to interpreter process with shebang=%s", registerInfo.getShebang()),
-              String.format("Received register event for interpreter, process details: shebang=%s, host=%s, port=%s, process uuid=%s",
-                      registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
-                      registerInfo.getProcessUUID()), "Unknown");
+          String.format("Зарегистрировано подключение к удаленному процессу по адресу %s:%s",
+              registerInfo.getHost(), String.valueOf(registerInfo.getPort())),
+          String.format("Зарегистрировано подключение к удаленному процессу[shebang=%s, host=%s, port=%s, process uuid=%s]",
+              registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
+              registerInfo.getProcessUUID()), SystemEvent.SYSTEM_USERNAME);
+
     }
     ZLog.log(ET.BAD_REMOTE_CONNECTION,
-            String.format("Requested interpreter process[shebang:%s] for remote connection not found", registerInfo.getShebang()),
-            String.format("Interpreter process with shebang=%s not exist in process map, process details: host=%s, port=%s, process uuid=%s",
-                    registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()), registerInfo.getProcessUUID()),
-            "Unknown");
+            String.format("Подключение к процессу[shebang:%s] не установлено", registerInfo.getShebang()),
+            String.format("Процесс [shebang=%s] не найден: host=%s, port=%s, process uuid=%s",
+                registerInfo.getShebang(), registerInfo.getHost(), String.valueOf(registerInfo.getPort()),
+                registerInfo.getProcessUUID()), SystemEvent.SYSTEM_USERNAME);
   }
 
   static void remove(final String shebang, final RemoteProcessType processType) {
@@ -106,15 +109,14 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
     final AbstractRemoteProcess removedProcess = processMap.get(processType).remove(shebang);
     if (removedProcess == null) {
       ZLog.log(ET.COMPLETED_PROCESS_NOT_FOUND,
-              String.format("System error, finished process by shebang: %s not found", shebang),
-              String.format("Interpreter process with shebang=%s not exist in process map", shebang),
-              "Unknown");
+          String.format("Системная ошибка, завершенный процесс[%s] не найден", shebang),
+          SystemEvent.SYSTEM_USERNAME);
     } else {
       ZLog.log(ET.PROCESS_COMPLETED,
-              String.format("Process with shebang=%s and uuid=%s finished", removedProcess.getShebang(), removedProcess.uuid),
-              String.format("Process finished, details: shebang=%s, host=%s, port=%s, process uuid=%s, status=%s",
-                      removedProcess.getShebang(), removedProcess.host, removedProcess.port, removedProcess.uuid, removedProcess.status),
-              "Unknown");
+              String.format("Процесс[shebang=%s, uuid=%s] завершен", removedProcess.getShebang(), removedProcess.uuid),
+              String.format("Удаленный процесс завершен: shebang=%s, host=%s, port=%s, process uuid=%s, status=%s",
+                      removedProcess.getShebang(), removedProcess.host, removedProcess.port, removedProcess.uuid, removedProcess.status)
+      );
     }
   }
 
@@ -175,9 +177,9 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
 
     } catch (final Exception e) {
       ZLog.log(ET.CONNECTION_FAILED,
-              String.format("Failed to open connection with host=%s, port=%s", host, port),
-              String.format("Error occurred during opening TSocket with host=%s, port=%s, error: %s",
-                      host, port, e.getMessage()), "Unknown");
+          String.format("Ошибка при открытии соедниение по адресу %s:%s", host, port),
+          String.format("Ошибка при открытии TSocket[%s:%s], ошибка: %s", host, port, e.getMessage()),
+          SystemEvent.SYSTEM_USERNAME);
       return null;
     }
   }
@@ -187,9 +189,9 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
       connection.getOutputProtocol().getTransport().close();
     } catch (final Throwable t) {
       ZLog.log(ET.FAILED_TO_RELEASE_CONNECTION,
-              "System error, failed to close connection",
-              String.format("Failed to close connection, process details=%s, error=%s",
-                      this.toString(), t.getMessage()), "Unknown");
+          String.format("Ошибка при зкарытии соедниения по адресу %s:%s", host, port),
+          String.format("Ошибка при зкарытии соедниения по адресу информация о процессе=%s, ошибка=%s",
+              this.toString(), t.getMessage()), SystemEvent.SYSTEM_USERNAME);
     }
   }
 
@@ -201,19 +203,19 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
     final T client = getConnection();
     if (client == null) {
       ZLog.log(ET.PING_FAILED_CLIENT_NOT_FOUND,
-              String.format("Ping failed: client not found, uuid=%s", this.uuid),
-              String.format("Ping failed: client not found, process details=%s", this.toString()),
-              "Unknown");
+          String.format("Ping: соединение не установлено %s:%s", this.host, String.valueOf(this.port)),
+          String.format("Ping: соединение не установлено: %s", this.toString()), SystemEvent.SYSTEM_USERNAME);
       return null;
     }
 
     try {
       return client.ping();
     } catch (final Throwable throwable) {
+
       ZLog.log(ET.PING_FAILED,
-              String.format("Ping failed, uuid=%s", this.uuid),
-              String.format("Error occurred during ping, process details=%s, error=%s",
-                      this.toString(), throwable.getMessage()), "Unknown");
+          String.format("Ping: соединение разорвано %s:%s", this.host, String.valueOf(this.port)),
+          String.format("Ping: соединение разорвано: %s, ошибка: %s", this.toString(), throwable.getMessage()),
+          SystemEvent.SYSTEM_USERNAME);
       return null;
     } finally {
       releaseConnection(client);
@@ -222,15 +224,16 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
 
   public void forceKill() {
     ZLog.log(ET.FORCE_KILL_REQUESTED,
-            String.format("Close process with uuid=%s", this.uuid),
-            String.format("Force kill called for process: %s", this.toString()),
-            "Unknown");
+        String.format("Вызвано принудительное завершение процесса по адресу %s:%s", this.host, String.valueOf(this.port)),
+        String.format("Вызвано принудительное завершение процесса %s", this.toString()),
+        SystemEvent.SYSTEM_USERNAME);
+
     final RemoteProcessThriftService.Client client = getConnection();
     if (client == null) {
       ZLog.log(ET.FORCE_KILL_FAILED_CLIENT_NOT_FOUND,
-              String.format("Force kill failed: client not found, uuid=%s", this.uuid),
-              String.format("Force kill failed: client not found, process details=%s", this.toString()),
-              "Unknown");
+          String.format("Ошибка при принудительном завершении процесса %s:%s, соединение не установлено", this.host, String.valueOf(this.port)),
+          String.format("Ошибка при принудительном завершении процесса %s, соединение не установлено", this.toString()),
+          SystemEvent.SYSTEM_USERNAME);
       return;
     }
 
@@ -238,9 +241,9 @@ public abstract class AbstractRemoteProcess<T extends RemoteProcessThriftService
       client.shutdown();
     } catch (final Throwable throwable) {
       ZLog.log(ET.FORCE_KILL_FAILED,
-              String.format("Force kill failed, uuid=%s", this.uuid),
-              String.format("Error occurred during force kill, process details=%s, error=%s",
-                      this.toString(), throwable.getMessage()), "Unknown");
+          String.format("Ошибка при принудительном завершении процесса %s:%s", this.host, String.valueOf(this.port)),
+          String.format("Ошибка при принудительном завершении процесса %s, ошибка:%s", this.toString(), throwable.getMessage()),
+          SystemEvent.SYSTEM_USERNAME);
     } finally {
       releaseConnection(client);
     }

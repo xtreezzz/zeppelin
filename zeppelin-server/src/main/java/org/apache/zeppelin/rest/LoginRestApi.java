@@ -17,19 +17,22 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
-import org.apache.zeppelin.realm.AuthenticationInfo;
-import org.apache.zeppelin.realm.AuthorizationService;
-import org.apache.zeppelin.rest.message.JsonResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.zeppelin.realm.AuthenticationInfo;
+import org.apache.zeppelin.realm.AuthorizationService;
+import org.apache.zeppelin.rest.message.JsonResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Created for org.apache.zeppelin.rest.message.
@@ -37,7 +40,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/login")
 public class LoginRestApi {
-  private static final Logger LOG = LoggerFactory.getLogger(LoginRestApi.class);
   private static final Gson gson = new Gson();
 
 
@@ -72,6 +74,7 @@ public class LoginRestApi {
     data.put("roles", gson.toJson(authenticationInfo.getRoles()));
     data.put("ticket", UUID.randomUUID().toString());
 
+    ZLog.log(ET.USER_POST_LOGIN, "Пользователь авторизовался", authenticationInfo.getUser());
     return new JsonResponse(HttpStatus.OK, "", data).build();
   }
 
@@ -82,6 +85,8 @@ public class LoginRestApi {
 
     Map<String, String> data = new HashMap<>();
     data.put("clearAuthorizationHeader", "true");
+
+    ZLog.log(ET.USER_LOGOUT, "Пользователь вышел из системы", authenticationInfo.getUser());
     return new JsonResponse(HttpStatus.UNAUTHORIZED, "", data).build();
   }
 }

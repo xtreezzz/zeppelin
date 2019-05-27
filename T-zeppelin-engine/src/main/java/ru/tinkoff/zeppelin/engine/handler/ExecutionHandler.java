@@ -21,7 +21,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
@@ -31,6 +31,7 @@ import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
 import ru.tinkoff.zeppelin.storage.JobResultDAO;
 import ru.tinkoff.zeppelin.storage.NoteDAO;
 import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
@@ -56,22 +57,15 @@ public class ExecutionHandler extends AbstractHandler{
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void run(final Note note, final List<Paragraph> paragraphs, final String username, final Set<String> roles) {
     if (noteIsRunning(note)) {
-      ZLog.log(ET.JOB_CANCEL_ALREADY_RUNNING,
-          String.format("Note[id=%s] is already running! Abort running note", note.getId()),
-          String.format(
-              "Batch for note[id=%s] with paragraphs[%s] will be rejected when user [name=%s;roles=%s] try execute it",
-              note.getId(), paragraphs.toString(), username, roles.toString()
-          ),
-          username);
+      ZLog.log(ET.JOB_ALREADY_RUNNING,
+          String.format("Ноут[id=%s] уже исполняется. Задача не будет добавлена на исполнение [автор задачи=%s]", note.getId(), username),
+          SystemEvent.SYSTEM_USERNAME);
       return;
     }
 
     ZLog.log(ET.JOB_SUBMITTED_FOR_EXECUTION,
-        String.format("Note[id=%s] with paragraphs[%s] submitted for execution by user[name=%s;roles=%s]",
-            note.getId(), paragraphs.toString(), username, roles.toString()),
-        String.format("Batch for note[id=%s] with paragraphs[%s] published by user[name=%s;roles=%s]",
-            note.getId(), paragraphs.toString(), username, roles.toString()),
-        username);
+        String.format("Задача добавлена в очередь на исполнение (ноут[id=%s], автор задачи=%s)", note.getId(), username),
+        SystemEvent.SYSTEM_USERNAME);
     publishBatch(note, paragraphs, username, roles, 0);
   }
 }

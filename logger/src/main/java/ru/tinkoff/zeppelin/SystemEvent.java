@@ -24,74 +24,12 @@ import javax.annotation.Nullable;
 
 public class SystemEvent implements Serializable {
 
-  /**
-   * Type of system event.
-   */
-  public enum ET {
-    UI_EVENT,
-    INTERPRETER_PROCESS_NOT_FOUND,
-    JOB_CANCEL_FAILED,
-    JOB_CANCEL_ACCEPTED,
-    JOB_CANCEL_NOT_FOUND,
-    JOB_CANCEL_ERRORED,
-    JOB_CANCEL_ALREADY_RUNNING,
-    JOB_SUBMITTED_FOR_EXECUTION,
-    GOT_JOB,
-    GOT_ABORTED_JOB,
-    INTERPRETER_INSTALL,
-    INTERPRETER_ALREADY_INSTALLED,
-    INTERPRETER_SUCCESSFULLY_INSTALLED,
-    INTERPRETER_INSTALLATION_FAILED,
-    INTERPRETER_SUCCESSFULLY_UNINSTALLED,
-    INTERPRETER_DELETION_FAILED,
-    INTERPRETER_CONFIGURATION_REQUESTED,
-    INTERPRETER_CONFIGURAION_FOUND,
-    INTERPRETER_CONFIGURATION_PROCESSING_FAILED,
-    PROCESS_STARTED,
-    REMOTE_CONNECTION_REGISTERED,
-    BAD_REMOTE_CONNECTION,
-    COMPLETED_PROCESS_NOT_FOUND,
-    PROCESS_COMPLETED,
-    CONNECTION_FAILED,
-    FAILED_TO_RELEASE_CONNECTION,
-    FORCE_KILL_REQUESTED,
-    PUSH_FAILED_CLIENT_NOT_FOUND,
-    PUSH_FAILED,
-    PING_FAILED_CLIENT_NOT_FOUND,
-    PING_FAILED,
-    FORCE_KILL_FAILED_CLIENT_NOT_FOUND,
-    FORCE_KILL_FAILED,
-    INTERPRETER_EVENT_SERVER_STARTING,
-    INTERPRETER_EVENT_SERVER_START_FAILED,
-    INTERPRETER_EVENT_SERVER_STARTED,
-    INTERPRETER_EVENT_SERVER_STOPPED,
-    INTERPRETER_PROCESS_START_REQUESTED,
-    INTERPRETER_PROCESS_FINISHED,
-    INTERPRETER_PROCESS_FAILED,
-    JOB_READY_FOR_EXECUTION,
-    JOB_REQUEST_IS_EMPTY,
-    JOB_ACCEPTED,
-    JOB_DECLINED,
-    JOB_REQUEST_ERRORED,
-    JOB_UNDEFINED,
-    JOB_READY_FOR_EXECUTION_BY_SCHEDULER,
-    SCHEDULED_JOB_ERRORED,
-    JOB_SCHEDULED,
-    JOB_NOT_FOUND,
-    INTERPRETER_RESULT_NOT_FOUND,
-    SUCCESSFUL_RESULT,
-    ABORTED_RESULT,
-    ERRORED_RESULT,
-    ACCESS_ERROR
-  }
-
-  private long databaseId;
+  public static final String SYSTEM_USERNAME = "ZEPPELIN";
 
   @Nonnull
   private final String username;
 
-  @Nonnull
-  private final ET type;
+  private final long typeId;
 
   @Nonnull
   private final String message;
@@ -103,37 +41,16 @@ public class SystemEvent implements Serializable {
   private final LocalDateTime actionTime;
 
 
-  public SystemEvent(final long databaseId,
-                     @Nonnull final ET type,
+  public SystemEvent(final long typeId,
                      @Nonnull final String username,
                      @Nonnull final String message,
                      @Nullable final String description,
                      @Nonnull final LocalDateTime actionTime) {
-    this.databaseId = databaseId;
     this.username = username;
-    this.type = type;
+    this.typeId = typeId;
     this.message = message;
     this.description = description;
     this.actionTime = actionTime;
-  }
-
-  public SystemEvent(@Nonnull final ET type,
-                     @Nonnull final String username,
-                     @Nonnull final String message,
-                     @Nullable final String description) {
-    this.username = username;
-    this.type = type;
-    this.message = message;
-    this.description = description;
-    this.actionTime = LocalDateTime.now();
-  }
-
-  public long getDatabaseId() {
-    return databaseId;
-  }
-
-  public void setDatabaseId(final long databaseId) {
-    this.databaseId = databaseId;
   }
 
   @Nonnull
@@ -141,9 +58,8 @@ public class SystemEvent implements Serializable {
     return username;
   }
 
-  @Nonnull
-  public ET getType() {
-    return type;
+  public long getTypeId() {
+    return typeId;
   }
 
   @Nonnull
@@ -164,9 +80,8 @@ public class SystemEvent implements Serializable {
   @Override
   public String toString() {
     return new StringJoiner(", ", "{", "}")
-        .add("databaseId=" + databaseId)
         .add("username='" + username + "'")
-        .add("type=" + type)
+        .add("typeId=" + typeId)
         .add("message='" + message + "'")
         .add("description='" + description + "'")
         .add("actionTime=" + actionTime)

@@ -24,7 +24,7 @@ import org.quartz.CronExpression;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.core.notebook.Note;
 import ru.tinkoff.zeppelin.core.notebook.Paragraph;
 import ru.tinkoff.zeppelin.core.notebook.Scheduler;
@@ -36,6 +36,7 @@ import ru.tinkoff.zeppelin.storage.JobResultDAO;
 import ru.tinkoff.zeppelin.storage.NoteDAO;
 import ru.tinkoff.zeppelin.storage.ParagraphDAO;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
@@ -72,27 +73,15 @@ public class SchedulerHandler extends AbstractHandler {
     final List<Paragraph> paragraphs = paragraphDAO.getByNoteId(note.getId());
 
     if (noteIsRunning(note)) {
-      ZLog.log(ET.JOB_CANCEL_ALREADY_RUNNING,
-          String.format("Note[id=%s] is already running! Abort running note", note.getId()),
-          String.format(
-              "Batch for note[id=%s] with paragraphs[%s] will be rejected when scheduler [username=%s;roles=%s] try execute it",
-              note.getId(),
-              paragraphs.toString(),
-              scheduler.getUser(),
-              scheduler.getRoles().toString()
-          ),
-          scheduler.getUser());
+      ZLog.log(ET.JOB_ALREADY_RUNNING,
+          String.format("Ноут[id=%s] уже запущен и не будет выполнен по РАСПИСАНИЮ, [автор задачи=%s]",
+              note.getId(), scheduler.getUser()), SystemEvent.SYSTEM_USERNAME);
       return;
     }
 
     ZLog.log(ET.JOB_READY_FOR_EXECUTION_BY_SCHEDULER,
-        String.format("Note[id=%s] is ready for execution by scheduler, user[name=%s, roles=%s]",
-            scheduler.getNoteId(), scheduler.getUser(), scheduler.getRoles()),
-        String.format("Note[id=%s] is ready for execution by scheduler, user[name=%s, roles=%s], "
-                + "execution parameters[last execution=%s, next execution=%s, expression=%s]",
-            scheduler.getNoteId(), scheduler.getUser(), scheduler.getRoles(),
-            scheduler.getLastExecution(), scheduler.getNextExecution(), scheduler.getExpression()),
-        scheduler.getUser());
+        String.format("Ноут[id=%s] готов к исполнению по РАСПИСАНИЮ (автор задачи=%s)",
+            scheduler.getNoteId(), scheduler.getUser()), SystemEvent.SYSTEM_USERNAME);
     publishBatch(note, paragraphs, scheduler.getUser(), scheduler.getRoles(), 100);
 
     final CronExpression cronExpression;
@@ -100,10 +89,8 @@ public class SchedulerHandler extends AbstractHandler {
       cronExpression = new CronExpression(scheduler.getExpression());
     } catch (final Exception e) {
       ZLog.log(ET.SCHEDULED_JOB_ERRORED,
-          String.format("Scheduled job[noteId = %s] has wrong expression = %s",
-              scheduler.getNoteId(), scheduler.getExpression()),
-          String.format("Scheduled job[%s] has wrong expression", scheduler.toString()),
-          scheduler.getUser());
+          String.format("Ноут поставлен на расписание[noteId=%s] с некорректным правилом[%s]",
+              scheduler.getNoteId(), scheduler.getExpression()), SystemEvent.SYSTEM_USERNAME);
       throw new IllegalArgumentException("Wrong cron expression");
     }
 
@@ -114,9 +101,8 @@ public class SchedulerHandler extends AbstractHandler {
     scheduler.setNextExecution(nextExecution);
     schedulerDAO.update(scheduler);
     ZLog.log(ET.JOB_SCHEDULED,
-        String.format("Job successfully scheduled, noteId=%s, next execution=%s", scheduler.getNoteId(), nextExecution),
-        String.format("Job successfully scheduled, job=%s, next execution=%s", scheduler.toString(), nextExecution),
-        scheduler.getUser());
+        String.format("Ноут успешно добавлен на выполеник по расписанию, noteId=%s, следующее время выполнения=%s", scheduler.getNoteId(), nextExecution),
+        SystemEvent.SYSTEM_USERNAME);
   }
 
 }

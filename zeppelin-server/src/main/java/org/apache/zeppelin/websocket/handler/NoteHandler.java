@@ -17,7 +17,15 @@
 
 package org.apache.zeppelin.websocket.handler;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.zeppelin.realm.AuthenticationInfo;
 import org.apache.zeppelin.realm.AuthorizationService;
 import org.apache.zeppelin.websocket.ConnectionManager;
@@ -34,14 +42,8 @@ import ru.tinkoff.zeppelin.core.notebook.Scheduler;
 import ru.tinkoff.zeppelin.engine.Configuration;
 import ru.tinkoff.zeppelin.engine.NoteService;
 import ru.tinkoff.zeppelin.storage.SchedulerDAO;
-
-import java.io.IOException;
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 
 @Component
@@ -95,12 +97,12 @@ public class NoteHandler extends AbstractHandler {
   }
 
   public void getNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
-    //TODO: add log to count users
     final AuthenticationInfo authenticationInfo = AuthorizationService.getAuthenticationInfo();
     final Note note = safeLoadNote("id", fromMessage, Permission.READER, authenticationInfo, conn);
     connectionManager.addSubscriberToNode(note.getId(), conn);
     final NoteDTO noteDTO = noteDTOConverter.convertNoteToDTO(note);
     conn.sendMessage(new SockMessage(Operation.NOTE).put("note", noteDTO).toSend());
+    ZLog.log(ET.NOTE_OPENED, String.format("Пользователь открыл ноут \"%s\"", note.getUuid()), authenticationInfo.getUser());
   }
 
   public void updateNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -126,6 +128,7 @@ public class NoteHandler extends AbstractHandler {
     noteService.deleteNote(note);
     connectionManager.removeNoteSubscribers(note.getId());
     sendListNotesInfo(conn);
+    ZLog.log(ET.NOTE_DELETED, String.format("Пользователь удалил ноут \"%s\"", note.getUuid()), authenticationInfo.getUser());
   }
 
   public void createNote(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
@@ -162,7 +165,10 @@ public class NoteHandler extends AbstractHandler {
       connectionManager.addSubscriberToNode(note.getId(), conn);
       conn.sendMessage(new SockMessage(Operation.NEW_NOTE).put("note", note).toSend());
       sendListNotesInfo(conn);
+      ZLog.log(ET.NOTE_CREATED, String.format("Пользователь успешно создал ноут \"%s\"", note.getUuid()), authenticationInfo.getUser());
     } catch (final Exception e) {
+      ZLog.log(ET.FAILED_TO_CREATE_NOTE, String.format("Ошибка при создании ноутбука: %s",
+          ExceptionUtils.getStackTrace(e)), authenticationInfo.getUser());
       throw new IllegalStateException("Failed to create note.", e);
     }
   }
@@ -244,10 +250,13 @@ public class NoteHandler extends AbstractHandler {
     note.setPath(normalizePath(destNotePath));
     noteService.updateNote(note);
     sendListNotesInfo(conn);
+    ZLog.log(ET.NOTE_RESTORED, String.format("Пользователь восстановил ноут \"%s\"из корзины",
+        note.getUuid()), authenticationInfo.getUser());
   }
 
   public void restoreFolder(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final String folderPath = normalizePath(fromMessage.getNotNull("id")) + "/";
+    final String user = AuthorizationService.getAuthenticationInfo().getUser();
 
     if (!folderPath.startsWith("/" + Note.TRASH_FOLDER)) {
       throw new IOException("Can't restore folder: '" + folderPath + "' as it is not in trash folder");
@@ -260,6 +269,8 @@ public class NoteHandler extends AbstractHandler {
           final String notePath = normalizePath(note.getPath().substring(Note.TRASH_FOLDER.length() + 1));
           note.setPath(notePath);
           noteService.updateNote(note);
+          ZLog.log(ET.NOTE_RESTORED, String.format("Пользователь восстановил ноут \"%s\" из корзины",
+              note.getUuid()), user);
         });
     sendListNotesInfo(conn);
   }
@@ -297,19 +308,28 @@ public class NoteHandler extends AbstractHandler {
 
   public void removeFolder(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
     final String folderPath = normalizePath(fromMessage.getNotNull("id")) + "/";
+    final String user = AuthorizationService.getAuthenticationInfo().getUser();
 
     noteService.getAllNotes().stream()
         .filter(this::userHasOwnerPermission)
         .filter(note -> note.getPath().startsWith(folderPath))
-        .forEach(noteService::deleteNote);
+        .forEach(n -> {
+          noteService.deleteNote(n);
+          ZLog.log(ET.NOTE_DELETED, String.format("Пользователь удалил ноут \"%s\"", n.getUuid()), user);
+        });
     sendListNotesInfo(conn);
   }
 
   public void emptyTrash(final WebSocketSession conn, final SockMessage fromMessage) throws IOException {
+    final String user = AuthorizationService.getAuthenticationInfo().getUser();
+
     noteService.getAllNotes().stream()
         .filter(note -> note.getPath().startsWith("/" + Note.TRASH_FOLDER + "/"))
         .filter(this::userHasOwnerPermission)
-        .forEach(noteService::deleteNote);
+        .forEach(n -> {
+          noteService.deleteNote(n);
+          ZLog.log(ET.NOTE_DELETED, String.format("Пользователь удалил ноут \"%s\"", n.getUuid()), user);
+        });
     sendListNotesInfo(conn);
   }
 

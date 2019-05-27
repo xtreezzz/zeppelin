@@ -18,10 +18,11 @@
 package ru.tinkoff.zeppelin.engine.server;
 
 import java.util.Map;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.interpreter.thrift.CancelResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
 import ru.tinkoff.zeppelin.interpreter.thrift.RemoteInterpreterThriftService;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 import ru.tinkoff.zeppelin.storage.ZLog;
 
 public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterpreterThriftService.Client> {
@@ -36,20 +37,21 @@ public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterp
                          final Map<String, String> configuration) {
     final RemoteInterpreterThriftService.Client client = getConnection();
     if(client == null) {
+
       ZLog.log(ET.PUSH_FAILED_CLIENT_NOT_FOUND,
-              String.format("Push failed: client not found, uuid=%s", this.uuid),
-              String.format("Push failed: client not found, process details=%s", this.toString()),
-              "Unknown");
+          String.format("Не удалось вызвать интерпретатор: клиент не найден, uuid=%s", this.uuid),
+          String.format("Не удалось вызвать интерпретатор: клиент не найден, информация о процессе=%s", this.toString()),
+          SystemEvent.SYSTEM_USERNAME);
       return null;
     }
 
     try {
       return client.push(payload, noteContext, userContext, configuration);
     } catch (final Throwable throwable) {
-      ZLog.log(ET.PUSH_FAILED,
-              String.format("Push failed, uuid=%s", this.uuid),
-              String.format("Error occurred during push, process details=%s, error=%s",
-                      this.toString(), throwable.getMessage()), "Unknown");
+
+      ZLog.log(ET.PUSH_FAILED, String.format("Не удалось вызвать интерпретатор: uuid=%s", this.uuid),
+          String.format("Ошибка в ходе вызова интерпретатора, описание процесса=%s, ошибка=%s",
+              this.toString(), throwable.getMessage()), SystemEvent.SYSTEM_USERNAME);
       return null;
     } finally {
       releaseConnection(client);
@@ -68,8 +70,8 @@ public class InterpreterRemoteProcess extends AbstractRemoteProcess<RemoteInterp
       ZLog.log(ET.JOB_CANCEL_FAILED,
               String.format("Failed to cancel job with uuid: %s", interpreterJobUUID),
               String.format("Exception thrown during job canceling: cancelResult[%s]",
-                      throwable.toString()),
-              "Unknown");
+                      throwable.toString())
+      );
       return null;
     } finally {
       releaseConnection(client);

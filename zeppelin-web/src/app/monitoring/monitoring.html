@@ -13,8 +13,59 @@ limitations under the License.
 -->
 <div ng-controller="MonitoringCtrl as monitoring" data-ng-init="init()">
 
-<h1>Page in progress...</h1>
+  <div class="monitoringHead">
+    <div class="header">
+      <div class="row">
+        <div class="col-md-12">
+          <h3 class="new_h3">
+            Event log
+          </h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          Shows the last 1000 events.
+        </div>
+      </div>
+    </div>
+  </div>
 
- <h3>Hi! {{user}}</h3>
+  <div class="box width-full">
 
+    <div class="table-responsive-xl">
+      <table class="table">
+        <thead>
+        <tr>
+          <th scope="col" style="width:10%;text-align: center; border: 1px solid black;">Event</th>
+          <th scope="col" style="width:10%;text-align: center; border: 1px solid black;">User</th>
+          <th scope="col" style="width:10%;text-align: center; border: 1px solid black;">Time</th>
+          <th scope="col" style="width:30%;text-align: center; border: 1px solid black;">Message</th>
+          <th scope="col" style="width:40%;text-align: center; border: 1px solid black;">Description</th>
+        </tr>
+        </thead>
+        <tr ng-repeat="event in events">
+          <!-- Event type -->
+          <td style="vertical-align: middle; border: 1px solid black;">
+            {{event.eventType}}
+          </td>
+          <!-- User -->
+          <td style="vertical-align: middle; border: 1px solid black;">
+            {{event.username}}
+          </td>
+          <!-- Time -->
+          <td style="vertical-align: middle; border: 1px solid black;">
+            {{event.actionTime | date:'dd/MM HH:mm:ss'}}
+          </td>
+          <!-- Message -->
+          <td style="vertical-align: middle; border: 1px solid black;">
+            {{event.message}}
+          </td>
+          <!-- Description -->
+          <td style="vertical-align: middle; border: 1px solid black;">
+            {{event.description}}
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
 </div>

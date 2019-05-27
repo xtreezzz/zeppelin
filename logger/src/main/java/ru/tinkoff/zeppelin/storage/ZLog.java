@@ -16,14 +16,16 @@
  */
 package ru.tinkoff.zeppelin.storage;
 
+import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ru.tinkoff.zeppelin.SystemEvent;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
 
 
 /**
@@ -32,11 +34,12 @@ import ru.tinkoff.zeppelin.SystemEvent.ET;
 @Component
 public class ZLog {
 
-  private static final Logger logger = LoggerFactory.getLogger(ZLog.class);
-
   private final ApplicationContext applicationContext;
 
   private static ZLog instance;
+
+  @Nonnull
+  private final ConcurrentLinkedQueue<SystemEventDTO> eventQueue;
 
   @Nonnull
   private final SystemEventDAO storage;
@@ -44,6 +47,7 @@ public class ZLog {
   public ZLog(@Nonnull final SystemEventDAO storage, final ApplicationContext applicationContext) {
     this.storage = storage;
     this.applicationContext = applicationContext;
+    this.eventQueue = new ConcurrentLinkedQueue<>();
   }
 
   @PostConstruct
@@ -51,45 +55,60 @@ public class ZLog {
     instance = applicationContext.getBean(ZLog.class);
   }
 
+  /**
+   * Publish system event.
+   */
+  @Scheduled(fixedDelay = 5)
+  private void publish() {
+    while (true) {
+      final SystemEventDTO event = eventQueue.poll();
+      if (event == null) {
+        return;
+      }
+
+      try {
+        storage.persist(event);
+      } catch (final Exception e) {
+        log(ET.FAILED_TO_SAVE_EVENT,
+            String.format("Ошибка при сохранении системного события: %s", e.getMessage()),
+            SystemEvent.SYSTEM_USERNAME);
+      }
+    }
+  }
 
   private void enqueue(@Nonnull final ET eventType,
                        @Nonnull final String message,
-                       @Nonnull final String description,
-                       @Nonnull final String username) {
+                       @Nullable final String description,
+                       @Nonnull final String username,
+                       @Nonnull final LocalDateTime time) {
     try {
-      storage.log(new SystemEvent(eventType, username, message, description));
+      final SystemEventDTO event = new SystemEventDTO(username, eventType.name(), message, description, time);
+      eventQueue.add(event);
     } catch (final Exception e) {
-      //skip
-      logger.error("Failed to log event", e);
+      log(ET.FAILED_TO_ADD_SYSTEM_EVENT,
+          String.format("Ошибка при добавлении системного события в очередь: %s", e.getMessage()),
+          SystemEvent.SYSTEM_USERNAME);
     }
   }
 
-  /**
-   * Все сообщения оборачиваются в System Event и добавляются в очередь
-   * Отдельным тредом процесс достает из очереди и кидает
-   * см. Логику с батчами.
-   */
   public static void log(@Nonnull final ET eventType,
                          @Nonnull final String message,
-                         @Nonnull final String description,
+                         @Nullable final String description,
                          @Nonnull final String username) {
     try {
-      instance.enqueue(eventType, message, description, username);
+      instance.enqueue(eventType, message, description, username, LocalDateTime.now());
     } catch (final Exception e) {
+      // Logs from interpreter reinstall will be ignored because instance is null at start.
       // skip
     }
   }
 
   /**
-   * Record without description (description the same as msg).
+   * Record without description.
    */
   public static void log(@Nonnull final ET eventType,
                          @Nonnull final String message,
                          @Nonnull final String username) {
-    try {
-      instance.enqueue(eventType, message, message, username);
-    } catch (final Exception e) {
-      // skip
-    }
+    log(eventType, message, null, username);
   }
 }

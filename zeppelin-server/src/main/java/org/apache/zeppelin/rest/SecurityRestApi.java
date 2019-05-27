@@ -17,6 +17,12 @@
 package org.apache.zeppelin.rest;
 
 import com.google.gson.Gson;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -32,8 +38,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.*;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Zeppelin security rest api endpoint.
@@ -63,6 +69,10 @@ public class SecurityRestApi {
 
     final JsonResponse response = new JsonResponse(HttpStatus.OK, "", data);
     LOG.warn(response.toString());
+
+    ZLog.log(ET.USER_CONNECTED, "Пользователь вошел в систему",
+        "Пользователь получил тикет с помощью GET: /api/security/ticket",
+        authenticationInfo.getUser());
     return response.build();
   }
 

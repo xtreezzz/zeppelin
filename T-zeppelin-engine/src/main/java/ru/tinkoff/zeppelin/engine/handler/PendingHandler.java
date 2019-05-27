@@ -16,10 +16,14 @@
  */
 package ru.tinkoff.zeppelin.engine.handler;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tinkoff.zeppelin.SystemEvent.ET;
+import ru.tinkoff.zeppelin.SystemEvent;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleConfiguration;
 import ru.tinkoff.zeppelin.core.configuration.interpreter.ModuleInnerConfiguration;
 import ru.tinkoff.zeppelin.core.notebook.Job;
@@ -32,11 +36,15 @@ import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Code;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message;
 import ru.tinkoff.zeppelin.interpreter.InterpreterResult.Message.Type;
 import ru.tinkoff.zeppelin.interpreter.thrift.PushResult;
-import ru.tinkoff.zeppelin.storage.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import ru.tinkoff.zeppelin.storage.FullParagraphDAO;
+import ru.tinkoff.zeppelin.storage.JobBatchDAO;
+import ru.tinkoff.zeppelin.storage.JobDAO;
+import ru.tinkoff.zeppelin.storage.JobPayloadDAO;
+import ru.tinkoff.zeppelin.storage.JobResultDAO;
+import ru.tinkoff.zeppelin.storage.NoteDAO;
+import ru.tinkoff.zeppelin.storage.ParagraphDAO;
+import ru.tinkoff.zeppelin.storage.SystemEventType.ET;
+import ru.tinkoff.zeppelin.storage.ZLog;
 
 /**
  * Class for handle pending jobs
@@ -69,19 +77,15 @@ public class PendingHandler extends AbstractHandler {
                      final ModuleConfiguration config,
                      final ModuleInnerConfiguration innerConfig) {
     if (!userIsInterpreterOwner(job, config)) {
-      String errorMessage = String.format(
+      final String errorMessage = String.format(
               "User [%s] does not have access to [%s] interpreter.",
               job.getUsername(),
               config.getHumanReadableName()
       );
 
-      ZLog.log(
-              ET.ACCESS_ERROR,
-              errorMessage,
-              String.format("Job: interpreter access error, job[%s]", job.toString()),
-              job.getUsername()
-      );
-      InterpreterResult interpreterResult = new InterpreterResult(
+      ZLog.log(ET.ACCESS_ERROR, String.format("Пользователь[%s] не имеет доступа к интерпретатору[%s]",
+          job.getUsername(), config.getShebang()), SystemEvent.SYSTEM_USERNAME);
+      final InterpreterResult interpreterResult = new InterpreterResult(
               Code.ABORTED,
               new Message(Type.TEXT, errorMessage)
       );
@@ -114,49 +118,46 @@ public class PendingHandler extends AbstractHandler {
     innerConfig.getProperties()
             .forEach((p, v) -> configuration.put(p, String.valueOf(v.getCurrentValue())));
 
-    ZLog.log(ET.JOB_READY_FOR_EXECUTION, "Job ready for execution, id=" + job.getId(),
-            String.format("Job ready for execution, job[%s]", job.toString()), job.getUsername());
+    ZLog.log(ET.JOB_READY_FOR_EXECUTION, "Задача готова к исполнению id=" + job.getId(),
+        SystemEvent.SYSTEM_USERNAME);
     final PushResult result = ((InterpreterRemoteProcess) process).push(payload, noteContext, userContext, configuration);
     if (result == null) {
-      ZLog.log(ET.JOB_REQUEST_IS_EMPTY, "Push result is empty for job with id=" + job.getId(),
-              String.format("Push result is empty, job[%s]", job.toString()), job.getUsername());
+      ZLog.log(ET.JOB_REQUEST_IS_EMPTY, "Задача не добавлена на исполнение, "
+          + "PushResult равен \"null\", id задачи=" + job.getId(), SystemEvent.SYSTEM_USERNAME);
       return;
     }
 
     switch (result.getStatus()) {
       case ACCEPT:
-        ZLog.log(ET.JOB_ACCEPTED, String.format("Job accepted, id=%s", job.getId()),
-                String.format("Job accepted, job[%s]", job.toString()), job.getUsername());
+        ZLog.log(ET.JOB_ACCEPTED, "Задача начала исполняться, id=%s" + job.getId(), SystemEvent.SYSTEM_USERNAME);
         setRunningState(job, result.getInterpreterProcessUUID(), result.getInterpreterJobUUID());
         break;
       case DECLINE:
-        ZLog.log(ET.JOB_DECLINED, String.format("Job declined, id=%s", job.getId()),
-                String.format("Job declined, job[%s]", job.toString()), job.getUsername());
+        ZLog.log(ET.JOB_DECLINED, "Задаче отклонена, id=%s" + job.getId(), SystemEvent.SYSTEM_USERNAME);
         break;
       case ERROR:
-        ZLog.log(ET.JOB_REQUEST_ERRORED, String.format("Job errored, id=%s", job.getId()),
-                String.format("Job errored, job[%s]", job.toString()), job.getUsername());
+        ZLog.log(ET.JOB_REQUEST_ERRORED, "Ошибка при попытке запустить задачу, id=%s" + job.getId(),
+            SystemEvent.SYSTEM_USERNAME);
         break;
       default:
         ZLog.log(ET.JOB_UNDEFINED,
-                String.format("System error, job request status undefined, id=%s, status=%s", job.getId(), result.getStatus()),
-                String.format("System error, job request status undefined, job[%s], status=%s", job.toString(), result.getStatus()),
-                job.getUsername());
+            String.format("Системная ошибка, статус PushResult не определен, id=%s, status=%s",
+                job.getId(), result.getStatus()), SystemEvent.SYSTEM_USERNAME);
     }
   }
 
-  private boolean userIsInterpreterOwner(Job job, ModuleConfiguration option) {
+  private boolean userIsInterpreterOwner(final Job job, final ModuleConfiguration option) {
     if (!option.getPermissions().isEnabled()) {
       return true;
     }
-    List<String> owners = option.getPermissions().getOwners();
+    final List<String> owners = option.getPermissions().getOwners();
     if (owners.isEmpty()) {
       return true;
     }
     if (owners.contains(job.getUsername())) {
       return true;
     }
-    for (String role : job.getRoles()) {
+    for (final String role : job.getRoles()) {
       if (owners.contains(role)) {
         return true;
       }

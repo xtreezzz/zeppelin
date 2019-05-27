@@ -11,3 +11,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+.monitoringHead {
+  margin: -10px -10px 20px;
+  padding: 10px 15px 15px 15px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.monitoringHead .header {
+  font-family: 'Roboto', sans-serif;
+}
+
+.new_h3 {
+  margin-top: 1px;
+  padding-top: 7px;
+  float: left;
+}
+
+.hiding_overflow {
+  overflow:auto;
+}

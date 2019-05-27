@@ -19,7 +19,6 @@
 package org.apache.zeppelin.realm;
 
 import com.google.gson.Gson;
-
 import java.util.Set;
 
 public class AuthenticationInfo {
