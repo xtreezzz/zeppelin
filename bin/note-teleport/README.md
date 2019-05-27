@@ -18,3 +18,5 @@
 5. Ноуты с ошибками во время отправки rest запроса попадут в `.../workDir/defective/persist`
 6. Чтобы отключить все cron таски дописать параметр `disableCron` при запуске.  
 Т.е. должно получится `java -jar NotesTeleport.jar полный_путь_к_workDir адрес_zeppelin disableCron` 
+7. Для заполнения пустых полей прав (Owners/Writers/Runners/Readers) в файле `role-association.txt` можно задать 
+группу `null  : default_group`.
