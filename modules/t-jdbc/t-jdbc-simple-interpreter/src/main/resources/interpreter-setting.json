@@ -1,5 +1,5 @@
  {
-    "className": "ru.tinkoff.zeppelin.interpreter.simple_jdbc.JDBCSimpleInterpreter",
+    "className": "ru.tinkoff.zeppelin.interpreter.jdbc.simple.JDBCSimpleInterpreter",
     "properties": {
       "connection.url": {
         "envName": null,

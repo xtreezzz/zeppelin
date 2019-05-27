@@ -27,7 +27,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>t-simple-jdbc-interpreter</artifactId>
+    <artifactId>t-jdbc-simple-interpreter</artifactId>
 
     <dependencies>
         <dependency>

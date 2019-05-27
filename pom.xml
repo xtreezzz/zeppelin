@@ -68,8 +68,7 @@
     <module>modules/t-jdbc/t-jdbc-commons</module>
     <module>modules/t-jdbc/t-jdbc-interpreter</module>
     <module>modules/t-jdbc/t-jdbc-completer</module>
-
-    <module>modules/t-simple-jdbc/t-simple-jdbc-intepreter</module>
+    <module>modules/t-jdbc/t-jdbc-simple-interpreter</module>
 
     <module>modules/t-python/t-python-commons</module>
     <module>modules/t-python/t-python-interpreter</module>
